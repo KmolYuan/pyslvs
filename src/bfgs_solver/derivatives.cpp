@@ -24,24 +24,24 @@ void derivatives(double **x,
         //////////////////////////////////////
         case PointOnPoint:
             // Derivative with respect to p1x
-            position = &P1_x - x[0];
+            position = cons[i].point1->x - x[0];
             if(position >= 0 && position < xLength)
-                gradF[position] += 2 * (P1_x - P2_x);
+                gradF[position] += 2 * (*cons[i].point1->x - *cons[i].point2->x);
 
             // Derivative with respect to p1y
-            position = &P1_y - x[0];
+            position = cons[i].point1->y - x[0];
             if(position >= 0 && position < xLength)
-                gradF[position] += 2 * (P1_y - P2_y);
+                gradF[position] += 2 * (*cons[i].point1->y - *cons[i].point2->y);
 
             // Derivative with respect to p2x
-            position = &P2_x - x[0];
+            position = cons[i].point2->x - x[0];
             if(position >= 0 && position < xLength)
-                gradF[position] += -2 * (P1_x - P2_x);
+                gradF[position] += -2 * (*cons[i].point1->x - *cons[i].point2->x);
 
             // Derivative with respect to p2y
-            position = &P2_y - x[0];
+            position = cons[i].point2->y - x[0];
             if(position >=0 && position<xLength)
-                gradF[position] += -2 * (P1_y - P2_y);
+                gradF[position] += -2 * (*cons[i].point1->y - *cons[i].point2->y);
             break;
 
         //////////////////////////////////////
@@ -49,29 +49,29 @@ void derivatives(double **x,
         //////////////////////////////////////
         case P2PDistance:
             // Derivative with respect to p1x
-            position = &P1_x - x[0];
+            position = cons[i].point1->x - x[0];
             if(position >= 0 && position < xLength)
-                gradF[position] += 2 * (P1_x - P2_x);
+                gradF[position] += 2 * (*cons[i].point1->x - *cons[i].point2->x);
 
             // Derivative with respect to p1y
-            position = &P1_y - x[0];
+            position = cons[i].point1->y - x[0];
             if(position >= 0 && position < xLength)
-                gradF[position] += 2 * (P1_y - P2_y);
+                gradF[position] += 2 * (*cons[i].point1->y - *cons[i].point2->y);
 
             // Derivative with respect to p2x
-            position = &P2_x - x[0];
+            position = cons[i].point2->x - x[0];
             if(position >= 0 && position < xLength)
-                gradF[position] += -2 * (P1_x - P2_x);
+                gradF[position] += -2 * (*cons[i].point1->x - *cons[i].point2->x);
 
             // Derivative with respect to p2y
-            position = &P2_y - x[0];
+            position = cons[i].point2->y - x[0];
             if(position >=0 && position < xLength)
-                gradF[position] += -2 * (P1_y - P2_y);
+                gradF[position] += -2 * (*cons[i].point1->y - *cons[i].point2->y);
 
             // Derivative with respect to distance
-            position = &distance - x[0];
+            position = cons[i].parameter - x[0];
             if(position >= 0 && position < xLength)
-                gradF[position] += -2 * distance;
+                gradF[position] += -2 * *cons[i].parameter;
             break;
 
         //////////////////////////////////////
@@ -79,19 +79,19 @@ void derivatives(double **x,
         //////////////////////////////////////
         case P2PDistanceVert:
             // Derivative with respect to p1y
-            position = &P1_y - x[0];
+            position = cons[i].point1->y - x[0];
             if(position >=0 && position < xLength)
-                gradF[position] += 2 * (P1_y - P2_y);
+                gradF[position] += 2 * (*cons[i].point1->y - *cons[i].point2->y);
 
             // Derivative with respect to p2y
-            position = &P2_y - x[0];
+            position = cons[i].point2->y - x[0];
             if(position >= 0 && position < xLength)
-                gradF[position] += -2 * (P1_y - P2_y);
+                gradF[position] += -2 * (*cons[i].point1->y - *cons[i].point2->y);
 
             // Derivative with respect to distance
-            position = &distance - x[0];
+            position = cons[i].parameter - x[0];
             if(position >= 0 && position < xLength)
-                gradF[position] += -2 * distance;
+                gradF[position] += -2 * *cons[i].parameter;
             break;
 
         //////////////////////////////////////
@@ -99,19 +99,19 @@ void derivatives(double **x,
         //////////////////////////////////////
         case P2PDistanceHorz:
             // Derivative with respect to p1x
-            position = &P1_x - x[0];
+            position = cons[i].point1->x - x[0];
             if(position >= 0 && position < xLength)
-                gradF[position] += 2 * (P1_x - P2_x);
+                gradF[position] += 2 * (*cons[i].point1->x - *cons[i].point2->x);
 
             // Derivative with respect to p2x
-            position = &P2_x - x[0];
+            position = cons[i].point2->x - x[0];
             if(position >= 0 && position < xLength)
-                gradF[position] += -2 * (P1_x - P2_x);
+                gradF[position] += -2 * (*cons[i].point1->x - *cons[i].point2->x);
 
             // Derivative with respect to distance
-            position = &distance - x[0];
+            position = cons[i].parameter - x[0];
             if(position >= 0 && position < xLength)
-                gradF[position] += -2 * distance;
+                gradF[position] += -2 * *cons[i].parameter;
             break;
 
         //////////////////////////////////////
@@ -119,19 +119,19 @@ void derivatives(double **x,
         //////////////////////////////////////
         case PointOnLine:
             // Derivative with respect to p1x
-            position = &P1_x - x[0];
+            position = cons[i].point1->x - x[0];
             if(position >= 0 && position < xLength)
-                gradF[position] += 2 * (P1_x - P2_x);
+                gradF[position] += 2 * (*cons[i].point1->x - *cons[i].point2->x);
 
             // Derivative with respect to p2x
-            position = &P2_x - x[0];
+            position = cons[i].point2->x - x[0];
             if(position >= 0 && position < xLength)
-                gradF[position] += -2 * (P1_x - P2_x);
+                gradF[position] += -2 * (*cons[i].point1->x - *cons[i].point2->x);
 
             // Derivative with respect to distance
-            position = &distance - x[0];
+            position = cons[i].parameter - x[0];
             if(position >= 0 && position < xLength)
-                gradF[position] += -2 * distance;
+                gradF[position] += -2 * *cons[i].parameter;
             break;
         }
 }
