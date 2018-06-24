@@ -10,7 +10,7 @@ import numpy
 
 
 sources = [
-    source for source in os.listdir(".")
+    source for source in os.listdir("./src")
     if source.split('.')[-1] == 'pyx'
 ]
 extra_compile_args = [
@@ -21,16 +21,17 @@ extra_compile_args = [
     #Windows format warning.
     '-Wno-format',
 ]
+ext_modules = [
+    Extension(
+        source.split('.')[0],
+        sources = ['src/' + source],
+        extra_compile_args = extra_compile_args,
+    )
+    for source in sources
+]
 
 setup(
-    ext_modules = [
-        Extension(
-            source.split('.')[0],
-            sources = [source],
-            extra_compile_args = extra_compile_args,
-        )
-        for source in sources
-    ],
+    ext_modules = ext_modules,
     cmdclass = {'build_ext': build_ext},
     include_dirs = [numpy.get_include()],
 )

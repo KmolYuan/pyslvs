@@ -104,8 +104,8 @@ venv.bak/
 .mypy_cache/
 
 #Cython .c files
-/*.c
-/*.cpp
+src/*.c
+src/*.cpp
 
 #Qt project
-*.user
+*.pro.user
