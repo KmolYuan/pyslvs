@@ -38,7 +38,7 @@ cpdef object NumberSynthesis(int NL, int NJ):
         if NLMmax < 0:
             continue
         answer = symbols + (NLMmax,)
-        if sum_factors(answer) == 2*NJ:
+        if sum_factors(answer) == (2 * NJ):
             result.append(answer)
     return tuple(result)
 
@@ -49,5 +49,5 @@ cdef inline int sum_factors(tuple factors):
     """
     cdef int factor = 0
     for i, f in enumerate(factors):
-        factor += f*(i + 2)
+        factor += f * (i + 2)
     return factor

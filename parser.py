@@ -32,7 +32,10 @@ except ImportError:
 else:
     HAS_PYGMENTS = True
 
-from .tinycadlib import VPoint
+try:
+    from .tinycadlib import VPoint
+except (SystemError, ImportError):
+    from tinycadlib import VPoint
 
 
 #Color dictionary.

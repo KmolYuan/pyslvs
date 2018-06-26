@@ -1,0 +1,24 @@
+#Travis-Ci
+dist: trusty
+sudo: required
+language: python
+
+python:
+- 3.5
+- 3.6
+
+branches:
+  only:
+    - master
+    - /^dev\d*[.]?\d*$/
+
+script:
+  - make
+  - python test_pyslvs.py
+
+before_cache:
+  - rm -rf $HOME/.cache/pip/log
+
+cache:
+  directories:
+    - $HOME/.cache/pip
