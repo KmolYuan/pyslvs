@@ -1,0 +1,76 @@
+# -*- coding: utf-8 -*-
+# cython: language_level=3
+
+"""Wrapper header of BFGS algorithm."""
+
+# __author__ = "Yuan Chang"
+# __copyright__ = "Copyright (C) 2016-2018"
+# __license__ = "AGPL"
+# __email__ = "pyslvs@gmail.com"
+
+cdef extern from "solve.h":
+    
+    cdef int Rough
+    cdef int Fine
+    cdef int MaxIterations
+    
+    cdef int Succsess
+    cdef int NoSolution
+    
+    struct Point:
+        double *x, *y
+    
+    struct Line:
+        Point *p1, *p2
+    
+    struct Arc:
+        double *startAngle, *endAngle, *rad
+        Point *center
+    
+    struct Circle:
+        Point *center
+        double *rad
+    
+    struct Constraint:
+        pass
+    
+    Constraint PointOnPointConstraint(Point *, Point *);
+    Constraint P2PDistanceConstraint(Point *, Point *, double *)
+    Constraint P2PDistanceVertConstraint(Point *, Point *, double *)
+    Constraint P2PDistanceHorzConstraint(Point *, Point *, double *)
+    Constraint PointOnLineConstraint(Point *, Line *)
+    Constraint P2LDistanceConstraint(Point *, Line *, double *)
+    Constraint P2LDistanceVertConstraint(Point *, Line *, double *)
+    Constraint P2LDistanceHorzConstraint(Point *, Line *, double *)
+    Constraint VerticalConstraint(Line *)
+    Constraint HorizontalConstraint(Line *)
+    Constraint TangentToCircleConstraint(Line *, Circle *)
+    Constraint TangentToArcConstraint(Line *, Arc *)
+    Constraint ArcRulesConstraint(Arc *)
+    Constraint LineLengthConstraint(Line *)
+    Constraint EqualLegnthConstraint(Line *, Line *)
+    Constraint ArcRadiusConstraint(Arc *, double *)
+    Constraint EqualRadiusArcsConstraint(Arc *, Arc *)
+    Constraint EqualRadiusCirclesConstraint(Circle *, Circle *)
+    Constraint EqualRadiusCircArcConstraint(Circle *, Arc *)
+    Constraint ConcentricArcsConstraint(Arc *, Arc *)
+    Constraint ConcentricCirclesConstraint(Circle *, Circle *)
+    Constraint ConcentricCircArcConstraint(Circle *, Arc *)
+    Constraint CircleRadiusConstraint(Circle *, double *)
+    Constraint InternalAngleConstraint(Line *, Line *, double *)
+    Constraint ExternalAngleConstraint(Line *, Line *, double *)
+    Constraint PerpendicularConstraint(Line *, Line *)
+    Constraint ParallelConstraint(Line *, Line *)
+    Constraint ColinearConstraint(Line *, Line *)
+    Constraint PointOnCircleConstraint(Point *, Circle *)
+    Constraint PointOnArcConstraint(Point *, Arc *)
+    Constraint PointOnLineMidpointConstraint(Point *, Line *)
+    Constraint PointOnArcMidpointConstraint(Point *, Arc *)
+    Constraint PointOnCircleQuadConstraint(Point *, Circle *, double *)
+    Constraint SymmetricPointsConstraint(Point *, Point *, Line *)
+    Constraint SymmetricLinesConstraint(Line *, Line *, Line *)
+    Constraint SymmetricCirclesConstraint(Circle *, Circle *, Line *)
+    Constraint SymmetricArcsConstraint(Arc *, Arc *, Line *)
+    
+    int solve(double **, int, Constraint *, int, int)
+    void derivatives(double **, double *, int, Constraint *, int)

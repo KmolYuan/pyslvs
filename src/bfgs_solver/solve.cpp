@@ -10,7 +10,7 @@
 #include "solve.h"
 #include <cmath>
 
-using namespace std;
+#define _hypot hypot
 
 ///////////////////////////////////////////////////////////////////////
 /// constraint defines (these make writing constraint equations easier
@@ -61,6 +61,8 @@ using namespace std;
 #define Sym_P1_y     *cons[i].SymLine->p1->y
 #define Sym_P2_x     *cons[i].SymLine->p2->x
 #define Sym_P2_y     *cons[i].SymLine->p2->y
+
+using namespace std;
 
 
 double calc(Constraint *, const int);

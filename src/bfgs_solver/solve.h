@@ -57,6 +57,7 @@
 ///////////////////////////////////////
 /// BFGS Solver parameters
 ///////////////////////////////////////
+
 #define PertMag            1e-6
 #define PertMin            1e-10
 #define XConvergenceRough  1e-8

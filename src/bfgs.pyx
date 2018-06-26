@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#cython: language_level=3
+# cython: language_level=3
 # distutils: include_dirs = ./bfgs_solver
 # distutils: sources = constraint_func.cpp, derivatives.cpp, solve.cpp
 
@@ -9,33 +9,6 @@
 # __copyright__ = "Copyright (C) 2016-2018"
 # __license__ = "AGPL"
 # __email__ = "pyslvs@gmail.com"
-
-cdef extern from "solve.h":
-    
-    cdef int Rough
-    cdef int Fine
-    cdef int MaxIterations
-    
-    cdef int Succsess
-    cdef int NoSolution
-    
-    struct Point:
-        double *x
-        double *y
-    
-    struct Line:
-        Point *p1
-        Point *p2
-    
-    struct Constraint:
-        pass
-    
-    Constraint PointOnPointConstraint(Point *, Point *)
-    Constraint P2PDistanceConstraint(Point *, Point *, double *)
-    Constraint HorizontalConstraint(Line *)
-    
-    int solve(double **, int, Constraint *, int, int)
-    void derivatives(double **, double *, int, Constraint *, int)
 
 from libc.stdlib cimport malloc, free
 
