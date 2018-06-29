@@ -8,6 +8,7 @@
 # __license__ = "AGPL"
 # __email__ = "pyslvs@gmail.com"
 
+from verify cimport Verification
 from tinycadlib cimport (
     Coordinate,
     legal_crank,
@@ -22,32 +23,6 @@ from tinycadlib import (
 )
 import numpy as np
 cimport numpy as np
-cimport cython
-
-
-@cython.freelist(100)
-cdef class Chromosome:
-    
-    """Data structure class."""
-    
-    def __cinit__(self, n: int):
-        self.n = n if n > 0 else 2
-        self.f = 0.0
-        self.v = np.zeros(n)
-    
-    cdef double distance(self, Chromosome obj):
-        cdef double dist = 0
-        cdef double diff
-        for i in range(self.n):
-            diff = self.v[i] - obj.v[i]
-            dist += diff * diff
-        return np.sqrt(dist)
-    
-    cpdef void assign(self, Chromosome obj):
-        if obj is not self:
-            self.n = obj.n
-            self.v[:] = obj.v
-            self.f = obj.f
 
 
 #Large fitness
@@ -61,23 +36,6 @@ cdef list path_error(list path, tuple target):
     for i in range(len(path)):
         tmp_list.append(path[i].distance(target[i]))
     return tmp_list
-
-
-cdef class Verification:
-    
-    """Verification function class base."""
-    
-    cdef np.ndarray get_upper(self):
-        return np.array([])
-    
-    cdef np.ndarray get_lower(self):
-        return np.array([])
-    
-    cdef int get_nParm(self):
-        return 0
-    
-    cpdef dict get_coordinates(self, np.ndarray v):
-        return {}
 
 
 cdef class Planar(Verification):

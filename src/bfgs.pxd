@@ -18,13 +18,17 @@ cdef extern from "solve.h":
     cdef int NoSolution
     
     struct Point:
-        double *x, *y
+        double *x
+        double *y
     
     struct Line:
-        Point *p1, *p2
+        Point *p1
+        Point *p2
     
     struct Arc:
-        double *startAngle, *endAngle, *rad
+        double *startAngle
+        double *endAngle
+        double *rad
         Point *center
     
     struct Circle:
