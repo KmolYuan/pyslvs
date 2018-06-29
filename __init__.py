@@ -9,15 +9,15 @@ Modules:
     + parser
     + tinycadlib
     + triangulation
++ Number synthesis:
+    + number
++ Topologic synthesis:
+    + topologic
 + Dimensional synthesis:
     + planarlinkage
     + rga
     + firefly
     + de
-+ Number synthesis:
-    + number
-+ Topologic synthesis:
-    + topologic
 
 Dependents:
 + lark-parser
