@@ -28,7 +28,7 @@ from de import DiffertialEvolution
 from number import NumberSynthesis
 from topologic import topo, Graph
 from triangulation import vpoints_configure
-from parser import parse_vpoints
+from _parser import parse_vpoints
 
 
 class CoreTest(TestCase):

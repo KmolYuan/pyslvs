@@ -63,9 +63,31 @@ cdef list path_error(list path, tuple target):
     return tmp_list
 
 
-cdef class Planar:
+cdef class Verification:
     
-    """This class used to verified kinematics of the linkage mechanism."""
+    """Verification function class base."""
+    
+    cdef np.ndarray get_upper(self):
+        return np.array([])
+    
+    cdef np.ndarray get_lower(self):
+        return np.array([])
+    
+    cdef int get_nParm(self):
+        return 0
+    
+    cpdef dict get_coordinates(self, np.ndarray v):
+        return {}
+
+
+cdef class Planar(Verification):
+    
+    """This class is used to verified kinematics of the linkage mechanism."""
+    
+    cdef int POINTS, VARS
+    cdef list constraint, Link, driver_list, follower_list
+    cdef dict Driver, Follower
+    cdef np.ndarray target_names, exprs, target, upper, lower
     
     def __cinit__(self, mech_params: dict):
         """
@@ -181,6 +203,15 @@ cdef class Planar:
             tmp_lower.append(mech_params[name])
         tmp_lower += [mech_params['AMin']]*len(self.driver_list)*self.POINTS
         self.lower = np.array(tmp_lower, dtype=np.float32)
+    
+    cdef np.ndarray get_upper(self):
+        return self.upper
+    
+    cdef np.ndarray get_lower(self):
+        return self.lower
+    
+    cdef int get_nParm(self):
+        return len(self.upper)
     
     cdef inline dict get_data_dict(self, np.ndarray v):
         """Create and return data dict."""

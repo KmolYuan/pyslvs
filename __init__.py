@@ -51,7 +51,7 @@ from .de import DiffertialEvolution
 from .number import NumberSynthesis
 from .topologic import topo, Graph
 from .triangulation import vpoints_configure
-from .parser import (
+from ._parser import (
     colorNames,
     colorRGB,
     parse_params,

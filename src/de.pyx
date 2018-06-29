@@ -16,7 +16,7 @@ from planarlinkage cimport (
     minFit,
     maxTime,
     Chromosome,
-    Planar,
+    Verification,
 )
 from cpython cimport bool
 from libc.stdlib cimport (
@@ -29,7 +29,7 @@ srand(int(time()))
 
 
 cdef double randV():
-    return rand()/(RAND_MAX*1.01)
+    return rand() / (RAND_MAX * 1.01)
 
 
 cdef class DiffertialEvolution:
@@ -40,13 +40,13 @@ cdef class DiffertialEvolution:
     cdef int strategy, D, NP, maxGen, maxTime, rpt, gen, r1, r2, r3, r4, r5
     cdef double F, CR, timeS, timeE, minFit
     cdef np.ndarray lb, ub, pop
-    cdef Planar func
+    cdef Verification func
     cdef object progress_fun, interrupt_fun
     cdef Chromosome lastgenbest, currentbest
     cdef list fitnessTime
     
     def __cinit__(self,
-        func: Planar,
+        func: Verification,
         settings: dict,
         progress_fun: object = None,
         interrupt_fun: object = None

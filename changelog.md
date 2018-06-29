@@ -8,3 +8,4 @@ Version 18.06
 + Add a C++ tiny CAD solver "Sketch solve" with BFGS algorithm:
     + Cython wrapper.
     + Use to make position analysis.
++ Base class for algorithm verification function object.

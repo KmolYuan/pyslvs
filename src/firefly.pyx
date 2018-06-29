@@ -17,7 +17,7 @@ from planarlinkage cimport (
     minFit,
     maxTime,
     Chromosome,
-    Planar,
+    Verification,
 )
 from cpython cimport bool
 from libc.stdlib cimport (
@@ -30,7 +30,7 @@ srand(int(time()))
 
 
 cdef double randV():
-    return rand()/(RAND_MAX*1.01)
+    return rand() / (RAND_MAX * 1.01)
 
 
 cdef class Firefly:
@@ -40,7 +40,7 @@ cdef class Firefly:
     cdef limit option
     cdef int D, n, maxGen, maxTime, rpt, gen
     cdef double alpha, alpha0, betaMin, beta0, gamma, timeS, timeE, minFit
-    cdef Planar func
+    cdef Verification func
     cdef object progress_fun, interrupt_fun
     cdef np.ndarray lb, ub
     cdef np.ndarray fireflys
@@ -48,7 +48,7 @@ cdef class Firefly:
     cdef list fitnessTime
     
     def __cinit__(self,
-        func: Planar,
+        func: Verification,
         settings: dict,
         progress_fun: object = None,
         interrupt_fun: object = None

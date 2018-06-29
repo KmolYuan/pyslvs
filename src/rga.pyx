@@ -17,7 +17,7 @@ from planarlinkage cimport (
     minFit,
     maxTime,
     Chromosome,
-    Planar,
+    Verification,
 )
 from cpython cimport bool
 from libc.stdlib cimport (
@@ -30,7 +30,7 @@ srand(int(time()))
 
 
 cdef double randV():
-    return rand()/(RAND_MAX*1.01)
+    return rand() / (RAND_MAX * 1.01)
 
 
 cdef class Genetic:
@@ -40,7 +40,7 @@ cdef class Genetic:
     cdef limit option
     cdef int nParm, nPop, maxGen, maxTime, gen, rpt
     cdef double pCross, pMute, pWin, bDelta, iseed, mask, seed, timeS, timeE, minFit
-    cdef Planar func
+    cdef Verification func
     cdef object progress_fun, interrupt_fun
     cdef np.ndarray chrom, newChrom, babyChrom
     cdef Chromosome chromElite, chromBest
@@ -48,7 +48,7 @@ cdef class Genetic:
     cdef list fitnessTime
     
     def __cinit__(self,
-        func: Planar,
+        func: Verification,
         settings: dict,
         progress_fun: object = None,
         interrupt_fun: object = None
