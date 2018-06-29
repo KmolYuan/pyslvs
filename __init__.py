@@ -44,6 +44,7 @@ from .tinycadlib import (
     VPoint,
     VLink,
 )
+from .verify import Verification
 from .planarlinkage import Planar
 from .rga import Genetic
 from .firefly import Firefly
@@ -59,10 +60,7 @@ from ._parser import (
     HAS_PYGMENTS,
 )
 if HAS_PYGMENTS:
-    try:
-        from .parser import PMKSLexer
-    except ImportError:
-        raise ImportError("no module name 'Pygment'")
+    from ._parser import PMKSLexer
 
 __all__ = [
     'Genetic',
@@ -79,6 +77,7 @@ __all__ = [
     'data_collecting',
     'VPoint',
     'VLink',
+    'Verification',
     'Planar',
     'NumberSynthesis',
     'topo',
