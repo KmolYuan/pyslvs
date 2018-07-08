@@ -20,8 +20,8 @@ ifeq ($(OS),Windows_NT)
 	-rename .__init__.py __init__.py
 	del $(addprefix src\,$(ADESIGN))
 else
-	cp Adesign/src/*.pyx src
-	cp Adesign/src/*.pxd src
+	cp -p Adesign/src/*.pyx src
+	cp -p Adesign/src/*.pxd src
 	-mv __init__.py .__init__.py
 	python3 setup.py build_ext --inplace
 	-mv .__init__.py __init__.py

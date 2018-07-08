@@ -21,6 +21,7 @@ from tinycadlib import (
     expr_solving,
     data_collecting,
 )
+import bfgs
 from planarlinkage import Planar
 from rga import Genetic
 from firefly import Firefly
@@ -128,6 +129,10 @@ class CoreTest(TestCase):
         self.assertTrue(isclose(x, -43.17005515543241))
         self.assertTrue(isclose(y, -91.75322590542523))
     
+    def test_bfgs(self):
+        """Test Sketch Solve kernel."""
+        bfgs.test_kernel()
+    
     def test_number_synthesis(self):
         """Test Number Synthesis function."""
         for NL, NJ in [(4, 4), (6, 7), (8, 9), (10, 12)]:
@@ -168,7 +173,7 @@ class CoreTest(TestCase):
     def test_algorithm_rga(self):
         """Real-coded genetic algorithm."""
         fun1 = Genetic(self.planar_object(), {
-            'maxTime': 10, 'report': 10,
+            'maxTime': 1, 'report': 10,
             #Genetic
             'nPop': 500,
             'pCross': 0.95,
@@ -181,7 +186,7 @@ class CoreTest(TestCase):
     def test_algorithm_firefly(self):
         """Firefly algorithm."""
         fun2 = Firefly(self.planar_object(), {
-            'maxTime': 10, 'report': 10,
+            'maxTime': 1, 'report': 10,
             #Firefly
             'n': 80,
             'alpha': 0.01,
@@ -194,7 +199,7 @@ class CoreTest(TestCase):
     def test_algorithm_de(self):
         """Differtial evolution."""
         fun3 = DiffertialEvolution(self.planar_object(), {
-            'maxTime': 10, 'report': 10,
+            'maxTime': 1, 'report': 10,
             #DE
             'strategy': 1,
             'NP': 400,

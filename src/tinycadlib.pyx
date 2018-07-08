@@ -658,7 +658,10 @@ cpdef list expr_solving(
     object vpoints,
     object angles
 ):
-    """Solving function."""
+    """Solving function.
+    
+    + angles: [[a0]: a0, [a1]: a1, ...]
+    """
     cdef dict data_dict
     cdef int dof_input
     data_dict, dof_input = data_collecting_c(exprs, mapping, vpoints)
@@ -678,6 +681,14 @@ cpdef list expr_solving(
     
     expr_parser(expr_join(exprs), data_dict)
     
+    """
+    Format:
+    (R joint)
+    [p0]: (p0_x, p0_y)
+    [p1]: (p1_x, p1_y)
+    (P or RP joint)
+    [p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))
+    """
     cdef list solved_points = []
     for i in range(len(vpoints)):
         if np.isnan(data_dict[mapping[i]][0]):
