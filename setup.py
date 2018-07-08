@@ -7,6 +7,7 @@ import os
 
 from Cython.Distutils import build_ext
 import numpy
+numpy_include = [numpy.get_include()]
 
 
 sources = [
@@ -32,7 +33,7 @@ ext_modules = [Extension(
         'src/bfgs_solver/' + 'solve.cpp',
     ],
     language = "c++",
-    include_dirs = ['src/bfgs_solver/'],
+    include_dirs = ['src/bfgs_solver/'] + numpy_include,
     
     extra_compile_args = extra_compile_args + ['-D_hypot=hypot'],
 )]
@@ -44,7 +45,7 @@ for source in sources:
         source.split('.')[0], #Base name
         sources = ['src/' + source], #path + file name
         
-        include_dirs = [numpy.get_include()],
+        include_dirs = numpy_include,
         extra_compile_args = extra_compile_args,
     ))
 
