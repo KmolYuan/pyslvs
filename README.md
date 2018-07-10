@@ -54,6 +54,10 @@ In Pyslvs, expression is mainly to [PMKS](http://designengrlab.github.io/PMKS/),
 + **planarlinkage** library:
     Dimensional synthesis verification function objects.
 
+#### Adesign
+
+[Adesign](https://github.com/KmolYuan/Adesign) module: Cython algorithms libraries provide evolution designing.
+
 + **rga** library:
     Real-coded genetic algorithm for dimensional synthesis.
 
