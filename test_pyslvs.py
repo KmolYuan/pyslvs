@@ -164,10 +164,8 @@ class CoreTest(TestCase):
                 "PLLP[P2,L1,L2,P1](P3);" +
                 "PLLP[P2,L3,L4,P3](P4)",
             'constraint': [('P0', 'P1', 'P2', 'P3')],
-            'IMin': 5., 'LMin': 5.,
-            'FMin': 5., 'AMin': 0.,
-            'IMax': 100., 'LMax': 100.,
-            'FMax': 100., 'AMax': 360.,
+            'upper': [100., 100., 100., 100., 100., 360.],
+            'lower': [5., 5., 5., 5., 5., 0.],
         })
     
     def test_algorithm_rga(self):

@@ -42,9 +42,8 @@ cdef class Planar(Verification):
     
     """This class is used to verified kinematics of the linkage mechanism."""
     
-    cdef int POINTS, VARS
-    cdef list constraint, Link, driver_list, follower_list
-    cdef dict Driver, Follower
+    cdef int target_count, vars
+    cdef list constraint, link_list, driver_list, follower_list
     cdef np.ndarray target_names, exprs, target, upper, lower
     
     def __cinit__(self, mech_params: dict):
@@ -52,23 +51,18 @@ cdef class Planar(Verification):
         mech_params = {
             'Driver': {'pt': (x, y, r)},
             'Follower': {'pt': (x, y, r)},
-            'Target': {'pt': (x, y, r)},
+            'Target': {'pt': [(x0, y0), (x1, y1), ...]},
             'constraint': [('pt', 'pt', 'pt', 'pt')],
             'Expression': str,
-            'upper': np.array[float32],
-            'lower': np.array[float32],
+            'upper': np.ndarray[float32],
+            'lower': np.ndarray[float32],
         }
         """
-        cdef dict value
         cdef set check_set = set(map(len, mech_params['Target'].values()))
         if len(check_set) != 1:
             raise ValueError("Target path should be in the same size.")
         #Counting how many action to satisfied require point.
-        self.POINTS = check_set.pop()
-        #Driving points
-        self.Driver = mech_params['Driver']
-        #Folower points
-        self.Follower = mech_params['Follower']
+        self.target_count = check_set.pop()
         #Target points
         #[Coordinate(x0, y0), Coordinate(x1, y1), Coordinate(x2, y2), ...]
         cdef int i = 0
@@ -91,7 +85,7 @@ cdef class Planar(Verification):
         cdef list exprs = mech_params['Expression'].split(';')
         
         """
-        Link: L0, L1, L2, L3, ...
+        link_list: L0, L1, L2, L3, ...
         driver_list: The name of the point in "self.Driver" (Sorted).
         follower_list: The name of the point in "self.Follower" (Sorted).
         exprs:
@@ -99,11 +93,11 @@ cdef class Planar(Verification):
             {'relate': 'PLLP', 'target': 'C', 'params': ['B', 'L1', 'L2', 'D']}, ...
         Expression: PLAP[A,L0,a0,D](B);PLLP[B,L1,L2,D](C);PLLP[B,L3,L4,C](E)
         """
-        cdef str expr, params
-        self.Link = []
+        self.link_list = []
         self.driver_list = []
         self.follower_list = []
         self.exprs = np.ndarray((len(exprs),), dtype=np.object)
+        cdef str expr, params, p
         for i, expr in enumerate(exprs):
             params = strbetween(expr, '[', ']')
             self.exprs[i] = (
@@ -114,26 +108,55 @@ cdef class Planar(Verification):
                 #[2]: params
                 params.split(','),
             )
+            #Parameters should exist in solver expression.
             for p in params.split(','):
-                if ('L' in p) and ('L' != p):
-                    self.Link.append(p)
-                if (p in self.Driver) and (p not in self.driver_list):
+                if p.startswith('L') and len(p) > 1:
+                    self.link_list.append(p)
+                if (p in mech_params['Driver']) and (p not in self.driver_list):
                     self.driver_list.append(p)
-                if (p in self.Follower) and (p not in self.follower_list):
+                if (p in mech_params['Follower']) and (p not in self.follower_list):
                     self.follower_list.append(p)
         
         """Limitations
         
-        The data will as same as a chromosome.
-        [I, L, F, L, L, L, ..., A0, A0, ..., A1, A1, ...]
-        self.VARS = length before matching angles.
+        self.vars = length before matching angles.
+        
+        The data format will same as chromosome.
+        [Ax, Ay, Dx, Dy, ..., L0, L1, ..., A00, A01, ..., A10, A11, ...]
+        Input format of upper and lower:
+        [Ax, Ay, Dx, Dy, ..., L0, L1, ..., A0, A1, ...]
+        + The input angles are not duplicated.
+        + The number of angles will same as length of driver list.
         """
-        #upper
-        self.upper = np.array(mech_params['upper'], dtype=np.float32)
-        #lower
-        self.lower = np.array(mech_params['lower'], dtype=np.float32)
+        cdef int link_count = len(self.link_list)
         #The number of all variables (except angles).
-        self.VARS = 2*len(self.driver_list) + 2*len(self.follower_list) + len(self.Link)
+        self.vars = 2 * len(self.driver_list) + 2 * len(self.follower_list) + link_count
+        
+        cdef dict tmp_dict = {}
+        tmp_dict.update(mech_params['Driver'])
+        tmp_dict.update(mech_params['Follower'])
+        
+        cdef list tmp_list = []
+        
+        #upper
+        for name in self.driver_list + self.follower_list:
+            for i in range(2):
+                tmp_list.append(tmp_dict[name][i] + tmp_dict[name][2]/2)
+        tmp_list.extend(mech_params['upper'][:link_count])
+        for i in range(len(self.driver_list)):
+            tmp_list.extend([mech_params['upper'][link_count + i]] * self.target_count)
+        self.upper = np.array(tmp_list, dtype=np.float32)
+        
+        tmp_list.clear()
+        
+        #lower
+        for name in self.driver_list + self.follower_list:
+            for i in range(2):
+                tmp_list.append(tmp_dict[name][i] - tmp_dict[name][2]/2)
+        tmp_list.extend(mech_params['lower'][:link_count])
+        for i in range(len(self.driver_list)):
+            tmp_list.extend([mech_params['lower'][link_count + i]] * self.target_count)
+        self.lower = np.array(tmp_list, dtype=np.float32)
     
     cdef np.ndarray get_upper(self):
         return self.upper
@@ -146,20 +169,16 @@ cdef class Planar(Verification):
     
     cdef inline dict get_data_dict(self, np.ndarray v):
         """Create and return data dict."""
-        cdef str name, L
+        cdef str name
         cdef dict tmp_dict = {}
         cdef int vi = 0
-        #driving
-        for name in self.driver_list:
-            tmp_dict[name] = Coordinate(v[vi], v[vi+1])
-            vi += 2
-        #follower
-        for name in self.follower_list:
+        #driver and follower
+        for name in self.driver_list + self.follower_list:
             tmp_dict[name] = Coordinate(v[vi], v[vi+1])
             vi += 2
         #links
-        for L in self.Link:
-            tmp_dict[L] = v[vi]
+        for name in self.link_list:
+            tmp_dict[name] = v[vi]
             vi += 1
         return tmp_dict
     
@@ -185,15 +204,12 @@ cdef class Planar(Verification):
             return Coordinate(*PXY(*params))
     
     cdef double run(self, np.ndarray v) except *:
-        """
-        v:
-        [Ax, Ay, Dx, Dy, ..., L0, L1, ..., A00, A01, ..., A10, A11, ...]
+        """Chromosome format: (decided by upper and lower)
         
+        v: [Ax, Ay, Dx, Dy, ..., L0, L1, ..., A00, A01, ..., A10, A11, ...]
         target: a list of target. [(1,5), (2,5), (3,5)]
-        
-        POINTS: length of target.
-        
-        VARS: mechanism variables count.
+        target_count: length of target.
+        vars: mechanism variables count.
         """
         # all variable
         cdef dict test_dict = self.get_data_dict(v)
@@ -205,12 +221,12 @@ cdef class Planar(Verification):
         cdef str name
         cdef tuple e
         cdef Coordinate target_coordinate
-        for i in range(self.POINTS):
+        for i in range(self.target_count):
             #a0: random angle to generate target point.
             #match to path points.
             for j in range(len(self.driver_list)):
                 test_dict['a{}'.format(j)] = np.deg2rad(
-                    v[self.VARS + i*len(self.driver_list) + j]
+                    v[self.vars + i * len(self.driver_list) + j]
                 )
             for e in self.exprs:
                 #target
@@ -246,7 +262,7 @@ cdef class Planar(Verification):
         cdef object value
         cdef dict final_dict = self.get_data_dict(v)
         for j in range(len(self.driver_list)):
-            final_dict['a{}'.format(j)] = np.deg2rad(v[self.VARS + j])
+            final_dict['a{}'.format(j)] = np.deg2rad(v[self.vars + j])
         for e in self.exprs:
             #target
             final_dict[e[1]] = self.from_formula(e, final_dict)
@@ -256,8 +272,8 @@ cdef class Planar(Verification):
         cdef list tmp_list
         for j in range(len(self.driver_list)):
             tmp_list = []
-            for i in range(self.POINTS):
-                tmp_list.append(v[self.VARS + i * len(self.driver_list) + j])
+            for i in range(self.target_count):
+                tmp_list.append(v[self.vars + i * len(self.driver_list) + j])
             final_dict['a{}'.format(j)] = tuple(tmp_list)
         return final_dict
     
