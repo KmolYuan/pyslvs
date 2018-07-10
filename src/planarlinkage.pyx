@@ -157,6 +157,11 @@ cdef class Planar(Verification):
         for i in range(len(self.driver_list)):
             tmp_list.extend([mech_params['lower'][link_count + i]] * self.target_count)
         self.lower = np.array(tmp_list, dtype=np.float32)
+        
+        #Swap sorting.
+        for i in range(len(self.upper)):
+            if self.upper[i] < self.lower[i]:
+                self.upper[i], self.lower[i] = self.lower[i], self.upper[i]
     
     cdef np.ndarray get_upper(self):
         return self.upper
