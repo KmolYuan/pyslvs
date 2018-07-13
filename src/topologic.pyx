@@ -413,14 +413,14 @@ cdef inline list connection_get(int i, tuple connection):
     return [c for c in connection if (i in c)]
 
 
-#Linkage Topological Component
 cpdef topo(
     object link_num,
     bool degenerate = True,
     object setjobFunc = None,
     object stopFunc = None
 ):
-    """
+    """Linkage mechanism topological function.
+    
     link_num = [L2, L3, L4, ...]
     links = [
         [number_code]: joint_number,

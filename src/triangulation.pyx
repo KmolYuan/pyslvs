@@ -72,7 +72,7 @@ def _get_base_friend(
     vlinks: dict,
     status: dict
 ) -> Iterator[int]:
-    """Get the constrained node of same linkage."""
+    """Get the constrained node of same links."""
     if len(vpoints[node].links) < 1:
         raise StopIteration
     cdef int friend
@@ -89,7 +89,7 @@ cdef inline int get_input_base(int node, object inputs):
     return -1
 
 
-cpdef list vpoints_configure(object vpoints_, object inputs, dict status = {}):
+cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = {}):
     """Auto configuration algorithm.
     
     For VPoint list.
@@ -99,7 +99,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = {}):
     
     vpoints will make a copy that we don't want to modified itself.
     """
-    if (not vpoints_) or (not inputs):
+    if not vpoints_:
         return []
     
     cdef list vpoints = list(vpoints_)
@@ -362,7 +362,6 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = {}):
                 skip_times = 0
         
         node += 1
-    """
-    exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1', 'P2'), ...]
-    """
+    
+    #exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1', 'P2'), ...]
     return exprs

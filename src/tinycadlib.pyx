@@ -148,7 +148,7 @@ cdef class VPoint:
 
 cdef class VLink:
     
-    """Symbol of linkages."""
+    """Symbol of links."""
     
     cdef readonly str name, colorSTR
     cdef readonly object color
@@ -478,7 +478,7 @@ cdef inline tuple data_collecting_c(object exprs, dict mapping, object vpoints_)
     
     + exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1', 'P2'), ...]
     + mapping: {0: 'P0', 1: 'P2', 2: 'P3', 3: 'P4', ...}
-        + Specify linkage length: mapping['L0'] = 20.0
+        + Specify link length: mapping['L0'] = 20.0
     + vpoints_: [VPoint0, VPoint1, VPoint2, ...]
     + pos: [(x0, y0), (x1, y1), (x2, y2), ...]
     
@@ -533,7 +533,7 @@ cdef inline tuple data_collecting_c(object exprs, dict mapping, object vpoints_)
                 )
     
     cdef k, v
-    #Reverse mapping, exclude specified linkage length.
+    #Reverse mapping, exclude specified link length.
     cdef dict mapping_r = {
         v: k
         for k, v in mapping.items() if (type(k) == int)

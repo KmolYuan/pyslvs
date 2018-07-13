@@ -80,13 +80,14 @@ cpdef tuple test_kernel():
     return input_data, output_data, grad_data
 
 
-cpdef list vpoint_solving(object vpoints, object angles = []):
+cpdef list vpoint_solving(object vpoints, object inputs = []):
     """Solving function from vpoint list.
     
-    + angles: [(p0, link0_0, link0_1, a0), (p1, link1_0, link1_1, a1), ...]
+    + inputs: [(b0, d0, a0), (b1, d1, a1), ...]
     """
     cdef dict vlinks = {}
     
+    #Pre-count number of parameters.
     cdef int params_count = 0
     cdef int constants_count = 0
     
@@ -127,6 +128,7 @@ cpdef list vpoint_solving(object vpoints, object angles = []):
             b += 2
         points[i] = point
     
+    #Pre-count number of distence constraints.
     cdef int cons_count = 0
     cdef int link_count
     for vlink in vlinks:
@@ -135,8 +137,17 @@ cpdef list vpoint_solving(object vpoints, object angles = []):
             continue
         cons_count += 1 + 2 * (link_count - 2)
     cdef double *distences = <double *>malloc(cons_count * sizeof(double))
+    
+    #Pre-count number of angle constraints.
+    #TODO: Add a new constant type: LineInternalAngle and LineExternalAngle
+    cdef int input_count = len(inputs)
+    cdef double *angles = <double *>malloc(input_count * sizeof(double))
+    cons_count += input_count
+    
+    #Pre-count number of constraints.
     cdef Constraint *cons = <Constraint *>malloc(cons_count * sizeof(Constraint))
     
+    #Create distence constraints of each link.
     i = 0
     cdef int c, d
     for vlink in vlinks:
@@ -154,6 +165,12 @@ cpdef list vpoint_solving(object vpoints, object angles = []):
                 cons[i] = P2PDistanceConstraint(points + c, points + d, distences + i)
                 i += 1
     
+    #TODO: Add angle constraints for input angles.
+    cdef double angle
+    for b, d, angle in inputs:
+        pass
+    
+    #Solve
     if solve(pparameters, params_count, cons, cons_count, Rough) != Succsess:
         raise Exception("No valid Solutions were found from this start point.")
     
