@@ -9,11 +9,13 @@ __email__ = "pyslvs@gmail.com"
 
 import unittest
 from unittest import TestCase
+from typing import List
 
 #For necessary modules.
 from math import sqrt, radians, isclose
 from tinycadlib import (
     Coordinate,
+    VPoint,
     PLAP,
     PLLP,
     PLPP,
@@ -87,15 +89,9 @@ class CoreTest(TestCase):
         answer, time = topo([4, 2], degenerate=True)
         self.assertEqual(len(answer), 2)
     
-    def test_solving(self):
-        """Test triangular formula solving.
-        
-        Example: Jansen's linkage (Single).
-        + Test for PMKS parser.
-        + Test data collecting function.
-        + Test expression solving function.
-        """
-        vpoints = parse_vpoints("M[\n" +
+    def vpoints_object(self) -> List[VPoint]:
+        """Example: Jansen's linkage (Single)."""
+        return parse_vpoints("M[\n" +
             "# Jansen's linkage (Single).\n" +
             "J[R, color[(255, 255, 255)], P[0.0, 0.0], L[ground, link_1]],\n" +
             "J[R, color[Green], P[9.61, 11.52], L[link_1, link_2, link_4]],\n" +
@@ -106,11 +102,20 @@ class CoreTest(TestCase):
             "J[R, color[Green], P[-56.05, -35.42], L[link_6, link_7]],\n" +
             "J[R, color[Green], P[-22.22, -91.74], L[link_7]],\n" +
             "]")
+    
+    def test_solving(self):
+        """Test triangular formula solving.
+        
+        + Test for PMKS parser.
+        + Test data collecting function.
+        + Test expression solving function.
+        """
+        vpoints = self.vpoints_object()
         self.assertTrue(len(vpoints) == 8)
         exprs = vpoints_configure(vpoints, [(0, 1)])
         mapping = {n: 'P{}'.format(n) for n in range(len(vpoints))}
         data_dict, dof = data_collecting(exprs, mapping, vpoints)
-        for link, link_length in [
+        for link, link_length in (
             ('L0', 15.002083188677497),
             ('L1', 41.50187586121861),
             ('L2', 49.9949057404852),
@@ -122,7 +127,7 @@ class CoreTest(TestCase):
             ('L8', 39.395233214184685),
             ('L9', 48.995886562037015),
             ('L10', 65.69940106271898),
-        ]:
+        ):
             self.assertTrue(isclose(data_dict[link], link_length))
         self.assertEqual(dof, 1)
         x, y = expr_solving(exprs, mapping, vpoints, [0.])[-1]
@@ -131,7 +136,16 @@ class CoreTest(TestCase):
     
     def test_bfgs(self):
         """Test Sketch Solve kernel."""
-        bfgs.test_kernel()
+        input_data, output_data, grad_data = bfgs.test_kernel()
+        self.assertEqual(input_data[0], (0.0, 0.0))
+        self.assertEqual(input_data[1], (5.0, 0.0))
+        self.assertEqual(input_data[2], (6.0, 5.0))
+        self.assertEqual(input_data[3], (6.0, 5.0))
+        self.assertEqual(input_data[4], (30.0, 10.0))
+        self.assertTrue(isclose(output_data[0][1], -13.68847598479309))
+        self.assertTrue(isclose(output_data[2][1], 10.000000000020655))
+        self.assertTrue(isclose(output_data[4][0], 30))
+        bfgs.vpoint_solving(self.vpoints_object(), [])
     
     def test_number_synthesis(self):
         """Test Number Synthesis function."""
@@ -142,7 +156,7 @@ class CoreTest(TestCase):
                     count += factor * (i + 2)
                 self.assertTrue(count / 2, 6)
     
-    def planar_object(self):
+    def planar_object(self) -> Planar:
         """Test-used mechanism for algorithm."""
         return Planar({
             'Driver': {'P0': (-70, -70, 50)},

@@ -656,7 +656,7 @@ cpdef list expr_solving(
     object exprs,
     dict mapping,
     object vpoints,
-    object angles
+    object angles = []
 ):
     """Solving function.
     
@@ -697,5 +697,4 @@ cpdef list expr_solving(
             solved_points.append(data_dict[mapping[i]])
         else:
             solved_points.append((vpoints[i].c[0], data_dict[mapping[i]]))
-    
     return solved_points

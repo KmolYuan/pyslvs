@@ -13,6 +13,16 @@ from numpy cimport ndarray
 
 
 cdef class VPoint:
+    """def __cinit__(self,
+        links: str,
+        type_int: int,
+        angle: double,
+        color_str: str,
+        x: double,
+        y: double,
+        color_func: object = None
+    )
+    """
     cdef readonly tuple links
     cdef readonly ndarray c
     cdef readonly int type
