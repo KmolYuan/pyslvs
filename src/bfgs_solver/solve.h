@@ -53,6 +53,8 @@
 #define SymmetricLines       36
 #define SymmetricCircles     37
 #define SymmetricArcs        38
+#define LineInternalAngle    39
+#define LineExternalAngle    40
 
 ///////////////////////////////////////
 /// BFGS Solver parameters
@@ -86,8 +88,8 @@ struct Point { double *x, *y; };
 struct Line { Point *p1, *p2; };
 
 struct Arc {
-    double *startAngle, *endAngle, *rad; //rad
     Point *center;
+    double *startAngle, *endAngle, *rad;
 };
 
 struct Circle {
@@ -118,7 +120,7 @@ Constraint HorizontalConstraint(Line *);
 Constraint TangentToCircleConstraint(Line *, Circle *);
 Constraint TangentToArcConstraint(Line *, Arc *);
 Constraint ArcRulesConstraint(Arc *);
-Constraint LineLengthConstraint(Line *);
+Constraint LineLengthConstraint(Line *, double *);
 Constraint EqualLegnthConstraint(Line *, Line *);
 Constraint ArcRadiusConstraint(Arc *, double *);
 Constraint EqualRadiusArcsConstraint(Arc *, Arc *);
@@ -142,6 +144,8 @@ Constraint SymmetricPointsConstraint(Point *, Point *, Line *);
 Constraint SymmetricLinesConstraint(Line *, Line *, Line *);
 Constraint SymmetricCirclesConstraint(Circle *, Circle *, Line *);
 Constraint SymmetricArcsConstraint(Arc *, Arc *, Line *);
+Constraint LineInternalAngleConstraint(Line *, double *);
+Constraint LineExternalAngleConstraint(Line *, double *);
 
 //Public Functions
 int solve(double **, int, Constraint *, int, int);

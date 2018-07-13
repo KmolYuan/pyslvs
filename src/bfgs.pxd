@@ -75,6 +75,8 @@ cdef extern from "solve.h":
     Constraint SymmetricLinesConstraint(Line *, Line *, Line *)
     Constraint SymmetricCirclesConstraint(Circle *, Circle *, Line *)
     Constraint SymmetricArcsConstraint(Arc *, Arc *, Line *)
+    Constraint LineInternalAngleConstraint(Line *, double *)
+    Constraint LineExternalAngleConstraint(Line *, double *)
     
     int solve(double **, int, Constraint *, int, int)
     void derivatives(double **, double *, int, Constraint *, int)

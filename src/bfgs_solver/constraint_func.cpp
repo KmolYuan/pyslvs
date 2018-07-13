@@ -107,11 +107,16 @@ Constraint ArcRulesConstraint(Arc *arc1) {
     return con;
 }
 
-Constraint LineLengthConstraint(Line *line1) {
+inline Constraint _LineConstraint(int type, Line *line1, double *value) {
     Constraint con;
-    con.type = LineLength;
+    con.type = type;
     con.line1 = line1;
+    con.parameter = value;
     return con;
+}
+
+Constraint LineLengthConstraint(Line *line1, double *value) {
+    return _LineConstraint(LineLength, line1, value);
 }
 
 inline Constraint _LinesConstraint(int type, Line *line1, Line *line2) {
@@ -294,4 +299,12 @@ Constraint SymmetricArcsConstraint(Arc *arc1, Arc *arc2, Line *sym) {
     con.arc2 = arc2;
     con.SymLine = sym;
     return con;
+}
+
+Constraint LineInternalAngleConstraint(Line *line1, double *value) {
+    return _LineConstraint(LineInternalAngle, line1, value);
+}
+
+Constraint LineExternalAngleConstraint(Line *line1, double *value) {
+    return _LineConstraint(LineExternalAngle, line1, value);
 }

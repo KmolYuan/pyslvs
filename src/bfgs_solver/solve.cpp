@@ -430,9 +430,8 @@ double calc(Constraint *cons, const int consLength) {
         switch(cons[i].type) {
         case PointOnPoint:
             //Hopefully avoid this constraint, make coincident points use the same parameters
-            dx = P1_x - P2_x;
-            dy = P1_y - P2_y;
-            error += dx * dx + dy * dy;
+            temp = _hypot(P2_x - P1_x, P2_y - P1_y);
+            error += temp * temp * 100;
             break;
 
         case P2PDistance:
@@ -633,9 +632,8 @@ double calc(Constraint *cons, const int consLength) {
             dx2 = dx2 / hyp2;
             dy2 = dy2 / hyp2;
 
-            temp = dx * dx2 + dy * dy2;
-            temp2 = cos(angleP);
-            error += (temp + temp2) * (temp + temp2);
+            temp = dx * dx2 + dy * dy2 + cos(angleP);
+            error += temp * temp;
             break;
 
         case ExternalAngle:
@@ -652,9 +650,30 @@ double calc(Constraint *cons, const int consLength) {
             dx2 = dx2 / hyp2;
             dy2 = dy2 / hyp2;
 
-            temp = dx * dx2 - dy * dy2;
-            temp2 = cos(M_PI - angleP);
-            error += (temp + temp2) * (temp + temp2);
+            temp = dx * dx2 - dy * dy2 + cos(M_PI - angleP);
+            error += temp * temp;
+            break;
+
+        case LineInternalAngle:
+            dx = L1_P2_x - L1_P1_x;
+            dy = L1_P2_y - L1_P1_y;
+
+            hyp1 = _hypot(dx, dy);
+            dx = dx / hyp1;
+
+            temp = dx + cos(angleP);
+            error += temp * temp;
+            break;
+
+        case LineExternalAngle:
+            dx = L1_P2_x - L1_P1_x;
+            dy = L1_P2_y - L1_P1_y;
+
+            hyp1 = _hypot(dx, dy);
+            dx = dx / hyp1;
+
+            temp = dx + cos(M_PI - angleP);
+            error += temp * temp;
             break;
 
         case Perpendicular:
