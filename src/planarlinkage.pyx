@@ -12,14 +12,12 @@ from verify cimport Verification
 from tinycadlib cimport (
     Coordinate,
     legal_crank,
-    strbetween,
-    strbefore,
-)
-from tinycadlib import (
     PLAP,
     PLLP,
     PLPP,
     PXY,
+    strbetween,
+    strbefore,
 )
 import numpy as np
 cimport numpy as np
@@ -199,14 +197,32 @@ cdef class Planar(Verification):
         """Formulas using PLAP and PLLP."""
         cdef str fun = expr[0]
         cdef tuple params = tuple(data_dict[p] for p in expr[2])
+        cdef int params_count = len(params)
+        
+        #We should unpack as C++'s way.
+        cdef double x = float('nan')
+        cdef double y = x
         if fun == 'PLAP':
-            return Coordinate(*PLAP(*params))
+            if params_count == 3:
+                x, y = PLAP(params[0], params[1], params[2])
+            elif params_count == 4:
+                x, y = PLAP(params[0], params[1], params[2], params[3])
+            elif params_count == 5:
+                x, y = PLAP(params[0], params[1], params[2], params[3], params[4])
         elif fun == 'PLLP':
-            return Coordinate(*PLLP(*params))
+            if params_count == 4:
+                x, y = PLLP(params[0], params[1], params[2], params[3])
+            elif params_count == 5:
+                x, y = PLLP(params[0], params[1], params[2], params[3], params[4])
         elif fun == 'PLPP':
-            return Coordinate(*PLPP(*params))
+            if params_count == 4:
+                x, y = PLPP(params[0], params[1], params[2], params[3])
+            elif params_count == 5:
+                x, y = PLPP(params[0], params[1], params[2], params[3], params[4])
         elif fun == 'PXY':
-            return Coordinate(*PXY(*params))
+            if params_count == 3:
+                x, y = PXY(params[0], params[1], params[2])
+        return Coordinate(x, y)
     
     cdef double run(self, np.ndarray v) except *:
         """Chromosome format: (decided by upper and lower)
@@ -236,7 +252,7 @@ cdef class Planar(Verification):
             for e in self.exprs:
                 #target
                 target_coordinate = self.from_formula(e, test_dict)
-                if target_coordinate.isnan():
+                if target_coordinate.is_nan():
                     return FAILURE
                 else:
                     test_dict[e[1]] = target_coordinate

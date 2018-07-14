@@ -529,20 +529,18 @@ double calc(Constraint *cons, const int consLength) {
         case TangentToArc:
             dx = L1_P2_x - L1_P1_x;
             dy = L1_P2_y - L1_P1_y;
-            {
-                t = -(L1_P1_x * dx -
-                      A1_Center_x * dx +
-                      L1_P1_y * dy -
-                      A1_Center_y * dy) / (dx * dx + dy * dy);
-                double Xint = L1_P1_x + dx * t;
-                double Yint = L1_P1_y + dy * t;
-                temp = (A1_Center_x - Xint) *
-                       (A1_Center_x - Xint) +
-                       (A1_Center_y - Yint) *
-                       (A1_Center_y - Yint) -
-                       (A1_Center_x - A1_Start_x) * (A1_Center_x - A1_Start_x) -
-                       (A1_Center_y - A1_Start_y) * (A1_Center_y - A1_Start_y);
-            }
+            t = -(L1_P1_x * dx -
+                  A1_Center_x * dx +
+                  L1_P1_y * dy -
+                  A1_Center_y * dy) / (dx * dx + dy * dy);
+            Ex = L1_P1_x + dx * t;
+            Ey = L1_P1_y + dy * t;
+            temp = (A1_Center_x - Ex) *
+                    (A1_Center_x - Ex) +
+                    (A1_Center_y - Ey) *
+                    (A1_Center_y - Ey) -
+                    (A1_Center_x - A1_Start_x) * (A1_Center_x - A1_Start_x) -
+                    (A1_Center_y - A1_Start_y) * (A1_Center_y - A1_Start_y);
             error += temp * temp;
             break;
 

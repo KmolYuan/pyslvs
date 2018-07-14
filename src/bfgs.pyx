@@ -12,7 +12,7 @@
 
 from libc.stdlib cimport malloc, free
 from tinycadlib cimport VPoint
-import numpy as np
+from libc.math cimport M_PI
 
 
 cpdef tuple test_kernel():
@@ -168,14 +168,14 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
                 i += 1
     
     #Add angle constraints for input angles.
-    link_count = 0
+    c = 0
     cdef double angle
     for b, d, angle in inputs:
-        lines[link_count] = [points + b, points + d]
-        angles[link_count] = np.deg2rad(angle)
-        cons[i] = LineInternalAngleConstraint(lines + link_count, angles + link_count)
+        lines[c] = [points + b, points + d]
+        angles[c] = angle * M_PI / 180
+        cons[i] = LineInternalAngleConstraint(lines + c, angles + c)
         i += 1
-        link_count += 1
+        c += 1
     
     #Solve
     if solve(pparameters, params_count, cons, cons_count, Rough) != Succsess:

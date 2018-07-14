@@ -187,9 +187,9 @@ cdef class Coordinate:
         """Distance."""
         return distance(self.x, self.y, p.x, p.y)
     
-    def isnan(self):
+    cpdef bool is_nan(self):
         """Test this coordinate is a error-occured answer."""
-        return np.isnan(self.x)
+        return bool(np.isnan(self.x))
     
     def __repr__(self):
         """Debug printing."""

@@ -42,8 +42,13 @@ cdef class Coordinate:
     cdef readonly double x, y
     
     cpdef double distance(self, Coordinate)
-    #cpdef bool isnan(self) # cause error??
+    cpdef bool is_nan(self)
 
+
+cpdef tuple PLAP(Coordinate, double, double, Coordinate B = *, bool inverse = *)
+cpdef tuple PLLP(Coordinate, double, double, Coordinate, bool inverse = *)
+cpdef tuple PLPP(Coordinate, double, Coordinate, Coordinate, bool inverse = *)
+cpdef tuple PXY(Coordinate, double, double)
 
 cdef bool legal_crank(Coordinate, Coordinate, Coordinate, Coordinate)
 cdef str strbetween(str, str, str)
