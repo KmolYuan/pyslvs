@@ -128,8 +128,9 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
             b += 2
         points[i] = point
     
-    #Pre-count number of distence constraints.
     cdef int cons_count = 0
+    
+    #Pre-count number of distence constraints.
     cdef int link_count
     for vlink in vlinks:
         link_count = len(vlinks[vlink])
@@ -139,9 +140,9 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
     cdef double *distences = <double *>malloc(cons_count * sizeof(double))
     
     #Pre-count number of angle constraints.
-    #TODO: Add a new constant type: LineInternalAngle and LineExternalAngle
     cdef int input_count = len(inputs)
     cdef double *angles = <double *>malloc(input_count * sizeof(double))
+    cdef Line *lines = <Line *>malloc(input_count * sizeof(Line))
     cons_count += input_count
     
     #Pre-count number of constraints.
@@ -165,10 +166,15 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
                 cons[i] = P2PDistanceConstraint(points + c, points + d, distences + i)
                 i += 1
     
-    #TODO: Add angle constraints for input angles.
+    #Add angle constraints for input angles.
+    link_count = 0
     cdef double angle
     for b, d, angle in inputs:
-        pass
+        lines[link_count] = [points + b, points + d]
+        angles[link_count] = angle
+        cons[i] = LineInternalAngleConstraint(lines + link_count, angles + link_count)
+        i += 1
+        link_count += 1
     
     #Solve
     if solve(pparameters, params_count, cons, cons_count, Rough) != Succsess:

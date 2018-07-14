@@ -308,7 +308,7 @@ int solve(
 
         //copy newest values to the xold
         for(int i = 0; i < xLength; i++)
-            xold[i] = *param_ptr[i];//Copy last values to xold
+            xold[i] = *param_ptr[i]; //Copy last values to xold
         steps = 0;
 
         ///////////////////////////////////////////////////////
@@ -322,14 +322,14 @@ int solve(
         //Take a step of alpha=1 as alpha2
         alpha2 = 1;
         for(int i = 0; i < xLength; i++)
-            *param_ptr[i] = xold[i] + alpha2 * s[i];//calculate the new x
+            *param_ptr[i] = xold[i] + alpha2 * s[i]; //calculate the new x
         f2 = calc(cons, consLength);
         ftimes++;
 
         //Take a step of alpha 3 that is 2*alpha2
         alpha3 = alpha2 * 2;
         for(int i = 0; i < xLength; i++)
-            *param_ptr[i] = xold[i] + alpha3 * s[i];//calculate the new x
+            *param_ptr[i] = xold[i] + alpha3 * s[i]; //calculate the new x
         f3 = calc(cons, consLength);
         ftimes++;
 
@@ -344,7 +344,7 @@ int solve(
                 f3 = f2;
                 alpha2 /= 2;
                 for(int i = 0; i < xLength; i++)
-                    *param_ptr[i] = xold[i] + alpha2 * s[i];//calculate the new x
+                    *param_ptr[i] = xold[i] + alpha2 * s[i]; //calculate the new x
                 f2 = calc(cons, consLength);
                 ftimes++;
             } else if(f2 > f3) {
@@ -354,7 +354,7 @@ int solve(
                 f2 = f3;
                 alpha3 = alpha3 * 2;
                 for(int i = 0; i < xLength; i++)
-                    *param_ptr[i] = xold[i] + alpha3 * s[i];//calculate the new x
+                    *param_ptr[i] = xold[i] + alpha3 * s[i]; //calculate the new x
                 f3 = calc(cons, consLength);
                 ftimes++;
             }
@@ -372,7 +372,7 @@ int solve(
 
         /// Set the values to alphaStar
         for(int i = 0; i < xLength; i++)
-            *param_ptr[i] = xold[i] + alphaStar * s[i];//calculate the new x
+            *param_ptr[i] = xold[i] + alphaStar * s[i]; //calculate the new x
         fnew = calc(cons, consLength);
         ftimes++;
 
@@ -382,7 +382,8 @@ int solve(
 
         deltaXnorm = 0;
         for(int i = 0; i < xLength; i++) {
-            deltaX[i] = *param_ptr[i] - xold[i];//Calculate the difference in x for the hessian update
+            //Calculate the difference in x for the hessian update
+            deltaX[i] = *param_ptr[i] - xold[i];
             deltaXnorm += deltaX[i] * deltaX[i];
             grad[i] = gradnew[i];
         }
@@ -430,8 +431,9 @@ double calc(Constraint *cons, const int consLength) {
         switch(cons[i].type) {
         case PointOnPoint:
             //Hopefully avoid this constraint, make coincident points use the same parameters
-            temp = _hypot(P2_x - P1_x, P2_y - P1_y);
-            error += temp * temp * 100;
+            dx = P1_x - P2_x;
+            dy = P1_y - P2_y;
+            error += dx * dx + dy * dy;
             break;
 
         case P2PDistance:
@@ -520,9 +522,7 @@ double calc(Constraint *cons, const int consLength) {
                 double error2 = (-dy * RpxN +
                                  dx * RpyN +
                                  (L1_P1_x * L1_P2_y - L1_P2_x * L1_P1_y)) / hyp1;
-                error1 *= error1;
-                error2 *= error2;
-                error += (error1 < error2) ? error1 : error2;
+                error += (error1 < error2) ? error1 * error1 : error2 * error2;
             }
             break;
 
@@ -658,22 +658,16 @@ double calc(Constraint *cons, const int consLength) {
             dx = L1_P2_x - L1_P1_x;
             dy = L1_P2_y - L1_P1_y;
 
-            hyp1 = _hypot(dx, dy);
-            dx = dx / hyp1;
-
-            temp = dx + cos(angleP);
-            error += temp * temp;
+            temp = dx / _hypot(dx, dy) + cos(angleP);
+            error += temp * temp * 1000;
             break;
 
         case LineExternalAngle:
             dx = L1_P2_x - L1_P1_x;
             dy = L1_P2_y - L1_P1_y;
 
-            hyp1 = _hypot(dx, dy);
-            dx = dx / hyp1;
-
-            temp = dx + cos(M_PI - angleP);
-            error += temp * temp;
+            temp = dx / _hypot(dx, dy) + cos(M_PI - angleP);
+            error += temp * temp * 1000;
             break;
 
         case Perpendicular:
@@ -751,16 +745,14 @@ double calc(Constraint *cons, const int consLength) {
             rad1 = _hypot(A1_Center_x - P1_x, A1_Center_y - P1_y);
             rad2 = _hypot(A1_Center_x - A1_Start_x, A1_Center_y - A1_Start_y);
             //Compare this radius to the radius of the circle, return the error squared
-            temp = rad1-rad2;
+            temp = rad1 - rad2;
             error += temp * temp;
             break;
 
         case PointOnLineMidpoint:
-            Ex = (L1_P1_x + L1_P2_x) / 2;
-            Ey = (L1_P1_y + L1_P2_y) / 2;
-            temp = Ex - P1_x;
-            temp2 = Ey - P1_y;
-            error += temp * temp + temp2 * temp2;
+            Ex = (L1_P1_x + L1_P2_x) / 2 - P1_x;
+            Ey = (L1_P1_y + L1_P2_y) / 2 - P1_y;
+            error += Ex * Ex + Ey * Ey;
             break;
 
         case PointOnArcMidpoint:
@@ -811,8 +803,8 @@ double calc(Constraint *cons, const int consLength) {
             break;
 
         case SymmetricLines:
-            dx = Sym_P2_x-Sym_P1_x;
-            dy = Sym_P2_y-Sym_P1_y;
+            dx = Sym_P2_x - Sym_P1_x;
+            dy = Sym_P2_y - Sym_P1_y;
             hyp1 = dx * dx + dy * dy;
             m = -dy * Sym_P1_x + dx * Sym_P1_y;
 

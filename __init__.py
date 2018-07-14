@@ -44,6 +44,7 @@ from .tinycadlib import (
     VPoint,
     VLink,
 )
+from .bfgs import vpoint_solving as bfgs_vpoint_solving
 from .verify import Verification
 from .planarlinkage import Planar
 from .rga import Genetic
@@ -77,6 +78,7 @@ __all__ = [
     'data_collecting',
     'VPoint',
     'VLink',
+    'bfgs_vpoint_solving',
     'Verification',
     'Planar',
     'NumberSynthesis',

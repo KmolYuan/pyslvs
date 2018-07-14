@@ -130,7 +130,8 @@ class CoreTest(TestCase):
         ):
             self.assertTrue(isclose(data_dict[link], link_length))
         self.assertEqual(dof, 1)
-        x, y = expr_solving(exprs, mapping, vpoints, [0.])[-1]
+        result = expr_solving(exprs, mapping, vpoints, [0.])
+        x, y = result[-1]
         self.assertTrue(isclose(x, -43.17005515543241))
         self.assertTrue(isclose(y, -91.75322590542523))
     
@@ -145,7 +146,7 @@ class CoreTest(TestCase):
         self.assertTrue(isclose(output_data[0][1], -13.68847598479309))
         self.assertTrue(isclose(output_data[2][1], 10.000000000020655))
         self.assertTrue(isclose(output_data[4][0], 30))
-        bfgs.vpoint_solving(self.vpoints_object(), [])
+        bfgs.vpoint_solving(self.vpoints_object(), [(0, 1, 0.)])
     
     def test_number_synthesis(self):
         """Test Number Synthesis function."""
