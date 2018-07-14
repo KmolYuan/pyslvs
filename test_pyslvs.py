@@ -143,10 +143,13 @@ class CoreTest(TestCase):
         self.assertEqual(input_data[2], (6.0, 5.0))
         self.assertEqual(input_data[3], (6.0, 5.0))
         self.assertEqual(input_data[4], (30.0, 10.0))
-        self.assertTrue(isclose(output_data[0][1], -13.68847598479309))
-        self.assertTrue(isclose(output_data[2][1], 10.000000000020655))
-        self.assertTrue(isclose(output_data[4][0], 30))
-        bfgs.vpoint_solving(self.vpoints_object(), [(0, 1, 0.)])
+        self.assertTrue(isclose(round(output_data[0][1], 2), -13.59))
+        self.assertTrue(isclose(round(output_data[2][1], 2), 10))
+        self.assertTrue(isclose(round(output_data[4][0], 2), 30))
+        result = bfgs.vpoint_solving(self.vpoints_object(), [(0, 1, 0.)])
+        x, y = result[-1]
+        self.assertTrue(isclose(round(x, 2), -43.17))
+        self.assertTrue(isclose(round(y, 2), -91.75))
     
     def test_number_synthesis(self):
         """Test Number Synthesis function."""

@@ -438,17 +438,17 @@ double calc(Constraint *cons, const int consLength) {
 
         case P2PDistance:
             temp = _hypot(P2_x - P1_x, P2_y - P1_y) - distance;
-            error += temp * temp * 100;
+            error += temp * temp * 10000;
             break;
 
         case P2PDistanceVert:
             temp = _hypot(0, P2_y - P1_y) - distance;
-            error += temp * temp * 100;
+            error += temp * temp * 10000;
             break;
 
         case P2PDistanceHorz:
             temp = _hypot(P2_x - P1_x, 0) - distance;
-            error += temp * temp * 100;
+            error += temp * temp * 10000;
             break;
 
         case PointOnLine:
@@ -497,12 +497,12 @@ double calc(Constraint *cons, const int consLength) {
 
         case Vertical:
             dx = L1_P2_x - L1_P1_x;
-            error += dx * dx * 1000;
+            error += dx * dx * 10000;
             break;
 
         case Horizontal:
             dy = L1_P2_y - L1_P1_y;
-            error += dy * dy * 1000;
+            error += dy * dy * 10000;
             break;
 
         case TangentToCircle:
@@ -547,31 +547,28 @@ double calc(Constraint *cons, const int consLength) {
             break;
 
         case ArcRules:
-            {
-                double a1endx2 = A1_End_x * A1_End_x;
-                double a1endy2 = A1_End_y * A1_End_y;
-                double a1startx2 = A1_Start_x * A1_Start_x;
-                double a1starty2 = A1_Start_y * A1_Start_y;
-                double num = -2 * A1_Center_x * A1_End_x + a1endx2 -
-                             2 * A1_Center_y * A1_End_y + a1endy2 +
-                             2 * A1_Center_x * A1_Start_x - a1startx2 +
-                             2 * A1_Center_y * A1_Start_y - a1starty2;
-                error += num * num / (
-                            4. * a1endx2 + a1endy2 -
-                            2 * A1_End_x * A1_Start_x + a1startx2 -
-                            2 * A1_End_y * A1_Start_y + a1starty2);
-            }
+            dx = A1_End_x * A1_End_x;
+            dy = A1_End_y * A1_End_y;
+            rad1 = A1_Start_x * A1_Start_x;
+            rad2 = A1_Start_y * A1_Start_y;
+            temp = -2 * A1_Center_x * A1_End_x + dx -
+                    2 * A1_Center_y * A1_End_y + dy +
+                    2 * A1_Center_x * A1_Start_x - rad1 +
+                    2 * A1_Center_y * A1_Start_y - rad2;
+            error += temp * temp / (4. * dx + dy -
+                                    2 * A1_End_x * A1_Start_x + rad1 -
+                                    2 * A1_End_y * A1_Start_y + rad2);
             break;
 
         case LineLength:
             temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) - length;
-            error += temp * temp * 100;
+            error += temp * temp * 10000;
             break;
 
         case EqualLegnth:
             temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) -
                    _hypot(L2_P2_x - L2_P1_x, L2_P2_y - L2_P1_y);
-            error += temp * temp;
+            error += temp * temp * 10000;
             break;
 
         case ArcRadius:
@@ -619,55 +616,27 @@ double calc(Constraint *cons, const int consLength) {
             break;
 
         case InternalAngle:
-            dx = L1_P2_x - L1_P1_x;
-            dy = L1_P2_y - L1_P1_y;
-            dx2 = L2_P2_x - L2_P1_x;
-            dy2 = L2_P2_y - L2_P1_y;
-
-            hyp1 = _hypot(dx, dy);
-            hyp2 = _hypot(dx2, dy2);
-
-            dx = dx / hyp1;
-            dy = dy / hyp1;
-            dx2 = dx2 / hyp2;
-            dy2 = dy2 / hyp2;
-
-            temp = dx * dx2 + dy * dy2 + cos(angleP);
+            temp = atan2(L2_P2_y - L2_P1_y, L2_P2_x - L2_P1_x) -
+                   atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) -
+                   angleP;
             error += temp * temp;
             break;
 
         case ExternalAngle:
-            dx = L1_P2_x - L1_P1_x;
-            dy = L1_P2_y - L1_P1_y;
-            dx2 = L2_P2_x - L2_P1_x;
-            dy2 = L2_P2_y - L2_P1_y;
-
-            hyp1 = _hypot(dx, dy);
-            hyp2 = _hypot(dx2, dy2);
-
-            dx = dx / hyp1;
-            dy = dy / hyp1;
-            dx2 = dx2 / hyp2;
-            dy2 = dy2 / hyp2;
-
-            temp = dx * dx2 - dy * dy2 + cos(M_PI - angleP);
+            temp = atan2(L2_P2_y - L2_P1_y, L2_P2_x - L2_P1_x) -
+                   atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) -
+                   (M_PI - angleP);
             error += temp * temp;
             break;
 
         case LineInternalAngle:
-            dx = L1_P2_x - L1_P1_x;
-            dy = L1_P2_y - L1_P1_y;
-
-            temp = dx / _hypot(dx, dy) + cos(angleP);
-            error += temp * temp * 1000;
+            temp = sin(atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - angleP);
+            error += temp * temp;
             break;
 
         case LineExternalAngle:
-            dx = L1_P2_x - L1_P1_x;
-            dy = L1_P2_y - L1_P1_y;
-
-            temp = dx / _hypot(dx, dy) + cos(M_PI - angleP);
-            error += temp * temp * 1000;
+            temp = sin(atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - (M_PI - angleP));
+            error += temp * temp;
             break;
 
         case Perpendicular:
