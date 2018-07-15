@@ -438,34 +438,26 @@ double calc(Constraint *cons, const int consLength) {
 
         case P2PDistance:
             temp = _hypot(P2_x - P1_x, P2_y - P1_y) - distance;
-            error += temp * temp * 10000;
+            error += temp * temp * 100;
             break;
 
         case P2PDistanceVert:
             temp = _hypot(0, P2_y - P1_y) - distance;
-            error += temp * temp * 10000;
+            error += temp * temp * 100;
             break;
 
         case P2PDistanceHorz:
             temp = _hypot(P2_x - P1_x, 0) - distance;
-            error += temp * temp * 10000;
+            error += temp * temp * 100;
             break;
 
         case PointOnLine:
             dx = L1_P2_x - L1_P1_x;
             dy = L1_P2_y - L1_P1_y;
 
-            m = dy / dx;
-            n = dx / dy;
-            if(m <= 1 && m >= -1) {
-                //Calculate the expected y point given the x coordinate of the point
-                Ey = L1_P1_y + m * (P1_x - L1_P1_x);
-                error += (Ey - P1_y) * (Ey - P1_y);
-            } else {
-                //Calculate the expected x point given the y coordinate of the point
-                Ex = L1_P1_x + n * (P1_y - L1_P1_y);
-                error += (Ex - P1_x) * (Ex - P1_x);
-            }
+            t = ((P1_x - L1_P1_x) * dx + (P1_y - L1_P1_y) * dy) / (dx * dx + dy * dy);
+            temp = _hypot((L1_P1_x + dx * t) - P1_x, (L1_P1_y + dy * t) - P1_y);
+            error += temp * temp / 100;
             break;
 
         case P2LDistance:
@@ -474,7 +466,7 @@ double calc(Constraint *cons, const int consLength) {
 
             t = -(L1_P1_x * dx - P1_x * dx + L1_P1_y * dy - P1_y * dy) / (dx * dx + dy * dy);
             temp = _hypot(P1_x - (L1_P1_x + dx * t), P1_y - (L1_P1_y + dy * t)) - distance;
-            error += temp * temp / 10;
+            error += temp * temp / 100;
             break;
 
         case P2LDistanceVert:
@@ -483,7 +475,7 @@ double calc(Constraint *cons, const int consLength) {
 
             t = (P1_x - L1_P1_x) / dx;
             temp = fabs(P1_y - (L1_P1_y + dy * t)) - distance;
-            error += temp * temp;
+            error += temp * temp / 100;
             break;
 
         case P2LDistanceHorz:
@@ -492,17 +484,17 @@ double calc(Constraint *cons, const int consLength) {
 
             t = (P1_y - L1_P1_y) / dy;
             temp = fabs(P1_x - (L1_P1_x + dx * t)) - distance;
-            error += temp * temp / 10;
+            error += temp * temp / 100;
             break;
 
         case Vertical:
             dx = L1_P2_x - L1_P1_x;
-            error += dx * dx * 10000;
+            error += dx * dx * 100;
             break;
 
         case Horizontal:
             dy = L1_P2_y - L1_P1_y;
-            error += dy * dy * 10000;
+            error += dy * dy * 100;
             break;
 
         case TangentToCircle:
@@ -560,13 +552,13 @@ double calc(Constraint *cons, const int consLength) {
 
         case LineLength:
             temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) - length;
-            error += temp * temp * 10000;
+            error += temp * temp * 100;
             break;
 
         case EqualLegnth:
             temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) -
                    _hypot(L2_P2_x - L2_P1_x, L2_P2_y - L2_P1_y);
-            error += temp * temp * 10000;
+            error += temp * temp * 100;
             break;
 
         case ArcRadius:

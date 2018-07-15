@@ -11,8 +11,13 @@
 # __email__ = "pyslvs@gmail.com"
 
 from libc.stdlib cimport malloc, free
+from libc.math cimport (
+    M_PI,
+    cos,
+    sin,
+)
+from libcpp.map cimport map
 from tinycadlib cimport VPoint
-from libc.math cimport M_PI
 
 
 cpdef tuple test_kernel():
@@ -91,24 +96,52 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
     #Pre-count number of parameters.
     cdef int params_count = 0
     cdef int constants_count = 0
+    cdef int slider_p_count = 0
+    cdef int slider_rp_count = 0
+    #sliders = {p_num: base_num}
+    cdef map[int, int] sliders
     
+    cdef int a = 0
+    cdef int b = 0
+    cdef int i
     cdef VPoint vpoint
-    for vpoint in vpoints:
+    for i, vpoint in enumerate(vpoints):
         if vpoint.grounded():
             constants_count += 2
         else:
             params_count += 2
+        if vpoint.type in {1, 2}:
+            if vpoint.grounded():
+                a += 1
+            else:
+                b += 1
+            params_count += 4
+            sliders[i] = slider_p_count + slider_rp_count
+            if vpoint.type == 1:
+                slider_p_count += 1
+            elif vpoint.type == 2:
+                slider_rp_count += 1
     
     cdef double *parameters = <double *>malloc(params_count * sizeof(double))
     cdef double **pparameters = <double **>malloc(params_count * sizeof(double *))
     cdef double *constants = <double *>malloc(constants_count * sizeof(double))
     cdef Point *points = <Point *>malloc(len(vpoints) * sizeof(Point))
+    #Slider data
+    cdef int slider_count = slider_p_count + slider_rp_count
+    cdef Point *slider_bases = NULL
+    cdef Point *slider_slots = NULL
+    cdef Line *slider_lines = NULL
+    cdef double *cons_angles = NULL
+    if not sliders.empty():
+        slider_bases = <Point *>malloc(slider_count * sizeof(Point))
+        slider_slots = <Point *>malloc(slider_count * sizeof(Point))
+        slider_lines = <Line *>malloc((a + b * 3) * sizeof(Line))
+        cons_angles = <double *>malloc((slider_p_count * 3 + slider_rp_count * 2) * sizeof(double))
     
-    cdef int i
-    cdef int a = 0
-    cdef int b = 0
+    slider_count = 0
+    a = 0
+    b = 0
     cdef str vlink
-    cdef Point point
     for i, vpoint in enumerate(vpoints):
         for vlink in vpoint.links:
             if vlink == 'ground':
@@ -117,17 +150,46 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
                 vlinks[vlink].append(i)
             else:
                 vlinks[vlink] = [i]
-        if not vpoint.grounded():
-            parameters[a], parameters[a + 1] = vpoint.c[0]
-            pparameters[a] = &parameters[a]
-            pparameters[a + 1] = &parameters[a + 1]
-            point = [pparameters[a], pparameters[a + 1]]
-            a += 2
-        else:
+        if vpoint.grounded():
             constants[b], constants[b + 1] = vpoint.c[0]
-            point = [constants + b, constants + b + 1]
+            if vpoint.type in {1, 2}:
+                #Base point (slot) is fixed.
+                slider_bases[slider_count] = [constants + b, constants + b + 1]
+                #Slot point (slot) is moveable.
+                parameters[a] = vpoint.c[0][0] + cos(vpoint.angle)
+                parameters[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
+                pparameters[a], pparameters[a + 1] = &parameters[a], &parameters[a + 1]
+                slider_slots[slider_count] = [pparameters[a], pparameters[a + 1]]
+                a += 2
+                slider_count += 1
+                #Pin is moveable.
+                parameters[a], parameters[a + 1] = vpoint.c[0]
+                pparameters[a], pparameters[a + 1] = &parameters[a], &parameters[a + 1]
+                points[i] = [pparameters[a], pparameters[a + 1]]
+                a += 2
+            else:
+                #Point is fixed.
+                points[i] = [constants + b, constants + b + 1]
             b += 2
-        points[i] = point
+        else:
+            if vpoint.type in {1, 2}:
+                #Base point (slot) is moveable.
+                parameters[a], parameters[a + 1] = vpoint.c[0]
+                pparameters[a], pparameters[a + 1] = &parameters[a], &parameters[a + 1]
+                slider_bases[slider_count] = [pparameters[a], pparameters[a + 1]]
+                a += 2
+                #Slot point (slot) is moveable.
+                parameters[a] = vpoint.c[0][0] + cos(vpoint.angle)
+                parameters[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
+                pparameters[a], pparameters[a + 1] = &parameters[a], &parameters[a + 1]
+                slider_slots[slider_count] = [pparameters[a], pparameters[a + 1]]
+                a += 2
+                slider_count += 1
+            #Point / Pin is moveable.
+            parameters[a], parameters[a + 1] = vpoint.c[0]
+            pparameters[a], pparameters[a + 1] = &parameters[a], &parameters[a + 1]
+            points[i] = [pparameters[a], pparameters[a + 1]]
+            a += 2
     
     cdef int cons_count = 0
     
@@ -139,6 +201,9 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
             continue
         cons_count += 1 + 2 * (link_count - 2)
     cdef double *distences = <double *>malloc(cons_count * sizeof(double))
+    
+    #Slider constraints.
+    cons_count += slider_p_count * 3 + slider_rp_count * 2
     
     #Pre-count number of angle constraints.
     cdef int input_count = len(inputs)
@@ -159,13 +224,39 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
         a = vlinks[vlink][0]
         b = vlinks[vlink][1]
         distences[i] = vpoints[a].distance(vpoints[b])
-        cons[i] = P2PDistanceConstraint(points + a, points + b, distences + i)
+        cons[i] = P2PDistanceConstraint(
+            slider_bases + sliders[a] if vpoints[a].is_slot_link(vlink) else points + a,
+            slider_bases + sliders[b] if vpoints[b].is_slot_link(vlink) else points + b,
+            distences + i
+        )
         i += 1
         for c in vlinks[vlink][2:]:
             for d in (a, b):
                 distences[i] = vpoints[c].distance(vpoints[d])
-                cons[i] = P2PDistanceConstraint(points + c, points + d, distences + i)
+                cons[i] = P2PDistanceConstraint(
+                    slider_bases + sliders[c] if vpoints[c].is_slot_link(vlink) else points + c,
+                    slider_bases + sliders[d] if vpoints[d].is_slot_link(vlink) else points + d,
+                    distences + i
+                )
                 i += 1
+    
+    #Add slider constraints.
+    c = 0
+    d = 0
+    for a, b in sliders:
+        slider_lines[c] = [slider_bases + b, slider_slots + b]
+        if vpoints[a].grounded():
+            cons_angles[d] = vpoints[a].angle * M_PI / 180
+            cons[i] = LineInternalAngleConstraint(slider_lines + c, cons_angles + d)
+            d += 1
+            i += 1
+            cons[i] = PointOnLineConstraint(points + a, slider_lines + c)
+            #TODO: P joint.
+        else:
+            #TODO: Slider between links.
+            pass
+        c += 1
+        i += 1
     
     #Add angle constraints for input angles.
     c = 0
@@ -194,11 +285,28 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
         if vpoints[i].type == 0:
             solved_points.append((points[i].x[0], points[i].y[0]))
         else:
-            solved_points.append((vpoints[i].c[0], (points[i].x[0], points[i].y[0])))
+            solved_points.append((
+                (slider_bases[sliders[i]].x[0], slider_bases[sliders[i]].y[0]),
+                (points[i].x[0], points[i].y[0])
+            ))
     free(parameters)
     free(pparameters)
     free(constants)
     free(points)
+    if not sliders.empty():
+        free(slider_bases)
+        free(slider_slots)
+        free(slider_lines)
+        free(cons_angles)
     free(distences)
+    free(angles)
+    free(lines)
     free(cons)
     return solved_points
+
+
+cpdef list structure_solving(object vpoints):
+    """Solving structure by PLP expressions.
+    
+    + TODO: PLP expression.
+    """

@@ -120,6 +120,15 @@ cdef class VPoint:
         """Return True if the joint is connect with the ground."""
         return 'ground' in self.links
     
+    cpdef bool is_slot_link(self, str link_name):
+        """Return True if the link name is first link."""
+        if self.type == 0:
+            return False
+        if self.links:
+            return link_name == self.links[0]
+        else:
+            return False
+    
     @property
     def expr(self):
         """Expression."""
@@ -256,8 +265,8 @@ cpdef tuple PLPP(
     cdef double line_mag = B.distance(C)
     cdef double dx = C.x - B.x
     cdef double dy = C.y - B.y
-    cdef double u = ((A.x - B.x)*dx + (A.y - B.y)*dy) / (line_mag*line_mag)
-    cdef Coordinate I = Coordinate(B.x + u*dx, B.y + u*dy)
+    cdef double u = ((A.x - B.x) * dx + (A.y - B.y) * dy) / (line_mag * line_mag)
+    cdef Coordinate I = Coordinate(B.x + u * dx, B.y + u * dy)
     
     #Test distance between point A and intersection.
     cdef double d = A.distance(I)

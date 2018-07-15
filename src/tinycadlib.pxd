@@ -36,6 +36,7 @@ cdef class VPoint:
     cpdef double distance(self, VPoint)
     cpdef double slopeAngle(self, VPoint, int num1 = *, int num2 = *)
     cpdef bool grounded(self)
+    cpdef bool is_slot_link(self, str)
 
 
 cdef class Coordinate:
