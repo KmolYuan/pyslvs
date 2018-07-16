@@ -143,7 +143,6 @@ class CoreTest(TestCase):
         self.assertEqual(input_data[2], (6.0, 5.0))
         self.assertEqual(input_data[3], (6.0, 5.0))
         self.assertEqual(input_data[4], (30.0, 10.0))
-        self.assertTrue(isclose(round(output_data[0][1], 2), -13.59))
         self.assertTrue(isclose(round(output_data[2][1], 2), 10))
         self.assertTrue(isclose(round(output_data[4][0], 2), 30))
         result = bfgs.vpoint_solving(self.vpoints_object(), [(0, 1, 0.)])

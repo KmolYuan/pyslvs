@@ -501,21 +501,14 @@ double calc(Constraint *cons, const int consLength) {
             dx = L1_P2_x - L1_P1_x;
             dy = L1_P2_y - L1_P1_y;
             hyp1 = _hypot(dx, dy);
-            {
-                //Calculate the expected tangent intersection points
-                double Rpx = C1_Center_x - dy / hyp1 * C1_rad;
-                double Rpy = C1_Center_y + dx / hyp1 * C1_rad;
-                double RpxN = C1_Center_x + dy / hyp1 * C1_rad;
-                double RpyN = C1_Center_y - dx / hyp1 * C1_rad;
-
-                double error1 = (-dy * Rpx +
-                                 dx * Rpy +
-                                 (L1_P1_x * L1_P2_y - L1_P2_x * L1_P1_y)) / hyp1;
-                double error2 = (-dy * RpxN +
-                                 dx * RpyN +
-                                 (L1_P1_x * L1_P2_y - L1_P2_x * L1_P1_y)) / hyp1;
-                error += (error1 < error2) ? error1 * error1 : error2 * error2;
-            }
+            //Calculate the expected tangent intersection points
+            temp = (-dy * (C1_Center_x - dy / hyp1 * C1_rad) +
+                    dx * (C1_Center_y + dx / hyp1 * C1_rad) +
+                    (L1_P1_x * L1_P2_y - L1_P2_x * L1_P1_y)) / hyp1;
+            temp2 = (-dy * (C1_Center_x + dy / hyp1 * C1_rad) +
+                     dx * (C1_Center_y - dx / hyp1 * C1_rad) +
+                     (L1_P1_x * L1_P2_y - L1_P2_x * L1_P1_y)) / hyp1;
+            error += (temp < temp2) ? temp * temp : temp2 * temp2;
             break;
 
         case TangentToArc:
@@ -525,14 +518,11 @@ double calc(Constraint *cons, const int consLength) {
                   A1_Center_x * dx +
                   L1_P1_y * dy -
                   A1_Center_y * dy) / (dx * dx + dy * dy);
-            Ex = L1_P1_x + dx * t;
-            Ey = L1_P1_y + dy * t;
-            temp = (A1_Center_x - Ex) *
-                    (A1_Center_x - Ex) +
-                    (A1_Center_y - Ey) *
-                    (A1_Center_y - Ey) -
-                    (A1_Center_x - A1_Start_x) * (A1_Center_x - A1_Start_x) -
-                    (A1_Center_y - A1_Start_y) * (A1_Center_y - A1_Start_y);
+            Ex = A1_Center_x - (L1_P1_x + dx * t);
+            Ey = A1_Center_y - (L1_P1_y + dy * t);
+            temp = Ex * Ex + Ey * Ey -
+                   (A1_Center_x - A1_Start_x) * (A1_Center_x - A1_Start_x) -
+                   (A1_Center_y - A1_Start_y) * (A1_Center_y - A1_Start_y);
             error += temp * temp;
             break;
 
@@ -569,9 +559,8 @@ double calc(Constraint *cons, const int consLength) {
             break;
 
         case EqualRadiusArcs:
-            rad1 = _hypot(A1_Center_x - A1_Start_x, A1_Center_y - A1_Start_y);
-            rad2 = _hypot(A2_Center_x - A2_Start_x, A2_Center_y - A2_Start_y);
-            temp = rad1 - rad2;
+            temp = _hypot(A1_Center_x - A1_Start_x, A1_Center_y - A1_Start_y) -
+                   _hypot(A2_Center_x - A2_Start_x, A2_Center_y - A2_Start_y);
             error += temp * temp;
             break;
 
@@ -607,15 +596,13 @@ double calc(Constraint *cons, const int consLength) {
 
         case InternalAngle:
             temp = atan2(L2_P2_y - L2_P1_y, L2_P2_x - L2_P1_x) -
-                   atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) -
-                   angleP;
+                   atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - angleP;
             error += temp * temp;
             break;
 
         case ExternalAngle:
             temp = atan2(L2_P2_y - L2_P1_y, L2_P2_x - L2_P1_x) -
-                   atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) -
-                   (M_PI - angleP);
+                   atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - (M_PI - angleP);
             error += temp * temp;
             break;
 
