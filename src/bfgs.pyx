@@ -135,8 +135,6 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
     if not sliders.empty():
         slider_bases = <Point *>malloc(slider_count * sizeof(Point))
         slider_slots = <Point *>malloc(slider_count * sizeof(Point))
-        slider_lines = <Line *>malloc((a + b * 3) * sizeof(Line))
-        cons_angles = <double *>malloc((slider_p_count * 3 + slider_rp_count * 2) * sizeof(double))
     
     slider_count = 0
     a = 0
@@ -202,8 +200,24 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
         cons_count += 1 + 2 * (link_count - 2)
     cdef double *distences = <double *>malloc(cons_count * sizeof(double))
     
-    #Slider constraints.
-    cons_count += slider_p_count * 3 + slider_rp_count * 2
+    #Pre-count number of slider constraints.
+    slider_count = 0
+    link_count = 0
+    for a, b in sliders:
+        link_count += 1
+        if vpoints[a].grounded():
+            cons_count += 2
+            link_count += 1
+            slider_count += 1
+        else:
+            pass
+        if vpoints[a].type == 1:
+            cons_count += 1
+            link_count += 1
+            slider_count += 1
+    if not sliders.empty():
+        slider_lines = <Line *>malloc(link_count * sizeof(Line))
+        cons_angles = <double *>malloc(slider_count * sizeof(double))
     
     #Pre-count number of angle constraints.
     cdef int input_count = len(inputs)
@@ -241,29 +255,55 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
                 i += 1
     
     #Add slider constraints.
+    #i: Constraint number.
+    #c: Slider line number.
+    #d: Angle digit number.
     c = 0
     d = 0
+    cdef int f1, value
     for a, b in sliders:
         slider_lines[c] = [slider_bases + b, slider_slots + b]
         if vpoints[a].grounded():
-            cons_angles[d] = vpoints[a].angle * M_PI / 180
+            cons_angles[d] = vpoints[a].angle / 180 * M_PI
             cons[i] = LineInternalAngleConstraint(slider_lines + c, cons_angles + d)
             d += 1
             i += 1
             cons[i] = PointOnLineConstraint(points + a, slider_lines + c)
-            #TODO: P joint.
         else:
             #TODO: Slider between links.
             pass
+        #P joint.
+        if vpoints[a].type == 1:
+            try:
+                vlink = vpoints[a].links[1]
+                f1 = vlinks[vlink][0]
+                if f1 == a:
+                    f1 = vlinks[vlink][1]
+            except IndexError:
+                pass
+            else:
+                c += 1
+                i += 1
+                if vpoints[f1].is_slot_link(vlink):
+                    slider_lines[c] = [points + a, slider_bases + sliders[f1]]
+                else:
+                    slider_lines[c] = [points + a, points + f1]
+                cons_angles[d] = vpoints[a].slopeAngle(vpoints[f1]) / 180 * M_PI - cons_angles[d - 1]
+                cons[i] = InternalAngleConstraint(
+                    slider_lines + c - 1,
+                    slider_lines + c,
+                    cons_angles + d
+                )
         c += 1
         i += 1
     
     #Add angle constraints for input angles.
+    #c: Input data count.
     c = 0
     cdef double angle
     for b, d, angle in inputs:
         lines[c] = [points + b, points + d]
-        angles[c] = angle * M_PI / 180
+        angles[c] = angle / 180 * M_PI
         cons[i] = LineInternalAngleConstraint(lines + c, angles + c)
         i += 1
         c += 1
