@@ -264,6 +264,7 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
     for a, b in sliders:
         slider_lines[c] = [slider_bases + b, slider_slots + b]
         if vpoints[a].grounded():
+            #Slot grounded.
             cons_angles[d] = vpoints[a].angle / 180 * M_PI
             cons[i] = LineInternalAngleConstraint(slider_lines + c, cons_angles + d)
             d += 1

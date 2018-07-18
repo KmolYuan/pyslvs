@@ -38,6 +38,46 @@ class CoreTest(TestCase):
     
     """Testing Cython libs."""
     
+    def vpoints_object(self) -> List[VPoint]:
+        """Example: Jansen's linkage (Single)."""
+        return parse_vpoints("M[\n" +
+            "# Jansen's linkage (Single).\n" +
+            "J[R, color[(255, 255, 255)], P[0.0, 0.0], L[ground, link_1]],\n" +
+            "J[R, color[Green], P[9.61, 11.52], L[link_1, link_2, link_4]],\n" +
+            "J[R, color[Blue], P[-38.0, -7.8], L[ground, link_3, link_5]],\n" +
+            "J[R, color[Green], P[-35.24, 33.61], L[link_2, link_3]],\n" +
+            "J[R, color[Green], P[-77.75, -2.54], L[link_3, link_6]],\n" +
+            "J[R, color[Green], P[-20.1, -42.79], L[link_4, link_5, link_7]],\n" +
+            "J[R, color[Green], P[-56.05, -35.42], L[link_6, link_7]],\n" +
+            "J[R, color[Green], P[-22.22, -91.74], L[link_7]],\n" +
+            "]")
+    
+    def planar_object(self) -> Planar:
+        """Test-used mechanism for algorithm."""
+        return Planar({
+            'Driver': {'P0': (-70, -70, 50)},
+            'Follower': {'P1': (70, -70, 50)},
+            'Target': {'P4': [
+                (60.3, 118.12),
+                (31.02, 115.62),
+                (3.52, 110.62),
+                (-25.77, 104.91),
+                (-81.49, 69.19),
+                (-96.47, 54.906),
+                (-109.34, 35.98),
+                (-121.84, 13.83),
+                (-127.56, -20.09),
+                (-128.63, -49.74),
+                (-117.56, -65.45),
+            ]},
+            'Expression': "PLAP[P0,L0,a0](P2);" +
+                "PLLP[P2,L1,L2,P1](P3);" +
+                "PLLP[P2,L3,L4,P3](P4)",
+            'constraint': [('P0', 'P1', 'P2', 'P3')],
+            'upper': [100., 100., 100., 100., 100., 360.],
+            'lower': [5., 5., 5., 5., 5., 0.],
+        })
+    
     def test_plap(self):
         """Test for PLAP function."""
         A = Coordinate(0, 0)
@@ -88,20 +128,6 @@ class CoreTest(TestCase):
         self.assertFalse(G.is_isomorphic(I))
         answer, time = topo([4, 2], degenerate=True)
         self.assertEqual(len(answer), 2)
-    
-    def vpoints_object(self) -> List[VPoint]:
-        """Example: Jansen's linkage (Single)."""
-        return parse_vpoints("M[\n" +
-            "# Jansen's linkage (Single).\n" +
-            "J[R, color[(255, 255, 255)], P[0.0, 0.0], L[ground, link_1]],\n" +
-            "J[R, color[Green], P[9.61, 11.52], L[link_1, link_2, link_4]],\n" +
-            "J[R, color[Blue], P[-38.0, -7.8], L[ground, link_3, link_5]],\n" +
-            "J[R, color[Green], P[-35.24, 33.61], L[link_2, link_3]],\n" +
-            "J[R, color[Green], P[-77.75, -2.54], L[link_3, link_6]],\n" +
-            "J[R, color[Green], P[-20.1, -42.79], L[link_4, link_5, link_7]],\n" +
-            "J[R, color[Green], P[-56.05, -35.42], L[link_6, link_7]],\n" +
-            "J[R, color[Green], P[-22.22, -91.74], L[link_7]],\n" +
-            "]")
     
     def test_solving(self):
         """Test triangular formula solving.
@@ -157,33 +183,7 @@ class CoreTest(TestCase):
                 count = 0
                 for i, factor in enumerate(factors):
                     count += factor * (i + 2)
-                self.assertTrue(count / 2, 6)
-    
-    def planar_object(self) -> Planar:
-        """Test-used mechanism for algorithm."""
-        return Planar({
-            'Driver': {'P0': (-70, -70, 50)},
-            'Follower': {'P1': (70, -70, 50)},
-            'Target': {'P4': [
-                (60.3, 118.12),
-                (31.02, 115.62),
-                (3.52, 110.62),
-                (-25.77, 104.91),
-                (-81.49, 69.19),
-                (-96.47, 54.906),
-                (-109.34, 35.98),
-                (-121.84, 13.83),
-                (-127.56, -20.09),
-                (-128.63, -49.74),
-                (-117.56, -65.45),
-            ]},
-            'Expression': "PLAP[P0,L0,a0](P2);" +
-                "PLLP[P2,L1,L2,P1](P3);" +
-                "PLLP[P2,L3,L4,P3](P4)",
-            'constraint': [('P0', 'P1', 'P2', 'P3')],
-            'upper': [100., 100., 100., 100., 100., 360.],
-            'lower': [5., 5., 5., 5., 5., 0.],
-        })
+                self.assertEqual(int(count / 2), NJ)
     
     def test_algorithm_rga(self):
         """Real-coded genetic algorithm."""

@@ -118,7 +118,13 @@ cdef class VPoint:
     
     cpdef bool grounded(self):
         """Return True if the joint is connect with the ground."""
-        return 'ground' in self.links
+        if self.type == 0:
+            return 'ground' in self.links
+        elif self.type in {1, 2}:
+            if self.links:
+                return 'ground' == self.links[0]
+            else:
+                return False
     
     cpdef bool is_slot_link(self, str link_name):
         """Return True if the link name is first link."""

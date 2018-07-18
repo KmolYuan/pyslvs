@@ -237,11 +237,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                 except StopIteration:
                     skip_times += 1
                 else:
-                    if not clockwise(
-                        pos[friend_a],
-                        pos[node],
-                        pos[friend_b]
-                    ):
+                    if not clockwise(pos[friend_a], pos[node], pos[friend_b]):
                         friend_a, friend_b = friend_b, friend_a
                     exprs.append((
                         'PLLP',
@@ -304,11 +300,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                 if 'ground' != vpoints[node].links[0]:
                     """Slot is not grounded."""
                     friend_d = next(f1)
-                    if not clockwise(
-                        pos[friend_b],
-                        (tmp_x, tmp_y),
-                        pos[friend_d]
-                    ):
+                    if not clockwise(pos[friend_b], (tmp_x, tmp_y), pos[friend_d]):
                         friend_b, friend_d = friend_d, friend_b
                     exprs.append((
                         'PLLP',
@@ -334,11 +326,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                 + A 'friend' from other link.
                 + Solving.
                 """
-                if not clockwise(
-                    pos[friend_b],
-                    (tmp_x, tmp_y),
-                    pos[friend_c]
-                ):
+                if not clockwise(pos[friend_b], (tmp_x, tmp_y), pos[friend_c]):
                     friend_b, friend_c = friend_c, friend_b
                 exprs.append((
                     'PLLP',
