@@ -205,12 +205,10 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
     link_count = 0
     for a, b in sliders:
         link_count += 1
-        if vpoints[a].grounded():
-            cons_count += 2
+        cons_count += 2
+        slider_count += 1
+        if not vpoints[a].grounded():
             link_count += 1
-            slider_count += 1
-        else:
-            pass
         if vpoints[a].type == 1:
             cons_count += 1
             link_count += 1
@@ -260,19 +258,41 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
     #d: Angle digit number.
     c = 0
     d = 0
-    cdef int f1, value
+    cdef int f1
     for a, b in sliders:
         slider_lines[c] = [slider_bases + b, slider_slots + b]
         if vpoints[a].grounded():
             #Slot grounded.
             cons_angles[d] = vpoints[a].angle / 180 * M_PI
             cons[i] = LineInternalAngleConstraint(slider_lines + c, cons_angles + d)
-            d += 1
             i += 1
             cons[i] = PointOnLineConstraint(points + a, slider_lines + c)
         else:
-            #TODO: Slider between links.
-            pass
+            #Slider between links.
+            try:
+                vlink = vpoints[a].links[0]
+                f1 = vlinks[vlink][0]
+                if f1 == a:
+                    f1 = vlinks[vlink][1]
+            except IndexError:
+                pass
+            else:
+                c += 1
+                if vpoints[f1].is_slot_link(vlink):
+                    slider_lines[c] = [points + a, slider_bases + sliders[f1]]
+                else:
+                    slider_lines[c] = [points + a, points + f1]
+                cons_angles[d] = (vpoints[a].angle - vpoints[a].slopeAngle(vpoints[f1])) / 180 * M_PI
+                cons[i] = InternalAngleConstraint(
+                    slider_lines + c - 1,
+                    slider_lines + c,
+                    cons_angles + d
+                )
+                i += 1
+                cons[i] = PointOnLineConstraint(points + a, slider_lines + c - 1)
+        d += 1
+        c += 1
+        i += 1
         #P joint.
         if vpoints[a].type == 1:
             try:
@@ -283,20 +303,19 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
             except IndexError:
                 pass
             else:
-                c += 1
-                i += 1
                 if vpoints[f1].is_slot_link(vlink):
                     slider_lines[c] = [points + a, slider_bases + sliders[f1]]
                 else:
                     slider_lines[c] = [points + a, points + f1]
                 cons_angles[d] = vpoints[a].slopeAngle(vpoints[f1]) / 180 * M_PI - cons_angles[d - 1]
                 cons[i] = InternalAngleConstraint(
-                    slider_lines + c - 1,
+                    slider_lines + c - (1 if vpoints[a].grounded() else 2),
                     slider_lines + c,
                     cons_angles + d
                 )
-        c += 1
-        i += 1
+                d += 1
+                c += 1
+                i += 1
     
     #Add angle constraints for input angles.
     #c: Input data count.
