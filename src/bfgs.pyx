@@ -282,7 +282,7 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
                     slider_lines[c] = [points + a, slider_bases + sliders[f1]]
                 else:
                     slider_lines[c] = [points + a, points + f1]
-                cons_angles[d] = (vpoints[a].angle - vpoints[a].slopeAngle(vpoints[f1])) / 180 * M_PI
+                cons_angles[d] = (vpoints[a].angle - vpoints[a].slope_angle(vpoints[f1])) / 180 * M_PI
                 cons[i] = InternalAngleConstraint(
                     slider_lines + c - 1,
                     slider_lines + c,
@@ -307,7 +307,7 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
                     slider_lines[c] = [points + a, slider_bases + sliders[f1]]
                 else:
                     slider_lines[c] = [points + a, points + f1]
-                cons_angles[d] = vpoints[a].slopeAngle(vpoints[f1]) / 180 * M_PI - cons_angles[d - 1]
+                cons_angles[d] = vpoints[a].slope_angle(vpoints[f1]) / 180 * M_PI - cons_angles[d - 1]
                 cons[i] = InternalAngleConstraint(
                     slider_lines + c - (1 if vpoints[a].grounded() else 2),
                     slider_lines + c,

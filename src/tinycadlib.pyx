@@ -97,7 +97,7 @@ cdef class VPoint:
         """Distance between two VPoint."""
         return distance(self.x, self.y, p.x, p.y)
     
-    cpdef double slopeAngle(self, VPoint p, int num1 = 2, int num2 = 2):
+    cpdef double slope_angle(self, VPoint p, int num1 = 2, int num2 = 2):
         """Angle between horizontal line and two point.
         
         num1: me.
@@ -571,8 +571,8 @@ cdef inline tuple data_collecting_c(object exprs, dict mapping, object vpoints_)
         bf = base_friend(i, vpoints)
         angle = np.deg2rad(
             vpoint.angle -
-            vpoint.slopeAngle(vpoints[bf], 1, 0) +
-            vpoint.slopeAngle(vpoints[bf], 0, 0)
+            vpoint.slope_angle(vpoints[bf], 1, 0) +
+            vpoint.slope_angle(vpoints[bf], 0, 0)
         )
         pos.append((vpoint.c[1][0] + cos(angle), vpoint.c[1][1] + sin(angle)))
         mapping_r['S{}'.format(i)] = len(pos) - 1
