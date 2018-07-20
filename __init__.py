@@ -30,6 +30,11 @@ __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 __version__ = (18, 7, 0, 'dev')
 
+from .pmks import VPoint, VLink
+from .bfgs import (
+    vpoint_solving as bfgs_vpoint_solving,
+    partial_solving,
+)
 from .tinycadlib import (
     Coordinate,
     PLAP,
@@ -41,12 +46,6 @@ from .tinycadlib import (
     expr_solving,
     expr_path,
     data_collecting,
-    VPoint,
-    VLink,
-)
-from .bfgs import (
-    vpoint_solving as bfgs_vpoint_solving,
-    partial_solving,
 )
 from .verify import Verification
 from .planarlinkage import Planar

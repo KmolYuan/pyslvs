@@ -18,7 +18,7 @@ from libc.math cimport (
 )
 from libcpp.map cimport map
 from sketch_solve cimport *
-from tinycadlib cimport VPoint
+from pmks cimport VPoint
 
 
 cpdef tuple test_kernel():

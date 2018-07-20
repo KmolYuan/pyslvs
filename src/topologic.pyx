@@ -16,10 +16,10 @@ from typing import (
 )
 from itertools import combinations, product
 import sys
-import numpy as np
-cimport numpy as np
 from time import time
 from cpython cimport bool
+from numpy cimport ndarray
+from numpy import zeros, int32 as np_int32
 
 
 cdef class Graph:
@@ -60,7 +60,7 @@ cdef class Graph:
     cpdef Graph compose(self, Graph H):
         return Graph(set(self.edges) | set(H.edges))
     
-    cpdef bool out_of_limit(self, np.ndarray limit):
+    cpdef bool out_of_limit(self, ndarray limit):
         cdef int n
         for n in self.adj:
             if len(self.adj[n]) > limit[n]:
@@ -430,7 +430,7 @@ cpdef topo(
     
     cdef double t0 = time()
     cdef int joint_count = sum(link_num)
-    cdef np.ndarray links = np.zeros((joint_count,), dtype=np.int32)
+    cdef ndarray links = zeros((joint_count,), dtype=np_int32)
     cdef int i, j, t, name, link_joint_count
     for i in range(joint_count):
         name = i

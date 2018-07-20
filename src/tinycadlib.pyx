@@ -1,27 +1,24 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3
 
+"""Tiny CAD library of PMKS simbolic and position analysis."""
+
 # __author__ = "Yuan Chang"
 # __copyright__ = "Copyright (C) 2016-2018"
 # __license__ = "AGPL"
 # __email__ = "pyslvs@gmail.com"
 
-from typing import (
-    Tuple,
-    Sequence,
-    Dict,
-    Union,
-)
 from cpython cimport bool
 from libc.math cimport (
+    M_PI,
     sqrt,
     sin,
     cos,
     atan2,
     hypot,
 )
-import numpy as np
-cimport numpy as np
+from numpy import isnan
+from pmks cimport VPoint
 from bfgs cimport partial_solving
 
 
@@ -31,164 +28,6 @@ cdef double nan = float('nan')
 cdef inline double distance(double x1, double y1, double x2, double y2):
     """Distance of two cartesian coordinates."""
     return hypot(x2 - x1, y2 - y1)
-
-
-cdef class VPoint:
-    
-    """Symbol of joints."""
-    
-    def __cinit__(self,
-        links: str,
-        type_int: int,
-        angle: double,
-        color_str: str,
-        x: double,
-        y: double,
-        color_func: object = None
-    ):
-        cdef list tmp_list = []
-        cdef str name
-        links = links.replace(" ", '')
-        for name in links.split(','):
-            if not name:
-                continue
-            tmp_list.append(name)
-        self.links = tuple(tmp_list)
-        self.type = type_int
-        self.typeSTR = ('R', 'P', 'RP')[type_int]
-        self.angle = angle
-        self.colorSTR = color_str
-        if color_func:
-            self.color = color_func(color_str)
-        self.x = x
-        self.y = y
-        self.c = np.ndarray(2, dtype=np.object)
-        if (self.type == 1) or (self.type == 2):
-            """Slider current coordinates.
-            
-            + [0]: Current node on slot.
-            + [1]: Pin.
-            """
-            self.c[0] = (self.x, self.y)
-            self.c[1] = (self.x, self.y)
-        else:
-            self.c[0] = (self.x, self.y)
-    
-    @property
-    def cx(self):
-        """X value of frist current coordinate."""
-        return self.c[0][0]
-    
-    @property
-    def cy(self):
-        """Y value of frist current coordinate."""
-        return self.c[0][1]
-    
-    cpdef void move(self, tuple c1, tuple c2 = None):
-        """Change coordinates of this point."""
-        self.c[0] = c1
-        if self.type != 0:
-            self.c[1] = c2 if c2 else c1
-    
-    cpdef void rotate(self, double angle):
-        """Change the angle of slider slot by degrees."""
-        self.angle = angle % 180
-    
-    cpdef double distance(self, VPoint p):
-        """Distance between two VPoint."""
-        return distance(self.x, self.y, p.x, p.y)
-    
-    cpdef double slope_angle(self, VPoint p, int num1 = 2, int num2 = 2):
-        """Angle between horizontal line and two point.
-        
-        num1: me.
-        num2: other side.
-        [0]: base (slot) link.
-        [1]: pin link.
-        """
-        cdef double x1, y1, x2, y2
-        if num1 > 1:
-            x2, y2 = self.x, self.y
-        else:
-            x2, y2 = self.c[num2]
-        if num2 > 1:
-            x1, y1 = p.x, p.y
-        else:
-            x1, y1 = p.c[num2]
-        return np.rad2deg(atan2(y1 - y2, x1 - x2))
-    
-    cpdef bool grounded(self):
-        """Return True if the joint is connect with the ground."""
-        if self.type == 0:
-            return 'ground' in self.links
-        elif self.type in {1, 2}:
-            if self.links:
-                return 'ground' == self.links[0]
-            else:
-                return False
-    
-    cpdef bool is_slot_link(self, str link_name):
-        """Return True if the link name is first link."""
-        if self.type == 0:
-            return False
-        if self.links:
-            return link_name == self.links[0]
-        else:
-            return False
-    
-    @property
-    def expr(self):
-        """Expression."""
-        return "J[{}, color[{}], P[{}], L[{}]]".format(
-            "{}, A[{}]".format(self.typeSTR, self.angle)
-            if self.typeSTR != 'R' else 'R',
-            self.colorSTR,
-            "{}, {}".format(self.x, self.y),
-            ", ".join(l for l in self.links)
-        )
-    
-    def __getitem__(self, i: int) -> float:
-        """Get coordinate like this:
-        
-        x, y = VPoint(10, 20)
-        """
-        if self.type == 0:
-            return self.c[0][i]
-        else:
-            return self.c[1][i]
-    
-    def __repr__(self):
-        """Use to generate script."""
-        return "VPoint({p.links}, {p.type}, {p.angle}, {p.c})".format(p=self)
-
-
-cdef class VLink:
-    
-    """Symbol of links."""
-    
-    cdef readonly str name, colorSTR
-    cdef readonly object color
-    cdef readonly tuple points
-    
-    def __cinit__(self,
-        str name,
-        str color_str,
-        tuple points,
-        object color_func = None
-    ):
-        self.name = name
-        self.colorSTR = color_str
-        if color_func:
-            self.color = color_func(color_str)
-        self.points = points
-    
-    def __contains__(self, point: int):
-        """Check if point number is in the link."""
-        return point in self.points
-    
-    def __repr__(self):
-        """Use to generate script."""
-        return "VLink('{l.name}', {l.points}, colorQt)".format(l=self)
 
 
 cdef class Coordinate:
@@ -205,7 +44,7 @@ cdef class Coordinate:
     
     cpdef bool is_nan(self):
         """Test this coordinate is a error-occured answer."""
-        return bool(np.isnan(self.x))
+        return bool(isnan(self.x))
     
     def __repr__(self):
         """Debug printing."""
@@ -402,7 +241,7 @@ cdef inline void rotate(
     cdef dict copy_dict
     cdef int n
     while 0 <= a <= 360:
-        data_dict[angle] = np.deg2rad(a)
+        data_dict[angle] = a / 180 * M_PI
         copy_dict = data_dict.copy()
         expr_parser(expr_str, copy_dict)
         for n in mapping:
@@ -561,11 +400,11 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
         if vpoint.type != 2:
             continue
         bf = base_friend(i, vpoints)
-        angle = np.deg2rad(
+        angle = (
             vpoint.angle -
             vpoint.slope_angle(vpoints[bf], 1, 0) +
             vpoint.slope_angle(vpoints[bf], 0, 0)
-        )
+        ) / 180 * M_PI
         pos.append((vpoint.c[1][0] + cos(angle), vpoint.c[1][1] + sin(angle)))
         mapping_r['S{}'.format(i)] = len(pos) - 1
     
@@ -688,7 +527,7 @@ cpdef list expr_solving(
     cdef double a
     cdef int i
     for i, a in enumerate(angles):
-        data_dict['a{}'.format(i)] = np.deg2rad(a)
+        data_dict['a{}'.format(i)] = a / 180 * M_PI
     
     expr_parser(expr_join(exprs), data_dict)
     
@@ -701,7 +540,7 @@ cpdef list expr_solving(
     """
     cdef list solved_points = []
     for i in range(len(vpoints)):
-        if np.isnan(data_dict[mapping[i]][0]):
+        if isnan(data_dict[mapping[i]][0]):
             raise Exception("result contains failure: Point{}".format(i))
         if vpoints[i].type == 0:
             solved_points.append(data_dict[mapping[i]])

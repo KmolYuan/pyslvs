@@ -12,7 +12,7 @@ from typing import Sequence, Iterator
 from libc.math cimport sin, cos
 import numpy as np
 cimport numpy as np
-from tinycadlib cimport VPoint
+from pmks cimport VPoint
 from cpython cimport bool
 
 

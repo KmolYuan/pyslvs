@@ -33,9 +33,9 @@ else:
     HAS_PYGMENTS = True
 
 try:
-    from .tinycadlib import VPoint
+    from .pmks import VPoint
 except (SystemError, ImportError):
-    from tinycadlib import VPoint
+    from pmks import VPoint
 
 
 #Color dictionary.

@@ -11,11 +11,12 @@ import unittest
 from unittest import TestCase
 from typing import List
 
-#For necessary modules.
+#For necessary testing modules.
 from math import sqrt, radians, isclose
+from pmks import VPoint
+import bfgs
 from tinycadlib import (
     Coordinate,
-    VPoint,
     PLAP,
     PLLP,
     PLPP,
@@ -23,7 +24,6 @@ from tinycadlib import (
     expr_solving,
     data_collecting,
 )
-import bfgs
 from planarlinkage import Planar
 from rga import Genetic
 from firefly import Firefly
