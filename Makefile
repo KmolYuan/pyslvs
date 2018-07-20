@@ -11,7 +11,7 @@ all: build
 ADESIGN = $(notdir $(wildcard Adesign/src/*.pyx) $(wildcard Adesign/src/*.pxd))
 
 # into package folder
-build: src/*.pyx src/bfgs_solver/*.cpp
+build: src/*.pyx src/*.pxd src/bfgs_solver/*.cpp Adesign/src/*.pyx Adesign/src/*.pxd
 ifeq ($(OS),Windows_NT)
 	copy Adesign\src\*.pyx src
 	copy Adesign\src\*.pxd src

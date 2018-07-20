@@ -196,7 +196,15 @@ cdef class Planar(Verification):
     cdef Coordinate from_formula(self, tuple expr, dict data_dict):
         """Formulas using PLAP and PLLP."""
         cdef str fun = expr[0]
-        cdef tuple params = tuple(data_dict[p] for p in expr[2])
+        cdef str p
+        cdef list params = []
+        for p in expr[2]:
+            if p == 'T':
+                params.append(True)
+            elif p == 'F':
+                params.append(False)
+            else:
+                params.append(data_dict[p])
         cdef int params_count = len(params)
         
         #We should unpack as C++'s way.

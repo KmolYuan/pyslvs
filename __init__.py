@@ -46,7 +46,7 @@ from .tinycadlib import (
 )
 from .bfgs import (
     vpoint_solving as bfgs_vpoint_solving,
-    structure_solving as bfgs_structure_solving,
+    partial_solving,
 )
 from .verify import Verification
 from .planarlinkage import Planar
@@ -82,7 +82,7 @@ __all__ = [
     'VPoint',
     'VLink',
     'bfgs_vpoint_solving',
-    'bfgs_structure_solving',
+    'partial_solving',
     'Verification',
     'Planar',
     'NumberSynthesis',

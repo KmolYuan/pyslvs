@@ -17,6 +17,7 @@ from libc.math cimport (
     sin,
 )
 from libcpp.map cimport map
+from sketch_solve cimport *
 from tinycadlib cimport VPoint
 
 
@@ -89,6 +90,7 @@ cpdef tuple test_kernel():
 cpdef list vpoint_solving(object vpoints, object inputs = []):
     """Solving function from vpoint list.
     
+    + vpoints: Sequence[VPoint]
     + inputs: [(b0, d0, a0), (b1, d1, a1), ...]
     """
     cdef dict vlinks = {}
@@ -119,7 +121,7 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
             sliders[i] = slider_p_count + slider_rp_count
             if vpoint.type == 1:
                 slider_p_count += 1
-            elif vpoint.type == 2:
+            else:
                 slider_rp_count += 1
     
     cdef double *parameters = <double *>malloc(params_count * sizeof(double))
@@ -136,6 +138,7 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
         slider_bases = <Point *>malloc(slider_count * sizeof(Point))
         slider_slots = <Point *>malloc(slider_count * sizeof(Point))
     
+    #Create parameters and link data.
     slider_count = 0
     a = 0
     b = 0
@@ -332,8 +335,7 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
     if solve(pparameters, params_count, cons, cons_count, Rough) != Succsess:
         raise Exception("No valid Solutions were found from this start point.")
     
-    """
-    Format:
+    """Format:
     (R joint)
     [p0]: (p0_x, p0_y)
     [p1]: (p1_x, p1_y)
@@ -365,8 +367,77 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
     return solved_points
 
 
-cpdef list structure_solving(object vpoints):
-    """Solving structure by PLP expressions.
+cpdef void partial_solving(object vpoints, dict data_dict):
+    """Partial constants solving.
     
-    + TODO: PLP expression.
+    + vpoints: Sequence[VPoint]
+    + TODO: Known coordinates import from data_dict.
+    + data_dict: Dict[int, Tuple[float, float]]
+    + targets: Set[int]
     """
+    cdef int i
+    cdef set targets = {i for i in range(len(vpoints)) if (i not in data_dict)}
+    cdef set friends = set()
+    cdef dict vlinks = {}
+    
+    #Pre-count number of parameters.
+    cdef int point_count = 0
+    cdef int params_count = 0
+    cdef int constants_count = 0
+    cdef int cons_count = 0
+    cdef int slider_p_count = 0
+    cdef int slider_rp_count = 0
+    #sliders = {p_num: base_num}
+    cdef map[int, int] sliders
+    
+    #Create vlink data.
+    cdef int a = 0
+    cdef int b = 0
+    cdef VPoint vpoint
+    for i, vpoint in enumerate(vpoints):
+        for vlink in vpoint.links:
+            if vlink == 'ground':
+                continue
+            if vlink in vlinks:
+                vlinks[vlink].append(i)
+            else:
+                vlinks[vlink] = [i]
+        if (i in targets) and (vpoint.type in {1, 2}):
+            if vpoint.grounded():
+                a += 1
+            else:
+                b += 1
+            params_count += 4
+            sliders[i] = slider_p_count + slider_rp_count
+            if vpoint.type == 1:
+                slider_p_count += 1
+            else:
+                slider_rp_count += 1
+    
+    #Counting params and constants.
+    for vlink in tuple(vlinks):
+        if not any([(i in targets) for i in vlinks[vlink]]):
+            #Remove the link not contain any target.
+            del vlinks[vlink]
+            continue
+        for i in vlinks[vlink]:
+            point_count += 1
+            if i in targets:
+                params_count += 2
+            else:
+                friends.add(i)
+                constants_count += 2
+    
+    cdef double *parameters = <double *>malloc(params_count * sizeof(double))
+    cdef double **pparameters = <double **>malloc(params_count * sizeof(double *))
+    cdef double *constants = <double *>malloc(constants_count * sizeof(double))
+    cdef Point *points = <Point *>malloc(point_count * sizeof(Point))
+    #Slider data
+    cdef int slider_count = slider_p_count + slider_rp_count
+    cdef Point *slider_bases = NULL
+    cdef Point *slider_slots = NULL
+    cdef Line *slider_lines = NULL
+    cdef double *cons_angles = NULL
+    if not sliders.empty():
+        slider_bases = <Point *>malloc(slider_count * sizeof(Point))
+        slider_slots = <Point *>malloc(slider_count * sizeof(Point))

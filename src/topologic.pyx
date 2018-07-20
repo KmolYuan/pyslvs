@@ -51,9 +51,9 @@ cdef class Graph:
         cdef list neighbors = []
         cdef int l1, l2
         for l1, l2 in self.edges:
-            if n==l1:
+            if n == l1:
                 neighbors.append(l2)
-            if n==l2:
+            if n == l2:
                 neighbors.append(l1)
         return tuple(neighbors)
     

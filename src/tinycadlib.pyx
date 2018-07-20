@@ -22,6 +22,7 @@ from libc.math cimport (
 )
 import numpy as np
 cimport numpy as np
+from bfgs cimport partial_solving
 
 
 cdef double nan = float('nan')
@@ -324,58 +325,59 @@ cdef inline str strbefore(str s, str front):
 
 
 cpdef void expr_parser(str exprs, dict data_dict):
-    """Use to generate path data.
+    """Update data.
     
-    exprs: "PLAP[P0,L0,a0,P1](P2);PLLP[P2,L1,L2,P1](P3);..."
-    data_dict: {'a0':0., 'L1':10., 'A':(30., 40.), ...}
+    + exprs: "PLAP[P0,L0,a0,P1](P2);PLLP[P2,L1,L2,P1](P3);..."
+    + data_dict: {'a0':0., 'L1':10., 'A':(30., 40.), ...}
     """
     #Remove all the spaces in the expression.
     exprs = exprs.replace(" ", '')
-    cdef str expr, f, name
+    cdef str expr, fun, p
     cdef list params
-    cdef object p
-    cdef list args
+    cdef int params_count
+    cdef double x, y
     for expr in exprs.split(';'):
         #If the mechanism has no any solution.
         if not expr:
             return
-        f = strbefore(expr, '[')
-        params = strbetween(expr, '[', ']').split(',')
-        target = strbetween(expr, '(', ')')
-        args = []
-        for name in params:
-            if name == 'T':
-                p = True
-            elif name == 'F':
-                p = False
+        fun = strbefore(expr, '[')
+        params = []
+        for p in strbetween(expr, '[', ']').split(','):
+            if p == 'T':
+                params.append(True)
+            elif p == 'F':
+                params.append(False)
+            elif type(data_dict[p]) == tuple:
+                x, y = data_dict[p]
+                params.append(Coordinate(x, y))
             else:
-                p = data_dict[name]
-            if type(p) == tuple:
-                args.append(Coordinate(*p))
-            else:
-                args.append(p)
-        if f == 'PLAP':
-            data_dict[target] = PLAP(*args)
-        elif f == 'PLLP':
-            data_dict[target] = PLLP(*args)
-        elif f == 'PLPP':
-            data_dict[target] = PLPP(*args)
-        elif f == 'PXY':
-            data_dict[target] = PXY(*args)
-    """'data_dict' has been updated."""
-
-
-cdef inline double tuple_distance(tuple c1, tuple c2):
-    """Calculate the distance between two tuple coordinates."""
-    return distance(c1[0], c1[1], c2[0], c2[1])
-
-
-cdef inline void rotate_collect(dict data_dict, dict mapping, list path):
-    """Collecting."""
-    cdef int n
-    cdef str m
-    for n, m in mapping.items():
-        path[n].append(data_dict[m])
+                params.append(data_dict[p])
+        params_count = len(params)
+        
+        #We should unpack as C++'s way.
+        x = float('nan')
+        y = x
+        if fun == 'PLAP':
+            if params_count == 3:
+                x, y = PLAP(params[0], params[1], params[2])
+            elif params_count == 4:
+                x, y = PLAP(params[0], params[1], params[2], params[3])
+            elif params_count == 5:
+                x, y = PLAP(params[0], params[1], params[2], params[3], params[4])
+        elif fun == 'PLLP':
+            if params_count == 4:
+                x, y = PLLP(params[0], params[1], params[2], params[3])
+            elif params_count == 5:
+                x, y = PLLP(params[0], params[1], params[2], params[3], params[4])
+        elif fun == 'PLPP':
+            if params_count == 4:
+                x, y = PLPP(params[0], params[1], params[2], params[3])
+            elif params_count == 5:
+                x, y = PLPP(params[0], params[1], params[2], params[3], params[4])
+        elif fun == 'PXY':
+            if params_count == 3:
+                x, y = PXY(params[0], params[1], params[2])
+        data_dict[strbetween(expr, '(', ')')] = (x, y)
 
 
 cdef inline void rotate(
@@ -385,24 +387,26 @@ cdef inline void rotate(
     dict mapping,
     list path,
     double interval,
-    bool reverse=False
+    bool reverse
 ):
     """Add path coordinates.
     
     + Rotate the input joints.
     + Collect the coordinates of all joints.
     """
-    cdef str param = 'a{}'.format(input_angle)
+    cdef str angle = 'a{}'.format(input_angle)
     cdef double a = 0
     if reverse:
         a = 360
         interval = -interval
     cdef dict copy_dict
+    cdef int n
     while 0 <= a <= 360:
-        data_dict[param] = np.deg2rad(a)
+        data_dict[angle] = np.deg2rad(a)
         copy_dict = data_dict.copy()
         expr_parser(expr_str, copy_dict)
-        rotate_collect(copy_dict, mapping, path)
+        for n in mapping:
+            path[n].append(copy_dict[mapping[n]])
         a += interval
 
 
@@ -418,14 +422,12 @@ cdef inline list return_path(
     cdef list path = [[] for i in range(len(mapping))]
     #For each input joint.
     for i in range(dof):
-        rotate(i, expr_str, data_dict, mapping, path, interval)
+        rotate(i, expr_str, data_dict, mapping, path, interval, False)
     if dof > 1:
         #Rotate back.
         for i in range(dof):
             rotate(i, expr_str, data_dict, mapping, path, interval, True)
-    """
-    return_path: [[each_joints]: [(x0, y0), (x1, y1), (x2, y2), ...], ...]
-    """
+    #return_path: [[each_joints]: [(x0, y0), (x1, y1), (x2, y2), ...], ...]
     for i in range(len(path)):
         if len(set(path[i])) <= 1:
             path[i] = ()
@@ -479,16 +481,12 @@ cdef inline int base_friend(int node, object vpoints):
             return i
 
 
-def data_collecting(
-    exprs: Sequence[Tuple[str]],
-    mapping: Dict[int, str],
-    vpoints: Sequence[VPoint]
-) -> Tuple[Dict[str, Union[Tuple[float, float], float]], int]:
-    """Python wrapper of c version function."""
-    return data_collecting_c(exprs, mapping, vpoints)
+cdef inline double tuple_distance(tuple c1, tuple c2):
+    """Calculate the distance between two tuple coordinates."""
+    return distance(c1[0], c1[1], c2[0], c2[1])
 
 
-cdef inline tuple data_collecting_c(object exprs, dict mapping, object vpoints_):
+cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     """Input data:
     
     + exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1', 'P2'), ...]
@@ -497,13 +495,12 @@ cdef inline tuple data_collecting_c(object exprs, dict mapping, object vpoints_)
     + vpoints_: [VPoint0, VPoint1, VPoint2, ...]
     + pos: [(x0, y0), (x1, y1), (x2, y2), ...]
     
-    vpoints will make a copy that we don't want to modified itself.
+    vpoints will make a copy that we don't want to modified origin data.
     """
     cdef list vpoints = list(vpoints_)
     
-    """First, we create a "VLinks" that can help us to
-    find a releationship just like adjacency matrix.
-    """
+    #First, we create a "VLinks" that can help us to
+    #find a releationship just like adjacency matrix.
     cdef int node
     cdef str link
     cdef VPoint vpoint
@@ -512,24 +509,22 @@ cdef inline tuple data_collecting_c(object exprs, dict mapping, object vpoints_)
         for link in vpoint.links:
             #Add as vlink.
             if link not in vlinks:
-                vlinks[link] = {node}
+                vlinks[link] = [node]
             else:
-                vlinks[link].add(node)
+                vlinks[link].append(node)
     
-    """Replace the P joints and their friends with RP joint.
-    
-    DOF must be same after properties changed.
-    """
+    #Replace the P joints and their friends with RP joint.
+    #DOF must be same after properties changed.
     cdef int base
     cdef str link_
     cdef VPoint vpoint_
-    cdef set links
+    cdef set links = set()
     for base in range(len(vpoints)):
         vpoint = vpoints[base]
         if vpoint.type != 1:
             continue
         for link in vpoint.links[1:]:
-            links = set()
+            links.clear()
             for node in vlinks[link]:
                 vpoint_ = vpoints[node]
                 if (node == base) or (vpoint_.type != 0):
@@ -547,12 +542,9 @@ cdef inline tuple data_collecting_c(object exprs, dict mapping, object vpoints_)
                     vpoint_.cy
                 )
     
-    cdef k, v
     #Reverse mapping, exclude specified link length.
-    cdef dict mapping_r = {
-        v: k
-        for k, v in mapping.items() if (type(k) == int)
-    }
+    cdef k, v
+    cdef dict mapping_r = {v: k for k, v in mapping.items() if (type(k) == int)}
     
     cdef list pos = []
     for vpoint in vpoints:
@@ -578,25 +570,29 @@ cdef inline tuple data_collecting_c(object exprs, dict mapping, object vpoints_)
         mapping_r['S{}'.format(i)] = len(pos) - 1
     
     cdef int dof = 0
-    cdef tuple expr
     cdef dict data_dict = {}
-    cdef set targets = set()
-    
+    cdef int target
+    cdef tuple expr
     """Add data to 'data_dict'.
     
     + Add 'L' (link) parameters.
     + Counting DOF and targets.
     """
-    cdef int target
     for expr in exprs:
         node = mapping_r[expr[1]]
         target = mapping_r[expr[-1]]
+        #Point 1: expr[1]
+        if expr[1] not in data_dict:
+            data_dict[expr[1]] = pos[mapping_r[expr[1]]]
         if expr[0] == 'PLAP':
             #Link 1: expr[2]
             if expr[2] in mapping:
                 data_dict[expr[2]] = mapping[expr[2]]
             else:
                 data_dict[expr[2]] = tuple_distance(pos[node], pos[target])
+            #Point 2: expr[4]
+            if expr[4] not in data_dict:
+                data_dict[expr[4]] = pos[mapping_r[expr[4]]]
             #Inputs
             dof += 1
         elif expr[0] == 'PLLP':
@@ -610,15 +606,18 @@ cdef inline tuple data_collecting_c(object exprs, dict mapping, object vpoints_)
                 data_dict[expr[3]] = mapping[expr[3]]
             else:
                 data_dict[expr[3]] = tuple_distance(pos[mapping_r[expr[4]]], pos[target])
+            #Point 2: expr[4]
+            if expr[4] not in data_dict:
+                data_dict[expr[4]] = pos[mapping_r[expr[4]]]
         elif expr[0] == 'PLPP':
             #Link 1: expr[2]
             if expr[2] in mapping:
                 data_dict[expr[2]] = mapping[expr[2]]
             else:
                 data_dict[expr[2]] = tuple_distance(pos[node], pos[target])
-            #PLPP[P1, L0, P2, S2](P2)
-            #So we should get P2 first.
-            data_dict[expr[3]] = pos[mapping_r[expr[3]]]
+            #Point 2:  expr[3]
+            if expr[3] not in data_dict:
+                data_dict[expr[3]] = pos[mapping_r[expr[3]]]
         elif expr[0] == 'PXY':
             #X: expr[2]
             if expr[2] in mapping:
@@ -630,13 +629,10 @@ cdef inline tuple data_collecting_c(object exprs, dict mapping, object vpoints_)
                 data_dict[expr[3]] = mapping[expr[3]]
             else:
                 data_dict[expr[3]] = pos[target][1] - pos[node][1]
-        #Targets
-        targets.add(expr[-1])
-    
+    #Fill in missing coordinates.
     for i in range(len(vpoints)):
-        if mapping[i] not in targets:
+        if mapping[i] not in data_dict:
             data_dict[mapping[i]] = pos[i]
-    
     return data_dict, dof
 
 
@@ -646,10 +642,10 @@ cpdef list expr_path(
     object vpoints,
     double interval
 ):
-    """Auto preview function."""
+    """Auto preview function of path."""
     cdef dict data_dict
     cdef int dof_input
-    data_dict, dof_input = data_collecting_c(exprs, mapping, vpoints)
+    data_dict, dof_input = data_collecting(exprs, mapping, vpoints)
     
     #Check input number.
     cdef int dof = vpoint_dof(vpoints)
@@ -679,7 +675,7 @@ cpdef list expr_solving(
     """
     cdef dict data_dict
     cdef int dof_input
-    data_dict, dof_input = data_collecting_c(exprs, mapping, vpoints)
+    data_dict, dof_input = data_collecting(exprs, mapping, vpoints)
     
     #Check input number.
     cdef int dof = vpoint_dof(vpoints)
@@ -696,13 +692,12 @@ cpdef list expr_solving(
     
     expr_parser(expr_join(exprs), data_dict)
     
-    """
-    Format:
-    (R joint)
-    [p0]: (p0_x, p0_y)
-    [p1]: (p1_x, p1_y)
-    (P or RP joint)
-    [p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))
+    """Format:
+    + R joint
+        [p0]: (p0_x, p0_y)
+        [p1]: (p1_x, p1_y)
+    + P or RP joint
+        [p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))
     """
     cdef list solved_points = []
     for i in range(len(vpoints)):

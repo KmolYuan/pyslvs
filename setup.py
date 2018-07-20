@@ -7,13 +7,13 @@ import os
 
 from Cython.Distutils import build_ext
 import numpy
-numpy_include = [numpy.get_include()]
+np_include = numpy.get_include()
 
 
-sources = [
-    source for source in os.listdir("./src")
-    if source.split('.')[-1] == 'pyx'
-]
+sources = []
+for source in os.listdir("./src"):
+    if source.split('.')[-1] == 'pyx':
+        sources.append(source)
 
 extra_compile_args = [
     #Compiler optimize.
@@ -22,6 +22,8 @@ extra_compile_args = [
     '-Wno-cpp',
     #Windows format warning.
     '-Wno-format',
+    #Avoid C++ math library.
+    '-D_hypot=hypot',
 ]
 
 ext_modules = [Extension(
@@ -33,24 +35,21 @@ ext_modules = [Extension(
         'src/bfgs_solver/' + 'solve.cpp',
     ],
     language = "c++",
-    include_dirs = ['src/bfgs_solver/'] + numpy_include,
-    
-    extra_compile_args = extra_compile_args + ['-D_hypot=hypot'],
+    include_dirs = ['src/bfgs_solver/', np_include],
+    extra_compile_args = extra_compile_args,
 )]
 
 for source in sources:
     if source == "bfgs.pyx":
         continue
     ext_modules.append(Extension(
-        source.split('.')[0], #Base name
-        sources = ['src/' + source], #path + file name
-        
-        include_dirs = numpy_include,
+        #Base name
+        source.split('.')[0],
+        #path + file name
+        sources = ['src/' + source],
+        language = "c++",
+        include_dirs = [np_include],
         extra_compile_args = extra_compile_args,
     ))
 
-
-setup(
-    ext_modules = ext_modules,
-    cmdclass = {'build_ext': build_ext},
-)
+setup(ext_modules = ext_modules, cmdclass = {'build_ext': build_ext})
