@@ -17,6 +17,7 @@ from libc.math cimport (
     sin,
 )
 from libcpp.map cimport map
+from cpython cimport bool
 from sketch_solve cimport *
 from pmks cimport VPoint
 
@@ -503,8 +504,7 @@ cpdef dict partial_solving(object vpoints, dict data_dict, set targets):
     cdef Constraint *cons = <Constraint *>malloc(cons_count * sizeof(Constraint))
     
     #Solve
-    if solve(pparameters, params_count, cons, cons_count, Rough) != Succsess:
-        raise Exception("No valid Solutions were found from this start point.")
+    cdef bool done = solve(pparameters, params_count, cons, cons_count, Rough) != Succsess
     
     """solved_points: Dict[
         #R joint
@@ -514,11 +514,22 @@ cpdef dict partial_solving(object vpoints, dict data_dict, set targets):
     ]
     """
     cdef dict solved_points = {}
-    for i in targets:
-        if vpoints[i].type == 0:
-            solved_points[i] = (points[mapping[i]].x[0], points[mapping[i]].y[0])
-        else:
-            pass
+    cdef double nan = float('nan')
+    if done:
+        for i in targets:
+            if vpoints[i].type == 0:
+                solved_points[i] = (points[mapping[i]].x[0], points[mapping[i]].y[0])
+            else:
+                solved_points[i] = (
+                    (slider_bases[sliders[i]].x[0], slider_bases[sliders[i]].y[0]),
+                    (points[mapping[i]].x[0], points[mapping[i]].y[0]),
+                )
+    else:
+        for i in targets:
+            if vpoints[i].type == 0:
+                solved_points[i] = (nan, nan)
+            else:
+                solved_points[i] = ((nan, nan), (nan, nan))
     
     free(parameters)
     free(pparameters)

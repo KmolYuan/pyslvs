@@ -163,25 +163,24 @@ cdef inline str strbefore(str s, str front):
     return s[:s.find(front)]
 
 
-cpdef void expr_parser(str exprs, dict data_dict):
+cpdef void expr_parser(object exprs, dict data_dict):
     """Update data.
     
     + exprs: "PLAP[P0,L0,a0,P1](P2);PLLP[P2,L1,L2,P1](P3);..."
     + data_dict: {'a0':0., 'L1':10., 'A':(30., 40.), ...}
     """
-    #Remove all the spaces in the expression.
-    exprs = exprs.replace(" ", '')
-    cdef str expr, fun, p
+    cdef object expr
+    cdef str fun, p
     cdef list params
     cdef int params_count
     cdef double x, y
-    for expr in exprs.split(';'):
+    for expr in exprs:
         #If the mechanism has no any solution.
         if not expr:
             return
-        fun = strbefore(expr, '[')
+        fun = expr[0]
         params = []
-        for p in strbetween(expr, '[', ']').split(','):
+        for p in expr[1:-1]:
             if p == 'T':
                 params.append(True)
             elif p == 'F':
@@ -216,12 +215,12 @@ cpdef void expr_parser(str exprs, dict data_dict):
         elif fun == 'PXY':
             if params_count == 3:
                 x, y = PXY(params[0], params[1], params[2])
-        data_dict[strbetween(expr, '(', ')')] = (x, y)
+        data_dict[expr[-1]] = (x, y)
 
 
 cdef inline void rotate(
     int input_angle,
-    str expr_str,
+    object exprs,
     dict data_dict,
     dict mapping,
     list path,
@@ -243,44 +242,38 @@ cdef inline void rotate(
     while 0 <= a <= 360:
         data_dict[angle] = a / 180 * M_PI
         copy_dict = data_dict.copy()
-        expr_parser(expr_str, copy_dict)
+        expr_parser(exprs, copy_dict)
         for n in mapping:
-            path[n].append(copy_dict[mapping[n]])
+            if mapping[n] in copy_dict:
+                path[n].append(copy_dict[mapping[n]])
+            else:
+                #TODO: The point can not be solved.
+                path[n].append(())
         a += interval
 
 
-cdef inline list return_path(
-    str expr_str,
-    dict data_dict,
-    dict mapping,
-    int dof,
-    double interval
-):
-    """Return as paths."""
-    cdef int i
-    cdef list path = [[] for i in range(len(mapping))]
-    #For each input joint.
-    for i in range(dof):
-        rotate(i, expr_str, data_dict, mapping, path, interval, False)
-    if dof > 1:
-        #Rotate back.
-        for i in range(dof):
-            rotate(i, expr_str, data_dict, mapping, path, interval, True)
-    #return_path: [[each_joints]: [(x0, y0), (x1, y1), (x2, y2), ...], ...]
-    for i in range(len(path)):
-        if len(set(path[i])) <= 1:
-            path[i] = ()
-        else:
-            path[i] = tuple(path[i])
-    return path
-
-
-cdef inline str expr_join(object exprs):
+cpdef str expr_join(object exprs):
     """Use to append a list of symbols into a string."""
     return ';'.join([
-        "{}[{}]({})".format(expr[0], ','.join(expr[1:-1]), expr[-1])
-        for expr in exprs
+        "{}[{}]({})".format(expr[0], ','.join(expr[1:-1]), expr[-1]) for expr in exprs
     ])
+
+
+cpdef tuple expr_parse(str exprs):
+    """Parse expression as tuple."""
+    exprs = exprs.replace(" ", '')
+    cdef list tmp_list = []
+    cdef list params
+    cdef str expr, p
+    for expr in exprs.split(';'):
+        if not expr:
+            return ()
+        params = []
+        params.append(strbefore(expr, '['))
+        params.extend(strbetween(expr, '[', ']').split(','))
+        params.append(strbetween(expr, '(', ')'))
+        tmp_list.append(tuple(params))
+    return tuple(tmp_list)
 
 
 cpdef int vpoint_dof(object vpoints):
@@ -468,10 +461,6 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
                 data_dict[expr[3]] = mapping[expr[3]]
             else:
                 data_dict[expr[3]] = pos[target][1] - pos[node][1]
-    #Fill in missing coordinates.
-    for i in range(len(vpoints)):
-        if mapping[i] not in data_dict:
-            data_dict[mapping[i]] = pos[i]
     return data_dict, dof
 
 
@@ -499,7 +488,22 @@ cpdef list expr_path(
     for i in range(dof):
         data_dict['a{}'.format(i)] = a
     
-    return return_path(expr_join(exprs), data_dict, mapping, dof, interval)
+    cdef list path = [[] for i in range(len(mapping))]
+    #For each input joint.
+    for i in range(dof):
+        rotate(i, exprs, data_dict, mapping, path, interval, False)
+    if dof > 1:
+        #Rotate back.
+        for i in range(dof):
+            rotate(i, exprs, data_dict, mapping, path, interval, True)
+    #return_path: [[each_joints]: ((x0, y0), (x1, y1), (x2, y2), ...), ...]
+    for i in range(len(path)):
+        if len(set(path[i])) <= 1:
+            #The point is not move or is nan.
+            path[i] = ()
+        else:
+            path[i] = tuple(path[i])
+    return path
 
 
 cpdef list expr_solving(
@@ -529,7 +533,7 @@ cpdef list expr_solving(
     for i, a in enumerate(angles):
         data_dict['a{}'.format(i)] = a / 180 * M_PI
     
-    expr_parser(expr_join(exprs), data_dict)
+    expr_parser(exprs, data_dict)
     
     """Format:
     + R joint
@@ -540,10 +544,17 @@ cpdef list expr_solving(
     """
     cdef list solved_points = []
     for i in range(len(vpoints)):
-        if isnan(data_dict[mapping[i]][0]):
-            raise Exception("result contains failure: Point{}".format(i))
-        if vpoints[i].type == 0:
-            solved_points.append(data_dict[mapping[i]])
+        if mapping[i] not in data_dict:
+            #TODO: The point can not be solved.
+            if vpoints[i].type == 0:
+                solved_points.append(vpoints[i].c[0])
+            else:
+                solved_points.append(vpoints[i].c)
         else:
-            solved_points.append((vpoints[i].c[0], data_dict[mapping[i]]))
+            if isnan(data_dict[mapping[i]][0]):
+                raise Exception("result contains failure: Point{}".format(i))
+            if vpoints[i].type == 0:
+                solved_points.append(data_dict[mapping[i]])
+            else:
+                solved_points.append((vpoints[i].c[0], data_dict[mapping[i]]))
     return solved_points
