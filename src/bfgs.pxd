@@ -10,4 +10,4 @@
 
 
 cpdef list vpoint_solving(object, object inputs = *)
-cpdef void partial_solving(object, dict)
+cpdef dict partial_solving(object, dict, set)

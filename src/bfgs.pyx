@@ -165,7 +165,7 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
                 slider_count += 1
                 #Pin is moveable.
                 parameters[a], parameters[a + 1] = vpoint.c[0]
-                pparameters[a], pparameters[a + 1] = &parameters[a], &parameters[a + 1]
+                pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
                 points[i] = [pparameters[a], pparameters[a + 1]]
                 a += 2
             else:
@@ -192,15 +192,14 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
             points[i] = [pparameters[a], pparameters[a + 1]]
             a += 2
     
-    cdef int cons_count = 0
-    
     #Pre-count number of distence constraints.
+    cdef int cons_count = 0
     cdef int link_count
     for vlink in vlinks:
-        link_count = len(vlinks[vlink])
-        if link_count < 2:
+        link_count = len(vlinks[vlink]) - 1
+        if link_count < 1:
             continue
-        cons_count += 1 + 2 * (link_count - 2)
+        cons_count += 1 + 2 * (link_count - 1)
     cdef double *distences = <double *>malloc(cons_count * sizeof(double))
     
     #Pre-count number of slider constraints.
@@ -335,12 +334,12 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
     if solve(pparameters, params_count, cons, cons_count, Rough) != Succsess:
         raise Exception("No valid Solutions were found from this start point.")
     
-    """Format:
-    (R joint)
-    [p0]: (p0_x, p0_y)
-    [p1]: (p1_x, p1_y)
-    (P or RP joint)
-    [p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))
+    """solved_points: List[
+        #R joint
+        [p1]: (p1_x, p1_y)
+        #P or RP joint
+        [p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))
+    ]
     """
     cdef list solved_points = []
     for i in range(len(vpoints)):
@@ -367,33 +366,33 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
     return solved_points
 
 
-cpdef void partial_solving(object vpoints, dict data_dict):
+cpdef dict partial_solving(object vpoints, dict data_dict, set targets):
     """Partial constants solving.
     
     + vpoints: Sequence[VPoint]
-    + TODO: Known coordinates import from data_dict.
+    TODO: Known coordinates import from data_dict.
     + data_dict: Dict[int, Tuple[float, float]]
     + targets: Set[int]
     """
     cdef int i
-    cdef set targets = {i for i in range(len(vpoints)) if (i not in data_dict)}
     cdef set friends = set()
     cdef dict vlinks = {}
     
     #Pre-count number of parameters.
-    cdef int point_count = 0
     cdef int params_count = 0
     cdef int constants_count = 0
-    cdef int cons_count = 0
     cdef int slider_p_count = 0
     cdef int slider_rp_count = 0
     #sliders = {p_num: base_num}
     cdef map[int, int] sliders
+    #mapping = {p_num: point_num}
+    cdef map[int, int] mapping
     
     #Create vlink data.
     cdef int a = 0
     cdef int b = 0
     cdef VPoint vpoint
+    cdef str vlink
     for i, vpoint in enumerate(vpoints):
         for vlink in vpoint.links:
             if vlink == 'ground':
@@ -420,18 +419,22 @@ cpdef void partial_solving(object vpoints, dict data_dict):
             #Remove the link not contain any target.
             del vlinks[vlink]
             continue
+        if len(vlinks[vlink]) == 1:
+            #Remove the link has only one target.
+            del vlinks[vlink]
+            continue
         for i in vlinks[vlink]:
-            point_count += 1
-            if i in targets:
-                params_count += 2
-            else:
+            if i not in targets:
                 friends.add(i)
-                constants_count += 2
+    for i in friends:
+        constants_count += 2
+    for i in targets:
+        params_count += 2
     
     cdef double *parameters = <double *>malloc(params_count * sizeof(double))
     cdef double **pparameters = <double **>malloc(params_count * sizeof(double *))
     cdef double *constants = <double *>malloc(constants_count * sizeof(double))
-    cdef Point *points = <Point *>malloc(point_count * sizeof(Point))
+    cdef Point *points = <Point *>malloc(len(friends | targets) * sizeof(Point))
     #Slider data
     cdef int slider_count = slider_p_count + slider_rp_count
     cdef Point *slider_bases = NULL
@@ -441,3 +444,91 @@ cpdef void partial_solving(object vpoints, dict data_dict):
     if not sliders.empty():
         slider_bases = <Point *>malloc(slider_count * sizeof(Point))
         slider_slots = <Point *>malloc(slider_count * sizeof(Point))
+    
+    #Copy coordinate data.
+    a = 0
+    b = 0
+    cdef int c = 0
+    for i in friends | targets:
+        vpoint = vpoints[i]
+        #TODO: Decide the link while point is a slider joint.
+        if i in targets:
+            parameters[a], parameters[a + 1] = vpoint.c[0]
+            pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
+            points[c] = [pparameters[a], pparameters[a + 1]]
+            mapping[i] = c
+            a += 2
+        else:
+            constants[b], constants[b + 1] = vpoint.c[0]
+            points[c] = [constants + b, constants + b + 1]
+            b += 2
+        c += 1
+    
+    #Pre-count number of distence constraints.
+    cdef int cons_count = 0
+    cdef int link_count
+    cdef int d
+    for vlink in vlinks:
+        link_count = len(vlinks[vlink]) - 1
+        if link_count == 1:
+            cons_count += 1
+            continue
+        if not set(vlinks[vlink][:2]) <= friends:
+            cons_count += 1
+        for c in vlinks[vlink][2:]:
+            if c in friends:
+                continue
+            for d in (a, b):
+                cons_count += 2
+    cdef double *distences = <double *>malloc(cons_count * sizeof(double))
+    
+    #Pre-count number of slider constraints.
+    slider_count = 0
+    link_count = 0
+    for a, b in sliders:
+        link_count += 1
+        cons_count += 2
+        slider_count += 1
+        if not vpoints[a].grounded():
+            link_count += 1
+        if vpoints[a].type == 1:
+            cons_count += 1
+            link_count += 1
+            slider_count += 1
+    if not sliders.empty():
+        slider_lines = <Line *>malloc(link_count * sizeof(Line))
+        cons_angles = <double *>malloc(slider_count * sizeof(double))
+    
+    #Pre-count number of constraints.
+    cdef Constraint *cons = <Constraint *>malloc(cons_count * sizeof(Constraint))
+    
+    #Solve
+    if solve(pparameters, params_count, cons, cons_count, Rough) != Succsess:
+        raise Exception("No valid Solutions were found from this start point.")
+    
+    """solved_points: Dict[
+        #R joint
+        [p1]: (p1_x, p1_y)
+        #P or RP joint
+        [p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))
+    ]
+    """
+    cdef dict solved_points = {}
+    for i in targets:
+        if vpoints[i].type == 0:
+            solved_points[i] = (points[mapping[i]].x[0], points[mapping[i]].y[0])
+        else:
+            pass
+    
+    free(parameters)
+    free(pparameters)
+    free(constants)
+    free(points)
+    if not sliders.empty():
+        free(slider_bases)
+        free(slider_slots)
+        free(slider_lines)
+        free(cons_angles)
+    free(distences)
+    free(cons)
+    return solved_points
