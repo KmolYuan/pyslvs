@@ -31,10 +31,7 @@ __email__ = "pyslvs@gmail.com"
 __version__ = (18, 7, 0, 'dev')
 
 from .pmks import VPoint, VLink
-from .bfgs import (
-    vpoint_solving as bfgs_vpoint_solving,
-    partial_solving,
-)
+from .bfgs import vpoint_solving as bfgs_vpoint_solving
 from .tinycadlib import (
     Coordinate,
     PLAP,
@@ -81,7 +78,6 @@ __all__ = [
     'VPoint',
     'VLink',
     'bfgs_vpoint_solving',
-    'partial_solving',
     'Verification',
     'Planar',
     'NumberSynthesis',

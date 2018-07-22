@@ -254,7 +254,7 @@ cdef class Planar(Verification):
             #a0: random angle to generate target point.
             #match to path points.
             for j in range(len(self.driver_list)):
-                test_dict['a{}'.format(j)] = np.deg2rad(
+                test_dict[f'a{j}'] = np.deg2rad(
                     v[self.vars + i * len(self.driver_list) + j]
                 )
             for e in self.exprs:
@@ -291,7 +291,7 @@ cdef class Planar(Verification):
         cdef object value
         cdef dict final_dict = self.get_data_dict(v)
         for j in range(len(self.driver_list)):
-            final_dict['a{}'.format(j)] = np.deg2rad(v[self.vars + j])
+            final_dict[f'a{j}'] = np.deg2rad(v[self.vars + j])
         for e in self.exprs:
             #target
             final_dict[e[1]] = self.from_formula(e, final_dict)
@@ -303,7 +303,7 @@ cdef class Planar(Verification):
             tmp_list = []
             for i in range(self.target_count):
                 tmp_list.append(v[self.vars + i * len(self.driver_list) + j])
-            final_dict['a{}'.format(j)] = tuple(tmp_list)
+            final_dict[f'a{j}'] = tuple(tmp_list)
         return final_dict
     
     def __call__(self, v: np.ndarray):

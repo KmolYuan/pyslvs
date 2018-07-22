@@ -88,11 +88,19 @@ cpdef tuple test_kernel():
     return input_data, output_data, grad_data
 
 
-cpdef list vpoint_solving(object vpoints, object inputs = []):
+cpdef list vpoint_solving(
+    object vpoints,
+    object inputs = [],
+    dict data_dict = {},
+    set targets = set()
+):
     """Solving function from vpoint list.
     
     + vpoints: Sequence[VPoint]
     + inputs: [(b0, d0, a0), (b1, d1, a1), ...]
+    TODO: Known coordinates import from data_dict.
+    + data_dict: Dict[int, Tuple[float, float]]
+    + targets: Set[int]
     """
     cdef dict vlinks = {}
     
@@ -222,9 +230,12 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
     
     #Pre-count number of angle constraints.
     cdef int input_count = len(inputs)
-    cdef double *angles = <double *>malloc(input_count * sizeof(double))
-    cdef Line *lines = <Line *>malloc(input_count * sizeof(Line))
-    cons_count += input_count
+    cdef double *angles = NULL
+    cdef Line *lines = NULL
+    if input_count:
+        angles = <double *>malloc(input_count * sizeof(double))
+        lines = <Line *>malloc(input_count * sizeof(Line))
+        cons_count += input_count
     
     #Pre-count number of constraints.
     cdef Constraint *cons = <Constraint *>malloc(cons_count * sizeof(Constraint))
@@ -363,183 +374,5 @@ cpdef list vpoint_solving(object vpoints, object inputs = []):
     free(distences)
     free(angles)
     free(lines)
-    free(cons)
-    return solved_points
-
-
-cpdef dict partial_solving(object vpoints, dict data_dict, set targets):
-    """Partial constants solving.
-    
-    + vpoints: Sequence[VPoint]
-    TODO: Known coordinates import from data_dict.
-    + data_dict: Dict[int, Tuple[float, float]]
-    + targets: Set[int]
-    """
-    cdef int i
-    cdef set friends = set()
-    cdef dict vlinks = {}
-    
-    #Pre-count number of parameters.
-    cdef int params_count = 0
-    cdef int constants_count = 0
-    cdef int slider_p_count = 0
-    cdef int slider_rp_count = 0
-    #sliders = {p_num: base_num}
-    cdef map[int, int] sliders
-    #mapping = {p_num: point_num}
-    cdef map[int, int] mapping
-    
-    #Create vlink data.
-    cdef int a = 0
-    cdef int b = 0
-    cdef VPoint vpoint
-    cdef str vlink
-    for i, vpoint in enumerate(vpoints):
-        for vlink in vpoint.links:
-            if vlink == 'ground':
-                continue
-            if vlink in vlinks:
-                vlinks[vlink].append(i)
-            else:
-                vlinks[vlink] = [i]
-        if (i in targets) and (vpoint.type in {1, 2}):
-            if vpoint.grounded():
-                a += 1
-            else:
-                b += 1
-            params_count += 4
-            sliders[i] = slider_p_count + slider_rp_count
-            if vpoint.type == 1:
-                slider_p_count += 1
-            else:
-                slider_rp_count += 1
-    
-    #Counting params and constants.
-    for vlink in tuple(vlinks):
-        if not any([(i in targets) for i in vlinks[vlink]]):
-            #Remove the link not contain any target.
-            del vlinks[vlink]
-            continue
-        if len(vlinks[vlink]) == 1:
-            #Remove the link has only one target.
-            del vlinks[vlink]
-            continue
-        for i in vlinks[vlink]:
-            if i not in targets:
-                friends.add(i)
-    for i in friends:
-        constants_count += 2
-    for i in targets:
-        params_count += 2
-    
-    cdef double *parameters = <double *>malloc(params_count * sizeof(double))
-    cdef double **pparameters = <double **>malloc(params_count * sizeof(double *))
-    cdef double *constants = <double *>malloc(constants_count * sizeof(double))
-    cdef Point *points = <Point *>malloc(len(friends | targets) * sizeof(Point))
-    #Slider data
-    cdef int slider_count = slider_p_count + slider_rp_count
-    cdef Point *slider_bases = NULL
-    cdef Point *slider_slots = NULL
-    cdef Line *slider_lines = NULL
-    cdef double *cons_angles = NULL
-    if not sliders.empty():
-        slider_bases = <Point *>malloc(slider_count * sizeof(Point))
-        slider_slots = <Point *>malloc(slider_count * sizeof(Point))
-    
-    #Copy coordinate data.
-    a = 0
-    b = 0
-    cdef int c = 0
-    for i in friends | targets:
-        vpoint = vpoints[i]
-        #TODO: Decide the link while point is a slider joint.
-        if i in targets:
-            parameters[a], parameters[a + 1] = vpoint.c[0]
-            pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
-            points[c] = [pparameters[a], pparameters[a + 1]]
-            mapping[i] = c
-            a += 2
-        else:
-            constants[b], constants[b + 1] = vpoint.c[0]
-            points[c] = [constants + b, constants + b + 1]
-            b += 2
-        c += 1
-    
-    #Pre-count number of distence constraints.
-    cdef int cons_count = 0
-    cdef int link_count
-    cdef int d
-    for vlink in vlinks:
-        link_count = len(vlinks[vlink]) - 1
-        if link_count == 1:
-            cons_count += 1
-            continue
-        if not set(vlinks[vlink][:2]) <= friends:
-            cons_count += 1
-        for c in vlinks[vlink][2:]:
-            if c in friends:
-                continue
-            for d in (a, b):
-                cons_count += 2
-    cdef double *distences = <double *>malloc(cons_count * sizeof(double))
-    
-    #Pre-count number of slider constraints.
-    slider_count = 0
-    link_count = 0
-    for a, b in sliders:
-        link_count += 1
-        cons_count += 2
-        slider_count += 1
-        if not vpoints[a].grounded():
-            link_count += 1
-        if vpoints[a].type == 1:
-            cons_count += 1
-            link_count += 1
-            slider_count += 1
-    if not sliders.empty():
-        slider_lines = <Line *>malloc(link_count * sizeof(Line))
-        cons_angles = <double *>malloc(slider_count * sizeof(double))
-    
-    #Pre-count number of constraints.
-    cdef Constraint *cons = <Constraint *>malloc(cons_count * sizeof(Constraint))
-    
-    #Solve
-    cdef bool done = solve(pparameters, params_count, cons, cons_count, Rough) != Succsess
-    
-    """solved_points: Dict[
-        #R joint
-        [p1]: (p1_x, p1_y)
-        #P or RP joint
-        [p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))
-    ]
-    """
-    cdef dict solved_points = {}
-    cdef double nan = float('nan')
-    if done:
-        for i in targets:
-            if vpoints[i].type == 0:
-                solved_points[i] = (points[mapping[i]].x[0], points[mapping[i]].y[0])
-            else:
-                solved_points[i] = (
-                    (slider_bases[sliders[i]].x[0], slider_bases[sliders[i]].y[0]),
-                    (points[mapping[i]].x[0], points[mapping[i]].y[0]),
-                )
-    else:
-        for i in targets:
-            if vpoints[i].type == 0:
-                solved_points[i] = (nan, nan)
-            else:
-                solved_points[i] = ((nan, nan), (nan, nan))
-    
-    free(parameters)
-    free(pparameters)
-    free(constants)
-    free(points)
-    if not sliders.empty():
-        free(slider_bases)
-        free(slider_slots)
-        free(slider_lines)
-        free(cons_angles)
-    free(distences)
     free(cons)
     return solved_points

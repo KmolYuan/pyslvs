@@ -124,10 +124,9 @@ cdef class VPoint:
     def expr(self):
         """Expression."""
         return "J[{}, color[{}], P[{}], L[{}]]".format(
-            "{}, A[{}]".format(self.typeSTR, self.angle)
-            if self.typeSTR != 'R' else 'R',
+            f"{self.typeSTR}, A[{self.angle}]" if self.typeSTR != 'R' else 'R',
             self.colorSTR,
-            "{}, {}".format(self.x, self.y),
+            f"{self.x}, {self.y}",
             ", ".join(l for l in self.links)
         )
     
@@ -143,7 +142,7 @@ cdef class VPoint:
     
     def __repr__(self):
         """Use to generate script."""
-        return "VPoint({p.links}, {p.type}, {p.angle}, {p.c})".format(p=self)
+        return f"VPoint({self.links}, {self.type}, {self.angle}, {self.c})"
 
 
 cdef class VLink:
@@ -172,4 +171,4 @@ cdef class VLink:
     
     def __repr__(self):
         """Use to generate script."""
-        return "VLink('{l.name}', {l.points}, colorQt)".format(l=self)
+        return f"VLink('{self.name}', {self.points}, colorQt)"

@@ -459,7 +459,7 @@ cpdef topo(
             continue
         if setjobFunc:
             setjobFunc(
-                "Match link #{} / {}".format(link, len(links)-1),
+                f"Match link #{link} / {len(links) - 1}",
                 len(edges_combinations)*len(match)
             )
         matched = []

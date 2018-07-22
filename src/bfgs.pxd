@@ -9,5 +9,4 @@
 # __email__ = "pyslvs@gmail.com"
 
 
-cpdef list vpoint_solving(object, object inputs = *)
-cpdef dict partial_solving(object, dict, set)
+cpdef list vpoint_solving(object, object inputs = *, dict data_dict = *, set targets = *)

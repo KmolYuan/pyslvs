@@ -104,9 +104,8 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
     
     cdef list vpoints = list(vpoints_)
     
-    """First, we create a "VLinks" that can help us to
-    find a releationship just like adjacency matrix.
-    """
+    #First, we create a "VLinks" that can help us to
+    #   find a releationship just like adjacency matrix.
     cdef int node
     cdef str link
     cdef VPoint vpoint
@@ -126,10 +125,8 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
         else:
             status[node] = True
     
-    """Replace the P joints and their friends with RP joint.
-    
-    DOF must be same after properties changed.
-    """
+    #Replace the P joints and their friends with RP joint.
+    #DOF must be same after properties changed.
     cdef int base
     cdef str link_
     cdef VPoint vpoint_
@@ -157,7 +154,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                     vpoint_.y
                 )
     
-    """Add positions parameters."""
+    #Add positions parameters.
     cdef list pos = []
     for vpoint in vpoints:
         pos.append(vpoint.c[0] if (vpoint.type == 0) else vpoint.c[1])
@@ -166,39 +163,37 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
     cdef int link_symbol = 0
     cdef int angle_symbol = 0
     
-    """Input joints (R) that was connect with ground."""
+    #Input joints (R) that was connect with ground.
     for base, node in inputs:
         if status[base]:
             exprs.append((
                 'PLAP',
-                'P{}'.format(base),
-                'L{}'.format(link_symbol),
-                'a{}'.format(angle_symbol),
-                'P{}'.format(node),
+                f'P{base}',
+                f'L{link_symbol}',
+                f'a{angle_symbol}',
+                f'P{node}',
             ))
             status[node] = True
             link_symbol += 1
             angle_symbol += 1
     
-    """Now let we search around all of points,
-    until find the solutions that we could.
-    """
+    #Now let we search around all of points, until find the solutions that we could.
+    cdef set input_targets = {node for base, node in inputs}
     node = 0
-    cdef int friend_a, friend_b, friend_c, friend_d
-    cdef bool not_grounded
     cdef int skip_times = 0
     cdef int around = len(status)
+    
+    cdef int type_num, friend_a, friend_b, friend_c, friend_d
     cdef double tmp_x, tmp_y, angle
-    cdef object f1
-    cdef set input_targets = {node for base, node in inputs}
+    #Friend iterator.
+    cdef object fi
     while not isAllLock(status):
         
         if node not in status:
             node = 0
             continue
         
-        #Check the solution.
-        #If re-scan again.
+        #Check and break the loop if it's re-scan again.
         if skip_times >= around:
             break
         
@@ -207,7 +202,9 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
             skip_times += 1
             continue
         
-        if vpoints[node].type == 0:
+        type_num = vpoints[node].type
+        
+        if type_num == 0:
             """R joint.
             
             + Is input node?
@@ -219,10 +216,10 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                 if status[base]:
                     exprs.append((
                         'PLAP',
-                        'P{}'.format(base),
-                        'L{}'.format(link_symbol),
-                        'a{}'.format(angle_symbol),
-                        'P{}'.format(node),
+                        f'P{base}',
+                        f'L{link_symbol}',
+                        f'a{angle_symbol}',
+                        f'P{node}',
                     ))
                     status[node] = True
                     link_symbol += 1
@@ -230,10 +227,10 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                 else:
                     skip_times += 1
             else:
-                f1 = _get_reliable_friend(node, vpoints, vlinks, status)
+                fi = _get_reliable_friend(node, vpoints, vlinks, status)
                 try:
-                    friend_a = next(f1)
-                    friend_b = next(f1)
+                    friend_a = next(fi)
+                    friend_b = next(fi)
                 except StopIteration:
                     skip_times += 1
                 else:
@@ -241,30 +238,30 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                         friend_a, friend_b = friend_b, friend_a
                     exprs.append((
                         'PLLP',
-                        'P{}'.format(friend_a),
-                        'L{}'.format(link_symbol),
-                        'L{}'.format(link_symbol + 1),
-                        'P{}'.format(friend_b),
-                        'P{}'.format(node),
+                        f'P{friend_a}',
+                        f'L{link_symbol}',
+                        f'L{link_symbol + 1}',
+                        f'P{friend_b}',
+                        f'P{node}',
                     ))
                     status[node] = True
                     link_symbol += 2
                     skip_times = 0
         
-        elif vpoints[node].type == 1:
+        elif type_num == 1:
             """Need to solve P joint itself here."""
-            f1 = _get_notbase_friend(node, vpoints, vlinks, status)
+            fi = _get_notbase_friend(node, vpoints, vlinks, status)
             try:
-                friend_a = next(f1)
+                friend_a = next(fi)
             except StopIteration:
                 skip_times += 1
             else:
                 exprs.append((
                     'PXY',
-                    'P{}'.format(friend_a),
-                    'L{}'.format(link_symbol),
-                    'L{}'.format(link_symbol + 1),
-                    'P{}'.format(node),
+                    f'P{friend_a}',
+                    f'L{link_symbol}',
+                    f'L{link_symbol + 1}',
+                    f'P{node}',
                 ))
                 status[node] = True
                 link_symbol += 2
@@ -275,18 +272,18 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                             continue
                         exprs.append((
                             'PXY',
-                            'P{}'.format(node),
-                            'L{}'.format(link_symbol),
-                            'L{}'.format(link_symbol + 1),
-                            'P{}'.format(friend_b),
+                            f'P{node}',
+                            f'L{link_symbol}',
+                            f'L{link_symbol + 1}',
+                            f'P{friend_b}',
                         ))
                         status[friend_b] = True
                         link_symbol += 2
                 skip_times = 0
         
-        elif vpoints[node].type == 2:
+        elif type_num == 2:
             """RP joint."""
-            f1 = _get_base_friend(node, vpoints, vlinks, status)
+            fi = _get_base_friend(node, vpoints, vlinks, status)
             #Copy as 'friend_c'.
             friend_c = node
             #'S' point.
@@ -296,19 +293,19 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
             tmp_y += sin(angle)
             try:
                 friend_a = next(_get_notbase_friend(node, vpoints, vlinks, status))
-                friend_b = next(f1)
+                friend_b = next(fi)
                 if 'ground' != vpoints[node].links[0]:
                     """Slot is not grounded."""
-                    friend_d = next(f1)
+                    friend_d = next(fi)
                     if not clockwise(pos[friend_b], (tmp_x, tmp_y), pos[friend_d]):
                         friend_b, friend_d = friend_d, friend_b
                     exprs.append((
                         'PLLP',
-                        'P{}'.format(friend_b),
-                        'L{}'.format(link_symbol),
-                        'L{}'.format(link_symbol + 1),
-                        'P{}'.format(friend_d),
-                        'P{}'.format(node),
+                        f'P{friend_b}',
+                        f'L{link_symbol}',
+                        f'L{link_symbol + 1}',
+                        f'P{friend_d}',
+                        f'P{node}',
                     ))
                     link_symbol += 2
             except StopIteration:
@@ -330,20 +327,20 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                     friend_b, friend_c = friend_c, friend_b
                 exprs.append((
                     'PLLP',
-                    'P{}'.format(friend_b),
-                    'L{}'.format(link_symbol),
-                    'L{}'.format(link_symbol + 1),
-                    'P{}'.format(friend_c),
-                    'S{}'.format(node),
+                    f'P{friend_b}',
+                    f'L{link_symbol}',
+                    f'L{link_symbol + 1}',
+                    f'P{friend_c}',
+                    f'S{node}',
                 ))
                 exprs.append((
                     'PLPP',
-                    'P{}'.format(friend_a),
-                    'L{}'.format(link_symbol + 2),
-                    'P{}'.format(node),
-                    'S{}'.format(node),
+                    f'P{friend_a}',
+                    f'L{link_symbol + 2}',
+                    f'P{node}',
+                    f'S{node}',
                     'T' if (pos[friend_a][0] - pos[node][0] > 0) != (vpoints[node].angle > 90) else 'F',
-                    'P{}'.format(node),
+                    f'P{node}',
                 ))
                 status[node] = True
                 link_symbol += 3

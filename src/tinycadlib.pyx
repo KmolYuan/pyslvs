@@ -17,12 +17,11 @@ from libc.math cimport (
     atan2,
     hypot,
 )
+#Not a number
+cdef double nan = float('nan')
 from numpy import isnan
 from pmks cimport VPoint
-from bfgs cimport partial_solving
-
-
-cdef double nan = float('nan')
+from bfgs cimport vpoint_solving
 
 
 cdef inline double distance(double x1, double y1, double x2, double y2):
@@ -48,7 +47,7 @@ cdef class Coordinate:
     
     def __repr__(self):
         """Debug printing."""
-        return "Coordinate({p.x:.02f}, {p.y:.02f})".format(p=self)
+        return f"Coordinate({self.x:.02f}, {self.y:.02f})"
 
 
 cpdef tuple PLAP(
@@ -232,7 +231,7 @@ cdef inline void rotate(
     + Rotate the input joints.
     + Collect the coordinates of all joints.
     """
-    cdef str angle = 'a{}'.format(input_angle)
+    cdef str angle = f'a{input_angle}'
     cdef double a = 0
     if reverse:
         a = 360
@@ -242,12 +241,13 @@ cdef inline void rotate(
     while 0 <= a <= 360:
         data_dict[angle] = a / 180 * M_PI
         copy_dict = data_dict.copy()
+        #Solve
         expr_parser(exprs, copy_dict)
         for n in mapping:
             if mapping[n] in copy_dict:
                 path[n].append(copy_dict[mapping[n]])
             else:
-                #TODO: The point can not be solved.
+                #TODO: These points can not be solved.
                 path[n].append(())
         a += interval
 
@@ -255,7 +255,7 @@ cdef inline void rotate(
 cpdef str expr_join(object exprs):
     """Use to append a list of symbols into a string."""
     return ';'.join([
-        "{}[{}]({})".format(expr[0], ','.join(expr[1:-1]), expr[-1]) for expr in exprs
+        f"{expr[0]}[{','.join(expr[1:-1]), expr[-1])}]({expr[-1]})" for expr in exprs
     ])
 
 
@@ -375,7 +375,7 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
                 )
     
     #Reverse mapping, exclude specified link length.
-    cdef k, v
+    cdef object k, v
     cdef dict mapping_r = {v: k for k, v in mapping.items() if (type(k) == int)}
     
     cdef list pos = []
@@ -399,7 +399,7 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
             vpoint.slope_angle(vpoints[bf], 0, 0)
         ) / 180 * M_PI
         pos.append((vpoint.c[1][0] + cos(angle), vpoint.c[1][1] + sin(angle)))
-        mapping_r['S{}'.format(i)] = len(pos) - 1
+        mapping_r[f'S{i}'] = len(pos) - 1
     
     cdef int dof = 0
     cdef dict data_dict = {}
@@ -461,6 +461,10 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
                 data_dict[expr[3]] = mapping[expr[3]]
             else:
                 data_dict[expr[3]] = pos[target][1] - pos[node][1]
+    #Other grounded R joints.
+    for i, vpoint in enumerate(vpoints):
+        if vpoint.grounded() and (vpoint.type == 0):
+            data_dict[mapping[i]] = vpoint.c[0]
     return data_dict, dof
 
 
@@ -479,14 +483,14 @@ cpdef list expr_path(
     cdef int dof = vpoint_dof(vpoints)
     if dof_input > dof:
         raise Exception(
-            "wrong number of input parameters: {} / {}".format(dof_input, dof)
+            f"wrong number of input parameters: {dof_input} / {dof}"
         )
     
     #Angles.
     cdef double a = 0
     cdef int i
     for i in range(dof):
-        data_dict['a{}'.format(i)] = a
+        data_dict[f'a{i}'] = a
     
     cdef list path = [[] for i in range(len(mapping))]
     #For each input joint.
@@ -524,16 +528,30 @@ cpdef list expr_solving(
     cdef int dof = vpoint_dof(vpoints)
     if dof_input > dof:
         raise Exception(
-            "wrong number of input parameters: {} / {}".format(dof_input, dof)
+            f"wrong number of input parameters: {dof_input} / {dof}"
         )
     
     #Angles.
     cdef double a
     cdef int i
     for i, a in enumerate(angles):
-        data_dict['a{}'.format(i)] = a / 180 * M_PI
+        data_dict[f'a{i}'] = a / 180 * M_PI
     
+    #Solve
     expr_parser(exprs, data_dict)
+    
+    cdef dict p_data_dict = {}
+    cdef set targets = set()
+    for i in range(len(vpoints)):
+        if mapping[i] in data_dict:
+            p_data_dict[i] = data_dict[mapping[i]]
+        else:
+            targets.add(i)
+    if exprs and targets:
+        print(exprs)
+        print(p_data_dict)
+        print(targets)
+        #TODO: print(vpoint_solving(vpoints, p_data_dict, targets))
     
     """Format:
     + R joint
@@ -545,14 +563,14 @@ cpdef list expr_solving(
     cdef list solved_points = []
     for i in range(len(vpoints)):
         if mapping[i] not in data_dict:
-            #TODO: The point can not be solved.
+            #TODO: These points can not be solved.
             if vpoints[i].type == 0:
                 solved_points.append(vpoints[i].c[0])
             else:
                 solved_points.append(vpoints[i].c)
         else:
             if isnan(data_dict[mapping[i]][0]):
-                raise Exception("result contains failure: Point{}".format(i))
+                raise Exception(f"result contains failure: Point{i}")
             if vpoints[i].type == 0:
                 solved_points.append(data_dict[mapping[i]])
             else:
