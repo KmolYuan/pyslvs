@@ -1,5 +1,5 @@
 [![Version](https://img.shields.io/badge/version-18.07.0-yellow.svg)](https://github.com/KmolYuan/pyslvs/releases/latest)
-[![Build Status](https://travis-ci.org/KmolYuan/pyslvs.svg)](https://travis-ci.org/KmolYuan/pyslvs)
+[![Build Status](https://img.shields.io/travis/KmolYuan/pyslvs.svg?logo=travis)](https://travis-ci.org/KmolYuan/pyslvs)
 
 # Pyslvs Libraries
 
