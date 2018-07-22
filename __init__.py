@@ -49,7 +49,7 @@ from .planarlinkage import Planar
 from .rga import Genetic
 from .firefly import Firefly
 from .de import DiffertialEvolution
-from .number import NumberSynthesis
+from .number import number_synthesis
 from .topologic import topo, Graph
 from .triangulation import vpoints_configure
 from ._parser import (
@@ -80,7 +80,7 @@ __all__ = [
     'bfgs_vpoint_solving',
     'Verification',
     'Planar',
-    'NumberSynthesis',
+    'number_synthesis',
     'topo',
     'Graph',
     'vpoints_configure',

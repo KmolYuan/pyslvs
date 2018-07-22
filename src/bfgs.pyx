@@ -18,7 +18,21 @@ from libc.math cimport (
 )
 from libcpp.map cimport map
 from cpython cimport bool
-from sketch_solve cimport *
+from sketch_solve cimport (
+    Rough,
+    Succsess,
+    Point,
+    Line,
+    Constraint,
+    HorizontalConstraint,
+    PointOnPointConstraint,
+    P2PDistanceConstraint,
+    InternalAngleConstraint,
+    PointOnLineConstraint,
+    LineInternalAngleConstraint,
+    solve,
+    derivatives,
+)
 from pmks cimport VPoint
 
 

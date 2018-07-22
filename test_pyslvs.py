@@ -28,7 +28,7 @@ from planarlinkage import Planar
 from rga import Genetic
 from firefly import Firefly
 from de import DiffertialEvolution
-from number import NumberSynthesis
+from number import number_synthesis
 from topologic import topo, Graph
 from triangulation import vpoints_configure
 from _parser import parse_vpoints
@@ -179,7 +179,7 @@ class CoreTest(TestCase):
     def test_number_synthesis(self):
         """Test Number Synthesis function."""
         for NL, NJ in [(4, 4), (6, 7), (8, 9), (10, 12)]:
-            for factors in NumberSynthesis(NL, NJ):
+            for factors in number_synthesis(NL, NJ):
                 count = 0
                 for i, factor in enumerate(factors):
                     count += factor * (i + 2)
