@@ -547,13 +547,15 @@ cpdef list expr_solving(
             p_data_dict[i] = data_dict[mapping[i]]
         else:
             targets.add(i)
+    cdef list solved_bfgs = []
     if exprs and targets:
-        print(exprs)
-        print(p_data_dict)
-        print(targets)
-        #TODO: print(vpoint_solving(vpoints, p_data_dict, targets))
+        try:
+            solved_bfgs = vpoint_solving(vpoints, [], p_data_dict)
+        except Exception as e:
+            raise Exception("result contains failure: Sketch Solve") from e
     
     """Format:
+    
     + R joint
         [p0]: (p0_x, p0_y)
         [p1]: (p1_x, p1_y)
@@ -563,11 +565,11 @@ cpdef list expr_solving(
     cdef list solved_points = []
     for i in range(len(vpoints)):
         if mapping[i] not in data_dict:
-            #TODO: These points can not be solved.
+            #These points solved by Sketch Solve.
             if vpoints[i].type == 0:
-                solved_points.append(vpoints[i].c[0])
+                solved_points.append(solved_bfgs[i])
             else:
-                solved_points.append(vpoints[i].c)
+                solved_points.append((vpoints[i].c[0], solved_bfgs[i]))
         else:
             if isnan(data_dict[mapping[i]][0]):
                 raise Exception(f"result contains failure: Point{i}")

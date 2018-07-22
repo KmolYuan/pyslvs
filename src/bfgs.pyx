@@ -37,7 +37,16 @@ from pmks cimport VPoint
 
 
 cpdef tuple test_kernel():
-    """Test kernel of Sketch Solve. Same as C++ version."""
+    """Test kernel of Sketch Solve. Same as C++ version.
+    
+    Note of Pointer:
+    + In Cython, pointer is more convenient then array.
+        Because we can not "new" them or using "const" decorator on size_t.
+    + There is NO pointer's "get value" operator in Cython,
+        please use "index" operator.
+    + Pointers can be plus with C's Integer, but not Python's.
+        So please copy or declare to C's Integer.
+    """
     cdef int i
     cdef double constants[3]
     constants = [30, 10, 24]
@@ -53,7 +62,7 @@ cpdef tuple test_kernel():
         #Just copy values, these are not their pointer.
         parameters[i] = params[i]
         #Pointer of parameter pointer.
-        pparameters[i] = &parameters[i]
+        pparameters[i] = parameters + i
     
     cdef Point points[5]
     points = [
@@ -61,7 +70,7 @@ cpdef tuple test_kernel():
         [pparameters[2], pparameters[3]],
         [pparameters[4], pparameters[5]],
         [pparameters[6], pparameters[7]],
-        [&constants[0], &constants[1]],
+        [constants + 0, constants + 1],
     ]
     cdef Line lines[2]
     lines = [
@@ -77,12 +86,13 @@ cpdef tuple test_kernel():
     ]
     
     cdef int point_count = 5
+    cdef int cons_count = 4
     cdef list input_data = []
     cdef list output_data = []
     for i in range(point_count):
         input_data.append((points[i].x[0], points[i].y[0]))
     
-    if solve(pparameters, len(params), cons, len(cons), Rough) != Succsess:
+    if solve(pparameters, len(params), cons, cons_count, Rough) != Succsess:
         raise Exception("No valid Solutions were found from this start point.")
     
     for i in range(point_count):
@@ -91,7 +101,7 @@ cpdef tuple test_kernel():
     cdef double *gradF = <double *>malloc(point_count * sizeof(double))
     for i in range(point_count):
         gradF[i] = 0
-    derivatives(pparameters, gradF, point_count, cons, len(cons))
+    derivatives(pparameters, gradF, point_count, cons, cons_count)
     cdef list grad_data = []
     for i in range(point_count):
         grad_data.append(gradF[i])
@@ -105,16 +115,15 @@ cpdef tuple test_kernel():
 cpdef list vpoint_solving(
     object vpoints,
     object inputs = [],
-    dict data_dict = {},
-    set targets = set()
+    dict data_dict = {}
 ):
     """Solving function from vpoint list.
     
     + vpoints: Sequence[VPoint]
     + inputs: [(b0, d0, a0), (b1, d1, a1), ...]
-    TODO: Known coordinates import from data_dict.
+    
+    Known coordinates import from data_dict.
     + data_dict: Dict[int, Tuple[float, float]]
-    + targets: Set[int]
     """
     cdef dict vlinks = {}
     
@@ -134,8 +143,15 @@ cpdef list vpoint_solving(
         if vpoint.grounded():
             constants_count += 2
         else:
-            params_count += 2
+            if i in data_dict:
+                #Known coordinates.
+                constants_count += 2
+            else:
+                params_count += 2
         if vpoint.type in {1, 2}:
+            if i in data_dict:
+                #Known coordinates are not slider.
+                continue
             if vpoint.grounded():
                 a += 1
             else:
@@ -175,6 +191,12 @@ cpdef list vpoint_solving(
             else:
                 vlinks[vlink] = [i]
         if vpoint.grounded():
+            if i in data_dict:
+                #Known coordinates.
+                constants[b], constants[b + 1] = data_dict[i]
+                points[i] = [constants + b, constants + b + 1]
+                b += 2
+                continue
             constants[b], constants[b + 1] = vpoint.c[0]
             if vpoint.type in {1, 2}:
                 #Base point (slot) is fixed.
@@ -182,12 +204,12 @@ cpdef list vpoint_solving(
                 #Slot point (slot) is moveable.
                 parameters[a] = vpoint.c[0][0] + cos(vpoint.angle)
                 parameters[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
-                pparameters[a], pparameters[a + 1] = &parameters[a], &parameters[a + 1]
+                pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
                 slider_slots[slider_count] = [pparameters[a], pparameters[a + 1]]
                 a += 2
                 slider_count += 1
                 #Pin is moveable.
-                parameters[a], parameters[a + 1] = vpoint.c[0]
+                parameters[a], parameters[a + 1] = vpoint.c[1]
                 pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
                 points[i] = [pparameters[a], pparameters[a + 1]]
                 a += 2
@@ -196,51 +218,64 @@ cpdef list vpoint_solving(
                 points[i] = [constants + b, constants + b + 1]
             b += 2
         else:
+            if i in data_dict:
+                #Known coordinates.
+                constants[b], constants[b + 1] = data_dict[i]
+                points[i] = [constants + b, constants + b + 1]
+                b += 2
+                continue
             if vpoint.type in {1, 2}:
                 #Base point (slot) is moveable.
                 parameters[a], parameters[a + 1] = vpoint.c[0]
-                pparameters[a], pparameters[a + 1] = &parameters[a], &parameters[a + 1]
+                pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
                 slider_bases[slider_count] = [pparameters[a], pparameters[a + 1]]
                 a += 2
                 #Slot point (slot) is moveable.
                 parameters[a] = vpoint.c[0][0] + cos(vpoint.angle)
                 parameters[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
-                pparameters[a], pparameters[a + 1] = &parameters[a], &parameters[a + 1]
+                pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
                 slider_slots[slider_count] = [pparameters[a], pparameters[a + 1]]
                 a += 2
                 slider_count += 1
             #Point / Pin is moveable.
             parameters[a], parameters[a + 1] = vpoint.c[0]
-            pparameters[a], pparameters[a + 1] = &parameters[a], &parameters[a + 1]
+            pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
             points[i] = [pparameters[a], pparameters[a + 1]]
             a += 2
     
     #Pre-count number of distence constraints.
     cdef int cons_count = 0
-    cdef int link_count
+    cdef int c, d
     for vlink in vlinks:
-        link_count = len(vlinks[vlink]) - 1
-        if link_count < 1:
+        if len(vlinks[vlink]) < 2:
             continue
-        cons_count += 1 + 2 * (link_count - 1)
+        a = vlinks[vlink][0]
+        b = vlinks[vlink][1]
+        if (a not in data_dict) or (b not in data_dict):
+            cons_count += 1
+        for c in vlinks[vlink][2:]:
+            if c in data_dict:
+                #Known coordinates.
+                continue
+            cons_count += 2
     cdef double *distences = <double *>malloc(cons_count * sizeof(double))
     
     #Pre-count number of slider constraints.
-    slider_count = 0
-    link_count = 0
+    c = 0
+    d = 0
     for a, b in sliders:
-        link_count += 1
+        c += 1
         cons_count += 2
-        slider_count += 1
+        d += 1
         if not vpoints[a].grounded():
-            link_count += 1
+            c += 1
         if vpoints[a].type == 1:
             cons_count += 1
-            link_count += 1
-            slider_count += 1
+            c += 1
+            d += 1
     if not sliders.empty():
-        slider_lines = <Line *>malloc(link_count * sizeof(Line))
-        cons_angles = <double *>malloc(slider_count * sizeof(double))
+        slider_lines = <Line *>malloc(c * sizeof(Line))
+        cons_angles = <double *>malloc(d * sizeof(double))
     
     #Pre-count number of angle constraints.
     cdef int input_count = len(inputs)
@@ -256,28 +291,46 @@ cpdef list vpoint_solving(
     
     #Create distence constraints of each link.
     i = 0
-    cdef int c, d
+    cdef Point *p1
+    cdef Point *p2
     for vlink in vlinks:
-        link_count = len(vlinks[vlink])
-        if link_count < 2:
+        if len(vlinks[vlink]) < 2:
             continue
         a = vlinks[vlink][0]
         b = vlinks[vlink][1]
-        distences[i] = vpoints[a].distance(vpoints[b])
-        cons[i] = P2PDistanceConstraint(
-            slider_bases + sliders[a] if vpoints[a].is_slot_link(vlink) else points + a,
-            slider_bases + sliders[b] if vpoints[b].is_slot_link(vlink) else points + b,
-            distences + i
-        )
-        i += 1
+        if (a not in data_dict) or (b not in data_dict):
+            distences[i] = vpoints[a].distance(vpoints[b])
+            if a in data_dict:
+                p1 = points + a
+            elif vpoints[a].is_slot_link(vlink):
+                p1 = slider_bases + sliders[a]
+            else:
+                p1 = points + a
+            if b in data_dict:
+                p2 = points + b
+            elif vpoints[b].is_slot_link(vlink):
+                p2 = slider_bases + sliders[b]
+            else:
+                p2 = points + b
+            cons[i] = P2PDistanceConstraint(p1, p2, distences + i)
+            i += 1
         for c in vlinks[vlink][2:]:
+            if c in data_dict:
+                #Known coordinates.
+                continue
             for d in (a, b):
                 distences[i] = vpoints[c].distance(vpoints[d])
-                cons[i] = P2PDistanceConstraint(
-                    slider_bases + sliders[c] if vpoints[c].is_slot_link(vlink) else points + c,
-                    slider_bases + sliders[d] if vpoints[d].is_slot_link(vlink) else points + d,
-                    distences + i
-                )
+                if vpoints[c].is_slot_link(vlink):
+                    p1 = slider_bases + sliders[c]
+                else:
+                    p1 = points + c
+                if d in data_dict:
+                    p2 = points + d
+                elif vpoints[d].is_slot_link(vlink):
+                    p2 = slider_bases + sliders[d]
+                else:
+                    p2 = points + d
+                cons[i] = P2PDistanceConstraint(p1, p2, distences + i)
                 i += 1
     
     #Add slider constraints.
@@ -380,11 +433,10 @@ cpdef list vpoint_solving(
     free(pparameters)
     free(constants)
     free(points)
-    if not sliders.empty():
-        free(slider_bases)
-        free(slider_slots)
-        free(slider_lines)
-        free(cons_angles)
+    free(slider_bases)
+    free(slider_slots)
+    free(slider_lines)
+    free(cons_angles)
     free(distences)
     free(angles)
     free(lines)

@@ -291,7 +291,6 @@ int solve(
             }
 
         //Now calculate the BFGS update on N
-        //cout<<"N:"<<endl;
         for(int i = 0; i < xLength; i++)
             for(int j = 0; j < xLength; j++)
                 N[i][j] = N[i][j] + FirstSecond[i][j] -
