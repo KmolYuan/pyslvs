@@ -60,9 +60,9 @@ cpdef tuple PLAP(
     """Point on circle by angle."""
     cdef double a1 = atan2(B.y - A.y, B.x - A.x) if B else 0
     if inverse:
-        return (A.x + L0*cos(a1 - a0), A.y + L0*sin(a1 - a0))
+        return (A.x + L0 * cos(a1 - a0), A.y + L0 * sin(a1 - a0))
     else:
-        return (A.x + L0*cos(a1 + a0), A.y + L0*sin(a1 + a0))
+        return (A.x + L0 * cos(a1 + a0), A.y + L0 * sin(a1 + a0))
 
 
 cpdef tuple PLLP(
@@ -88,15 +88,15 @@ cpdef tuple PLLP(
     #Circles are coincident and there are an infinite number of solutions.
     if (d == 0) and (L0 == L1):
         return (nan, nan)
-    cdef double a = (L0*L0 - L1*L1 + d*d)/(2*d)
-    cdef double h = sqrt(L0*L0 - a*a)
-    cdef double xm = A.x + a*dx/d
-    cdef double ym = A.y + a*dy/d
+    cdef double a = (L0 * L0 - L1 * L1 + d * d) / (2 * d)
+    cdef double h = sqrt(L0 * L0 - a * a)
+    cdef double xm = A.x + a * dx / d
+    cdef double ym = A.y + a * dy / d
     
     if inverse:
-        return (xm + h*dy/d, ym - h*dx/d)
+        return (xm + h * dy / d, ym - h * dx / d)
     else:
-        return (xm - h*dy/d, ym + h*dx/d)
+        return (xm - h * dy / d, ym + h * dx / d)
 
 
 cpdef tuple PLPP(
@@ -123,11 +123,11 @@ cpdef tuple PLPP(
         return (I.x, I.y)
     
     #Two intersection points.
-    d = sqrt(L0*L0 - d*d) / line_mag
+    d = sqrt(L0 * L0 - d * d) / line_mag
     if inverse:
-        return (I.x - dx*d, I.y - dy*d)
+        return (I.x - dx * d, I.y - dy * d)
     else:
-        return (I.x + dx*d, I.y + dy*d)
+        return (I.x + dx * d, I.y + dy * d)
 
 
 cpdef tuple PXY(Coordinate A, double x, double y):
@@ -154,7 +154,7 @@ cdef inline bool legal_crank(Coordinate A, Coordinate B, Coordinate C, Coordinat
 
 cdef inline str strbetween(str s, str front, str back):
     """Get the string that is inside of parenthesis."""
-    return s[s.find(front)+1:s.find(back)]
+    return s[s.find(front) + 1:s.find(back)]
 
 
 cdef inline str strbefore(str s, str front):
@@ -220,6 +220,7 @@ cpdef void expr_parser(object exprs, dict data_dict):
 cdef inline void rotate(
     int input_angle,
     object exprs,
+    object vpoints,
     dict data_dict,
     dict mapping,
     list path,
@@ -231,24 +232,55 @@ cdef inline void rotate(
     + Rotate the input joints.
     + Collect the coordinates of all joints.
     """
-    cdef str angle = f'a{input_angle}'
+    cdef str angle_str = f'a{input_angle}'
     cdef double a = 0
     if reverse:
         a = 360
         interval = -interval
     cdef dict copy_dict
-    cdef int n
+    cdef dict p_data_dict = {}
+    cdef list solved_bfgs
+    cdef bool has_target, error
+    cdef int i
     while 0 <= a <= 360:
-        data_dict[angle] = a / 180 * M_PI
         copy_dict = data_dict.copy()
+        copy_dict[angle_str] = a / 180 * M_PI
         #Solve
         expr_parser(exprs, copy_dict)
-        for n in mapping:
-            if mapping[n] in copy_dict:
-                path[n].append(copy_dict[mapping[n]])
+        #FIXME: Here has an unbound error.
+        p_data_dict.clear()
+        has_target = False
+        for i in range(len(vpoints)):
+            if mapping[i] in copy_dict:
+                p_data_dict[i] = copy_dict[mapping[i]]
             else:
-                #TODO: These points can not be solved.
-                path[n].append(())
+                has_target = True
+                break
+        if exprs and has_target:
+            try:
+                solved_bfgs = vpoint_solving(vpoints, [], p_data_dict)
+            except:
+                has_target = False
+        #Error detection.
+        error = False
+        for i in mapping:
+            if mapping[i] in copy_dict:
+                if isnan(copy_dict[mapping[i]][0]):
+                    error = True
+                    break
+            else:
+                if not has_target:
+                    error = True
+                    break
+        for i in mapping:
+            if error:
+                path[i].append((nan, nan))
+                continue
+            if mapping[i] in copy_dict:
+                path[i].append(copy_dict[mapping[i]])
+            else:
+                #These points solved by Sketch Solve.
+                path[i].append(solved_bfgs[i])
         a += interval
 
 
@@ -495,11 +527,11 @@ cpdef list expr_path(
     cdef list path = [[] for i in range(len(mapping))]
     #For each input joint.
     for i in range(dof):
-        rotate(i, exprs, data_dict, mapping, path, interval, False)
+        rotate(i, exprs, vpoints, data_dict, mapping, path, interval, False)
     if dof > 1:
         #Rotate back.
         for i in range(dof):
-            rotate(i, exprs, data_dict, mapping, path, interval, True)
+            rotate(i, exprs, vpoints, data_dict, mapping, path, interval, True)
     #return_path: [[each_joints]: ((x0, y0), (x1, y1), (x2, y2), ...), ...]
     for i in range(len(path)):
         if len(set(path[i])) <= 1:
@@ -541,14 +573,15 @@ cpdef list expr_solving(
     expr_parser(exprs, data_dict)
     
     cdef dict p_data_dict = {}
-    cdef set targets = set()
+    cdef bool has_target = False
     for i in range(len(vpoints)):
         if mapping[i] in data_dict:
             p_data_dict[i] = data_dict[mapping[i]]
         else:
-            targets.add(i)
+            has_target = True
+            break
     cdef list solved_bfgs = []
-    if exprs and targets:
+    if exprs and has_target:
         try:
             solved_bfgs = vpoint_solving(vpoints, [], p_data_dict)
         except Exception as e:
