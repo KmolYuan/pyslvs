@@ -240,36 +240,18 @@ cdef inline void rotate(
     cdef dict copy_dict
     cdef dict p_data_dict = {}
     cdef list solved_bfgs
-    cdef bool has_target, error
+    cdef bool error
     cdef int i
     while 0 <= a <= 360:
         copy_dict = data_dict.copy()
         copy_dict[angle_str] = a / 180 * M_PI
         #Solve
         expr_parser(exprs, copy_dict)
-        #FIXME: Here has an unbound error.
-        p_data_dict.clear()
-        has_target = False
-        for i in range(len(vpoints)):
-            if mapping[i] in copy_dict:
-                p_data_dict[i] = copy_dict[mapping[i]]
-            else:
-                has_target = True
-                break
-        if exprs and has_target:
-            try:
-                solved_bfgs = vpoint_solving(vpoints, [], p_data_dict)
-            except:
-                has_target = False
         #Error detection.
         error = False
         for i in mapping:
             if mapping[i] in copy_dict:
                 if isnan(copy_dict[mapping[i]][0]):
-                    error = True
-                    break
-            else:
-                if not has_target:
                     error = True
                     break
         for i in mapping:
@@ -279,8 +261,8 @@ cdef inline void rotate(
             if mapping[i] in copy_dict:
                 path[i].append(copy_dict[mapping[i]])
             else:
-                #These points solved by Sketch Solve.
-                path[i].append(solved_bfgs[i])
+                #TODO: These points can not solved.
+                path[i].append((nan, nan))
         a += interval
 
 
