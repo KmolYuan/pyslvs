@@ -47,7 +47,7 @@ struct Circle {
     double *rad;
 };
 
-struct Constraint {
+struct GeoConstraint {
     int type;
     Point *point1, *point2;
     Line *line1, *line2, *SymLine;
@@ -56,47 +56,47 @@ struct Constraint {
     double *parameter; //radius, length, angle etc...
 };
 
-//Constraint Functions
-Constraint PointOnPointConstraint(Point *, Point *);
-Constraint P2PDistanceConstraint(Point *, Point *, double *);
-Constraint P2PDistanceVertConstraint(Point *, Point *, double *);
-Constraint P2PDistanceHorzConstraint(Point *, Point *, double *);
-Constraint PointOnLineConstraint(Point *, Line *);
-Constraint P2LDistanceConstraint(Point *, Line *, double *);
-Constraint P2LDistanceVertConstraint(Point *, Line *, double *);
-Constraint P2LDistanceHorzConstraint(Point *, Line *, double *);
-Constraint VerticalConstraint(Line *);
-Constraint HorizontalConstraint(Line *);
-Constraint TangentToCircleConstraint(Line *, Circle *);
-Constraint TangentToArcConstraint(Line *, Arc *);
-Constraint ArcRulesConstraint(Arc *);
-Constraint LineLengthConstraint(Line *, double *);
-Constraint EqualLegnthConstraint(Line *, Line *);
-Constraint ArcRadiusConstraint(Arc *, double *);
-Constraint EqualRadiusArcsConstraint(Arc *, Arc *);
-Constraint EqualRadiusCirclesConstraint(Circle *, Circle *);
-Constraint EqualRadiusCircArcConstraint(Circle *, Arc *);
-Constraint ConcentricArcsConstraint(Arc *, Arc *);
-Constraint ConcentricCirclesConstraint(Circle *, Circle *);
-Constraint ConcentricCircArcConstraint(Circle *, Arc *);
-Constraint CircleRadiusConstraint(Circle *, double *);
-Constraint InternalAngleConstraint(Line *, Line *, double *);
-Constraint ExternalAngleConstraint(Line *, Line *, double *);
-Constraint PerpendicularConstraint(Line *, Line *);
-Constraint ParallelConstraint(Line *, Line *);
-Constraint ColinearConstraint(Line *, Line *);
-Constraint PointOnCircleConstraint(Point *, Circle *);
-Constraint PointOnArcConstraint(Point *, Arc *);
-Constraint PointOnLineMidpointConstraint(Point *, Line *);
-Constraint PointOnArcMidpointConstraint(Point *, Arc *);
-Constraint PointOnCircleQuadConstraint(Point *, Circle *, double *);
-Constraint SymmetricPointsConstraint(Point *, Point *, Line *);
-Constraint SymmetricLinesConstraint(Line *, Line *, Line *);
-Constraint SymmetricCirclesConstraint(Circle *, Circle *, Line *);
-Constraint SymmetricArcsConstraint(Arc *, Arc *, Line *);
-Constraint LineInternalAngleConstraint(Line *, double *);
-Constraint LineExternalAngleConstraint(Line *, double *);
+//GeoConstraint Functions
+GeoConstraint PointOnPointConstraint(Point *, Point *);
+GeoConstraint P2PDistanceConstraint(Point *, Point *, double *);
+GeoConstraint P2PDistanceVertConstraint(Point *, Point *, double *);
+GeoConstraint P2PDistanceHorzConstraint(Point *, Point *, double *);
+GeoConstraint PointOnLineConstraint(Point *, Line *);
+GeoConstraint P2LDistanceConstraint(Point *, Line *, double *);
+GeoConstraint P2LDistanceVertConstraint(Point *, Line *, double *);
+GeoConstraint P2LDistanceHorzConstraint(Point *, Line *, double *);
+GeoConstraint VerticalConstraint(Line *);
+GeoConstraint HorizontalConstraint(Line *);
+GeoConstraint TangentToCircleConstraint(Line *, Circle *);
+GeoConstraint TangentToArcConstraint(Line *, Arc *);
+GeoConstraint ArcRulesConstraint(Arc *);
+GeoConstraint LineLengthConstraint(Line *, double *);
+GeoConstraint EqualLegnthConstraint(Line *, Line *);
+GeoConstraint ArcRadiusConstraint(Arc *, double *);
+GeoConstraint EqualRadiusArcsConstraint(Arc *, Arc *);
+GeoConstraint EqualRadiusCirclesConstraint(Circle *, Circle *);
+GeoConstraint EqualRadiusCircArcConstraint(Circle *, Arc *);
+GeoConstraint ConcentricArcsConstraint(Arc *, Arc *);
+GeoConstraint ConcentricCirclesConstraint(Circle *, Circle *);
+GeoConstraint ConcentricCircArcConstraint(Circle *, Arc *);
+GeoConstraint CircleRadiusConstraint(Circle *, double *);
+GeoConstraint InternalAngleConstraint(Line *, Line *, double *);
+GeoConstraint ExternalAngleConstraint(Line *, Line *, double *);
+GeoConstraint PerpendicularConstraint(Line *, Line *);
+GeoConstraint ParallelConstraint(Line *, Line *);
+GeoConstraint ColinearConstraint(Line *, Line *);
+GeoConstraint PointOnCircleConstraint(Point *, Circle *);
+GeoConstraint PointOnArcConstraint(Point *, Arc *);
+GeoConstraint PointOnLineMidpointConstraint(Point *, Line *);
+GeoConstraint PointOnArcMidpointConstraint(Point *, Arc *);
+GeoConstraint PointOnCircleQuadConstraint(Point *, Circle *, double *);
+GeoConstraint SymmetricPointsConstraint(Point *, Point *, Line *);
+GeoConstraint SymmetricLinesConstraint(Line *, Line *, Line *);
+GeoConstraint SymmetricCirclesConstraint(Circle *, Circle *, Line *);
+GeoConstraint SymmetricArcsConstraint(Arc *, Arc *, Line *);
+GeoConstraint LineInternalAngleConstraint(Line *, double *);
+GeoConstraint LineExternalAngleConstraint(Line *, double *);
 
 //Public Functions
-int solve(double **, int, Constraint *, int, int);
-void derivatives(double **, double *, int, Constraint *, int);
+int solve(double **, int, GeoConstraint *, int, int);
+void derivatives(double **, double *, int, GeoConstraint *, int);

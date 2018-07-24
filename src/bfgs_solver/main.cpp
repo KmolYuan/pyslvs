@@ -48,7 +48,7 @@ int main(void) {
         {&points[1], &points[2]},
     };
 
-    Constraint cons[] = {
+    GeoConstraint cons[] = {
         HorizontalConstraint(&lines[0]),
         PointOnPointConstraint(&points[2], &points[4]),
         PointOnPointConstraint(&points[3], &points[4]),

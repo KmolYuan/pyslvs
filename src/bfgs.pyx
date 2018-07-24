@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3
-# distutils: include_dirs = ./bfgs_solver
-# distutils: sources = constraint_func.cpp, derivatives.cpp, solve.cpp, position.cpp
 
 """Wrapper of BFGS algorithm."""
 
@@ -23,7 +21,7 @@ from sketch_solve cimport (
     Succsess,
     Point,
     Line,
-    Constraint,
+    GeoConstraint,
     HorizontalConstraint,
     PointOnPointConstraint,
     P2PDistanceConstraint,
@@ -77,7 +75,7 @@ cpdef tuple test_kernel():
         [&points[0], &points[1]],
         [&points[1], &points[2]],
     ]
-    cdef Constraint cons[4]
+    cdef GeoConstraint cons[4]
     cons = [
         HorizontalConstraint(&lines[0]),
         PointOnPointConstraint(&points[2], &points[4]),
@@ -287,7 +285,7 @@ cpdef list vpoint_solving(
         cons_count += input_count
     
     #Pre-count number of constraints.
-    cdef Constraint *cons = <Constraint *>malloc(cons_count * sizeof(Constraint))
+    cdef GeoConstraint *cons = <GeoConstraint *>malloc(cons_count * sizeof(GeoConstraint))
     
     #Create distence constraints of each link.
     i = 0

@@ -12,10 +12,14 @@
 
 using namespace std;
 
+double calc(GeoConstraint *cons, const int consLength) {
+    return position_analysis(cons, consLength);
+}
+
 int solve(
     double **param_ptr,
     const int xLength,
-    Constraint *cons,
+    GeoConstraint *cons,
     const int consLength,
     int const isFine
 ) {

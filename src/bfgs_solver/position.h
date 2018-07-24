@@ -65,4 +65,4 @@
 #define Sym_P2_y     *cons[i].SymLine->p2->y
 
 
-double calc(Constraint *, const int);
+double position_analysis(GeoConstraint *, const int);

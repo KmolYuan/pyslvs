@@ -11,17 +11,18 @@
 using namespace std;
 
 
-void derivatives(double **x,
+void derivatives(
+    double **x,
     double *gradF,
     const int xLength,
-    Constraint *cons,
+    GeoConstraint *cons,
     const int consLength
 ) {
     int position;
     for(int i = 0; i < consLength; i++)
         switch(cons[i].type) {
         //////////////////////////////////////
-        //Point on Point Constraint derivative
+        //Point on Point GeoConstraint derivative
         //////////////////////////////////////
         case PointOnPoint:
             // Derivative with respect to p1x
@@ -46,7 +47,7 @@ void derivatives(double **x,
             break;
 
         //////////////////////////////////////
-        //Point to Point Distance Constraint derivative
+        //Point to Point Distance GeoConstraint derivative
         //////////////////////////////////////
         case P2PDistance:
             // Derivative with respect to p1x
@@ -76,7 +77,7 @@ void derivatives(double **x,
             break;
 
         //////////////////////////////////////
-        //Point to Point Distance Vert Constraint derivative
+        //Point to Point Distance Vert GeoConstraint derivative
         //////////////////////////////////////
         case P2PDistanceVert:
             // Derivative with respect to p1y
@@ -96,7 +97,7 @@ void derivatives(double **x,
             break;
 
         //////////////////////////////////////
-        //Point to Point Horz Distance Constraint derivative
+        //Point to Point Horz Distance GeoConstraint derivative
         //////////////////////////////////////
         case P2PDistanceHorz:
             // Derivative with respect to p1x
@@ -116,7 +117,7 @@ void derivatives(double **x,
             break;
 
         //////////////////////////////////////
-        //Point on line Constraint derivatives
+        //Point on line GeoConstraint derivatives
         //////////////////////////////////////
         case PointOnLine:
             // Derivative with respect to p1x

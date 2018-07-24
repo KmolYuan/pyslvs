@@ -6,7 +6,7 @@
 #include "position.h"
 #include "constrain_func.h"
 
-double calc(Constraint *cons, const int consLength) {
+double position_analysis(GeoConstraint *cons, const int consLength) {
     double error = 0;
     double temp, temp2, dx, dy, m, n, Ex, Ey, rad1, rad2, t, dx2, dy2, hyp1, hyp2;
     for(int i = 0; i < consLength; i++) {
