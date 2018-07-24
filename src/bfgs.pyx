@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3
 # distutils: include_dirs = ./bfgs_solver
-# distutils: sources = constraint_func.cpp, derivatives.cpp, solve.cpp
+# distutils: sources = constraint_func.cpp, derivatives.cpp, solve.cpp, position.cpp
 
 """Wrapper of BFGS algorithm."""
 

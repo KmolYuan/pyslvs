@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include "solve.h"
+#include "constrain_func.h"
 
 using namespace std;
 

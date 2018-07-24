@@ -33,6 +33,7 @@ ext_modules = [Extension(
         'src/bfgs_solver/' + 'constraint_func.cpp',
         'src/bfgs_solver/' + 'derivatives.cpp',
         'src/bfgs_solver/' + 'solve.cpp',
+        'src/bfgs_solver/' + 'position.cpp',
     ],
     language = "c++",
     include_dirs = ['src/bfgs_solver/', np_include],

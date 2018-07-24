@@ -4,6 +4,7 @@
  * These functions make writing constraint easier
  */
 
+#include "constrain_func.h"
 #include "solve.h"
 
 
