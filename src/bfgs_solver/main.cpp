@@ -28,11 +28,11 @@ int main(void) {
     };
     const int param_count = sizeof(parameters) / sizeof(*parameters);
     //Make a list of pointers of parameters.
-    double *pparameters[param_count];
+    double **pparameters = new double *[param_count];
     for(int i = 0; i < param_count; i++)
         pparameters[i] = &parameters[i];
     //Input a constant parameter list.
-    double constants[] = {30, 10, 24,};
+    double constants[] = {30, 10, 24};
 
     //Create geometric objects and constraints with pointers.
     Point points[] = {

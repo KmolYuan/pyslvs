@@ -19,7 +19,7 @@ int solve(
     const int xLength,
     Constraint *cons,
     const int consLength,
-    int const isFine
+    const int isFine
 ) {
     //Save the original parameters for later.
     double *origSolution = new double[xLength];
@@ -63,17 +63,15 @@ int solve(
     double **N = new double *[xLength];
     for(int i = 0; i < xLength; i++)
         N[i] = new double[xLength]; //The estimate of the Hessian inverse
-    for(int i = 0; i < xLength; i++) {
+    for(int i = 0; i < xLength; i++)
         for(int j = 0; j < xLength; j++) {
             if(i == j) {
-                //N[i][j]=norm; //Calculate a scaled identity matrix as a Hessian inverse estimate
-                //N[i][j]=grad[i]/(norm+.001);
                 N[i][j] = 1;
                 s[i] = -grad[i]; //Calculate the initial search vector
-            } else
-                N[i][j] = 0;
+                continue;
+            }
+            N[i][j] = 0;
         }
-    }
     double fnew = f0 + 1; //make fnew greater than fold
     double alpha = 1; //Initial search vector multiplier
 
@@ -107,7 +105,7 @@ int solve(
 
     //Now reduce or lengthen alpha2 and alpha3 until the minimum is
     //Bracketed by the triplet f1>f2<f3
-    while(f2 > f1 || f2 > f3) {
+    while(f2 > f1 || f2 > f3)
         if(f2 > f1) {
             //If f2 is greater than f1 then we shorten alpha2 and alpha3 closer to f1
             //Effectively both are shortened by a factor of two.
@@ -129,15 +127,14 @@ int solve(
             f3 = calc(cons, consLength);
             ftimes++;
         }
-    }
     // get the alpha for the minimum f of the quadratic approximation
-    alphaStar = alpha2 + (alpha2 - alpha1) * (f1 - f3) / (3*(f1 - 2 * f2 + f3));
+    alphaStar = alpha2 + (alpha2 - alpha1) * (f1 - f3) / (3 * (f1 - 2 * f2 + f3));
 
     //Guarantee that the new alphaStar is within the bracket
     if(alphaStar > alpha3 || alphaStar < alpha1)
         alphaStar = alpha2;
     if(alphaStar != alphaStar)
-        alphaStar = 0.001;//Fix nan problem
+        alphaStar = 0.001; //Fix nan problem
 
     /// Set the values to alphaStar
     for(int i = 0; i < xLength; i++)
@@ -171,7 +168,6 @@ int solve(
     int iterations = 1;
     double maxIterNumber = MaxIterations * xLength;
     double deltaXnorm = 1;
-    int steps;
     double deltaXtDotGamma, gammatDotNDotGamma, firstTerm, bottom;
     while(deltaXnorm > convergence && fnew > SmallF && iterations < maxIterNumber) {
         //////////////////////////////////////////////////////////////////////
@@ -207,7 +203,7 @@ int solve(
         for(int i = 0; i < xLength; i++) {
             gammatDotN[i] = 0;
             for(int j = 0; j < xLength; j++)
-                gammatDotN[i] += gamma[j] * N[i][j];//This is gammatDotN transpose
+                gammatDotN[i] += gamma[j] * N[i][j]; //This is gammatDotN transpose
         }
 
         //calculate all (1xn).(nx1)
@@ -221,13 +217,12 @@ int solve(
         firstTerm = 1 + gammatDotNDotGamma / bottom;
 
         //Calculate all (nx1).(1xn) matrices
-        for(int i = 0; i < xLength; i++) {
+        for(int i = 0; i < xLength; i++)
             for(int j = 0; j < xLength; j++) {
                 FirstSecond[i][j] = deltaX[j] * deltaX[i] / bottom * firstTerm;
                 deltaXDotGammatDotN[i][j] = deltaX[i] * gammatDotN[j];
                 gammatDotDeltaXt[i][j] = gamma[i] * deltaX[j];
             }
-        }
 
         //Calculate all (nxn).(nxn) matrices
         for(int i = 0; i < xLength; i++)
@@ -255,7 +250,6 @@ int solve(
         //copy newest values to the xold
         for(int i = 0; i < xLength; i++)
             xold[i] = *param_ptr[i]; //Copy last values to xold
-        steps = 0;
 
         ///////////////////////////////////////////////////////
         /// Start of line search
@@ -281,8 +275,7 @@ int solve(
 
         //Now reduce or lengthen alpha2 and alpha3 until the minimum is
         //Bracketed by the triplet f1>f2<f3
-        steps = 0;
-        while(f2 > f1 || f2 > f3) {
+        while(f2 > f1 || f2 > f3)
             if(f2 > f1) {
                 //If f2 is greater than f1 then we shorten alpha2 and alpha3 closer to f1
                 //Effectively both are shortened by a factor of two.
@@ -298,14 +291,12 @@ int solve(
                 //Effectively both are lengthened by a factor of two.
                 alpha2 = alpha3;
                 f2 = f3;
-                alpha3 = alpha3 * 2;
+                alpha3 *= 2;
                 for(int i = 0; i < xLength; i++)
                     *param_ptr[i] = xold[i] + alpha3 * s[i]; //calculate the new x
                 f3 = calc(cons, consLength);
                 ftimes++;
             }
-            steps++;
-        }
 
         // get the alpha for the minimum f of the quadratic approximation
         alphaStar = alpha2 + (alpha2 - alpha1) * (f1 - f3) / (3 * (f1 - 2 * f2 + f3));
@@ -313,6 +304,7 @@ int solve(
         //Guarantee that the new alphaStar is within the bracket
         if(alphaStar >= alpha3 || alphaStar <= alpha1)
             alphaStar = alpha2;
+        //Avoid NaN
         if(alphaStar != alphaStar)
             alphaStar = 0;
 
@@ -361,10 +353,9 @@ int solve(
     ///End of function
     if(fnew < ((isFine == 1) ? ValidSolutionFine : ValidSoltuionRough))
         return Succsess;
-    else {
-        //Replace the bad numbers with the last result
-        for(int i = 0; i < xLength; i++)
-            *param_ptr[i] = origSolution[i];
-        return NoSolution;
-    }
+
+    //Replace the bad numbers with the last result.
+    for(int i = 0; i < xLength; i++)
+        *param_ptr[i] = origSolution[i];
+    return NoSolution;
 }

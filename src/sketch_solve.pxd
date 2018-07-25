@@ -35,8 +35,21 @@ cdef extern from "solve.h":
         Point *center
         double *rad
     
-    struct Constraint:
+    cdef enum ConstraintTypes "Constraint::Types":
         pass
+    
+    struct Constraint:
+        ConstraintTypes type
+        Point *point1
+        Point *point2
+        Line *line1
+        Line *line2
+        Line *SymLine
+        Circle *circle1
+        Circle *circle2
+        Arc *arc1
+        Arc *arc2
+        double *parameter
     
     Constraint PointOnPointConstraint(Point *, Point *);
     Constraint P2PDistanceConstraint(Point *, Point *, double *)

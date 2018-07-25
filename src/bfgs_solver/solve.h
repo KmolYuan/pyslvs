@@ -101,7 +101,8 @@ struct Constraint {
     Line *line1, *line2, *SymLine;
     Circle *circle1, *circle2;
     Arc *arc1, *arc2;
-    double *parameter; //radius, length, angle etc...
+    //radius, length, angle etc...
+    double *parameter;
 };
 
 ///////////////////////////////////////
