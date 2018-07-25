@@ -12,9 +12,11 @@
 
 using namespace std;
 
-double calc(GeoConstraint *cons, const int consLength) {
+
+double inline calc(GeoConstraint *cons, const int consLength) {
     return position_analysis(cons, consLength);
 }
+
 
 int solve(
     double **param_ptr,

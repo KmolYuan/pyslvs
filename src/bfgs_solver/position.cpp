@@ -4,36 +4,36 @@
  */
 
 #include "position.h"
-#include "constrain_func.h"
+
 
 double position_analysis(GeoConstraint *cons, const int consLength) {
     double error = 0;
     double temp, temp2, dx, dy, m, n, Ex, Ey, rad1, rad2, t, dx2, dy2, hyp1, hyp2;
-    for(int i = 0; i < consLength; i++) {
-        switch(cons[i].type) {
-        case PointOnPoint:
+    for(int i = 0; i < consLength; i++)
+        switch((int)cons[i].type) {
+        case GeoConstraint::PointOnPoint:
             //Hopefully avoid this constraint, make coincident points use the same parameters
             dx = P1_x - P2_x;
             dy = P1_y - P2_y;
             error += dx * dx + dy * dy;
             break;
 
-        case P2PDistance:
+        case GeoConstraint::P2PDistance:
             temp = _hypot(P2_x - P1_x, P2_y - P1_y) - distance;
             error += temp * temp * 100;
             break;
 
-        case P2PDistanceVert:
+        case GeoConstraint::P2PDistanceVert:
             temp = _hypot(0, P2_y - P1_y) - distance;
             error += temp * temp * 100;
             break;
 
-        case P2PDistanceHorz:
+        case GeoConstraint::P2PDistanceHorz:
             temp = _hypot(P2_x - P1_x, 0) - distance;
             error += temp * temp * 100;
             break;
 
-        case PointOnLine:
+        case GeoConstraint::PointOnLine:
             dx = L1_P2_x - L1_P1_x;
             dy = L1_P2_y - L1_P1_y;
 
@@ -42,7 +42,7 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += temp * temp / 100;
             break;
 
-        case P2LDistance:
+        case GeoConstraint::P2LDistance:
             dx = L1_P2_x - L1_P1_x;
             dy = L1_P2_y - L1_P1_y;
 
@@ -51,7 +51,7 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += temp * temp / 100;
             break;
 
-        case P2LDistanceVert:
+        case GeoConstraint::P2LDistanceVert:
             dx = L1_P2_x - L1_P1_x;
             dy = L1_P2_y - L1_P1_y;
 
@@ -60,7 +60,7 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += temp * temp / 100;
             break;
 
-        case P2LDistanceHorz:
+        case GeoConstraint::P2LDistanceHorz:
             dx = L1_P2_x - L1_P1_x;
             dy = L1_P2_y - L1_P1_y;
 
@@ -69,17 +69,17 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += temp * temp / 100;
             break;
 
-        case Vertical:
+        case GeoConstraint::Vertical:
             dx = L1_P2_x - L1_P1_x;
             error += dx * dx * 100;
             break;
 
-        case Horizontal:
+        case GeoConstraint::Horizontal:
             dy = L1_P2_y - L1_P1_y;
             error += dy * dy * 100;
             break;
 
-        case TangentToCircle:
+        case GeoConstraint::TangentToCircle:
             dx = L1_P2_x - L1_P1_x;
             dy = L1_P2_y - L1_P1_y;
             hyp1 = _hypot(dx, dy);
@@ -93,7 +93,7 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += (temp < temp2) ? temp * temp : temp2 * temp2;
             break;
 
-        case TangentToArc:
+        case GeoConstraint::TangentToArc:
             dx = L1_P2_x - L1_P1_x;
             dy = L1_P2_y - L1_P1_y;
             t = -(L1_P1_x * dx -
@@ -108,7 +108,7 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += temp * temp;
             break;
 
-        case ArcRules:
+        case GeoConstraint::ArcRules:
             dx = A1_End_x * A1_End_x;
             dy = A1_End_y * A1_End_y;
             rad1 = A1_Start_x * A1_Start_x;
@@ -122,83 +122,83 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
                                     2 * A1_End_y * A1_Start_y + rad2);
             break;
 
-        case LineLength:
+        case GeoConstraint::LineLength:
             temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) - length;
             error += temp * temp * 100;
             break;
 
-        case EqualLegnth:
+        case GeoConstraint::EqualLegnth:
             temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) -
                    _hypot(L2_P2_x - L2_P1_x, L2_P2_y - L2_P1_y);
             error += temp * temp * 100;
             break;
 
-        case ArcRadius:
+        case GeoConstraint::ArcRadius:
             rad1 = _hypot(A1_Center_x - A1_Start_x, A1_Center_y - A1_Start_y);
             rad2 = _hypot(A1_Center_x - A1_End_x, A1_Center_y - A1_End_y);
             temp= rad1 - radius;
             error += temp * temp;
             break;
 
-        case EqualRadiusArcs:
+        case GeoConstraint::EqualRadiusArcs:
             temp = _hypot(A1_Center_x - A1_Start_x, A1_Center_y - A1_Start_y) -
                    _hypot(A2_Center_x - A2_Start_x, A2_Center_y - A2_Start_y);
             error += temp * temp;
             break;
 
-        case EqualRadiusCircles:
+        case GeoConstraint::EqualRadiusCircles:
             temp = C1_rad - C2_rad;
             error += temp * temp;
             break;
 
-        case EqualRadiusCircArc:
+        case GeoConstraint::EqualRadiusCircArc:
             rad1 = _hypot(A1_Center_x - A1_Start_x, A1_Center_y - A1_Start_y);
             temp = rad1 - C1_rad;
             error += temp * temp;
             break;
 
-        case ConcentricArcs:
+        case GeoConstraint::ConcentricArcs:
             temp = _hypot(A1_Center_x - A2_Center_x, A1_Center_y - A2_Center_y);
             error += temp * temp;
             break;
 
-        case ConcentricCircles:
+        case GeoConstraint::ConcentricCircles:
             temp = _hypot(C1_Center_x - C2_Center_x, C1_Center_y - C2_Center_y);
             error += temp * temp;
             break;
 
-        case ConcentricCircArc:
+        case GeoConstraint::ConcentricCircArc:
             temp = _hypot(A1_Center_x - C1_Center_x, A1_Center_y - C1_Center_y);
             error += temp * temp;
             break;
 
-        case CircleRadius:
+        case GeoConstraint::CircleRadius:
             error += (C1_rad - radius) * (C1_rad - radius);
             break;
 
-        case InternalAngle:
+        case GeoConstraint::InternalAngle:
             temp = atan2(L2_P2_y - L2_P1_y, L2_P2_x - L2_P1_x) -
                    atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - angleP;
             error += temp * temp;
             break;
 
-        case ExternalAngle:
+        case GeoConstraint::ExternalAngle:
             temp = atan2(L2_P2_y - L2_P1_y, L2_P2_x - L2_P1_x) -
                    atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - (M_PI - angleP);
             error += temp * temp;
             break;
 
-        case LineInternalAngle:
+        case GeoConstraint::LineInternalAngle:
             temp = sin(atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - angleP);
             error += temp * temp;
             break;
 
-        case LineExternalAngle:
+        case GeoConstraint::LineExternalAngle:
             temp = sin(atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - (M_PI - angleP));
             error += temp * temp;
             break;
 
-        case Perpendicular:
+        case GeoConstraint::Perpendicular:
             dx = L1_P2_x - L1_P1_x;
             dy = L1_P2_y - L1_P1_y;
             dx2 = L2_P2_x - L2_P1_x;
@@ -216,7 +216,7 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += temp * temp;
             break;
 
-        case Parallel:
+        case GeoConstraint::Parallel:
             dx = L1_P2_x - L1_P1_x;
             dy = L1_P2_y - L1_P1_y;
             dx2 = L2_P2_x - L2_P1_x;
@@ -234,7 +234,7 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += temp * temp;
             break;
 
-        case Colinear:
+        case GeoConstraint::Colinear:
             dx = L1_P2_x - L1_P1_x;
             dy = L1_P2_y - L1_P1_y;
 
@@ -260,7 +260,7 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             }
             break;
 
-        case PointOnCircle:
+        case GeoConstraint::PointOnCircle:
             //see what the current radius to the point is
             rad1 = _hypot(C1_Center_x - P1_x, C1_Center_y - P1_y);
             //Compare this radius to the radius of the circle, return the error squared
@@ -268,7 +268,7 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += temp * temp;
             break;
 
-        case PointOnArc:
+        case GeoConstraint::PointOnArc:
             //see what the current radius to the point is
             rad1 = _hypot(A1_Center_x - P1_x, A1_Center_y - P1_y);
             rad2 = _hypot(A1_Center_x - A1_Start_x, A1_Center_y - A1_Start_y);
@@ -277,13 +277,13 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += temp * temp;
             break;
 
-        case PointOnLineMidpoint:
+        case GeoConstraint::PointOnLineMidpoint:
             Ex = (L1_P1_x + L1_P2_x) / 2 - P1_x;
             Ey = (L1_P1_y + L1_P2_y) / 2 - P1_y;
             error += Ex * Ex + Ey * Ey;
             break;
 
-        case PointOnArcMidpoint:
+        case GeoConstraint::PointOnArcMidpoint:
             rad1 = _hypot(A1_Center_x - A1_Start_x, A1_Center_y - A1_Start_y);
             temp = atan2(A1_Start_y - A1_Center_y, A1_Start_x - A1_Center_x);
             temp2 = atan2(A1_End_y - A1_Center_y, A1_End_x - A1_Center_x);
@@ -294,7 +294,7 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += temp * temp + temp2 * temp2;
             break;
 
-        case PointOnCircleQuad:
+        case GeoConstraint::PointOnCircleQuad:
             Ex = C1_Center_x;
             Ey = C1_Center_y;
             switch((int)quadIndex) {
@@ -316,7 +316,7 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += temp * temp + temp2 * temp2;
             break;
 
-        case SymmetricPoints:
+        case GeoConstraint::SymmetricPoints:
             dx = Sym_P2_x - Sym_P1_x;
             dy = Sym_P2_y - Sym_P1_y;
             t = -(dy * P1_x -
@@ -330,7 +330,7 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += temp * temp + temp2 * temp2;
             break;
 
-        case SymmetricLines:
+        case GeoConstraint::SymmetricLines:
             dx = Sym_P2_x - Sym_P1_x;
             dy = Sym_P2_y - Sym_P1_y;
             hyp1 = dx * dx + dy * dy;
@@ -350,7 +350,7 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += temp * temp + temp2 * temp2;
             break;
 
-        case SymmetricCircles:
+        case GeoConstraint::SymmetricCircles:
             dx = Sym_P2_x - Sym_P1_x;
             dy = Sym_P2_y - Sym_P1_y;
             t = -(dy * C1_Center_x -
@@ -366,7 +366,7 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += temp * temp;
             break;
 
-        case SymmetricArcs:
+        case GeoConstraint::SymmetricArcs:
             dx = Sym_P2_x - Sym_P1_x;
             dy = Sym_P2_y - Sym_P1_y;
             hyp1 = dx * dx + dy * dy;
@@ -392,6 +392,5 @@ double position_analysis(GeoConstraint *cons, const int consLength) {
             error += temp * temp + temp2 * temp2;
             break;
         }
-    }
     return error;
 }

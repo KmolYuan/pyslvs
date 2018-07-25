@@ -4,8 +4,8 @@ CONFIG += debug_and_release
 CONFIG -= app_bundle
 CONFIG -= qt
 
-HEADERS += solve.h \
-    constrain_func.h \
+HEADERS += \
+    solve.h \
     position.h
 
 SOURCES += \

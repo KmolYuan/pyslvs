@@ -30,7 +30,7 @@
 #define NoSolution 1
 
 ///////////////////////////////////////
-/// Expression data
+/// Position Expression data
 ///////////////////////////////////////
 
 struct Point { double *x, *y; };
@@ -48,7 +48,52 @@ struct Circle {
 };
 
 struct GeoConstraint {
-    int type;
+
+    enum Types {
+        PointOnPoint,
+        PointToLine,
+        PointOnLine,
+        Horizontal,
+        Vertical,
+        InternalAngle,
+        RadiusValue,
+        TangentToArc,
+        TangentToCircle,
+        ArcRules,
+        P2PDistance,
+        P2PDistanceVert,
+        P2PDistanceHorz,
+        P2LDistance,
+        P2LDistanceVert,
+        P2LDistanceHorz,
+        LineLength,
+        EqualLegnth,
+        ArcRadius,
+        EqualRadiusArcs,
+        EqualRadiusCircles,
+        EqualRadiusCircArc,
+        ConcentricArcs,
+        ConcentricCircles,
+        ConcentricCircArc,
+        CircleRadius,
+        ExternalAngle,
+        Parallel,
+        Perpendicular,
+        Colinear,
+        PointOnCircle,
+        PointOnArc,
+        PointOnLineMidpoint,
+        PointOnArcMidpoint,
+        PointOnCircleQuad,
+        SymmetricPoints,
+        SymmetricLines,
+        SymmetricCircles,
+        SymmetricArcs,
+        LineInternalAngle,
+        LineExternalAngle,
+    };
+
+    GeoConstraint::Types type;
     Point *point1, *point2;
     Line *line1, *line2, *SymLine;
     Circle *circle1, *circle2;
@@ -96,6 +141,12 @@ GeoConstraint SymmetricCirclesConstraint(Circle *, Circle *, Line *);
 GeoConstraint SymmetricArcsConstraint(Arc *, Arc *, Line *);
 GeoConstraint LineInternalAngleConstraint(Line *, double *);
 GeoConstraint LineExternalAngleConstraint(Line *, double *);
+
+///////////////////////////////////////
+/// Velocity and Acceleration Expression data
+///////////////////////////////////////
+
+//VecConstraint Functions
 
 //Public Functions
 int solve(double **, int, GeoConstraint *, int, int);

@@ -10,6 +10,7 @@
 
 using namespace std;
 
+
 //Show coordinates.
 template<size_t N> inline void printpoints(Point (&points)[N]) {
     for(int i = 0; i < (int)N; i++)

@@ -36,17 +36,7 @@ cdef extern from "solve.h":
         double *rad
     
     struct GeoConstraint:
-        int type
-        Point *point1
-        Point *point2
-        Line *line1
-        Line *line2
-        Line *SymLine
-        Circle *circle1
-        Circle *circle2
-        Arc *arc1
-        Arc *arc2
-        double *parameter
+        pass
     
     GeoConstraint PointOnPointConstraint(Point *, Point *);
     GeoConstraint P2PDistanceConstraint(Point *, Point *, double *)
