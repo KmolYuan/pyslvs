@@ -6,11 +6,11 @@ CONFIG -= qt
 
 HEADERS += \
     solve.h \
-    position.h
+    calc.h
 
 SOURCES += \
     solve.cpp \
-    constraint_func.cpp \
     derivatives.cpp \
     main.cpp \
-    position.cpp
+    geometric_constraint.cpp \
+    calc.cpp

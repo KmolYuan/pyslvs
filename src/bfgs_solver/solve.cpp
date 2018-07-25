@@ -7,21 +7,17 @@
  */
 
 #include <iostream>
+#include <cmath>
 #include "solve.h"
-#include "position.h"
+#include "calc.h"
 
 using namespace std;
-
-
-double inline calc(GeoConstraint *cons, const int consLength) {
-    return position_analysis(cons, consLength);
-}
 
 
 int solve(
     double **param_ptr,
     const int xLength,
-    GeoConstraint *cons,
+    Constraint *cons,
     const int consLength,
     int const isFine
 ) {
@@ -83,7 +79,7 @@ int solve(
 
     double *xold = new double[xLength]; //Storage for the previous design variables
     for(int i = 0; i < xLength; i++)
-        xold[i] = *param_ptr[i];//Copy last values to xold
+        xold[i] = *param_ptr[i]; //Copy last values to xold
 
     ///////////////////////////////////////////////////////
     /// Start of line search
@@ -96,7 +92,7 @@ int solve(
     //Take a step of alpha=1 as alpha2
     alpha2 = 1;
     for(int i = 0; i < xLength; i++)
-        *param_ptr[i] = xold[i] + alpha2 * s[i];//calculate the new x
+        *param_ptr[i] = xold[i] + alpha2 * s[i]; //calculate the new x
 
     f2 = calc(cons, consLength);
     ftimes++;
@@ -104,7 +100,7 @@ int solve(
     //Take a step of alpha 3 that is 2*alpha2
     alpha3 = alpha * 2;
     for(int i = 0; i < xLength; i++)
-        *param_ptr[i] = xold[i] + alpha3 * s[i];//calculate the new x
+        *param_ptr[i] = xold[i] + alpha3 * s[i]; //calculate the new x
 
     f3 = calc(cons, consLength);
     ftimes++;
@@ -119,7 +115,7 @@ int solve(
             f3 = f2;
             alpha2 = alpha2 / 2;
             for(int i = 0; i < xLength; i++)
-                *param_ptr[i] = xold[i] + alpha2 * s[i];//calculate the new x
+                *param_ptr[i] = xold[i] + alpha2 * s[i]; //calculate the new x
             f2 = calc(cons, consLength);
             ftimes++;
         } else if(f2 > f3) {
@@ -129,7 +125,7 @@ int solve(
             f2 = f3;
             alpha3 = alpha3 * 2;
             for(int i = 0; i < xLength; i++)
-                *param_ptr[i] = xold[i] + alpha3 * s[i];//calculate the new x
+                *param_ptr[i] = xold[i] + alpha3 * s[i]; //calculate the new x
             f3 = calc(cons, consLength);
             ftimes++;
         }
@@ -145,7 +141,7 @@ int solve(
 
     /// Set the values to alphaStar
     for(int i = 0; i < xLength; i++)
-        *param_ptr[i] = xold[i] + alphaStar * s[i];//calculate the new x
+        *param_ptr[i] = xold[i] + alphaStar * s[i]; //calculate the new x
     fnew = calc(cons, consLength);
     ftimes++;
 
@@ -351,11 +347,11 @@ int solve(
 #endif
 
     delete s;
-    delete [] N;
-    delete [] FirstSecond;
-    delete [] deltaXDotGammatDotN;
-    delete [] gammatDotDeltaXt;
-    delete [] NDotGammaDotDeltaXt;
+    delete[] N;
+    delete[] FirstSecond;
+    delete[] deltaXDotGammatDotN;
+    delete[] gammatDotDeltaXt;
+    delete[] NDotGammaDotDeltaXt;
     delete origSolution;
 
     delete grad;

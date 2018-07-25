@@ -14,7 +14,7 @@ void derivatives(
     double **x,
     double *gradF,
     const int xLength,
-    GeoConstraint *cons,
+    Constraint *cons,
     const int consLength
 ) {
     int position;
@@ -23,7 +23,7 @@ void derivatives(
         //////////////////////////////////////
         //Point on Point GeoConstraint derivative
         //////////////////////////////////////
-        case GeoConstraint::PointOnPoint:
+        case Constraint::PointOnPoint:
             // Derivative with respect to p1x
             position = cons[i].point1->x - x[0];
             if(position >= 0 && position < xLength)
@@ -48,7 +48,7 @@ void derivatives(
         //////////////////////////////////////
         //Point to Point Distance GeoConstraint derivative
         //////////////////////////////////////
-        case GeoConstraint::P2PDistance:
+        case Constraint::P2PDistance:
             // Derivative with respect to p1x
             position = cons[i].point1->x - x[0];
             if(position >= 0 && position < xLength)
@@ -78,7 +78,7 @@ void derivatives(
         //////////////////////////////////////
         //Point to Point Distance Vert GeoConstraint derivative
         //////////////////////////////////////
-        case GeoConstraint::P2PDistanceVert:
+        case Constraint::P2PDistanceVert:
             // Derivative with respect to p1y
             position = cons[i].point1->y - x[0];
             if(position >=0 && position < xLength)
@@ -98,7 +98,7 @@ void derivatives(
         //////////////////////////////////////
         //Point to Point Horz Distance GeoConstraint derivative
         //////////////////////////////////////
-        case GeoConstraint::P2PDistanceHorz:
+        case Constraint::P2PDistanceHorz:
             // Derivative with respect to p1x
             position = cons[i].point1->x - x[0];
             if(position >= 0 && position < xLength)
@@ -118,7 +118,7 @@ void derivatives(
         //////////////////////////////////////
         //Point on line GeoConstraint derivatives
         //////////////////////////////////////
-        case GeoConstraint::PointOnLine:
+        case Constraint::PointOnLine:
             // Derivative with respect to p1x
             position = cons[i].point1->x - x[0];
             if(position >= 0 && position < xLength)
