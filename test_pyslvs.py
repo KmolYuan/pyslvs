@@ -9,7 +9,7 @@ __email__ = "pyslvs@gmail.com"
 
 import unittest
 from unittest import TestCase
-from typing import List
+from typing import Tuple, List
 
 #For necessary testing modules.
 from math import sqrt, radians, isclose
@@ -32,25 +32,17 @@ from number import number_synthesis
 from topologic import topo, Graph
 from triangulation import vpoints_configure
 from _parser import parse_vpoints
+from examples import example_list
 
 
 class CoreTest(TestCase):
     
     """Testing Cython libs."""
     
-    def vpoints_object(self) -> List[VPoint]:
+    def vpoints_object(self) -> Tuple[List[VPoint], Tuple[Tuple[int, int]]]:
         """Example: Jansen's linkage (Single)."""
-        return parse_vpoints("M[\n" +
-            "# Jansen's linkage (Single).\n" +
-            "J[R, color[(255, 255, 255)], P[0.0, 0.0], L[ground, link_1]],\n" +
-            "J[R, color[Green], P[9.61, 11.52], L[link_1, link_2, link_4]],\n" +
-            "J[R, color[Blue], P[-38.0, -7.8], L[ground, link_3, link_5]],\n" +
-            "J[R, color[Green], P[-35.24, 33.61], L[link_2, link_3]],\n" +
-            "J[R, color[Green], P[-77.75, -2.54], L[link_3, link_6]],\n" +
-            "J[R, color[Green], P[-20.1, -42.79], L[link_4, link_5, link_7]],\n" +
-            "J[R, color[Green], P[-56.05, -35.42], L[link_6, link_7]],\n" +
-            "J[R, color[Green], P[-22.22, -91.74], L[link_7]],\n" +
-            "]")
+        expr, inputs = example_list["Jansen's linkage (Single)"]
+        return parse_vpoints(expr), inputs
     
     def planar_object(self) -> Planar:
         """Test-used mechanism for algorithm."""
@@ -136,9 +128,9 @@ class CoreTest(TestCase):
         + Test data collecting function.
         + Test expression solving function.
         """
-        vpoints = self.vpoints_object()
+        vpoints, inputs = self.vpoints_object()
         self.assertTrue(len(vpoints) == 8)
-        exprs = vpoints_configure(vpoints, [(0, 1)])
+        exprs = vpoints_configure(vpoints, inputs)
         mapping = {n: 'P{}'.format(n) for n in range(len(vpoints))}
         data_dict, dof = data_collecting(exprs, mapping, vpoints)
         for link, link_length in (
@@ -171,7 +163,8 @@ class CoreTest(TestCase):
         self.assertEqual(input_data[4], (30.0, 10.0))
         self.assertTrue(isclose(round(output_data[2][1], 2), 10))
         self.assertTrue(isclose(round(output_data[4][0], 2), 30))
-        result = bfgs.vpoint_solving(self.vpoints_object(), [(0, 1, 0.)])
+        vpoints, inputs = self.vpoints_object()
+        result = bfgs.vpoint_solving(vpoints, [(0, 1, 0.)])
         x, y = result[-1]
         self.assertTrue(isclose(round(x, 2), -43.17))
         self.assertTrue(isclose(round(y, 2), -91.75))

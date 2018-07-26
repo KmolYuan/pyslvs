@@ -61,6 +61,7 @@ from ._parser import (
 )
 if HAS_PYGMENTS:
     from ._parser import PMKSLexer
+from .examples import example_list
 
 __all__ = [
     'Genetic',
@@ -90,4 +91,5 @@ __all__ = [
     'parse_params',
     'parse_vpoints',
     'PMKSLexer',
+    'example_list',
 ]
