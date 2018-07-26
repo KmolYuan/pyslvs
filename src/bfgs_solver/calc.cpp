@@ -10,34 +10,51 @@
 /// constraint defines (these make writing constraint equations easier)
 ///////////////////////////////////////////////////////////////////////
 
-#define P1_x         *cons[i].point1->x
-#define P1_y         *cons[i].point1->y
-#define P2_x         *cons[i].point2->x
-#define P2_y         *cons[i].point2->y
-#define L1_P1_x      *cons[i].line1->p1->x
-#define L1_P1_y      *cons[i].line1->p1->y
-#define L1_P2_x      *cons[i].line1->p2->x
-#define L1_P2_y      *cons[i].line1->p2->y
-#define L2_P1_x      *cons[i].line2->p1->x
-#define L2_P1_y      *cons[i].line2->p1->y
-#define L2_P2_x      *cons[i].line2->p2->x
-#define L2_P2_y      *cons[i].line2->p2->y
-#define C1_Center_x  *cons[i].circle1->center->x
-#define C1_Center_y  *cons[i].circle1->center->y
-#define C1_rad       *cons[i].circle1->rad
-#define C2_Center_x  *cons[i].circle2->center->x
-#define C2_Center_y  *cons[i].circle2->center->y
-#define C2_rad       *cons[i].circle2->rad
-#define A1_startA    *cons[i].arc1->startAngle
-#define A1_endA      *cons[i].arc1->endAngle
-#define A1_radius    *cons[i].arc1->rad
-#define A1_Center_x  *cons[i].arc1->center->x
-#define A1_Center_y  *cons[i].arc1->center->y
-#define A2_startA    *cons[i].arc2->startAngle
-#define A2_endA      *cons[i].arc2->endAngle
-#define A2_radius    *cons[i].arc2->rad
-#define A2_Center_x  *cons[i].arc2->center->x
-#define A2_Center_y  *cons[i].arc2->center->y
+#define CON_i        cons[i]
+#define P1           CON_i.point1
+#define P1_x         *P1->x
+#define P1_y         *P1->y
+#define P2           CON_i.point2
+#define P2_x         *P2->x
+#define P2_y         *P2->y
+#define L1           CON_i.line1
+#define L1_P1        L1->p1
+#define L1_P1_x      *L1_P1->x
+#define L1_P1_y      *L1_P1->y
+#define L1_P2        L1->p2
+#define L1_P2_x      *L1_P2->x
+#define L1_P2_y      *L1_P2->y
+#define L2           CON_i.line2
+#define L2_P1        L2->p1
+#define L2_P1_x      *L2_P1->x
+#define L2_P1_y      *L2_P1->y
+#define L2_P2        L2->p2
+#define L2_P2_x      *L2_P2->x
+#define L2_P2_y      *L2_P2->y
+#define C1           CON_i.circle1
+#define C1_Center    C1->center
+#define C1_Center_x  *C1_Center->x
+#define C1_Center_y  *C1_Center->y
+#define C1_rad       *C1->rad
+#define C2           CON_i.circle2
+#define C2_Center    C2->center
+#define C2_Center_x  *C2_Center->x
+#define C2_Center_y  *C2_Center->y
+#define C2_rad       *C2->rad
+#define A1           CON_i.arc1
+#define A1_startA    *A1->startAngle
+#define A1_endA      *A1->endAngle
+#define A1_radius    *A1->rad
+#define A1_Center    A1->center
+#define A1_Center_x  *A1_Center->x
+#define A1_Center_y  *A1_Center->y
+#define A2           CON_i.arc2
+#define A2_startA    *A2->startAngle
+#define A2_endA      *A2->endAngle
+#define A2_radius    *A2->rad
+#define A2_Center    A2->center
+#define A2_Center_x  *A2_Center->x
+#define A2_Center_y  *A2_Center->y
 #define A1_Start_x   (A1_Center_x + A1_radius * cos(A1_startA))
 #define A1_Start_y   (A1_Center_y + A1_radius * sin(A1_startA))
 #define A1_End_x     (A1_Center_x + A1_radius * cos(A1_endA))
@@ -46,15 +63,19 @@
 #define A2_Start_y   (A1_Center_y + A2_radius * sin(A2_startA))
 #define A2_End_x     (A1_Center_x + A2_radius * cos(A2_endA))
 #define A2_End_y     (A1_Center_y + A2_radius * sin(A2_endA))
-#define length       *cons[i].parameter
-#define distance     *cons[i].parameter
-#define radius       *cons[i].parameter
-#define angleP       *cons[i].parameter
-#define quadIndex    *cons[i].parameter
-#define Sym_P1_x     *cons[i].SymLine->p1->x
-#define Sym_P1_y     *cons[i].SymLine->p1->y
-#define Sym_P2_x     *cons[i].SymLine->p2->x
-#define Sym_P2_y     *cons[i].SymLine->p2->y
+#define PARAMETER    *CON_i.parameter
+#define length       PARAMETER
+#define distance     PARAMETER
+#define radius       PARAMETER
+#define angleP       PARAMETER
+#define quadIndex    PARAMETER
+#define Sym          CON_i.SymLine
+#define Sym_P1       Sym->p1
+#define Sym_P1_x     *Sym_P1->x
+#define Sym_P1_y     *Sym_P1->y
+#define Sym_P2       Sym->p2
+#define Sym_P2_x     *Sym_P2->x
+#define Sym_P2_y     *Sym_P2->y
 
 
 double calc(Constraint *cons, const int consLength) {

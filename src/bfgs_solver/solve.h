@@ -93,7 +93,15 @@ struct Constraint {
         LineInternalAngle,
         LineExternalAngle,
         //Velocity Constraint types
+        CircularVelocity,
+        JointJointVelocity,
+        JointSliderVelocity,
+        SliderSliderVelocity,
         //Acceleration Constraint types
+        CircularAcceleration,
+        JointJointAcceleration,
+        JointSliderAcceleration,
+        SliderSliderAcceleration,
     };
 
     Types type;
