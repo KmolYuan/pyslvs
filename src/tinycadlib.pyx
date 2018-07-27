@@ -581,10 +581,16 @@ cpdef list expr_solving(
     for i in range(len(vpoints)):
         if mapping[i] not in data_dict:
             #These points solved by Sketch Solve.
-            if vpoints[i].type == 0:
-                solved_points.append(solved_bfgs[i])
+            if solved_bfgs:
+                if vpoints[i].type == 0:
+                    solved_points.append(solved_bfgs[i])
+                else:
+                    solved_points.append((vpoints[i].c[0], solved_bfgs[i]))
             else:
-                solved_points.append((vpoints[i].c[0], solved_bfgs[i]))
+                if vpoints[i].type == 0:
+                    solved_points.append(vpoints[i].c[0])
+                else:
+                    solved_points.append(vpoints[i].c)
         else:
             if isnan(data_dict[mapping[i]][0]):
                 raise Exception(f"result contains failure: Point{i}")
