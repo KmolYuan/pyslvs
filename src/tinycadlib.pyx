@@ -217,55 +217,6 @@ cpdef void expr_parser(object exprs, dict data_dict):
         data_dict[expr[-1]] = (x, y)
 
 
-cdef inline void rotate(
-    int input_angle,
-    object exprs,
-    object vpoints,
-    dict data_dict,
-    dict mapping,
-    list path,
-    double interval,
-    bool reverse
-):
-    """Add path coordinates.
-    
-    + Rotate the input joints.
-    + Collect the coordinates of all joints.
-    """
-    cdef str angle_str = f'a{input_angle}'
-    cdef double a = 0
-    if reverse:
-        a = 360
-        interval = -interval
-    cdef dict copy_dict
-    cdef dict p_data_dict = {}
-    cdef list solved_bfgs
-    cdef bool error
-    cdef int i
-    while 0 <= a <= 360:
-        copy_dict = data_dict.copy()
-        copy_dict[angle_str] = a / 180 * M_PI
-        #Solve
-        expr_parser(exprs, copy_dict)
-        #Error detection.
-        error = False
-        for i in mapping:
-            if mapping[i] in copy_dict:
-                if isnan(copy_dict[mapping[i]][0]):
-                    error = True
-                    break
-        for i in mapping:
-            if error:
-                path[i].append((nan, nan))
-                continue
-            if mapping[i] in copy_dict:
-                path[i].append(copy_dict[mapping[i]])
-            else:
-                #TODO: These points can not solved.
-                path[i].append((nan, nan))
-        a += interval
-
-
 cpdef str expr_join(object exprs):
     """Use to append a list of symbols into a string."""
     return ';'.join([
@@ -480,48 +431,6 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
         if vpoint.grounded() and (vpoint.type == 0):
             data_dict[mapping[i]] = vpoint.c[0]
     return data_dict, dof
-
-
-cpdef list expr_path(
-    object exprs,
-    dict mapping,
-    object vpoints,
-    double interval
-):
-    """Auto preview function of path."""
-    cdef dict data_dict
-    cdef int dof_input
-    data_dict, dof_input = data_collecting(exprs, mapping, vpoints)
-    
-    #Check input number.
-    cdef int dof = vpoint_dof(vpoints)
-    if dof_input > dof:
-        raise Exception(
-            f"wrong number of input parameters: {dof_input} / {dof}"
-        )
-    
-    #Angles.
-    cdef double a = 0
-    cdef int i
-    for i in range(dof):
-        data_dict[f'a{i}'] = a
-    
-    cdef list path = [[] for i in range(len(mapping))]
-    #For each input joint.
-    for i in range(dof):
-        rotate(i, exprs, vpoints, data_dict, mapping, path, interval, False)
-    if dof > 1:
-        #Rotate back.
-        for i in range(dof):
-            rotate(i, exprs, vpoints, data_dict, mapping, path, interval, True)
-    #return_path: [[p]: ((x0, y0), (x1, y1), (x2, y2), ...), ...]
-    for i in range(len(path)):
-        if len(set(path[i])) <= 1:
-            #The point is not move or is nan.
-            path[i] = ()
-        else:
-            path[i] = tuple(path[i])
-    return path
 
 
 cpdef list expr_solving(

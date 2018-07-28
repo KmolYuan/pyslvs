@@ -6,6 +6,7 @@ Version 18.07
 
 + Limitation (upper and lower) format changed.
 + PMKS expression classes has been independent to new library.
++ Remove "expr_path" function.
 + "Sketch Solve" kernel support PMKS expression.
 
 Version 18.06

@@ -41,7 +41,6 @@ from .tinycadlib import (
     vpoint_dof,
     expr_parser,
     expr_solving,
-    expr_path,
     data_collecting,
 )
 from .verify import Verification
@@ -74,7 +73,6 @@ __all__ = [
     'PXY',
     'expr_parser',
     'expr_solving',
-    'expr_path',
     'data_collecting',
     'VPoint',
     'VLink',
