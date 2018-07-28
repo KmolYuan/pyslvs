@@ -58,6 +58,32 @@ cdef class VPoint:
         else:
             self.c[0] = (self.x, self.y)
     
+    def __reduce__(self):
+        """Reduce method."""
+        return (VPoint, (
+            ", ".join(self.links),
+            self.type,
+            self.angle,
+            self.colorSTR,
+            self.x,
+            self.y
+        ))
+    
+    def __copy__(self) -> VPoint:
+        """Copy method."""
+        return VPoint(
+            ", ".join(self.links),
+            self.type,
+            self.angle,
+            self.colorSTR,
+            self.x,
+            self.y
+        )
+    
+    def copy(self) -> VPoint:
+        """Copy method of Python."""
+        return self.__copy__()
+    
     @property
     def cx(self):
         """X value of frist current coordinate."""
