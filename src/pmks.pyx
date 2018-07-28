@@ -71,7 +71,7 @@ cdef class VPoint:
     
     def __copy__(self) -> VPoint:
         """Copy method."""
-        return VPoint(
+        cdef VPoint vpoint = VPoint(
             ", ".join(self.links),
             self.type,
             self.angle,
@@ -79,6 +79,8 @@ cdef class VPoint:
             self.x,
             self.y
         )
+        vpoint.move(*self.c)
+        return vpoint
     
     def copy(self) -> VPoint:
         """Copy method of Python."""
