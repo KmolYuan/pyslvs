@@ -514,7 +514,7 @@ cpdef list expr_path(
         #Rotate back.
         for i in range(dof):
             rotate(i, exprs, vpoints, data_dict, mapping, path, interval, True)
-    #return_path: [[each_joints]: ((x0, y0), (x1, y1), (x2, y2), ...), ...]
+    #return_path: [[p]: ((x0, y0), (x1, y1), (x2, y2), ...), ...]
     for i in range(len(path)):
         if len(set(path[i])) <= 1:
             #The point is not move or is nan.
