@@ -58,6 +58,16 @@ cdef class VPoint:
         else:
             self.c[0] = (self.x, self.y)
     
+    @staticmethod
+    def from_R_joint(links: str, x: double, y: double) -> VPoint:
+        """Create by coordinate."""
+        return VPoint(links, 0, 0., '', x, y)
+    
+    @staticmethod
+    def from_Slider_joint(links: str, type_int: int, angle: double, x: double, y: double) -> VPoint:
+        """Create by coordinate."""
+        return VPoint(links, type_int, angle, '', x, y)
+    
     def __reduce__(self):
         """Reduce method."""
         return (VPoint, (

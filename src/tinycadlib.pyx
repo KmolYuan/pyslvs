@@ -454,6 +454,17 @@ cpdef list expr_solving(
             f"wrong number of input parameters: {dof_input} / {dof}"
         )
     
+    #Reverse mapping, exclude specified link length.
+    cdef object k, v
+    cdef dict mapping_r = {v: k for k, v in mapping.items() if (type(k) == int)}
+    
+    #Check input paires.
+    cdef tuple expr
+    for expr in exprs:
+        if expr[0] == 'PLAP':
+            if vpoints[mapping_r[expr[1]]].grounded() and vpoints[mapping_r[expr[-1]]].grounded():
+                raise Exception("wrong driver definition.")
+    
     #Angles.
     cdef double a
     cdef int i

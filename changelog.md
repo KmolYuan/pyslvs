@@ -4,8 +4,9 @@ Change Log
 Version 18.07
 ===
 
-+ Limitation (upper and lower) format changed.
++ Limitation format (upper and lower) of "Planar" class has been changed.
 + PMKS expression classes has been independent to new library.
++ Copy method of "VPoint" class.
 + Remove "expr_path" function.
 + "Sketch Solve" kernel support PMKS expression.
 
