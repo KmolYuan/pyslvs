@@ -142,7 +142,7 @@ cdef class VPoint:
     
     cpdef double distance(self, VPoint p):
         """Distance between two VPoint."""
-        return hypot(p.x - self.x, p.y - self.y)
+        return hypot(p.cx - self.cx, p.cy - self.cy)
     
     cpdef double slope_angle(self, VPoint p, int num1 = 2, int num2 = 2):
         """Angle between horizontal line and two point.
