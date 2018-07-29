@@ -8,6 +8,13 @@
 # __license__ = "AGPL"
 # __email__ = "pyslvs@gmail.com"
 
+from libc.math cimport M_PI
+from numpy import (
+    array as np_array,
+    object as np_object,
+    float32 as np_float32,
+)
+from numpy cimport ndarray
 from verify cimport Verification
 from tinycadlib cimport (
     Coordinate,
@@ -19,8 +26,6 @@ from tinycadlib cimport (
     strbetween,
     strbefore,
 )
-import numpy as np
-cimport numpy as np
 
 
 #Large fitness
@@ -42,7 +47,7 @@ cdef class Planar(Verification):
     
     cdef int target_count, vars
     cdef list constraint, link_list, driver_list, follower_list
-    cdef np.ndarray target_names, exprs, target, upper, lower
+    cdef ndarray target_names, exprs, target, upper, lower
     
     def __cinit__(self, mech_params: dict):
         """
@@ -52,8 +57,8 @@ cdef class Planar(Verification):
             'Target': {'pt': [(x0, y0), (x1, y1), ...]},
             'constraint': [('pt', 'pt', 'pt', 'pt')],
             'Expression': str,
-            'upper': np.ndarray[float32],
-            'lower': np.ndarray[float32],
+            'upper': ndarray[np_float32],
+            'lower': ndarray[np_float32],
         }
         """
         cdef set check_set = set(map(len, mech_params['Target'].values()))
@@ -65,8 +70,8 @@ cdef class Planar(Verification):
         #[Coordinate(x0, y0), Coordinate(x1, y1), Coordinate(x2, y2), ...]
         cdef int i = 0
         cdef int target_count = len(mech_params['Target'])
-        self.target_names = np.ndarray((target_count,), dtype=np.object)
-        self.target = np.ndarray((target_count,), dtype=np.object)
+        self.target_names = ndarray((target_count,), dtype=np_object)
+        self.target = ndarray((target_count,), dtype=np_object)
         cdef double x, y
         cdef str name
         cdef list target
@@ -94,7 +99,7 @@ cdef class Planar(Verification):
         self.link_list = []
         self.driver_list = []
         self.follower_list = []
-        self.exprs = np.ndarray((len(exprs),), dtype=np.object)
+        self.exprs = ndarray((len(exprs),), dtype=np_object)
         cdef str expr, params, p
         for i, expr in enumerate(exprs):
             params = strbetween(expr, '[', ']')
@@ -143,7 +148,7 @@ cdef class Planar(Verification):
         tmp_list.extend(mech_params['upper'][:link_count])
         for i in range(len(self.driver_list)):
             tmp_list.extend([mech_params['upper'][link_count + i]] * self.target_count)
-        self.upper = np.array(tmp_list, dtype=np.float32)
+        self.upper = np_array(tmp_list, dtype=np_float32)
         
         tmp_list.clear()
         
@@ -154,23 +159,23 @@ cdef class Planar(Verification):
         tmp_list.extend(mech_params['lower'][:link_count])
         for i in range(len(self.driver_list)):
             tmp_list.extend([mech_params['lower'][link_count + i]] * self.target_count)
-        self.lower = np.array(tmp_list, dtype=np.float32)
+        self.lower = np_array(tmp_list, dtype=np_float32)
         
         #Swap sorting.
         for i in range(len(self.upper)):
             if self.upper[i] < self.lower[i]:
                 self.upper[i], self.lower[i] = self.lower[i], self.upper[i]
     
-    cdef np.ndarray get_upper(self):
+    cdef ndarray get_upper(self):
         return self.upper
     
-    cdef np.ndarray get_lower(self):
+    cdef ndarray get_lower(self):
         return self.lower
     
     cdef int get_nParm(self):
         return len(self.upper)
     
-    cdef inline dict get_data_dict(self, np.ndarray v):
+    cdef inline dict get_data_dict(self, ndarray v):
         """Create and return data dict."""
         cdef str name
         cdef dict tmp_dict = {}
@@ -185,9 +190,9 @@ cdef class Planar(Verification):
             vi += 1
         return tmp_dict
     
-    cdef inline np.ndarray get_path_array(self):
+    cdef inline ndarray get_path_array(self):
         """Create and return path array."""
-        cdef np.ndarray path = np.ndarray((len(self.target_names),), dtype=np.object)
+        cdef ndarray path = ndarray((len(self.target_names),), dtype=np_object)
         cdef int i
         for i in range(len(self.target_names)):
             path[i] = []
@@ -232,7 +237,7 @@ cdef class Planar(Verification):
                 x, y = PXY(params[0], params[1], params[2])
         return Coordinate(x, y)
     
-    cdef double run(self, np.ndarray v) except *:
+    cdef double run(self, ndarray v) except *:
         """Chromosome format: (decided by upper and lower)
         
         v: [Ax, Ay, Dx, Dy, ..., L0, L1, ..., A00, A01, ..., A10, A11, ...]
@@ -242,7 +247,7 @@ cdef class Planar(Verification):
         """
         # all variable
         cdef dict test_dict = self.get_data_dict(v)
-        cdef np.ndarray path = self.get_path_array()
+        cdef ndarray path = self.get_path_array()
         # calculate the target point, and sum all error.
         #My fitness
         cdef double fitness = 0
@@ -254,9 +259,7 @@ cdef class Planar(Verification):
             #a0: random angle to generate target point.
             #match to path points.
             for j in range(len(self.driver_list)):
-                test_dict[f'a{j}'] = np.deg2rad(
-                    v[self.vars + i * len(self.driver_list) + j]
-                )
+                test_dict[f'a{j}'] = v[self.vars + i * len(self.driver_list) + j] / 180 * M_PI
             for e in self.exprs:
                 #target
                 target_coordinate = self.from_formula(e, test_dict)
@@ -284,14 +287,14 @@ cdef class Planar(Verification):
             fitness += sum(path_error(path[k], self.target[k]))
         return fitness
     
-    cpdef dict get_coordinates(self, np.ndarray v):
+    cpdef dict get_coordinates(self, ndarray v):
         """Return the last answer."""
         cdef str k
         cdef tuple e
         cdef object value
         cdef dict final_dict = self.get_data_dict(v)
         for j in range(len(self.driver_list)):
-            final_dict[f'a{j}'] = np.deg2rad(v[self.vars + j])
+            final_dict[f'a{j}'] = v[self.vars + j] / 180 * M_PI
         for e in self.exprs:
             #target
             final_dict[e[1]] = self.from_formula(e, final_dict)
@@ -306,6 +309,6 @@ cdef class Planar(Verification):
             final_dict[f'a{j}'] = tuple(tmp_list)
         return final_dict
     
-    def __call__(self, v: np.ndarray):
+    def __call__(self, v: ndarray) -> double:
         """Python callable object."""
         return self.run(v)

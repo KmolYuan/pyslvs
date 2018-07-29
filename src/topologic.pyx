@@ -19,7 +19,10 @@ import sys
 from time import time
 from cpython cimport bool
 from numpy cimport ndarray
-from numpy import zeros, int32 as np_int32
+from numpy import (
+    zeros as np_zeros,
+    int32 as np_int32,
+)
 
 
 cdef class Graph:
@@ -430,7 +433,7 @@ cpdef topo(
     
     cdef double t0 = time()
     cdef int joint_count = sum(link_num)
-    cdef ndarray links = zeros((joint_count,), dtype=np_int32)
+    cdef ndarray links = np_zeros((joint_count,), dtype=np_int32)
     cdef int i, j, t, name, link_joint_count
     for i in range(joint_count):
         name = i

@@ -9,14 +9,12 @@
 # __email__ = "pyslvs@gmail.com"
 
 from typing import Sequence, Iterator
-from libc.math cimport sin, cos
-import numpy as np
-cimport numpy as np
+from libc.math cimport sin, cos, M_PI
 from pmks cimport VPoint
 from cpython cimport bool
 
 
-cdef inline bool isAllLock(dict status, dict same={}):
+cdef inline bool isAllLock(dict status, dict same = {}):
     """Test is all status done."""
     cdef int node
     cdef bool n_status
@@ -288,7 +286,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
             friend_c = node
             #'S' point.
             tmp_x, tmp_y = pos[node]
-            angle = np.deg2rad(vpoints[node].angle)
+            angle = vpoints[node].angle / 180 * M_PI
             tmp_x += cos(angle)
             tmp_y += sin(angle)
             try:
