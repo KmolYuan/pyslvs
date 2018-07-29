@@ -27,18 +27,8 @@ from tinycadlib cimport (
     strbefore,
 )
 
-
-#Large fitness
+#A large fitness. Infinity can not used in chart.
 cdef double FAILURE = 9487945
-
-
-cdef list path_error(list path, tuple target):
-    """A list of each error value."""
-    cdef list tmp_list = []
-    cdef int i
-    for i in range(len(path)):
-        tmp_list.append(path[i].distance(target[i]))
-    return tmp_list
 
 
 cdef class Planar(Verification):
@@ -254,7 +244,7 @@ cdef class Planar(Verification):
         cdef int i, j, k
         cdef str name
         cdef tuple e
-        cdef Coordinate target_coordinate
+        cdef Coordinate target_coord
         for i in range(self.target_count):
             #a0: random angle to generate target point.
             #match to path points.
@@ -262,11 +252,11 @@ cdef class Planar(Verification):
                 test_dict[f'a{j}'] = v[self.vars + i * len(self.driver_list) + j] / 180 * M_PI
             for e in self.exprs:
                 #target
-                target_coordinate = self.from_formula(e, test_dict)
-                if target_coordinate.is_nan():
+                target_coord = self.from_formula(e, test_dict)
+                if target_coord.is_nan():
                     return FAILURE
                 else:
-                    test_dict[e[1]] = target_coordinate
+                    test_dict[e[1]] = target_coord
             for i, name in enumerate(self.target_names):
                 path[i].append(test_dict[name])
         #constraint
@@ -282,9 +272,8 @@ cdef class Planar(Verification):
         cdef list errors
         cdef Coordinate c
         for k in range(len(self.target_names)):
-            errors = path_error(path[k], self.target[k])
-            path[k] = [c for _, c in sorted(zip(errors, path[k]))]
-            fitness += sum(path_error(path[k], self.target[k]))
+            for i in range(self.target_count):
+                fitness += path[i].distance(self.target[i])
         return fitness
     
     cpdef dict get_coordinates(self, ndarray v):
