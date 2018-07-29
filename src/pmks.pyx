@@ -13,6 +13,7 @@ from libc.math cimport (
     atan2,
     hypot,
 )
+from cpython.object cimport Py_EQ, Py_NE
 from numpy cimport ndarray
 from numpy import object as np_object
 
@@ -95,6 +96,29 @@ cdef class VPoint:
     def copy(self) -> VPoint:
         """Copy method of Python."""
         return self.__copy__()
+    
+    def __richcmp__(self, other: VPoint, op: int) -> bool:
+        """Rich comparison."""
+        if op == Py_EQ:
+            return (
+                self.links == other.links and
+                (self.c == other.c).all() and
+                self.type == other.type and
+                self.x == other.x and
+                self.y == other.y and
+                self.angle == other.angle
+            )
+        elif op == Py_NE:
+            return (
+                self.links != other.links or
+                (self.c != other.c).any() or
+                self.type != other.type or
+                self.x != other.x or
+                self.y != other.y or
+                self.angle != other.angle
+            )
+        else:
+            raise TypeError(f"'{op}' not support between instances of {type(self)} and {type(other)}")
     
     @property
     def cx(self):
