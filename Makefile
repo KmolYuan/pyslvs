@@ -10,6 +10,8 @@ all: build
 #Submodule files
 ADESIGN = $(notdir $(wildcard Adesign/src/*.pyx) $(wildcard Adesign/src/*.pxd))
 
+.PHONY: build
+
 # into package folder
 build: src/*.pyx src/*.pxd src/bfgs_solver/*.cpp Adesign/src/*.pyx Adesign/src/*.pxd
 ifeq ($(OS),Windows_NT)
