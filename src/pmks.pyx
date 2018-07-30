@@ -123,12 +123,18 @@ cdef class VPoint:
     @property
     def cx(self):
         """X value of frist current coordinate."""
-        return self.c[0][0]
+        if self.type == 0:
+            return self.c[0][0]
+        else:
+            return self.c[1][0]
     
     @property
     def cy(self):
         """Y value of frist current coordinate."""
-        return self.c[0][1]
+        if self.type == 0:
+            return self.c[0][1]
+        else:
+            return self.c[1][1]
     
     cpdef void move(self, tuple c1, tuple c2 = None):
         """Change coordinates of this point."""
@@ -142,7 +148,38 @@ cdef class VPoint:
     
     cpdef double distance(self, VPoint p):
         """Distance between two VPoint."""
-        return hypot(p.cx - self.cx, p.cy - self.cy)
+        cdef set m_links = set(self.links)
+        cdef set p_links = set(p.links)
+        cdef tuple on_links = tuple(m_links & p_links)
+        
+        cdef double m_x = 0
+        cdef double m_y = 0
+        cdef double p_x = 0
+        cdef double p_y = 0
+        
+        if not on_links:
+            m_x = self.c[0][0]
+            m_y = self.c[0][1]
+            p_x = p.c[0][0]
+            p_y = p.c[0][1]
+        else:
+            if (self.type == 0) or (self.links[0] == on_links[0]):
+                #self is R joint or at base link.
+                m_x = self.c[0][0]
+                m_y = self.c[0][1]
+            else:
+                #At pin joint.
+                m_x = self.c[1][0]
+                m_y = self.c[1][1]
+            if (p.type == 0) or (p.links[0] == on_links[0]):
+                #p is R joint or at base link.
+                p_x = p.c[0][0]
+                p_y = p.c[0][1]
+            else:
+                #At pin joint.
+                p_x = p.c[1][0]
+                p_y = p.c[1][1]
+        return hypot(p_x - m_x, p_y - m_y)
     
     cpdef double slope_angle(self, VPoint p, int num1 = 2, int num2 = 2):
         """Angle between horizontal line and two point.

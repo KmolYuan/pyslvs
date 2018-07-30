@@ -7,6 +7,7 @@ Version 18.07
 + Limitation format (upper and lower) of "Planar" class has been changed.
 + PMKS expression classes has been independent to new library.
 + Copy and comparison method of "VPoint" class.
++ New detect mechanism in VPoint distance method.
 + Remove "expr_path" function.
 + "Sketch Solve" kernel support PMKS expression.
 
