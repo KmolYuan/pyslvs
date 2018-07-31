@@ -34,5 +34,7 @@ cdef class VPoint:
     cpdef void rotate(self, double)
     cpdef double distance(self, VPoint)
     cpdef double slope_angle(self, VPoint, int num1 = *, int num2 = *)
+    
     cpdef bool grounded(self)
+    cpdef bool no_link(self)
     cpdef bool is_slot_link(self, str)
