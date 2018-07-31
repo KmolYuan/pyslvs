@@ -210,6 +210,10 @@ cdef class VPoint:
             else:
                 return False
     
+    cpdef bool no_link(self):
+        """Return True if the point has no link."""
+        return not self.links
+    
     cpdef bool is_slot_link(self, str link_name):
         """Return True if the link name is first link."""
         if self.type == 0:
