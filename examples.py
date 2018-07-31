@@ -140,7 +140,6 @@ example_list = {
     "Lift Tailgate": ("M["
         "J[R, color[Green], P[50.0, 0.0], L[ground, link_1]], "
         "J[R, color[Green], P[30.53, -42.05], L[link_1, link_2]], "
-        "J[R, color[Green], P[35.26, -57.11], L[link_2]], "
         "J[R, color[Green], P[41.0, -24.21], L[link_3, link_1]], "
         "J[R, color[Green], P[66.58, -40.0], L[link_3, link_4]], "
         "J[R, color[Green], P[67.63, -20.0], L[ground, link_4]], "
