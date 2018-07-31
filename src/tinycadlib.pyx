@@ -433,6 +433,21 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     return data_dict, dof
 
 
+cdef inline tuple check_pair(str link, object exprs, dict mapping_r):
+    """Check two points of the length."""
+    cdef tuple expr
+    for expr in exprs:
+        if expr[2] == link:
+            return (mapping_r[expr[1]], mapping_r[expr[-1]])
+        if expr[0] == 'PLLP':
+            if expr[3] == link:
+                return (mapping_r[expr[4]], mapping_r[expr[-1]])
+        elif expr[0] == 'PXY':
+            if expr[3] == link:
+                return (mapping_r[expr[1]], mapping_r[expr[-1]])
+    return ()
+
+
 cpdef list expr_solving(
     object exprs,
     dict mapping,
@@ -441,6 +456,9 @@ cpdef list expr_solving(
 ):
     """Solving function.
     
+    + exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1'), ...]
+    + mapping: {0: 'P0', ..., 'L0': 20.0, ...}
+    + vpoints: [VPoint]
     + angles: [[a0]: a0, [a1]: a1, ...]
     """
     cdef dict data_dict
@@ -476,12 +494,19 @@ cpdef list expr_solving(
     
     cdef dict p_data_dict = {}
     cdef bool has_target = False
+    #Add coordinate of known points.
     for i in range(len(vpoints)):
         if mapping[i] in data_dict:
             p_data_dict[i] = data_dict[mapping[i]]
         else:
             has_target = True
             break
+    #Add specified link lengths.
+    for k, v in mapping.items():
+        if type(k) == str:
+            p_data_dict[check_pair(k, exprs, mapping_r)] = v
+    
+    #Calling Sketch Solve kernel and try to get the result.
     cdef list solved_bfgs = []
     if exprs and has_target:
         try:

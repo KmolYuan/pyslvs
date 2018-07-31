@@ -121,7 +121,8 @@ cpdef list vpoint_solving(
     + inputs: [(b0, d0, a0), (b1, d1, a1), ...]
     
     Known coordinates import from data_dict.
-    + data_dict: Dict[int, Tuple[float, float]]
+    + data_dict: {0: (10.0, 20.0), ..., (0, 2): 30.0, ...}
+    TODO: Link lengths from "tinycadlib".
     """
     cdef dict vlinks = {}
     
