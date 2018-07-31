@@ -273,7 +273,7 @@ cdef class Planar(Verification):
         cdef Coordinate c
         for k in range(len(self.target_names)):
             for i in range(self.target_count):
-                fitness += path[i].distance(self.target[i])
+                fitness += path[k][i].distance(self.target[k][i])
         return fitness
     
     cpdef dict get_coordinates(self, ndarray v):
