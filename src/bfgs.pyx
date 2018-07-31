@@ -179,7 +179,7 @@ cpdef list vpoint_solving(
     cdef double *parameters = <double *>malloc(params_count * sizeof(double))
     cdef double **pparameters = <double **>malloc(params_count * sizeof(double *))
     cdef double *constants = <double *>malloc(constants_count * sizeof(double))
-    cdef Point *points = <Point *>malloc(len(vpoint) * sizeof(Point))
+    cdef Point *points = <Point *>malloc(len(vpoints) * sizeof(Point))
     #Slider data
     cdef int slider_count = slider_p_count + slider_rp_count
     cdef Point *slider_bases = NULL
