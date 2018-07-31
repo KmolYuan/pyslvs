@@ -129,7 +129,6 @@ cpdef list vpoint_solving(
     
     Known coordinates import from data_dict.
     + data_dict: {0: (10.0, 20.0), ..., (0, 2): 30.0, ...}
-    TODO: Link lengths from "tinycadlib".
     """
     #Sort pairs in data_dict.
     cdef object k
