@@ -138,6 +138,9 @@ cpdef list vpoint_solving(
     cdef int i
     cdef VPoint vpoint
     for i, vpoint in enumerate(vpoints):
+        if vpoint.no_link():
+            constants_count += 2
+            continue
         if vpoint.grounded():
             constants_count += 2
         else:
@@ -161,6 +164,10 @@ cpdef list vpoint_solving(
             else:
                 slider_rp_count += 1
     
+    #Avoid no parameters.
+    if not params_count:
+        return []
+    
     cdef double *parameters = <double *>malloc(params_count * sizeof(double))
     cdef double **pparameters = <double **>malloc(params_count * sizeof(double *))
     cdef double *constants = <double *>malloc(constants_count * sizeof(double))
@@ -181,6 +188,11 @@ cpdef list vpoint_solving(
     b = 0
     cdef str vlink
     for i, vpoint in enumerate(vpoints):
+        if vpoint.no_link():
+            constants[b], constants[b + 1] = vpoint.c[0]
+            points[i] = [constants + b, constants + b + 1]
+            b += 2
+            continue
         for vlink in vpoint.links:
             if vlink == 'ground':
                 continue
