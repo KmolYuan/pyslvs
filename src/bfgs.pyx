@@ -110,6 +110,13 @@ cpdef tuple test_kernel():
     return input_data, output_data, grad_data
 
 
+cdef inline tuple sort_pair(tuple pair):
+    """A sorted pair."""
+    cdef int a, b
+    a, b = pair
+    return (a, b) if a < b else (b, a)
+
+
 cpdef list vpoint_solving(
     object vpoints,
     object inputs = [],
@@ -124,6 +131,11 @@ cpdef list vpoint_solving(
     + data_dict: {0: (10.0, 20.0), ..., (0, 2): 30.0, ...}
     TODO: Link lengths from "tinycadlib".
     """
+    #Sort pairs in data_dict.
+    cdef object k
+    for k in data_dict:
+        if type(k) == tuple:
+            data_dict[sort_pair(k)] = data_dict.pop(k)
     cdef dict vlinks = {}
     
     #Pre-count number of parameters.
@@ -292,6 +304,7 @@ cpdef list vpoint_solving(
     i = 0
     cdef Point *p1
     cdef Point *p2
+    cdef tuple pair
     for vlink in vlinks:
         if len(vlinks[vlink]) < 2:
             continue
@@ -318,7 +331,11 @@ cpdef list vpoint_solving(
                 #Known coordinates.
                 continue
             for d in (a, b):
-                distences[i] = vpoints[c].distance(vpoints[d])
+                pair = sort_pair((c, d))
+                if pair in data_dict:
+                    distences[i] = data_dict[pair]
+                else:
+                    distences[i] = vpoints[c].distance(vpoints[d])
                 if vpoints[c].is_slot_link(vlink):
                     p1 = slider_bases + sliders[c]
                 else:
