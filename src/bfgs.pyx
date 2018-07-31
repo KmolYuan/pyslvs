@@ -176,6 +176,10 @@ cpdef list vpoint_solving(
             else:
                 slider_rp_count += 1
     
+    #Avoid no parameters.
+    if not params_count:
+        return []
+    
     cdef double *parameters = <double *>malloc(params_count * sizeof(double))
     cdef double **pparameters = <double **>malloc(params_count * sizeof(double *))
     cdef double *constants = <double *>malloc(constants_count * sizeof(double))
