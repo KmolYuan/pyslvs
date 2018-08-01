@@ -62,6 +62,16 @@ example_list = {
         "J[R, color[Green], P[7.50, 93.44], L[link_12]], "
         "]", ((0, 1),)),
     
+    "Crank lifter": ("M["
+        "J[R, color[Green], P[-67.38, 36.13], L[ground, link_1]], "
+        "J[R, color[Green], P[-68.925, 55.925], L[link_1, link_2]], "
+        "J[RP, A[0.0], color[Green], P[11.88, 0.0], L[ground, link_2, link_3]], "
+        "J[R, color[Green], P[50.775, 24.7908], L[link_3, link_4]], "
+        "J[R, color[Green], P[80.375, 8.625], L[ground, link_4]], "
+        "J[R, color[Green], P[109.19720966542752, 63.88050148698885], L[link_3, link_5]], "
+        "J[RP, A[0.0], color[Green], P[0.82, 64.42], L[link_5, link_4]], "
+        "]", ((0, 1),)),
+    
     "Crank rocker": ("M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
         "J[R, color[Green], P[12.92, 32.53], L[link_1, link_2]], "
