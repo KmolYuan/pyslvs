@@ -117,6 +117,26 @@ example_list = {
         "J[R, color[Green], P[4.79, -87.79], L[link_13]], "
         "]", ((0, 1),)),
     
+    "Lift Tailgate": ("M["
+        "J[R, color[Green], P[50.0, 0.0], L[ground, link_1]], "
+        "J[R, color[Green], P[30.53, -42.05], L[link_1, link_2]], "
+        "J[R, color[Green], P[41.0, -24.21], L[link_3, link_1]], "
+        "J[R, color[Green], P[66.58, -40.0], L[link_3, link_4]], "
+        "J[R, color[Green], P[67.63, -20.0], L[ground, link_4]], "
+        "J[R, color[Green], P[161.84, -1.05], L[link_4]], "
+        "J[R, color[Green], P[0.0, 0.0], L[ground, link_2]], "
+        "]", ()),
+    
+    "Stephenson I": ("M["
+        "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
+        "J[R, color[Green], P[29.42583732057417, 46.650717703349315], L[link_1, link_5]], "
+        "J[R, color[Green], P[10.789473684210535, 114.37799043062203], L[link_1, link_2]], "
+        "J[R, color[Green], P[73.75, 202.8125], L[link_2, link_3]], "
+        "J[R, color[Green], P[146.25, 146.5625], L[link_3, link_4]], "
+        "J[R, color[Green], P[105.25, 87.5625], L[link_4, link_5]], "
+        "J[R, color[Green], P[113.75, 0.0], L[ground, link_4]], "
+        "]", ((0, 1),)),
+    
     "Stephenson II": ("M["
         "J[R, color[Green], P[-45.0, -15.5], L[ground, link_1]], "
         "J[R, color[Green], P[-52.0, 25.5], L[link_1, link_2]], "
@@ -137,13 +157,23 @@ example_list = {
         "J[R, color[Green], P[138.875, 33.125], L[ground, link_5]], "
         "]", ((0, 1),)),
     
-    "Lift Tailgate": ("M["
-        "J[R, color[Green], P[50.0, 0.0], L[ground, link_1]], "
-        "J[R, color[Green], P[30.53, -42.05], L[link_1, link_2]], "
-        "J[R, color[Green], P[41.0, -24.21], L[link_3, link_1]], "
-        "J[R, color[Green], P[66.58, -40.0], L[link_3, link_4]], "
-        "J[R, color[Green], P[67.63, -20.0], L[ground, link_4]], "
-        "J[R, color[Green], P[161.84, -1.05], L[link_4]], "
-        "J[R, color[Green], P[0.0, 0.0], L[ground, link_2]], "
-        "]", ())
+    "Watt I": ("M["
+        "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
+        "J[R, color[Green], P[-18.615384615384613, 41.38461538461538], L[link_1, link_2]], "
+        "J[R, color[Green], P[29.0, 116.5], L[link_2, link_3]], "
+        "J[R, color[Green], P[38.0, 69.0], L[link_2, link_5]], "
+        "J[R, color[Green], P[95.0, 143.0], L[link_3, link_4]], "
+        "J[R, color[Green], P[122.0, 76.5], L[link_4, link_5]], "
+        "J[R, color[Green], P[64.0, 0.0], L[ground, link_5]], "
+        "]", ((0, 1),)),
+    
+    "Watt II": ("M["
+        "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
+        "J[R, color[Green], P[-5.333333333333334, 36.0], L[link_1, link_2]], "
+        "J[R, color[Green], P[42.666666666666664, 48.333333333333336], L[link_2, link_3]], "
+        "J[R, color[Green], P[60.0, 1.333333333333334], L[ground, link_3]], "
+        "J[R, color[Green], P[79.0, 71.33333333333333], L[link_3, link_4]], "
+        "J[R, color[Green], P[113.66666666666667, 36.0], L[link_4, link_5]], "
+        "J[R, color[Green], P[87.0, -17.0], L[ground, link_5]], "
+        "]", ((0, 1),)),
 }
