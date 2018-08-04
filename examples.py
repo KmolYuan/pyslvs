@@ -186,4 +186,13 @@ example_list = {
         "J[R, color[Green], P[113.66666666666667, 36.0], L[link_4, link_5]], "
         "J[R, color[Green], P[87.0, -17.0], L[ground, link_5]], "
         "]", ((0, 1),)),
+    
+    "test": ("M["
+        "J[RP, A[0.0], color[Blue], P[16.75, 62.38], L[ground, link_4]], "
+        "J[R, color[Green], P[28.5, 30.875], L[link_3, link_4]], "
+        "J[R, color[Green], P[-6.75, 27.125], L[link_2, link_4]], "
+        "J[R, color[Blue], P[10.75, -25.125], L[ground, link_3]], "
+        "J[R, color[Blue], P[-66.0, -22.625], L[ground, link_1]], "
+        "J[R, color[Green], P[-80.5, -15.625], L[link_1, link_2]], "
+        "]", ((4, 5),)),
 }

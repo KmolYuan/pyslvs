@@ -155,7 +155,10 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
     #Add positions parameters.
     cdef list pos = []
     for vpoint in vpoints:
-        pos.append(vpoint.c[0] if (vpoint.type == 0) else vpoint.c[1])
+        if vpoint.type == 0:
+            pos.append(vpoint.c[0])
+        else:
+            pos.append(vpoint.c[1])
     
     cdef list exprs = []
     cdef int link_symbol = 0

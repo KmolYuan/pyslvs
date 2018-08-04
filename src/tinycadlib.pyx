@@ -515,7 +515,7 @@ cpdef list expr_solving(
                 if vpoints[i].type == 0:
                     solved_points.append(solved_bfgs[i])
                 else:
-                    solved_points.append((vpoints[i].c[0], solved_bfgs[i]))
+                    solved_points.append((vpoints[i].c[0], solved_bfgs[i][1]))
             else:
                 if vpoints[i].type == 0:
                     solved_points.append(vpoints[i].c[0])

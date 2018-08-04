@@ -30,7 +30,7 @@ cdef class VPoint:
     cdef readonly str typeSTR
     cdef readonly double x, y, angle
     
-    cpdef void move(self, tuple, tuple c2 = *)
+    cpdef void move(self, tuple, tuple c2 = *) except *
     cpdef void rotate(self, double)
     cpdef double distance(self, VPoint)
     cpdef double slope_angle(self, VPoint, int num1 = *, int num2 = *)

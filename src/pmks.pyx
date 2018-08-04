@@ -90,7 +90,7 @@ cdef class VPoint:
             self.x,
             self.y
         )
-        vpoint.move(*self.c)
+        vpoint.move(self.c[0], self.c[1])
         return vpoint
     
     def copy(self) -> VPoint:
@@ -136,11 +136,15 @@ cdef class VPoint:
         else:
             return self.c[1][1]
     
-    cpdef void move(self, tuple c1, tuple c2 = None):
+    cpdef void move(self, tuple c1, tuple c2 = None) except *:
         """Change coordinates of this point."""
-        self.c[0] = c1
+        cdef double x, y
+        x, y = c1
+        self.c[0] = (x, y)
         if self.type != 0:
-            self.c[1] = c2 if c2 else c1
+            if c2:
+                x, y = c2
+            self.c[1] = (x, y)
     
     cpdef void rotate(self, double angle):
         """Change the angle of slider slot by degrees."""
