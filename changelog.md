@@ -4,6 +4,8 @@ Change Log
 Version 18.08
 ===
 
++ Add "same link" operator for "VPoint" class.
+
 Version 18.07
 ===
 

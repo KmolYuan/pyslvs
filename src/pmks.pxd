@@ -36,5 +36,6 @@ cdef class VPoint:
     cpdef double slope_angle(self, VPoint, int num1 = *, int num2 = *)
     
     cpdef bool grounded(self)
+    cpdef bool same_link(self, VPoint p)
     cpdef bool no_link(self)
     cpdef bool is_slot_link(self, str)

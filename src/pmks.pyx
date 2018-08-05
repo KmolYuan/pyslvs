@@ -152,9 +152,7 @@ cdef class VPoint:
     
     cpdef double distance(self, VPoint p):
         """Distance between two VPoint."""
-        cdef set m_links = set(self.links)
-        cdef set p_links = set(p.links)
-        cdef tuple on_links = tuple(m_links & p_links)
+        cdef tuple on_links = tuple(set(self.links) & set(p.links))
         
         cdef double m_x = 0
         cdef double m_y = 0
@@ -213,6 +211,10 @@ cdef class VPoint:
                 return 'ground' == self.links[0]
             else:
                 return False
+    
+    cpdef bool same_link(self, VPoint p):
+        """Return True if the point is at the same link."""
+        return bool(set(self.links) & set(p.links))
     
     cpdef bool no_link(self):
         """Return True if the point has no link."""
