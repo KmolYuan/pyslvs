@@ -487,7 +487,6 @@ cpdef list expr_solving(
             p_data_dict[i] = data_dict[mapping[i]]
         else:
             has_target = True
-            break
     
     #TODO: Add specified link lengths.
     
