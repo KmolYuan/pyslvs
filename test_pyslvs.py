@@ -62,10 +62,10 @@ class CoreTest(TestCase):
                 (-128.63, -49.74),
                 (-117.56, -65.45),
             ]},
-            'Expression': "PLAP[P0,L0,a0](P2);" +
-                "PLLP[P2,L1,L2,P1](P3);" +
-                "PLLP[P2,L3,L4,P3](P4)",
-            'constraint': [('P0', 'P1', 'P2', 'P3')],
+            'Expression': ("PLAP[P0,L0,a0](P2);"
+                "PLLP[P2,L1,L2,P1](P3);"
+                "PLLP[P2,L3,L4,P3](P4)"),
+            'constraints': [('P0', 'P1', 'P2', 'P3')],
             'upper': [100., 100., 100., 100., 100., 360.],
             'lower': [5., 5., 5., 5., 5., 0.],
         })

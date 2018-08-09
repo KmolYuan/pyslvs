@@ -36,16 +36,15 @@ cdef class Planar(Verification):
     """This class is used to verified kinematics of the linkage mechanism."""
     
     cdef int target_count, vars
-    cdef list constraint, link_list, driver_list, follower_list
-    cdef ndarray target_names, exprs, target, upper, lower
+    cdef list link_list, driver_list, follower_list
+    cdef ndarray constraints, target_names, exprs, target, upper, lower
     
     def __cinit__(self, mech_params: dict):
-        """
-        mech_params = {
+        """mech_params = {
             'Driver': {'pt': (x, y, r)},
             'Follower': {'pt': (x, y, r)},
             'Target': {'pt': [(x0, y0), (x1, y1), ...]},
-            'constraint': [('pt', 'pt', 'pt', 'pt')],
+            'constraints': [('pt', 'pt', 'pt', 'pt')],
             'Expression': str,
             'upper': ndarray[np_float32],
             'lower': ndarray[np_float32],
@@ -71,11 +70,11 @@ cdef class Planar(Verification):
             i += 1
         
         #Constraint
-        self.constraint = mech_params['constraint']
+        self.constraints = np_array(mech_params['constraints'])
         
         #Expression
         #['A', 'B', 'C', 'D', 'E', 'L0', 'L1', 'L2', 'L3', 'L4', 'a0']
-        cdef list exprs = mech_params['Expression'].split(';')
+        cdef tuple exprs = tuple(mech_params['Expression'].split(';'))
         
         """
         link_list: L0, L1, L2, L3, ...
@@ -260,7 +259,8 @@ cdef class Planar(Verification):
             for i, name in enumerate(self.target_names):
                 path[i].append(test_dict[name])
         #constraint
-        for constraint in self.constraint:
+        cdef ndarray constraint
+        for constraint in self.constraints:
             if not legal_crank(
                 test_dict[constraint[0]],
                 test_dict[constraint[1]],
