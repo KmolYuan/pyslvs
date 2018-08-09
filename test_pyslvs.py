@@ -14,7 +14,7 @@ from typing import Tuple, List
 #For necessary testing modules.
 from math import sqrt, radians, isclose
 from pmks import VPoint
-import bfgs
+from bfgs import vpoint_solving
 from tinycadlib import (
     Coordinate,
     PLAP,
@@ -155,16 +155,8 @@ class CoreTest(TestCase):
     
     def test_bfgs(self):
         """Test Sketch Solve kernel."""
-        input_data, output_data, grad_data = bfgs.test_kernel()
-        self.assertEqual(input_data[0], (0.0, 0.0))
-        self.assertEqual(input_data[1], (5.0, 0.0))
-        self.assertEqual(input_data[2], (6.0, 5.0))
-        self.assertEqual(input_data[3], (6.0, 5.0))
-        self.assertEqual(input_data[4], (30.0, 10.0))
-        self.assertTrue(isclose(round(output_data[2][1], 2), 10))
-        self.assertTrue(isclose(round(output_data[4][0], 2), 30))
         vpoints, inputs = self.vpoints_object()
-        result = bfgs.vpoint_solving(vpoints, [(0, 1, 0.)])
+        result = vpoint_solving(vpoints, [(0, 1, 0.)])
         x, y = result[-1]
         self.assertTrue(isclose(round(x, 2), -43.17))
         self.assertTrue(isclose(round(y, 2), -91.75))

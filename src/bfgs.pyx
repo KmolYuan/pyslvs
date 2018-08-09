@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3
 
-"""Wrapper of BFGS algorithm."""
+"""Wrapper of BFGS algorithm.
+
+Note of Pointer:
+    + In Cython, pointer is more convenient then array.
+        Because we can not "new" them or using "const" decorator on size_t.
+    + There is NO pointer's "get value" operator in Cython,
+        please use "index" operator.
+    + Pointers can be plus with C's Integer, but not Python's.
+        So please copy or declare to C's Integer.
+"""
 
 # __author__ = "Yuan Chang"
 # __copyright__ = "Copyright (C) 2016-2018"
@@ -32,82 +41,6 @@ from sketch_solve cimport (
     derivatives,
 )
 from pmks cimport VPoint
-
-
-cpdef tuple test_kernel():
-    """Test kernel of Sketch Solve. Same as C++ version.
-    
-    Note of Pointer:
-    + In Cython, pointer is more convenient then array.
-        Because we can not "new" them or using "const" decorator on size_t.
-    + There is NO pointer's "get value" operator in Cython,
-        please use "index" operator.
-    + Pointers can be plus with C's Integer, but not Python's.
-        So please copy or declare to C's Integer.
-    """
-    cdef int i
-    cdef double constants[3]
-    constants = [30, 10, 24]
-    cdef list params = [
-        0, 0,
-        5, 0,
-        6, 5,
-        6, 5,
-    ]
-    cdef double *parameters = <double *>malloc(len(params) * sizeof(double))
-    cdef double **pparameters = <double **>malloc(len(params) * sizeof(double *))
-    for i in range(len(params)):
-        #Just copy values, these are not their pointer.
-        parameters[i] = params[i]
-        #Pointer of parameter pointer.
-        pparameters[i] = parameters + i
-    
-    cdef Point points[5]
-    points = [
-        [pparameters[0], pparameters[1]],
-        [pparameters[2], pparameters[3]],
-        [pparameters[4], pparameters[5]],
-        [pparameters[6], pparameters[7]],
-        [constants + 0, constants + 1],
-    ]
-    cdef Line lines[2]
-    lines = [
-        [&points[0], &points[1]],
-        [&points[1], &points[2]],
-    ]
-    cdef Constraint cons[4]
-    cons = [
-        HorizontalConstraint(&lines[0]),
-        PointOnPointConstraint(&points[2], &points[4]),
-        PointOnPointConstraint(&points[3], &points[4]),
-        P2PDistanceConstraint(&points[1], &points[2], &constants[2]),
-    ]
-    
-    cdef int point_count = 5
-    cdef int cons_count = 4
-    cdef list input_data = []
-    cdef list output_data = []
-    for i in range(point_count):
-        input_data.append((points[i].x[0], points[i].y[0]))
-    
-    if solve(pparameters, len(params), cons, cons_count, Rough) != Succsess:
-        raise Exception("No valid Solutions were found from this start point.")
-    
-    for i in range(point_count):
-        output_data.append((points[i].x[0], points[i].y[0]))
-    
-    cdef double *gradF = <double *>malloc(point_count * sizeof(double))
-    for i in range(point_count):
-        gradF[i] = 0
-    derivatives(pparameters, gradF, point_count, cons, cons_count)
-    cdef list grad_data = []
-    for i in range(point_count):
-        grad_data.append(gradF[i])
-    
-    free(parameters)
-    free(pparameters)
-    free(gradF)
-    return input_data, output_data, grad_data
 
 
 cdef inline tuple sort_pair(tuple pair):
