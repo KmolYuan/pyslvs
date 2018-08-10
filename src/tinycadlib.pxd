@@ -18,6 +18,7 @@ cdef class Coordinate:
     cpdef bool is_nan(self)
 
 
+cdef double radians(double)
 cpdef tuple PLAP(Coordinate, double, double, Coordinate B = *, bool inverse = *)
 cpdef tuple PLLP(Coordinate, double, double, Coordinate, bool inverse = *)
 cpdef tuple PLPP(Coordinate, double, Coordinate, Coordinate, bool inverse = *)

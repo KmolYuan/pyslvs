@@ -8,7 +8,6 @@
 # __license__ = "AGPL"
 # __email__ = "pyslvs@gmail.com"
 
-from cpython cimport bool
 from libc.math cimport (
     M_PI,
     sqrt,
@@ -22,6 +21,11 @@ cdef double nan = float('nan')
 from numpy import isnan
 from pmks cimport VPoint
 from bfgs cimport vpoint_solving
+
+
+cdef inline double radians(double degree):
+    """Deg to rad."""
+    return degree / 180 * M_PI
 
 
 cdef inline double distance(double x1, double y1, double x2, double y2):
@@ -358,11 +362,11 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
         if vpoint.type != 2:
             continue
         bf = base_friend(i, vpoints)
-        angle = (
+        angle = radians(
             vpoint.angle -
             vpoint.slope_angle(vpoints[bf], 1, 0) +
             vpoint.slope_angle(vpoints[bf], 0, 0)
-        ) / 180 * M_PI
+        )
         pos.append((vpoint.c[1][0] + cos(angle), vpoint.c[1][1] + sin(angle)))
         mapping_r[f'S{i}'] = len(pos) - 1
     
@@ -474,7 +478,7 @@ cpdef list expr_solving(
     cdef double a
     cdef int i
     for i, a in enumerate(angles):
-        data_dict[f'a{i}'] = a / 180 * M_PI
+        data_dict[f'a{i}'] = radians(a)
     
     #Solve
     expr_parser(exprs, data_dict)

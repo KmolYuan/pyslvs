@@ -9,7 +9,8 @@
 # __email__ = "pyslvs@gmail.com"
 
 from typing import Sequence, Iterator
-from libc.math cimport sin, cos, M_PI
+from libc.math cimport sin, cos
+from tinycadlib cimport radians
 from pmks cimport VPoint
 from cpython cimport bool
 
@@ -289,7 +290,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
             friend_c = node
             #'S' point.
             tmp_x, tmp_y = pos[node]
-            angle = vpoints[node].angle / 180 * M_PI
+            angle = radians(vpoints[node].angle)
             tmp_x += cos(angle)
             tmp_y += sin(angle)
             try:

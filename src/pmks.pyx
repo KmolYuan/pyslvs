@@ -14,7 +14,6 @@ from libc.math cimport (
     hypot,
 )
 from cpython.object cimport Py_EQ, Py_NE
-from numpy cimport ndarray
 from numpy import object as np_object
 
 

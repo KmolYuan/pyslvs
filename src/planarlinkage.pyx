@@ -18,11 +18,12 @@ from numpy cimport ndarray
 from verify cimport Verification
 from tinycadlib cimport (
     Coordinate,
-    legal_crank,
+    radians,
     PLAP,
     PLLP,
     PLPP,
     PXY,
+    legal_crank,
     strbetween,
     strbefore,
 )
@@ -248,7 +249,7 @@ cdef class Planar(Verification):
             #a0: random angle to generate target point.
             #match to path points.
             for j in range(len(self.driver_list)):
-                test_dict[f'a{j}'] = v[self.vars + i * len(self.driver_list) + j] / 180 * M_PI
+                test_dict[f'a{j}'] = radians(v[self.vars + i * len(self.driver_list) + j])
             for e in self.exprs:
                 #target
                 target_coord = self.from_formula(e, test_dict)
@@ -283,7 +284,7 @@ cdef class Planar(Verification):
         cdef object value
         cdef dict final_dict = self.get_data_dict(v)
         for j in range(len(self.driver_list)):
-            final_dict[f'a{j}'] = v[self.vars + j] / 180 * M_PI
+            final_dict[f'a{j}'] = radians(v[self.vars + j])
         for e in self.exprs:
             #target
             final_dict[e[1]] = self.from_formula(e, final_dict)

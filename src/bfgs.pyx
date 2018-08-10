@@ -43,11 +43,16 @@ from sketch_solve cimport (
 from pmks cimport VPoint
 
 
+cdef inline double radians(double degree):
+    """Deg to rad."""
+    return degree / 180 * M_PI
+
+
 cdef inline tuple sort_pair(tuple pair):
     """A sorted pair."""
     cdef int a, b
     a, b = pair
-    return (a, b) if a < b else (b, a)
+    return pair if a < b else (b, a)
 
 
 cpdef list vpoint_solving(
@@ -304,7 +309,7 @@ cpdef list vpoint_solving(
         slider_lines[c] = [slider_bases + b, slider_slots + b]
         if vpoints[a].grounded():
             #Slot grounded.
-            cons_angles[d] = vpoints[a].angle / 180 * M_PI
+            cons_angles[d] = radians(vpoints[a].angle)
             cons[i] = LineInternalAngleConstraint(slider_lines + c, cons_angles + d)
             i += 1
             cons[i] = PointOnLineConstraint(points + a, slider_lines + c)
@@ -323,7 +328,7 @@ cpdef list vpoint_solving(
                     slider_lines[c] = [points + a, slider_bases + sliders[f1]]
                 else:
                     slider_lines[c] = [points + a, points + f1]
-                cons_angles[d] = (vpoints[a].slope_angle(vpoints[f1]) - vpoints[a].angle) / 180 * M_PI
+                cons_angles[d] = radians(vpoints[a].slope_angle(vpoints[f1]) - vpoints[a].angle)
                 cons[i] = InternalAngleConstraint(
                     slider_lines + c - 1,
                     slider_lines + c,
@@ -348,7 +353,7 @@ cpdef list vpoint_solving(
                     slider_lines[c] = [points + a, slider_bases + sliders[f1]]
                 else:
                     slider_lines[c] = [points + a, points + f1]
-                cons_angles[d] = vpoints[a].slope_angle(vpoints[f1]) / 180 * M_PI - cons_angles[d - 1]
+                cons_angles[d] = radians(vpoints[a].slope_angle(vpoints[f1])) - cons_angles[d - 1]
                 cons[i] = InternalAngleConstraint(
                     slider_lines + c - (1 if vpoints[a].grounded() else 2),
                     slider_lines + c,
@@ -364,7 +369,7 @@ cpdef list vpoint_solving(
     cdef double angle
     for b, d, angle in inputs:
         lines[c] = [points + b, points + d]
-        angles[c] = angle / 180 * M_PI
+        angles[c] = radians(angle)
         cons[i] = LineInternalAngleConstraint(lines + c, angles + c)
         i += 1
         c += 1

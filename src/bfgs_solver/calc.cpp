@@ -111,7 +111,7 @@ double calc(Constraint *cons, const int consLength) {
 
             t = ((P1_x - L1_P1_x) * dx + (P1_y - L1_P1_y) * dy) / (dx * dx + dy * dy);
             temp = _hypot((L1_P1_x + dx * t) - P1_x, (L1_P1_y + dy * t) - P1_y);
-            error += temp * temp / 100;
+            error += temp * temp / 1000;
             break;
 
         case Constraint::P2LDistance:
