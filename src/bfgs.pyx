@@ -348,15 +348,13 @@ cpdef list vpoint_solving(
         i += 1
         #P joint.
         if vpoints[a].type == 1:
-            try:
-                vlink = vpoints[a].links[1]
+            for vlink in vpoints[a].links[1:]:
                 #A base link friend.
                 f1 = vlinks[vlink][0]
                 if f1 == a:
+                    if len(vlinks[vlink]) < 2:
+                        continue
                     f1 = vlinks[vlink][1]
-            except IndexError:
-                pass
-            else:
                 if vpoints[f1].is_slot_link(vlink):
                     #f1 is a slider, and it is be connected with slot link.
                     slider_lines[c] = [points + a, slider_bases + sliders[f1]]

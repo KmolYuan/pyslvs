@@ -7,6 +7,7 @@ Version 18.08
 + Add "same link" operator for "VPoint" class.
 + Fix bug of BFGS transform in tinycadlib.
 + Remove test function of Sketch Solve.
++ Support for multi slider joint.
 
 Version 18.07
 ===
