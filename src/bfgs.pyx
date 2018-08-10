@@ -305,37 +305,44 @@ cpdef list vpoint_solving(
     c = 0
     d = 0
     cdef int f1
+    cdef Line *slider_slot
     for a, b in sliders:
+        #Base slot.
         slider_lines[c] = [slider_bases + b, slider_slots + b]
+        slider_slot = slider_lines + c
         if vpoints[a].grounded():
-            #Slot grounded.
+            #Slot is grounded.
             cons_angles[d] = radians(vpoints[a].angle)
-            cons[i] = LineInternalAngleConstraint(slider_lines + c, cons_angles + d)
+            cons[i] = LineInternalAngleConstraint(slider_slot, cons_angles + d)
             i += 1
-            cons[i] = PointOnLineConstraint(points + a, slider_lines + c)
+            cons[i] = PointOnLineConstraint(points + a, slider_slot)
         else:
             #Slider between links.
             try:
                 vlink = vpoints[a].links[0]
+                #A base link friend.
                 f1 = vlinks[vlink][0]
                 if f1 == a:
                     f1 = vlinks[vlink][1]
             except IndexError:
                 pass
             else:
+                #FIXME: There still have simulation error.
                 c += 1
                 if vpoints[f1].is_slot_link(vlink):
+                    #f1 is a slider, and it is be connected with slot link.
                     slider_lines[c] = [points + a, slider_bases + sliders[f1]]
                 else:
+                    #f1 is a R joint or it is not connected with slot link.
                     slider_lines[c] = [points + a, points + f1]
-                cons_angles[d] = radians(vpoints[a].slope_angle(vpoints[f1]) - vpoints[a].angle)
+                cons_angles[d] = radians(vpoints[f1].slope_angle(vpoints[a]) - vpoints[a].angle)
                 cons[i] = InternalAngleConstraint(
-                    slider_lines + c - 1,
+                    slider_slot,
                     slider_lines + c,
                     cons_angles + d
                 )
                 i += 1
-                cons[i] = PointOnLineConstraint(points + a, slider_lines + c - 1)
+                cons[i] = PointOnLineConstraint(points + a, slider_slot)
         d += 1
         c += 1
         i += 1
@@ -343,6 +350,7 @@ cpdef list vpoint_solving(
         if vpoints[a].type == 1:
             try:
                 vlink = vpoints[a].links[1]
+                #A base link friend.
                 f1 = vlinks[vlink][0]
                 if f1 == a:
                     f1 = vlinks[vlink][1]
@@ -350,12 +358,14 @@ cpdef list vpoint_solving(
                 pass
             else:
                 if vpoints[f1].is_slot_link(vlink):
+                    #f1 is a slider, and it is be connected with slot link.
                     slider_lines[c] = [points + a, slider_bases + sliders[f1]]
                 else:
+                    #f1 is a R joint or it is not connected with slot link.
                     slider_lines[c] = [points + a, points + f1]
-                cons_angles[d] = radians(vpoints[a].slope_angle(vpoints[f1])) - cons_angles[d - 1]
+                cons_angles[d] = radians(vpoints[a].slope_angle(vpoints[f1]) - vpoints[a].angle)
                 cons[i] = InternalAngleConstraint(
-                    slider_lines + c - (1 if vpoints[a].grounded() else 2),
+                    slider_slot,
                     slider_lines + c,
                     cons_angles + d
                 )
