@@ -6,7 +6,9 @@
  *  Contributor: KmolYuan
  */
 
+#ifdef DEBUG
 #include <iostream>
+#endif
 #include <cmath>
 #include "solve.h"
 #include "calc.h"

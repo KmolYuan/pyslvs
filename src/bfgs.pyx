@@ -198,8 +198,11 @@ cpdef list vpoint_solving(
                 slider_slots[slider_count] = [pparameters[a], pparameters[a + 1]]
                 a += 2
                 slider_count += 1
-            #Point / Pin is moveable.
-            parameters[a], parameters[a + 1] = vpoint.c[0]
+                #Pin is moveable.
+                parameters[a], parameters[a + 1] = vpoint.c[1]
+            else:
+                #Point is moveable.
+                parameters[a], parameters[a + 1] = vpoint.c[0]
             pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
             points[i] = [pparameters[a], pparameters[a + 1]]
             a += 2
@@ -363,7 +366,6 @@ cpdef list vpoint_solving(
                 else:
                     #f1 is a R joint or it is not connected with slot link.
                     slider_lines[c] = [points + a, points + f1]
-                print(vpoints[a].slope_angle(vpoints[f1]), vpoints[a].angle)
                 cons_angles[d] = radians(vpoints[a].slope_angle(vpoints[f1]) - vpoints[a].angle)
                 cons[i] = InternalAngleConstraint(
                     slider_slot,

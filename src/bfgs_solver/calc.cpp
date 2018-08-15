@@ -3,6 +3,9 @@
  *  Author: KmolYuan
  */
 
+#ifdef DEBUG
+#include <iostream>
+#endif
 #include <cmath>
 #include "calc.h"
 
@@ -92,7 +95,7 @@ double calc(Constraint *cons, const int consLength) {
 
         case Constraint::P2PDistance:
             temp = _hypot(P2_x - P1_x, P2_y - P1_y) - distance;
-            error += temp * temp * 100;
+            error += temp * temp * 1000;
             break;
 
         case Constraint::P2PDistanceVert:
@@ -196,7 +199,7 @@ double calc(Constraint *cons, const int consLength) {
 
         case Constraint::LineLength:
             temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) - length;
-            error += temp * temp * 100;
+            error += temp * temp * 1000;
             break;
 
         case Constraint::EqualLegnth:
@@ -464,5 +467,8 @@ double calc(Constraint *cons, const int consLength) {
             error += temp * temp + temp2 * temp2;
             break;
         }
+#ifdef DEBUG
+    cout << "Error: " << error << endl;
+#endif
     return error;
 }
