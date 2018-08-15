@@ -4,12 +4,12 @@
 """Wrapper of BFGS algorithm.
 
 Note of Pointer:
-    + In Cython, pointer is more convenient then array.
-        Because we can not "new" them or using "const" decorator on size_t.
-    + There is NO pointer's "get value" operator in Cython,
-        please use "index" operator.
-    + Pointers can be plus with C's Integer, but not Python's.
-        So please copy or declare to C's Integer.
++ In Cython, pointer is more convenient then array.
+    Because we can not "new" them or using "const" decorator on size_t.
++ There is NO pointer's "get value" operator in Cython,
+    please use "index" operator.
++ Pointers can be plus with C's Integer, but not Python's.
+    So please copy or declare to C's Integer.
 """
 
 # __author__ = "Yuan Chang"
@@ -129,6 +129,7 @@ cpdef list vpoint_solving(
     cdef Line *slider_lines = NULL
     cdef double *cons_angles = NULL
     if not sliders.empty():
+        #Base point and slot point to determine a slot line.
         slider_bases = <Point *>malloc(slider_count * sizeof(Point))
         slider_slots = <Point *>malloc(slider_count * sizeof(Point))
     
@@ -331,10 +332,10 @@ cpdef list vpoint_solving(
                 c += 1
                 if vpoints[f1].is_slot_link(vlink):
                     #f1 is a slider, and it is be connected with slot link.
-                    slider_lines[c] = [points + a, slider_bases + sliders[f1]]
+                    slider_lines[c] = [slider_bases + b, slider_bases + sliders[f1]]
                 else:
                     #f1 is a R joint or it is not connected with slot link.
-                    slider_lines[c] = [points + a, points + f1]
+                    slider_lines[c] = [slider_bases + b, points + f1]
                 cons_angles[d] = radians(vpoints[f1].slope_angle(vpoints[a]) - vpoints[a].angle)
                 cons[i] = InternalAngleConstraint(
                     slider_slot,
@@ -353,6 +354,7 @@ cpdef list vpoint_solving(
                 f1 = vlinks[vlink][0]
                 if f1 == a:
                     if len(vlinks[vlink]) < 2:
+                        #If no any friend.
                         continue
                     f1 = vlinks[vlink][1]
                 if vpoints[f1].is_slot_link(vlink):
@@ -361,6 +363,7 @@ cpdef list vpoint_solving(
                 else:
                     #f1 is a R joint or it is not connected with slot link.
                     slider_lines[c] = [points + a, points + f1]
+                print(vpoints[a].slope_angle(vpoints[f1]), vpoints[a].angle)
                 cons_angles[d] = radians(vpoints[a].slope_angle(vpoints[f1]) - vpoints[a].angle)
                 cons[i] = InternalAngleConstraint(
                     slider_slot,
