@@ -20,8 +20,6 @@ extra_compile_args = [
     '-O3',
     #Disable NumPy warning only on Linux.
     '-Wno-cpp',
-    #Windows format warning.
-    '-Wno-format',
     #Avoid C++ math library.
     '-D_hypot=hypot',
 ]
