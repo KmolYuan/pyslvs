@@ -231,12 +231,10 @@ cdef class VPoint:
     @property
     def expr(self):
         """Expression."""
-        return "J[{}, color[{}], P[{}], L[{}]]".format(
-            f"{self.typeSTR}, A[{self.angle}]" if self.typeSTR != 'R' else 'R',
-            self.colorSTR,
-            f"{self.x}, {self.y}",
-            ", ".join(l for l in self.links)
-        )
+        cdef str l
+        cdef str type_text = f"{self.typeSTR}, A[{self.angle}]" if self.typeSTR != 'R' else 'R'
+        cdef str links_text = ", ".join(l for l in self.links)
+        return f"J[{type_text}, color[{self.colorSTR}], P[{self.x}, {self.y}], L[{links_text}]]"
     
     def __getitem__(self, i: int) -> float:
         """Get coordinate like this:

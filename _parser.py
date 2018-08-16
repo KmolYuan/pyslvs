@@ -85,7 +85,7 @@ def colorRGB(name: str) -> Tuple[int, int, int]:
             .split(',')
         ))
 
-_colors = "|".join('"{}"'.format(color) for color in reversed(colorNames))
+_colors = "|".join(f'"{color}"' for color in reversed(colorNames))
 
 _pmks_grammar = Lark(
     #Number
@@ -184,7 +184,7 @@ class _PMKSParams(Transformer):
         x, y = args[-2]
         return [
             ','.join(args[-1]),
-            '{}:{}'.format(args[0], args[1]) if hasAngle else 'R',
+            f'{args[0]}:{args[1]}' if hasAngle else 'R',
             args[2] if hasAngle else args[1],
             x,
             y
@@ -235,7 +235,7 @@ if HAS_PYGMENTS:
         tokens = {'root': [
             ('#.*$', Comment.Single),
             ('(M)|(J)|(L)|(P)|(A)|(color)', Name.Function),
-            ('|'.join("({})".format(color) for color in colorNames), Name.Variable),
+            ('|'.join(f"({color})" for color in colorNames), Name.Variable),
             ('(RP)|(R)|(P)', Keyword.Constant),
             (r'(\d+\.\d*|\d*\.\d+)([eE][+-]?[0-9]+)?j?', Number.Float),
         ]}
