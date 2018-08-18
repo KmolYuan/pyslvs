@@ -156,10 +156,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
     #Add positions parameters.
     cdef list pos = []
     for vpoint in vpoints:
-        if vpoint.type == 0:
-            pos.append(vpoint.c[0])
-        else:
-            pos.append(vpoint.c[1])
+        pos.append(vpoint.c[0 if vpoint.type == 0 else 1])
     
     cdef list exprs = []
     cdef int link_symbol = 0
@@ -296,8 +293,8 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
             try:
                 friend_a = next(_get_notbase_friend(node, vpoints, vlinks, status))
                 friend_b = next(fi)
+                #Slot is not grounded.
                 if 'ground' != vpoints[node].links[0]:
-                    """Slot is not grounded."""
                     friend_d = next(fi)
                     if not clockwise(pos[friend_b], (tmp_x, tmp_y), pos[friend_d]):
                         friend_b, friend_d = friend_d, friend_b

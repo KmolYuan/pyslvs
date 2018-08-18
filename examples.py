@@ -68,7 +68,7 @@ example_list = {
         "J[RP, A[0.0], color[Green], P[11.88, 0.0], L[ground, link_2, link_3]], "
         "J[R, color[Green], P[50.775, 24.7908], L[link_3, link_4]], "
         "J[R, color[Green], P[80.375, 8.625], L[ground, link_4]], "
-        "J[R, color[Green], P[109.19720966542752, 63.88050148698885], L[link_3, link_5]], "
+        "J[R, color[Green], P[109.1972, 63.8805], L[link_3, link_5]], "
         "J[RP, A[0.0], color[Green], P[0.82, 64.42], L[link_5, link_4]], "
         "]", ((0, 1),)),
     
@@ -96,8 +96,15 @@ example_list = {
         "J[RP, A[0.0], color[Green], P[11.88, 0.0], L[ground, link_2, link_3]], "
         "J[R, color[Green], P[50.775, 24.7908], L[link_3, link_4]], "
         "J[R, color[Green], P[74.375, 7.625], L[ground, link_4]], "
-        "J[R, color[Green], P[95.19720966542752, 52.88050148698885], L[link_3]], "
+        "J[R, color[Green], P[95.1972, 52.8805], L[link_3]], "
         "]", ((0, 1),)),
+    
+    "Inverted slider": ("M["
+        "J[R, color[Green], P[-15.0, 0.0], L[ground, link_1]], "
+        "J[R, color[Green], P[41.0, 0.0], L[ground, link_3]], "
+        "J[R, color[Green], P[-8.0, 25.0], L[link_1, link_2]], "
+        "J[P, A[0.0], color[Green], P[44.0, 41.0], L[link_3, link_2]], "
+        "]", ((0, 2),)),
     
     "Jansen's linkage (Single)": ("M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
@@ -139,8 +146,8 @@ example_list = {
     
     "Stephenson I": ("M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
-        "J[R, color[Green], P[29.42583732057417, 46.650717703349315], L[link_1, link_5]], "
-        "J[R, color[Green], P[10.789473684210535, 114.37799043062203], L[link_1, link_2]], "
+        "J[R, color[Green], P[29.4258, 46.6507], L[link_1, link_5]], "
+        "J[R, color[Green], P[10.7895, 114.378], L[link_1, link_2]], "
         "J[R, color[Green], P[73.75, 202.8125], L[link_2, link_3]], "
         "J[R, color[Green], P[146.25, 146.5625], L[link_3, link_4]], "
         "J[R, color[Green], P[105.25, 87.5625], L[link_4, link_5]], "
@@ -169,7 +176,7 @@ example_list = {
     
     "Watt I": ("M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
-        "J[R, color[Green], P[-18.615384615384613, 41.38461538461538], L[link_1, link_2]], "
+        "J[R, color[Green], P[-18.6154, 41.3846], L[link_1, link_2]], "
         "J[R, color[Green], P[29.0, 116.5], L[link_2, link_3]], "
         "J[R, color[Green], P[38.0, 69.0], L[link_2, link_5]], "
         "J[R, color[Green], P[95.0, 143.0], L[link_3, link_4]], "
@@ -179,22 +186,15 @@ example_list = {
     
     "Watt II": ("M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
-        "J[R, color[Green], P[-5.333333333333334, 36.0], L[link_1, link_2]], "
-        "J[R, color[Green], P[42.666666666666664, 48.333333333333336], L[link_2, link_3]], "
-        "J[R, color[Green], P[60.0, 1.333333333333334], L[ground, link_3]], "
-        "J[R, color[Green], P[79.0, 71.33333333333333], L[link_3, link_4]], "
-        "J[R, color[Green], P[113.66666666666667, 36.0], L[link_4, link_5]], "
+        "J[R, color[Green], P[-5.3333, 36.0], L[link_1, link_2]], "
+        "J[R, color[Green], P[42.6667, 48.3333], L[link_2, link_3]], "
+        "J[R, color[Green], P[60.0, 1.3333], L[ground, link_3]], "
+        "J[R, color[Green], P[79.0, 71.3333], L[link_3, link_4]], "
+        "J[R, color[Green], P[113.6667, 36.0], L[link_4, link_5]], "
         "J[R, color[Green], P[87.0, -17.0], L[ground, link_5]], "
         "]", ((0, 1),)),
     
     "test": ("M["
-        "J[R, color[Green], P[-15.0, 0.0], L[ground, link_1]], "
-        "J[R, color[Green], P[40.0, 0.0], L[ground, link_3]], "
-        "J[R, color[Green], P[-8.0, 28.0], L[link_1, link_2]], "
-        "J[P, A[0.0], color[Green], P[40.0, 40.0], L[link_3, link_2]], "
-        "]", ((0, 2),)),
-    
-    "test2": ("M["
         "J[R, color[Green], P[-72.625, -6.875], L[ground, link_1]], "
         "J[R, color[Green], P[-60.125, 29.625], L[link_1, link_2]], "
         "J[RP, A[0.0], color[Green], P[8.13, 24.13], L[link_2, link_3, link_4]], "

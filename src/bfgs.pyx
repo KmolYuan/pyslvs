@@ -339,7 +339,7 @@ cpdef list vpoint_solving(
                 else:
                     #f1 is a R joint or it is not connected with slot link.
                     slider_lines[c] = [slider_bases + b, points + f1]
-                cons_angles[d] = radians(vpoints[f1].slope_angle(vpoints[a]) - vpoints[a].angle)
+                cons_angles[d] = radians(vpoints[a].slope_angle(vpoints[f1]) - vpoints[a].angle)
                 cons[i] = InternalAngleConstraint(
                     slider_slot,
                     slider_lines + c,
