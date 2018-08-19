@@ -132,7 +132,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
     cdef set links
     for base in range(len(vpoints)):
         vpoint = vpoints[base]
-        if not vpoint.type == 1:
+        if (vpoint.type != 1) or (not vpoint.grounded()):
             continue
         for link in vpoint.links[1:]:
             links = set()
@@ -184,6 +184,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
     
     cdef int type_num, friend_a, friend_b, friend_c, friend_d
     cdef double tmp_x, tmp_y, angle
+    cdef bool reverse
     #Friend iterator.
     cdef object fi
     while not isAllLock(status):
@@ -248,9 +249,11 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                     skip_times = 0
         
         elif type_num == 1:
-            """Need to solve P joint itself here."""
+            """Need to solve P joint itself here. (only grounded)"""
             fi = _get_notbase_friend(node, vpoints, vlinks, status)
             try:
+                if not vpoints[node].grounded():
+                    raise StopIteration
                 friend_a = next(fi)
             except StopIteration:
                 skip_times += 1
@@ -294,7 +297,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                 friend_a = next(_get_notbase_friend(node, vpoints, vlinks, status))
                 friend_b = next(fi)
                 #Slot is not grounded.
-                if 'ground' != vpoints[node].links[0]:
+                if not vpoints[node].grounded():
                     friend_d = next(fi)
                     if not clockwise(pos[friend_b], (tmp_x, tmp_y), pos[friend_d]):
                         friend_b, friend_d = friend_d, friend_b
@@ -332,13 +335,15 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                     f'P{friend_c}',
                     f'S{node}',
                 ))
+                #Two conditions.
+                reverse = (pos[friend_a][0] - pos[node][0] > 0) != (vpoints[node].angle > 90)
                 exprs.append((
                     'PLPP',
                     f'P{friend_a}',
                     f'L{link_symbol + 2}',
                     f'P{node}',
                     f'S{node}',
-                    'T' if (pos[friend_a][0] - pos[node][0] > 0) != (vpoints[node].angle > 90) else 'F',
+                    'T' if reverse else 'F',
                     f'P{node}',
                 ))
                 status[node] = True

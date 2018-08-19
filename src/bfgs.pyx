@@ -331,7 +331,6 @@ cpdef list vpoint_solving(
             except IndexError:
                 pass
             else:
-                #FIXME: There still have simulation error.
                 c += 1
                 if vpoints[f1].is_slot_link(vlink):
                     #f1 is a slider, and it is be connected with slot link.
