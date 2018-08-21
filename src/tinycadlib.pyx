@@ -16,7 +16,7 @@ from libc.math cimport (
     atan2,
     hypot,
 )
-#Not a number
+# Not a number
 cdef double nan = float('nan')
 from numpy import isnan
 from pmks cimport VPoint
@@ -81,15 +81,15 @@ cpdef tuple PLLP(
     cdef double dy = B.y - A.y
     cdef double d = A.distance(B)
     
-    #No solutions, the circles are separate.
+    # No solutions, the circles are separate.
     if d > L0 + L1:
         return (nan, nan)
     
-    #No solutions because one circle is contained within the other.
+    # No solutions because one circle is contained within the other.
     if d < abs(L0 - L1):
         return (nan, nan)
     
-    #Circles are coincident and there are an infinite number of solutions.
+    # Circles are coincident and there are an infinite number of solutions.
     if (d == 0) and (L0 == L1):
         return (nan, nan)
     cdef double a = (L0 * L0 - L1 * L1 + d * d) / (2 * d)
@@ -117,16 +117,16 @@ cpdef tuple PLPP(
     cdef double u = ((A.x - B.x) * dx + (A.y - B.y) * dy) / (line_mag * line_mag)
     cdef Coordinate I = Coordinate(B.x + u * dx, B.y + u * dy)
     
-    #Test distance between point A and intersection.
+    # Test distance between point A and intersection.
     cdef double d = A.distance(I)
     if d > L0:
-        #No intersection.
+        # No intersection.
         return (nan, nan)
     elif d == L0:
-        #One intersection point.
+        # One intersection point.
         return (I.x, I.y)
     
-    #Two intersection points.
+    # Two intersection points.
     d = sqrt(L0 * L0 - d * d) / line_mag
     if inverse:
         return (I.x - dx * d, I.y - dy * d)
@@ -178,7 +178,7 @@ cpdef void expr_parser(object exprs, dict data_dict):
     cdef int params_count
     cdef double x, y
     for expr in exprs:
-        #If the mechanism has no any solution.
+        # If the mechanism has no any solution.
         if not expr:
             return
         fun = expr[0]
@@ -195,7 +195,7 @@ cpdef void expr_parser(object exprs, dict data_dict):
                 params.append(data_dict[p])
         params_count = len(params)
         
-        #We should unpack as C++'s way.
+        # We should unpack as C++'s way.
         x = float('nan')
         y = x
         if fun == 'PLAP':
@@ -256,7 +256,7 @@ cpdef int vpoint_dof(object vpoints):
     for vpoint in vpoints:
         link_count = len(vpoint.links)
         if not link_count > 1:
-            #If a point doesn't have two more links, it can not be call a 'joint'.
+            # If a point doesn't have two more links, it can not be call a 'joint'.
             continue
         vlinks.update(vpoint.links)
         if vpoint.type == 0:
@@ -300,22 +300,22 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     """
     cdef list vpoints = list(vpoints_)
     
-    #First, we create a "VLinks" that can help us to
-    #find a releationship just like adjacency matrix.
+    # First, we create a "VLinks" that can help us to
+    # find a releationship just like adjacency matrix.
     cdef int node
     cdef str link
     cdef VPoint vpoint
     cdef dict vlinks = {}
     for node, vpoint in enumerate(vpoints):
         for link in vpoint.links:
-            #Add as vlink.
+            # Add as vlink.
             if link not in vlinks:
                 vlinks[link] = [node]
             else:
                 vlinks[link].append(node)
     
-    #Replace the P joints and their friends with RP joint.
-    #DOF must be same after properties changed.
+    # Replace the P joints and their friends with RP joint.
+    # DOF must be same after properties changed.
     cdef int base
     cdef str link_
     cdef VPoint vpoint_
@@ -343,7 +343,7 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
                     vpoint_.cy
                 )
     
-    #Reverse mapping, exclude specified link length.
+    # Reverse mapping, exclude specified link length.
     cdef object k, v
     cdef dict mapping_r = {v: k for k, v in mapping.items() if (type(k) == int)}
     
@@ -356,9 +356,9 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     
     cdef int i, bf
     cdef double angle
-    #Add slider slot virtual coordinates.
+    # Add slider slot virtual coordinates.
     for i, vpoint in enumerate(vpoints):
-        #PLPP dependents.
+        # PLPP dependents.
         if vpoint.type != 2:
             continue
         bf = base_friend(i, vpoints)
@@ -383,55 +383,55 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     for expr in exprs:
         node = mapping_r[expr[1]]
         target = mapping_r[expr[-1]]
-        #Point 1: expr[1]
+        # Point 1: expr[1]
         if expr[1] not in data_dict:
             data_dict[expr[1]] = pos[mapping_r[expr[1]]]
         if expr[0] == 'PLAP':
-            #Link 1: expr[2]
+            # Link 1: expr[2]
             if expr[2] in mapping:
                 data_dict[expr[2]] = mapping[expr[2]]
             else:
                 data_dict[expr[2]] = tuple_distance(pos[node], pos[target])
-            #Point 2: expr[4]
+            # Point 2: expr[4]
             if expr[4] not in data_dict:
                 data_dict[expr[4]] = pos[mapping_r[expr[4]]]
-            #Inputs
+            # Inputs
             dof += 1
         elif expr[0] == 'PLLP':
-            #Link 1: expr[2]
+            # Link 1: expr[2]
             if expr[2] in mapping:
                 data_dict[expr[2]] = mapping[expr[2]]
             else:
                 data_dict[expr[2]] = tuple_distance(pos[node], pos[target])
-            #Link 2: expr[3]
+            # Link 2: expr[3]
             if expr[3] in mapping:
                 data_dict[expr[3]] = mapping[expr[3]]
             else:
                 data_dict[expr[3]] = tuple_distance(pos[mapping_r[expr[4]]], pos[target])
-            #Point 2: expr[4]
+            # Point 2: expr[4]
             if expr[4] not in data_dict:
                 data_dict[expr[4]] = pos[mapping_r[expr[4]]]
         elif expr[0] == 'PLPP':
-            #Link 1: expr[2]
+            # Link 1: expr[2]
             if expr[2] in mapping:
                 data_dict[expr[2]] = mapping[expr[2]]
             else:
                 data_dict[expr[2]] = tuple_distance(pos[node], pos[target])
-            #Point 2:  expr[3]
+            # Point 2:  expr[3]
             if expr[3] not in data_dict:
                 data_dict[expr[3]] = pos[mapping_r[expr[3]]]
         elif expr[0] == 'PXY':
-            #X: expr[2]
+            # X: expr[2]
             if expr[2] in mapping:
                 data_dict[expr[2]] = mapping[expr[2]]
             else:
                 data_dict[expr[2]] = pos[target][0] - pos[node][0]
-            #Y: expr[3]
+            # Y: expr[3]
             if expr[3] in mapping:
                 data_dict[expr[3]] = mapping[expr[3]]
             else:
                 data_dict[expr[3]] = pos[target][1] - pos[node][1]
-    #Other grounded R joints.
+    # Other grounded R joints.
     for i, vpoint in enumerate(vpoints):
         if vpoint.grounded() and (vpoint.type == 0):
             data_dict[mapping[i]] = vpoint.c[0]
@@ -456,47 +456,47 @@ cpdef list expr_solving(
     cdef int dof_input
     data_dict, dof_input = data_collecting(exprs, mapping, vpoints)
     
-    #Check input number.
+    # Check input number.
     cdef int dof = vpoint_dof(vpoints)
     if dof_input > dof:
         raise Exception(
             f"wrong number of input parameters: {dof_input} / {dof}"
         )
     
-    #Reverse mapping, exclude specified link length.
+    # Reverse mapping, exclude specified link length.
     cdef object k, v
     cdef dict mapping_r = {v: k for k, v in mapping.items() if (type(k) == int)}
     
-    #Check input paires.
+    # Check input paires.
     cdef tuple expr
     for expr in exprs:
         if expr[0] == 'PLAP':
             if vpoints[mapping_r[expr[1]]].grounded() and vpoints[mapping_r[expr[-1]]].grounded():
                 raise Exception("wrong driver definition.")
     
-    #Angles.
+    # Angles.
     cdef double a
     cdef int i
     for i, a in enumerate(angles):
         data_dict[f'a{i}'] = radians(a)
     
-    #Solve
+    # Solve
     expr_parser(exprs, data_dict)
     
     cdef dict p_data_dict = {}
-    cdef bool has_target = False
-    #Add coordinate of known points.
+    cdef bool has_not_solved = False
+    # Add coordinate of known points.
     for i in range(len(vpoints)):
         if mapping[i] in data_dict:
             p_data_dict[i] = data_dict[mapping[i]]
         else:
-            has_target = True
+            has_not_solved = True
     
-    #TODO: Add specified link lengths.
+    # TODO: Add specified link lengths.
     
-    #Calling Sketch Solve kernel and try to get the result.
+    # Calling Sketch Solve kernel and try to get the result.
     cdef list solved_bfgs = []
-    if exprs and has_target:
+    if exprs and has_not_solved:
         try:
             solved_bfgs = vpoint_solving(vpoints, [], p_data_dict)
         except Exception as e:
@@ -513,7 +513,7 @@ cpdef list expr_solving(
     cdef list solved_points = []
     for i in range(len(vpoints)):
         if mapping[i] in data_dict:
-            #These points solved by Pyslvs.
+            # These points solved by Pyslvs.
             if isnan(data_dict[mapping[i]][0]):
                 raise Exception(f"result contains failure: Point{i}")
             if vpoints[i].type == 0:
@@ -521,13 +521,13 @@ cpdef list expr_solving(
             else:
                 solved_points.append((vpoints[i].c[0], data_dict[mapping[i]]))
         elif solved_bfgs:
-            #These points solved by Sketch Solve.
+            # These points solved by Sketch Solve.
             if vpoints[i].type == 0:
                 solved_points.append(solved_bfgs[i])
             else:
-                solved_points.append((vpoints[i].c[0], solved_bfgs[i][1]))
+                solved_points.append((solved_bfgs[i][0], solved_bfgs[i][1]))
         else:
-            #No answer.
+            # No answer.
             if vpoints[i].type == 0:
                 solved_points.append(vpoints[i].c[0])
             else:

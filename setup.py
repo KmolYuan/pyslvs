@@ -16,11 +16,11 @@ for source in os.listdir("./src"):
         sources.append(source)
 
 extra_compile_args = [
-    #Compiler optimize.
+    # Compiler optimize.
     '-O3',
-    #Disable NumPy warning only on Linux.
+    # Disable NumPy warning only on Linux.
     '-Wno-cpp',
-    #Avoid C++ math library.
+    # Avoid C++ math library.
     '-D_hypot=hypot',
 ]
 
@@ -42,9 +42,9 @@ for source in sources:
     if source == "bfgs.pyx":
         continue
     ext_modules.append(Extension(
-        #Base name
+        # Base name
         source.split('.')[0],
-        #path + file name
+        # path + file name
         sources = ['src/' + source],
         language = "c++",
         include_dirs = [np_include],

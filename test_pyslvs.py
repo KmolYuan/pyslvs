@@ -11,7 +11,7 @@ import unittest
 from unittest import TestCase
 from typing import Tuple, List
 
-#For necessary testing modules.
+# For necessary testing modules.
 from math import sqrt, radians, isclose
 from pmks import VPoint
 from bfgs import vpoint_solving
@@ -174,7 +174,7 @@ class CoreTest(TestCase):
         """Real-coded genetic algorithm."""
         fun1 = Genetic(self.planar_object(), {
             'maxTime': 1, 'report': 10,
-            #Genetic
+            # Genetic
             'nPop': 500,
             'pCross': 0.95,
             'pMute': 0.05,
@@ -187,7 +187,7 @@ class CoreTest(TestCase):
         """Firefly algorithm."""
         fun2 = Firefly(self.planar_object(), {
             'maxTime': 1, 'report': 10,
-            #Firefly
+            # Firefly
             'n': 80,
             'alpha': 0.01,
             'betaMin': 0.2,
@@ -200,7 +200,7 @@ class CoreTest(TestCase):
         """Differtial evolution."""
         fun3 = DiffertialEvolution(self.planar_object(), {
             'maxTime': 1, 'report': 10,
-            #DE
+            # DE
             'strategy': 1,
             'NP': 400,
             'F': 0.6,

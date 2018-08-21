@@ -34,10 +34,10 @@ cdef class Graph:
     cdef public tuple edges
     
     def __cinit__(self, edges: Sequence[Tuple[int, int]]):
-        #edges
+        # edges
         """edges: ((l1, l2), ...)"""
         self.edges = tuple(edges)
-        #nodes
+        # nodes
         cdef list nodes = []
         for p1, p2 in self.edges:
             if p1 not in nodes:
@@ -45,7 +45,7 @@ cdef class Graph:
             if p2 not in nodes:
                 nodes.append(p2)
         self.nodes = tuple(nodes)
-        #adj
+        # adj
         cdef int n
         self.adj = {n: self.neighbors(n) for n in self.nodes}
     
@@ -139,19 +139,19 @@ cdef class GraphMatcher:
         # Initialize state
         self.initialize()
     
-    #Reinitializes the state of the algorithm.
+    # Reinitializes the state of the algorithm.
     cdef inline void initialize(self):
         # core_1[n] contains the index of the node paired with n, which is m,
-        #           provided n is in the mapping.
+        #            provided n is in the mapping.
         # core_2[m] contains the index of the node paired with m, which is n,
-        #           provided m is in the mapping.
+        #            provided m is in the mapping.
         self.core_1 = {}
         self.core_2 = {}
         
         # See the paper for definitions of M_x and T_x^{y}
         # inout_1[n]  is non-zero if n is in M_1 or in T_1^{inout}
         # inout_2[m]  is non-zero if m is in M_2 or in T_2^{inout}
-        #
+        # 
         # The value stored is the depth of the SSR tree when the node became
         # part of the corresponding set.
         self.inout_1 = {}
@@ -163,7 +163,7 @@ cdef class GraphMatcher:
         # Provide a convienient way to access the isomorphism mapping.
         self.mapping = self.core_1.copy()
     
-    #Generator candidate_pairs_iter()
+    # Generator candidate_pairs_iter()
     def candidate_pairs_iter(self) -> Iterator[Tuple[int, int]]:
         """Iterator over candidate pairs of nodes in G1 and G2."""
         cdef int node
@@ -180,7 +180,7 @@ cdef class GraphMatcher:
         else:
             # If T1_inout and T2_inout were both empty....
             # P(s) = (N_1 - M_1) x {min (N_2 - M_2)}
-            ##if not (T1_inout or T2_inout):
+            # # if not (T1_inout or T2_inout):
             # as suggested by  [2], incorrect
             # as inferred from [1], correct
             # First we determine the candidate node for G2
@@ -189,7 +189,7 @@ cdef class GraphMatcher:
                     yield node, min(self.G2_nodes - set(self.core_2))
         # For all other cases, we don't have any candidate pairs.
     
-    #Returns True if G1 and G2 are isomorphic graphs.
+    # Returns True if G1 and G2 are isomorphic graphs.
     cpdef bool is_isomorphic(self):
         # Let's do two very quick checks!
         # QUESTION: Should we call faster_graph_could_be_isomorphic(G1,G2)?
@@ -208,8 +208,8 @@ cdef class GraphMatcher:
         except StopIteration:
             return False
     
-    #Generator isomorphisms_iter()
-    #Generator over isomorphisms between G1 and G2.
+    # Generator isomorphisms_iter()
+    # Generator over isomorphisms between G1 and G2.
     def isomorphisms_iter(self) -> Iterator[Dict[int, Tuple[int]]]:
         # Declare that we are looking for a graph-graph isomorphism.
         self.initialize()
@@ -217,8 +217,8 @@ cdef class GraphMatcher:
         for mapping in self.match():
             yield mapping
     
-    #Generator match()
-    #Extends the isomorphism mapping.
+    # Generator match()
+    # Extends the isomorphism mapping.
     def match(self) -> Iterator[Dict[int, Tuple[int]]]:
         cdef int G1_node, G2_node
         cdef GMState newstate
@@ -238,25 +238,25 @@ cdef class GraphMatcher:
                     # restore data structures
                     newstate.restore()
     
-    #Returns True if adding (G1_node, G2_node) is syntactically feasible.
+    # Returns True if adding (G1_node, G2_node) is syntactically feasible.
     cdef inline bool syntactic_feasibility(self, int G1_node, int G2_node):
         # The VF2 algorithm was designed to work with graphs having, at most,
         # one edge connecting any two nodes.  This is not the case when
         # dealing with an MultiGraphs.
-        #
+        # 
         # Basically, when we test the look-ahead rules R_neighbor, we will
         # make sure that the number of edges are checked. We also add
         # a R_self check to verify that the number of selfloops is acceptable.
-        #
+        # 
         # Users might be comparing Graph instances with MultiGraph instances.
         # So the generic GraphMatcher class must work with MultiGraphs.
         # Care must be taken since the value in the innermost dictionary is a
         # singlet for Graph instances.  For MultiGraphs, the value in the
         # innermost dictionary is a list.
         
-        ### Test at each step to get a return value as soon as possible.
+        # ## Test at each step to get a return value as soon as possible.
         
-        ### Look ahead 0
+        # ## Look ahead 0
         # R_self
         # The number of selfloops for G1_node must equal the number of
         # self-loops for G2_node. Without this check, we would fail on
@@ -282,7 +282,7 @@ cdef class GraphMatcher:
                 elif self.G1.number_of_edges(self.core_2[neighbor], G1_node) != self.G2.number_of_edges(neighbor, G2_node):
                     return False
         
-        ### Look ahead 1
+        # ## Look ahead 1
         # R_terminout
         # The number of neighbors of n that are in T_1^{inout} is equal to the
         # number of neighbors of m that are in T_2^{inout}, and vice versa.
@@ -297,7 +297,7 @@ cdef class GraphMatcher:
         if num1 != num2:
             return False
         
-        ### Look ahead 2
+        # ## Look ahead 2
         # R_new
         # The number of neighbors of n that are neither in the core_1 nor
         # T_1^{inout} is equal to the number of neighbors of m
@@ -402,7 +402,7 @@ cdef class GMState:
 
 cdef inline bool verify(Graph G, list answer):
     if not G.is_connected():
-        #is not connected
+        # is not connected
         return True
     cdef Graph H
     for H in answer:
@@ -445,9 +445,9 @@ cpdef topo(
             i -= t
         links[name] = link_joint_count
     
-    #connection = [(1, 2), (1, 3), ..., (2, 3), (2, 4), ...]
+    # connection = [(1, 2), (1, 3), ..., (2, 3), (2, 4), ...]
     cdef tuple connection = tuple(combinations(range(joint_count), 2))
-    #ALL results.
+    # ALL results.
     cdef list edges_combinations = []
     cdef int link, count, n
     cdef list match, matched
@@ -455,14 +455,14 @@ cpdef topo(
     cdef Graph G, H
     cdef GraphMatcher GM_GH
     for link, count in enumerate(links):
-        #Other of joints that the link connect with.
+        # Other of joints that the link connect with.
         match = [Graph(m) for m in combinations(connection_get(link, connection), count)]
         if not edges_combinations:
             edges_combinations = match
             continue
         if setjobFunc:
             setjobFunc(
-                f"Match link #{link} / {len(links) - 1}",
+                f"Match link # {link} / {len(links) - 1}",
                 len(edges_combinations)*len(match)
             )
         matched = []
@@ -470,10 +470,10 @@ cpdef topo(
             if stopFunc and stopFunc():
                 return None, time()-t0
             G = G.compose(H)
-            #Out of limit.
+            # Out of limit.
             if G.out_of_limit(links):
                 continue
-            #Has triangles.
+            # Has triangles.
             if degenerate and G.has_triangles():
                 continue
             matched.append(G)

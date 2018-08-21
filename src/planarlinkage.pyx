@@ -28,7 +28,7 @@ from tinycadlib cimport (
     strbefore,
 )
 
-#A large fitness. Infinity can not used in chart.
+# A large fitness. Infinity can not used in chart.
 cdef double FAILURE = 9487945
 
 
@@ -54,10 +54,10 @@ cdef class Planar(Verification):
         cdef set check_set = set(map(len, mech_params['Target'].values()))
         if len(check_set) != 1:
             raise ValueError("Target path should be in the same size.")
-        #Counting how many action to satisfied require point.
+        # Counting how many action to satisfied require point.
         self.target_count = check_set.pop()
-        #Target points
-        #[Coordinate(x0, y0), Coordinate(x1, y1), Coordinate(x2, y2), ...]
+        # Target points
+        # [Coordinate(x0, y0), Coordinate(x1, y1), Coordinate(x2, y2), ...]
         cdef int i = 0
         cdef int target_count = len(mech_params['Target'])
         self.target_names = ndarray((target_count,), dtype=np_object)
@@ -70,11 +70,11 @@ cdef class Planar(Verification):
             self.target[i] = tuple(Coordinate(x, y) for x, y in target)
             i += 1
         
-        #Constraint
+        # Constraint
         self.constraints = np_array(mech_params['constraints'])
         
-        #Expression
-        #['A', 'B', 'C', 'D', 'E', 'L0', 'L1', 'L2', 'L3', 'L4', 'a0']
+        # Expression
+        # ['A', 'B', 'C', 'D', 'E', 'L0', 'L1', 'L2', 'L3', 'L4', 'a0']
         cdef tuple exprs = tuple(mech_params['Expression'].split(';'))
         
         """
@@ -94,14 +94,14 @@ cdef class Planar(Verification):
         for i, expr in enumerate(exprs):
             params = strbetween(expr, '[', ']')
             self.exprs[i] = (
-                #[0]: relate
+                # [0]: relate
                 strbefore(expr, '['),
-                #[1]: target
+                # [1]: target
                 strbetween(expr, '(', ')'),
-                #[2]: params
+                # [2]: params
                 params.split(','),
             )
-            #Parameters should exist in solver expression.
+            # Parameters should exist in solver expression.
             for p in params.split(','):
                 if p.startswith('L') and len(p) > 1:
                     self.link_list.append(p)
@@ -122,7 +122,7 @@ cdef class Planar(Verification):
         + The number of angles will same as length of driver list.
         """
         cdef int link_count = len(self.link_list)
-        #The number of all variables (except angles).
+        # The number of all variables (except angles).
         self.vars = 2 * len(self.driver_list) + 2 * len(self.follower_list) + link_count
         
         cdef dict tmp_dict = {}
@@ -131,7 +131,7 @@ cdef class Planar(Verification):
         
         cdef list tmp_list = []
         
-        #upper
+        # upper
         for name in self.driver_list + self.follower_list:
             for i in range(2):
                 tmp_list.append(tmp_dict[name][i] + tmp_dict[name][2]/2)
@@ -142,7 +142,7 @@ cdef class Planar(Verification):
         
         tmp_list.clear()
         
-        #lower
+        # lower
         for name in self.driver_list + self.follower_list:
             for i in range(2):
                 tmp_list.append(tmp_dict[name][i] - tmp_dict[name][2]/2)
@@ -151,7 +151,7 @@ cdef class Planar(Verification):
             tmp_list.extend([mech_params['lower'][link_count + i]] * self.target_count)
         self.lower = np_array(tmp_list, dtype=np_float32)
         
-        #Swap sorting.
+        # Swap sorting.
         for i in range(len(self.upper)):
             if self.upper[i] < self.lower[i]:
                 self.upper[i], self.lower[i] = self.lower[i], self.upper[i]
@@ -170,11 +170,11 @@ cdef class Planar(Verification):
         cdef str name
         cdef dict tmp_dict = {}
         cdef int vi = 0
-        #driver and follower
+        # driver and follower
         for name in self.driver_list + self.follower_list:
             tmp_dict[name] = Coordinate(v[vi], v[vi+1])
             vi += 2
-        #links
+        # links
         for name in self.link_list:
             tmp_dict[name] = v[vi]
             vi += 1
@@ -202,7 +202,7 @@ cdef class Planar(Verification):
                 params.append(data_dict[p])
         cdef int params_count = len(params)
         
-        #We should unpack as C++'s way.
+        # We should unpack as C++'s way.
         cdef double x = float('nan')
         cdef double y = x
         if fun == 'PLAP':
@@ -239,19 +239,19 @@ cdef class Planar(Verification):
         cdef dict test_dict = self.get_data_dict(v)
         cdef ndarray path = self.get_path_array()
         # calculate the target point, and sum all error.
-        #My fitness
+        # My fitness
         cdef double fitness = 0
         cdef int i, j, k
         cdef str name
         cdef tuple e
         cdef Coordinate target_coord
         for i in range(self.target_count):
-            #a0: random angle to generate target point.
-            #match to path points.
+            # a0: random angle to generate target point.
+            # match to path points.
             for j in range(len(self.driver_list)):
                 test_dict[f'a{j}'] = radians(v[self.vars + i * len(self.driver_list) + j])
             for e in self.exprs:
-                #target
+                # target
                 target_coord = self.from_formula(e, test_dict)
                 if target_coord.is_nan():
                     return FAILURE
@@ -259,7 +259,7 @@ cdef class Planar(Verification):
                     test_dict[e[1]] = target_coord
             for i, name in enumerate(self.target_names):
                 path[i].append(test_dict[name])
-        #constraint
+        # constraint
         cdef ndarray constraint
         for constraint in self.constraints:
             if not legal_crank(
@@ -269,7 +269,7 @@ cdef class Planar(Verification):
                 test_dict[constraint[3]]
             ):
                 return FAILURE
-        #swap
+        # swap
         cdef list errors
         cdef Coordinate c
         for k in range(len(self.target_names)):
@@ -286,7 +286,7 @@ cdef class Planar(Verification):
         for j in range(len(self.driver_list)):
             final_dict[f'a{j}'] = radians(v[self.vars + j])
         for e in self.exprs:
-            #target
+            # target
             final_dict[e[1]] = self.from_formula(e, final_dict)
         for k, value in final_dict.items():
             if type(value) == Coordinate:

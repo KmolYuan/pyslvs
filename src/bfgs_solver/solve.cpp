@@ -6,11 +6,11 @@
  *  Contributor: KmolYuan
  */
 
+#include <cmath>
+#include "solve.h"
 #ifdef DEBUG
 #include <iostream>
 #endif
-#include <cmath>
-#include "solve.h"
 #include "calc.h"
 
 using namespace std;

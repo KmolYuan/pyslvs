@@ -3,11 +3,12 @@
  *  Author: KmolYuan
  */
 
-#ifdef DEBUG
-#include <iostream>
-#endif
 #include <cmath>
 #include "calc.h"
+#ifdef DEBUG
+#include <iostream>
+using namespace std;
+#endif
 
 ///////////////////////////////////////////////////////////////////////
 /// constraint defines (these make writing constraint equations easier)
@@ -84,7 +85,7 @@
 double calc(Constraint *cons, const int consLength) {
     double error = 0;
     double temp, temp2, dx, dy, m, n, Ex, Ey, rad1, rad2, t, dx2, dy2, hyp1, hyp2;
-    for(int i = 0; i < consLength; i++)
+    for(int i = 0; i < consLength; i++) {
         switch((int)cons[i].type) {
         case Constraint::PointOnPoint:
             //Hopefully avoid this constraint, make coincident points use the same parameters
@@ -468,7 +469,8 @@ double calc(Constraint *cons, const int consLength) {
             break;
         }
 #ifdef DEBUG
-    cout << "Error: " << error << endl;
+    cout << "Type: " << cons[i].type << " Error: " << error << endl;
 #endif
+    }
     return error;
 }

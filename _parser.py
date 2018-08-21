@@ -38,7 +38,7 @@ except (SystemError, ImportError):
     from pmks import VPoint
 
 
-#Color dictionary.
+# Color dictionary.
 _color_list = {
     'Red': (172, 68, 68),
     'Green': (110, 190, 30),
@@ -77,7 +77,7 @@ def colorRGB(name: str) -> Tuple[int, int, int]:
     elif name in _color_list:
         return _color_list[name]
     else:
-        #Input RGB as a "(255, 255, 255)" string.
+        # Input RGB as a "(255, 255, 255)" string.
         return tuple(int(i) for i in (
             name.replace('(', '')
             .replace(')', '')
@@ -88,7 +88,7 @@ def colorRGB(name: str) -> Tuple[int, int, int]:
 _colors = "|".join(f'"{color}"' for color in reversed(colorNames))
 
 _pmks_grammar = Lark(
-    #Number
+    # Number
     """
     DIGIT: "0".."9"
     INT: DIGIT+
@@ -98,21 +98,21 @@ _pmks_grammar = Lark(
     FLOAT: INT _EXP | DECIMAL _EXP?
     NUMBER: FLOAT | INT
     """
-    #Letters
+    # Letters
     """
     LCASE_LETTER: "a".."z"
     UCASE_LETTER: "A".."Z"
     LETTER: UCASE_LETTER | LCASE_LETTER
     CNAME: ("_"|LETTER) ("_"|LETTER|DIGIT)*
     """
-    #White space and new line.
+    # White space and new line.
     """
     WS: /[ \\t\\f\\r\\n]/+
     CR : /\\r/
     LF : /\\n/
     NEWLINE: (CR? LF)+
     """
-    #Main document.
+    # Main document.
     """
     type: JOINTTYPE+
     name: CNAME

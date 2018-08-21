@@ -103,8 +103,8 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
     
     cdef list vpoints = list(vpoints_)
     
-    #First, we create a "VLinks" that can help us to
-    #   find a releationship just like adjacency matrix.
+    # First, we create a "VLinks" that can help us to
+    #    find a releationship just like adjacency matrix.
     cdef int node
     cdef str link
     cdef VPoint vpoint
@@ -113,10 +113,10 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
         status[node] = False
         if vpoint.links:
             for link in vpoint.links:
-                #Connect on the ground and it is not a slider.
+                # Connect on the ground and it is not a slider.
                 if ('ground' == link) and (vpoint.type == 0):
                     status[node] = True
-                #Add as vlink.
+                # Add as vlink.
                 if link not in vlinks:
                     vlinks[link] = {node}
                 else:
@@ -124,8 +124,8 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
         else:
             status[node] = True
     
-    #Replace the P joints and their friends with RP joint.
-    #DOF must be same after properties changed.
+    # Replace the P joints and their friends with RP joint.
+    # DOF must be same after properties changed.
     cdef int base
     cdef str link_
     cdef VPoint vpoint_
@@ -153,7 +153,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                     vpoint_.y
                 )
     
-    #Add positions parameters.
+    # Add positions parameters.
     cdef list pos = []
     for vpoint in vpoints:
         pos.append(vpoint.c[0 if vpoint.type == 0 else 1])
@@ -162,7 +162,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
     cdef int link_symbol = 0
     cdef int angle_symbol = 0
     
-    #Input joints (R) that was connect with ground.
+    # Input joints (R) that was connect with ground.
     for base, node in inputs:
         if status[base]:
             exprs.append((
@@ -176,7 +176,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
             link_symbol += 1
             angle_symbol += 1
     
-    #Now let we search around all of points, until find the solutions that we could.
+    # Now let we search around all of points, until find the solutions that we could.
     cdef set input_targets = {node for base, node in inputs}
     node = 0
     cdef int skip_times = 0
@@ -185,7 +185,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
     cdef int type_num, friend_a, friend_b, friend_c, friend_d
     cdef double tmp_x, tmp_y, angle
     cdef bool reverse
-    #Friend iterator.
+    # Friend iterator.
     cdef object fi
     while not isAllLock(status):
         
@@ -193,7 +193,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
             node = 0
             continue
         
-        #Check and break the loop if it's re-scan again.
+        # Check and break the loop if it's re-scan again.
         if skip_times >= around:
             break
         
@@ -267,7 +267,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                 ))
                 status[node] = True
                 link_symbol += 2
-                #Solution for all friends.
+                # Solution for all friends.
                 for link in vpoints[node].links[1:]:
                     for friend_b in vlinks[link]:
                         if status[friend_b]:
@@ -286,9 +286,9 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
         elif type_num == 2:
             """RP joint."""
             fi = _get_base_friend(node, vpoints, vlinks, status)
-            #Copy as 'friend_c'.
+            # Copy as 'friend_c'.
             friend_c = node
-            #'S' point.
+            # 'S' point.
             tmp_x, tmp_y = pos[node]
             angle = radians(vpoints[node].angle)
             tmp_x += cos(angle)
@@ -296,7 +296,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
             try:
                 friend_a = next(_get_notbase_friend(node, vpoints, vlinks, status))
                 friend_b = next(fi)
-                #Slot is not grounded.
+                # Slot is not grounded.
                 if not vpoints[node].grounded():
                     friend_d = next(fi)
                     if not clockwise(pos[friend_b], (tmp_x, tmp_y), pos[friend_d]):
@@ -335,7 +335,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                     f'P{friend_c}',
                     f'S{node}',
                 ))
-                #Two conditions.
+                # Two conditions.
                 reverse = (pos[friend_a][0] - pos[node][0] > 0) != (vpoints[node].angle > 90)
                 exprs.append((
                     'PLPP',
@@ -352,5 +352,5 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
         
         node += 1
     
-    #exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1', 'P2'), ...]
+    # exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1', 'P2'), ...]
     return exprs
