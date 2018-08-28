@@ -8,6 +8,7 @@ Modules:
 + Solver:
     + parser
     + tinycadlib
+        + Sketch Solve solver
     + triangulation
 + Number synthesis:
     + number
@@ -28,7 +29,7 @@ __author__ = "Yuan Chang"
 __copyright__ = "Copyright (C) 2016-2018"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
-__version__ = (18, 8, 0, 'dev')
+__version__ = (18, 8, 0, 'release')
 
 from .pmks import VPoint, VLink
 from .bfgs import vpoint_solving as bfgs_vpoint_solving
