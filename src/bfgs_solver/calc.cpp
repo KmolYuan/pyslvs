@@ -87,6 +87,7 @@ double calc(Constraint *cons, const int consLength) {
     double temp, temp2, dx, dy, m, n, Ex, Ey, rad1, rad2, t, dx2, dy2, hyp1, hyp2;
     for(int i = 0; i < consLength; i++) {
         switch((int)cons[i].type) {
+
         case Constraint::PointOnPoint:
             //Hopefully avoid this constraint, make coincident points use the same parameters
             dx = P1_x - P2_x;
@@ -96,7 +97,7 @@ double calc(Constraint *cons, const int consLength) {
 
         case Constraint::P2PDistance:
             temp = _hypot(P2_x - P1_x, P2_y - P1_y) - distance;
-            error += temp * temp * 1000;
+            error += temp * temp * 100;
             break;
 
         case Constraint::P2PDistanceVert:
@@ -143,6 +144,17 @@ double calc(Constraint *cons, const int consLength) {
             t = (P1_y - L1_P1_y) / dy;
             temp = fabs(P1_x - (L1_P1_x + dx * t)) - distance;
             error += temp * temp / 100;
+            break;
+
+        case Constraint::LineLength:
+            temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) - length;
+            error += temp * temp * 100;
+            break;
+
+        case Constraint::EqualLegnth:
+            temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) -
+                   _hypot(L2_P2_x - L2_P1_x, L2_P2_y - L2_P1_y);
+            error += temp * temp * 100;
             break;
 
         case Constraint::Vertical:
@@ -196,17 +208,6 @@ double calc(Constraint *cons, const int consLength) {
             error += temp * temp / (4. * dx + dy -
                                     2 * A1_End_x * A1_Start_x + rad1 -
                                     2 * A1_End_y * A1_Start_y + rad2);
-            break;
-
-        case Constraint::LineLength:
-            temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) - length;
-            error += temp * temp * 1000;
-            break;
-
-        case Constraint::EqualLegnth:
-            temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) -
-                   _hypot(L2_P2_x - L2_P1_x, L2_P2_y - L2_P1_y);
-            error += temp * temp * 100;
             break;
 
         case Constraint::ArcRadius:
