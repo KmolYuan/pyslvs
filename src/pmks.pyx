@@ -117,7 +117,10 @@ cdef class VPoint:
                 self.angle != other.angle
             )
         else:
-            raise TypeError(f"'{op}' not support between instances of {type(self)} and {type(other)}")
+            raise TypeError(
+                f"'{op}' not support between instances of "
+                f"{type(self)} and {type(other)}"
+            )
     
     @property
     def cx(self):
@@ -148,6 +151,10 @@ cdef class VPoint:
     cpdef void rotate(self, double angle):
         """Change the angle of slider slot by degrees."""
         self.angle = angle % 180
+    
+    cpdef void set_offset(self, int pin, double offset):
+        """Set slider offset."""
+        self.offset[pin] = offset
     
     cpdef double distance(self, VPoint p):
         """Distance between two VPoint."""
@@ -181,6 +188,17 @@ cdef class VPoint:
                 p_x = p.c[1][0]
                 p_y = p.c[1][1]
         return hypot(p_x - m_x, p_y - m_y)
+    
+    cpdef double target_offset(self, int pin):
+        """Return target offset."""
+        if self.offset.find(pin) == self.offset.end():
+            # Not exist.
+            return 0
+        return self.offset[pin]
+    
+    cpdef double true_offset(self, int pin):
+        """Return offset between slot and pin."""
+        return hypot(self.c[pin + 1][0] - self.c[0][0], self.c[pin + 1][1] - self.c[0][1])
     
     cpdef double slope_angle(self, VPoint p, int num1 = 2, int num2 = 2):
         """Angle between horizontal line and two point.
