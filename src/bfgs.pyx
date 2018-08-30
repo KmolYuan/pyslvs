@@ -128,7 +128,7 @@ cpdef list vpoint_solving(
     cdef Point *slider_slots = NULL
     cdef Line *slider_lines = NULL
     cdef double *cons_angles = NULL
-    if not sliders.empty():
+    if sliders.size():
         # Base point and slot point to determine a slot line.
         slider_bases = <Point *>malloc(slider_count * sizeof(Point))
         slider_slots = <Point *>malloc(slider_count * sizeof(Point))
@@ -227,17 +227,26 @@ cpdef list vpoint_solving(
     # Pre-count number of slider constraints.
     c = 0
     d = 0
+    cdef int f1
     for a, b in sliders:
         c += 1
-        cons_count += 2
         d += 1
-        if not vpoints[a].grounded():
-            c += 1
+        if vpoints[a].grounded():
+            cons_count += 2
+        else:
+            for vlink in vpoints[a].links[:1]:
+                f1 = vlinks[vlink][0]
+                if f1 == a:
+                    if len(vlinks[vlink]) < 2:
+                        # If no any friend.
+                        continue
+                c += 1
+                cons_count += 2
         if vpoints[a].type == 1:
             cons_count += 1
             c += 1
             d += 1
-    if not sliders.empty():
+    if sliders.size():
         slider_lines = <Line *>malloc(c * sizeof(Line))
         cons_angles = <double *>malloc(d * sizeof(double))
     
@@ -308,7 +317,6 @@ cpdef list vpoint_solving(
     # d: Angle digit number.
     c = 0
     d = 0
-    cdef int f1
     cdef Line *slider_slot
     for a, b in sliders:
         # Base slot.
@@ -322,15 +330,14 @@ cpdef list vpoint_solving(
             cons[i] = PointOnLineConstraint(points + a, slider_slot)
         else:
             # Slider between links.
-            try:
-                vlink = vpoints[a].links[0]
+            for vlink in vpoints[a].links[:1]:
                 # A base link friend.
                 f1 = vlinks[vlink][0]
                 if f1 == a:
+                    if len(vlinks[vlink]) < 2:
+                        # If no any friend.
+                        continue
                     f1 = vlinks[vlink][1]
-            except IndexError:
-                pass
-            else:
                 c += 1
                 if vpoints[f1].is_slot_link(vlink):
                     # f1 is a slider, and it is be connected with slot link.
