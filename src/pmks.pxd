@@ -10,7 +10,6 @@
 
 from cpython cimport bool
 from numpy cimport ndarray
-from libcpp.map cimport map
 
 cdef class VPoint:
     """def __cinit__(self,
@@ -30,15 +29,17 @@ cdef class VPoint:
     cdef readonly str colorSTR
     cdef readonly str typeSTR
     cdef readonly double x, y, angle
-    cdef readonly map[int, double] offset
+    cdef double __offset
+    cdef bool __has_offset
     
     cpdef void move(self, tuple, tuple c2 = *) except *
     cpdef void rotate(self, double)
-    cpdef void set_offset(self, int, double)
+    cpdef void set_offset(self, double)
     
     cpdef double distance(self, VPoint)
-    cpdef double target_offset(self, int)
-    cpdef double true_offset(self, int)
+    cpdef bool has_offset(self)
+    cpdef double offset(self)
+    cpdef double true_offset(self)
     cpdef double slope_angle(self, VPoint, int num1 = *, int num2 = *)
     
     cpdef bool grounded(self)

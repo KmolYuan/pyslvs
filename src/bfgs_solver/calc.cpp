@@ -68,11 +68,10 @@ using namespace std;
 #define A2_End_x     (A1_Center_x + A2_radius * cos(A2_endA))
 #define A2_End_y     (A1_Center_y + A2_radius * sin(A2_endA))
 #define PARAMETER    *CON_i.parameter
-#define length       PARAMETER
-#define distance     PARAMETER
+#define distance     fabs(PARAMETER)
 #define radius       PARAMETER
 #define angleP       PARAMETER
-#define quadIndex    PARAMETER
+#define quadIndex    (int)PARAMETER
 #define Sym          CON_i.SymLine
 #define Sym_P1       Sym->p1
 #define Sym_P1_x     *Sym_P1->x
@@ -147,7 +146,7 @@ double calc(Constraint *cons, const int consLength) {
             break;
 
         case Constraint::LineLength:
-            temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) - length;
+            temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) - distance;
             error += temp * temp * 100;
             break;
 
@@ -374,7 +373,7 @@ double calc(Constraint *cons, const int consLength) {
         case Constraint::PointOnCircleQuad:
             Ex = C1_Center_x;
             Ey = C1_Center_y;
-            switch((int)quadIndex) {
+            switch(quadIndex) {
             case 1:
                 Ey += C1_rad;
                 break;
@@ -384,6 +383,7 @@ double calc(Constraint *cons, const int consLength) {
             case 3:
                 Ey -= C1_rad;
                 break;
+            case 4:
             default:
                 Ex += C1_rad;
                 break;

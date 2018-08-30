@@ -128,6 +128,7 @@ cpdef list vpoint_solving(
     cdef Point *slider_slots = NULL
     cdef Line *slider_lines = NULL
     cdef double *cons_angles = NULL
+    cdef double *slider_offset = NULL
     if sliders.size():
         # Base point and slot point to determine a slot line.
         slider_bases = <Point *>malloc(slider_count * sizeof(Point))
@@ -228,11 +229,14 @@ cpdef list vpoint_solving(
     c = 0
     d = 0
     cdef int f1
+    cdef int slider_offset_count = 0
     for a, b in sliders:
         c += 1
         d += 1
         if vpoints[a].grounded():
             cons_count += 2
+            if vpoints[a].has_offset():
+                slider_offset_count += 1
         else:
             for vlink in vpoints[a].links[:1]:
                 f1 = vlinks[vlink][0]
@@ -249,6 +253,8 @@ cpdef list vpoint_solving(
     if sliders.size():
         slider_lines = <Line *>malloc(c * sizeof(Line))
         cons_angles = <double *>malloc(d * sizeof(double))
+    if slider_offset_count:
+        slider_offset = <double *>malloc(slider_offset_count * sizeof(double))
     
     # Pre-count number of angle constraints.
     cdef int input_count = len(inputs)
@@ -317,6 +323,7 @@ cpdef list vpoint_solving(
     # d: Angle digit number.
     c = 0
     d = 0
+    slider_offset_count = 0
     cdef Line *slider_slot
     for a, b in sliders:
         # Base slot.
@@ -328,6 +335,15 @@ cpdef list vpoint_solving(
             cons[i] = LineInternalAngleConstraint(slider_slot, cons_angles + d)
             i += 1
             cons[i] = PointOnLineConstraint(points + a, slider_slot)
+            if vpoints[a].has_offset():
+                i += 1
+                slider_offset[slider_offset_count] = vpoints[a].offset()
+                slider_offset_count += 1
+                cons[i] = P2PDistanceConstraint(
+                    slider_bases + b,
+                    points + a,
+                    slider_offset + slider_offset_count
+                )
         else:
             # Slider between links.
             for vlink in vpoints[a].links[:1]:
@@ -353,6 +369,15 @@ cpdef list vpoint_solving(
                 )
                 i += 1
                 cons[i] = PointOnLineConstraint(points + a, slider_slot)
+                if vpoints[a].has_offset():
+                    i += 1
+                    slider_offset[slider_offset_count] = vpoints[a].offset()
+                    slider_offset_count += 1
+                    cons[i] = P2PDistanceConstraint(
+                        slider_bases + b,
+                        points + a,
+                        slider_offset + slider_offset_count
+                    )
         d += 1
         c += 1
         i += 1
@@ -421,6 +446,7 @@ cpdef list vpoint_solving(
     free(slider_slots)
     free(slider_lines)
     free(cons_angles)
+    free(slider_offset)
     free(distences)
     free(angles)
     free(lines)
