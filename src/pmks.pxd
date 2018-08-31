@@ -12,16 +12,10 @@ from cpython cimport bool
 from numpy cimport ndarray
 
 cdef class VPoint:
-    """def __cinit__(self,
-        links: str,
-        type_int: int,
-        angle: double,
-        color_str: str,
-        x: double,
-        y: double,
-        color_func: object = None
-    )
-    """
+    
+    # VPoint(links, type_int, angle, color_str, x, y, color_func=None)
+    
+    # Members
     cdef readonly tuple links
     cdef readonly ndarray c
     cdef readonly int type
@@ -32,16 +26,19 @@ cdef class VPoint:
     cdef double __offset
     cdef bool __has_offset
     
+    # Set values
     cpdef void move(self, tuple, tuple c2 = *) except *
     cpdef void rotate(self, double)
     cpdef void set_offset(self, double)
     
+    # Get or calculate values.
     cpdef double distance(self, VPoint)
     cpdef bool has_offset(self)
     cpdef double offset(self)
     cpdef double true_offset(self)
     cpdef double slope_angle(self, VPoint, int num1 = *, int num2 = *)
     
+    # Link operators.
     cpdef bool grounded(self)
     cpdef bool same_link(self, VPoint p)
     cpdef bool no_link(self)
