@@ -40,6 +40,7 @@ cdef class VPoint:
     
     # Link operators.
     cpdef bool grounded(self)
+    cpdef bool pin_grounded(self)
     cpdef bool same_link(self, VPoint p)
     cpdef bool no_link(self)
     cpdef bool is_slot_link(self, str)

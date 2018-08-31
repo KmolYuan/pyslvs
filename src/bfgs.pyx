@@ -208,7 +208,7 @@ cpdef list vpoint_solving(
             points[i] = [pparameters[a], pparameters[a + 1]]
             a += 2
     
-    # Pre-count number of distence constraints.
+    # Pre-count number of distance constraints.
     cdef int cons_count = 0
     cdef int c, d
     for vlink in vlinks:
@@ -223,7 +223,7 @@ cpdef list vpoint_solving(
                 # Known coordinates.
                 continue
             cons_count += 2
-    cdef double *distences = <double *>malloc(cons_count * sizeof(double))
+    cdef double *distances = <double *>malloc(cons_count * sizeof(double))
     
     # Pre-count number of slider constraints.
     c = 0
@@ -268,7 +268,7 @@ cpdef list vpoint_solving(
     # Pre-count number of constraints.
     cdef Constraint *cons = <Constraint *>malloc(cons_count * sizeof(Constraint))
     
-    # Create distence constraints of each link.
+    # Create distance constraints of each link.
     i = 0
     cdef Point *p1
     cdef Point *p2
@@ -279,7 +279,7 @@ cpdef list vpoint_solving(
         a = vlinks[vlink][0]
         b = vlinks[vlink][1]
         if (a not in data_dict) or (b not in data_dict):
-            distences[i] = vpoints[a].distance(vpoints[b])
+            distances[i] = vpoints[a].distance(vpoints[b])
             if a in data_dict:
                 p1 = points + a
             elif vpoints[a].is_slot_link(vlink):
@@ -292,7 +292,7 @@ cpdef list vpoint_solving(
                 p2 = slider_bases + sliders[b]
             else:
                 p2 = points + b
-            cons[i] = P2PDistanceConstraint(p1, p2, distences + i)
+            cons[i] = P2PDistanceConstraint(p1, p2, distances + i)
             i += 1
         for c in vlinks[vlink][2:]:
             if c in data_dict:
@@ -301,9 +301,9 @@ cpdef list vpoint_solving(
             for d in (a, b):
                 pair = sort_pair((c, d))
                 if pair in data_dict:
-                    distences[i] = data_dict[pair]
+                    distances[i] = data_dict[pair]
                 else:
-                    distences[i] = vpoints[c].distance(vpoints[d])
+                    distances[i] = vpoints[c].distance(vpoints[d])
                 if vpoints[c].is_slot_link(vlink):
                     p1 = slider_bases + sliders[c]
                 else:
@@ -314,7 +314,7 @@ cpdef list vpoint_solving(
                     p2 = slider_bases + sliders[d]
                 else:
                     p2 = points + d
-                cons[i] = P2PDistanceConstraint(p1, p2, distences + i)
+                cons[i] = P2PDistanceConstraint(p1, p2, distances + i)
                 i += 1
     
     # Add slider constraints.
@@ -447,7 +447,7 @@ cpdef list vpoint_solving(
     free(slider_lines)
     free(cons_angles)
     free(slider_offset)
-    free(distences)
+    free(distances)
     free(angles)
     free(lines)
     free(cons)

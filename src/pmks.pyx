@@ -229,9 +229,13 @@ cdef class VPoint:
             return 'ground' in self.links
         elif self.type in {1, 2}:
             if self.links:
-                return 'ground' == self.links[0]
+                return self.is_slot_link('ground')
             else:
                 return False
+    
+    cpdef bool pin_grounded(self):
+        """Return True if the joint has any pin connect with the ground."""
+        return 'ground' in self.links[1:]
     
     cpdef bool same_link(self, VPoint p):
         """Return True if the point is at the same link."""
