@@ -98,7 +98,10 @@ cpdef list vpoint_solving(
                 # Known coordinates.
                 constants_count += 2
             else:
-                params_count += 2
+                if vpoint.pin_grounded():
+                    constants_count += 2
+                else:
+                    params_count += 2
         if vpoint.type in {1, 2}:
             if i in data_dict:
                 # Known coordinates are not slider.
@@ -199,14 +202,22 @@ cpdef list vpoint_solving(
                 slider_slots[slider_count] = [pparameters[a], pparameters[a + 1]]
                 a += 2
                 slider_count += 1
-                # Pin is moveable.
-                parameters[a], parameters[a + 1] = vpoint.c[1]
+                if vpoint.pin_grounded():
+                    # Pin is fixed.
+                    constants[b], constants[b + 1] = vpoint.c[1]
+                    points[i] = [constants + b, constants + b + 1]
+                else:
+                    # Pin is moveable.
+                    parameters[a], parameters[a + 1] = vpoint.c[1]
+                    pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
+                    points[i] = [pparameters[a], pparameters[a + 1]]
+                    a += 2
             else:
                 # Point is moveable.
                 parameters[a], parameters[a + 1] = vpoint.c[0]
-            pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
-            points[i] = [pparameters[a], pparameters[a + 1]]
-            a += 2
+                pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
+                points[i] = [pparameters[a], pparameters[a + 1]]
+                a += 2
     
     # Pre-count number of distance constraints.
     cdef int cons_count = 0
@@ -246,6 +257,8 @@ cpdef list vpoint_solving(
                         continue
                 c += 1
                 cons_count += 2
+                if vpoints[a].has_offset():
+                    slider_offset_count += 1
         if vpoints[a].type == 1:
             cons_count += 1
             c += 1
@@ -357,10 +370,11 @@ cpdef list vpoint_solving(
                 c += 1
                 if vpoints[f1].is_slot_link(vlink):
                     # f1 is a slider, and it is be connected with slot link.
-                    slider_lines[c] = [slider_bases + b, slider_bases + sliders[f1]]
+                    p1 = slider_bases + sliders[f1]
                 else:
                     # f1 is a R joint or it is not connected with slot link.
-                    slider_lines[c] = [slider_bases + b, points + f1]
+                    p1 = points + f1
+                slider_lines[c] = [slider_bases + b, p1]
                 cons_angles[d] = radians(vpoints[a].slope_angle(vpoints[f1]) - vpoints[a].angle)
                 cons[i] = InternalAngleConstraint(
                     slider_slot,
@@ -393,10 +407,11 @@ cpdef list vpoint_solving(
                     f1 = vlinks[vlink][1]
                 if vpoints[f1].is_slot_link(vlink):
                     # f1 is a slider, and it is be connected with slot link.
-                    slider_lines[c] = [points + a, slider_bases + sliders[f1]]
+                    p1 = slider_bases + sliders[f1]
                 else:
                     # f1 is a R joint or it is not connected with slot link.
-                    slider_lines[c] = [points + a, points + f1]
+                    p1 = points + f1
+                slider_lines[c] = [points + a, p1]
                 cons_angles[d] = radians(vpoints[a].slope_angle(vpoints[f1]) - vpoints[a].angle)
                 cons[i] = InternalAngleConstraint(
                     slider_slot,
