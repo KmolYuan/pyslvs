@@ -99,6 +99,12 @@ example_list = {
         "J[R, color[Green], P[95.1972, 52.8805], L[link_3]], "
         "]", ((0, 1),)),
     
+    "Crank slider (Three bar)": ("M["
+        "J[R, color[Green], P[-30.0, -10.0], L[ground, link_1]], "
+        "J[R, color[Green], P[-5.0, 25.0], L[link_1, link_2]], "
+        "J[RP, A[0.0], color[Green], P[25.0, -10.0], L[link_2, ground]], "
+        "]", ((0, 1),)),
+    
     "Inverted slider": ("M["
         "J[R, color[Green], P[-15.0, 0.0], L[ground, link_1]], "
         "J[R, color[Green], P[41.0, 0.0], L[ground, link_3]], "

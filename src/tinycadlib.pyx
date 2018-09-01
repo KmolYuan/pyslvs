@@ -247,8 +247,11 @@ cpdef tuple expr_parse(str exprs):
 
 cpdef int vpoint_dof(object vpoints):
     """Degree of freedoms calculate from PMKS expressions."""
+    # Joint with DOF 1.
     cdef int j1 = 0
+    # Joint with DOF 2.
     cdef int j2 = 0
+    # First link 'ground'.
     cdef set vlinks = {'ground'}
     
     cdef int link_count
