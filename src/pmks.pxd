@@ -30,6 +30,7 @@ cdef class VPoint:
     cpdef void move(self, tuple, tuple c2 = *) except *
     cpdef void rotate(self, double)
     cpdef void set_offset(self, double)
+    cpdef void disable_offset(self)
     
     # Get or calculate values.
     cpdef double distance(self, VPoint)

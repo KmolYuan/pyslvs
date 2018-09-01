@@ -159,6 +159,10 @@ cdef class VPoint:
         self.__has_offset = True
         self.__offset = offset
     
+    cpdef void disable_offset(self):
+        """Disable offset status."""
+        self.__has_offset = False
+    
     cpdef double distance(self, VPoint p):
         """Distance between two VPoint."""
         cdef tuple on_links = tuple(set(self.links) & set(p.links))
