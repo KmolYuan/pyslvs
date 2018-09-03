@@ -262,13 +262,13 @@ cpdef int vpoint_dof(object vpoints):
             # If a point doesn't have two more links, it can not be call a 'joint'.
             continue
         vlinks.update(vpoint.links)
-        if vpoint.type == 0:
+        if vpoint.type == VPoint.R:
             j1 += link_count - 1
-        elif vpoint.type == 1:
+        elif vpoint.type == VPoint.P:
             if link_count > 2:
                 j1 += link_count - 2
             j1 += 1
-        elif vpoint.type == 2:
+        elif vpoint.type == VPoint.RP:
             if link_count > 2:
                 j1 += link_count - 2
             j2 += 1
@@ -325,13 +325,13 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     cdef set links = set()
     for base in range(len(vpoints)):
         vpoint = vpoints[base]
-        if vpoint.type != 1:
+        if vpoint.type != VPoint.P:
             continue
         for link in vpoint.links[1:]:
             links.clear()
             for node in vlinks[link]:
                 vpoint_ = vpoints[node]
-                if (node == base) or (vpoint_.type != 0):
+                if (node == base) or (vpoint_.type in {VPoint.P, VPoint.RP}):
                     continue
                 links.update(vpoint_.links)
                 vpoints[node] = VPoint(
@@ -352,7 +352,7 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     
     cdef list pos = []
     for vpoint in vpoints:
-        if vpoint.type == 0:
+        if vpoint.type == VPoint.R:
             pos.append(vpoint.c[0])
         else:
             pos.append(vpoint.c[1])
@@ -362,7 +362,7 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     # Add slider slot virtual coordinates.
     for i, vpoint in enumerate(vpoints):
         # PLPP dependents.
-        if vpoint.type != 2:
+        if vpoint.type != VPoint.RP:
             continue
         bf = base_friend(i, vpoints)
         angle = radians(
@@ -436,7 +436,7 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
                 data_dict[expr[3]] = pos[target][1] - pos[node][1]
     # Other grounded R joints.
     for i, vpoint in enumerate(vpoints):
-        if vpoint.grounded() and (vpoint.type == 0):
+        if vpoint.grounded() and (vpoint.type == VPoint.R):
             data_dict[mapping[i]] = vpoint.c[0]
     return data_dict, dof
 
@@ -519,19 +519,19 @@ cpdef list expr_solving(
             # These points solved by Pyslvs.
             if isnan(data_dict[mapping[i]][0]):
                 raise Exception(f"result contains failure: Point{i}")
-            if vpoints[i].type == 0:
+            if vpoints[i].type == VPoint.R:
                 solved_points.append(data_dict[mapping[i]])
             else:
                 solved_points.append((vpoints[i].c[0], data_dict[mapping[i]]))
         elif solved_bfgs:
             # These points solved by Sketch Solve.
-            if vpoints[i].type == 0:
+            if vpoints[i].type == VPoint.R:
                 solved_points.append(solved_bfgs[i])
             else:
                 solved_points.append((solved_bfgs[i][0], solved_bfgs[i][1]))
         else:
             # No answer.
-            if vpoints[i].type == 0:
+            if vpoints[i].type == VPoint.R:
                 solved_points.append(vpoints[i].c[0])
             else:
                 solved_points.append(vpoints[i].c)

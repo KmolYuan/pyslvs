@@ -5,6 +5,7 @@ Version 18.09
 ===
 
 + Simulation corrections.
++ Add joint types of "VPoint" class.
 
 Version 18.08
 ===

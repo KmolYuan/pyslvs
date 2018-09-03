@@ -102,7 +102,7 @@ cpdef list vpoint_solving(
                     constants_count += 2
                 else:
                     params_count += 2
-        if vpoint.type in {1, 2}:
+        if vpoint.type in {VPoint.P, VPoint.RP}:
             if i in data_dict:
                 # Known coordinates are not slider.
                 continue
@@ -112,7 +112,7 @@ cpdef list vpoint_solving(
                 b += 1
             params_count += 4
             sliders[i] = slider_p_count + slider_rp_count
-            if vpoint.type == 1:
+            if vpoint.type == VPoint.P:
                 slider_p_count += 1
             else:
                 slider_rp_count += 1
@@ -163,7 +163,7 @@ cpdef list vpoint_solving(
                 b += 2
                 continue
             constants[b], constants[b + 1] = vpoint.c[0]
-            if vpoint.type in {1, 2}:
+            if vpoint.type in {VPoint.P, VPoint.RP}:
                 # Base point (slot) is fixed.
                 slider_bases[slider_count] = [constants + b, constants + b + 1]
                 # Slot point (slot) is moveable.
@@ -189,7 +189,7 @@ cpdef list vpoint_solving(
                 points[i] = [constants + b, constants + b + 1]
                 b += 2
                 continue
-            if vpoint.type in {1, 2}:
+            if vpoint.type in {VPoint.P, VPoint.RP}:
                 # Base point (slot) is moveable.
                 parameters[a], parameters[a + 1] = vpoint.c[0]
                 pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
@@ -259,7 +259,7 @@ cpdef list vpoint_solving(
                 cons_count += 2
                 if vpoints[a].has_offset():
                     slider_offset_count += 1
-        if vpoints[a].type == 1:
+        if vpoints[a].type == VPoint.P:
             cons_count += 1
             c += 1
             d += 1
@@ -395,8 +395,7 @@ cpdef list vpoint_solving(
         d += 1
         c += 1
         i += 1
-        # P joint.
-        if vpoints[a].type == 1:
+        if vpoints[a].type == VPoint.P:
             for vlink in vpoints[a].links[1:]:
                 # A base link friend.
                 f1 = vlinks[vlink][0]
@@ -446,7 +445,7 @@ cpdef list vpoint_solving(
     """
     cdef list solved_points = []
     for i in range(len(vpoints)):
-        if vpoints[i].type == 0:
+        if vpoints[i].type == VPoint.R:
             solved_points.append((points[i].x[0], points[i].y[0]))
         else:
             solved_points.append((

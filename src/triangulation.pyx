@@ -114,7 +114,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
         if vpoint.links:
             for link in vpoint.links:
                 # Connect on the ground and it is not a slider.
-                if ('ground' == link) and (vpoint.type == 0):
+                if ('ground' == link) and (vpoint.type == VPoint.R):
                     status[node] = True
                 # Add as vlink.
                 if link not in vlinks:
@@ -132,13 +132,13 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
     cdef set links
     for base in range(len(vpoints)):
         vpoint = vpoints[base]
-        if (vpoint.type != 1) or (not vpoint.grounded()):
+        if (vpoint.type != VPoint.P) or (not vpoint.grounded()):
             continue
         for link in vpoint.links[1:]:
             links = set()
             for node in vlinks[link]:
                 vpoint_ = vpoints[node]
-                if (node == base) or (vpoint_.type != 0):
+                if (node == base) or (vpoint_.type != VPoint.R):
                     continue
                 links.update(vpoint_.links)
                 vpoints[node] = VPoint(
@@ -156,7 +156,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
     # Add positions parameters.
     cdef list pos = []
     for vpoint in vpoints:
-        pos.append(vpoint.c[0 if vpoint.type == 0 else 1])
+        pos.append(vpoint.c[0 if vpoint.type == VPoint.R else 1])
     
     cdef list exprs = []
     cdef int link_symbol = 0
