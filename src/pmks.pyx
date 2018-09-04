@@ -26,7 +26,8 @@ cdef class VPoint:
     P = 1
     RP = 2
     
-    def __cinit__(self,
+    def __cinit__(
+        self,
         links: str,
         type_int: int,
         angle: double,
@@ -294,7 +295,8 @@ cdef class VLink:
     cdef readonly object color
     cdef readonly tuple points
     
-    def __cinit__(self,
+    def __cinit__(
+        self,
         str name,
         str color_str,
         tuple points,

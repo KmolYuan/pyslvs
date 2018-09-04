@@ -318,7 +318,8 @@ cdef class GMState:
     cdef GraphMatcher GM
     cdef int G1_node, G2_node, depth
     
-    def __cinit__(self,
+    def __cinit__(
+        self,
         GM: GraphMatcher,
         G1_node: int = -1,
         G2_node: int = -1
