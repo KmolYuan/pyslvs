@@ -178,12 +178,7 @@ cdef class VPoint:
         cdef double p_x = 0
         cdef double p_y = 0
         
-        if not on_links:
-            m_x = self.c[0][0]
-            m_y = self.c[0][1]
-            p_x = p.c[0][0]
-            p_y = p.c[0][1]
-        else:
+        if on_links:
             if (self.type == VPoint.R) or (self.links[0] == on_links[0]):
                 # self is R joint or at base link.
                 m_x = self.c[0][0]
@@ -200,6 +195,11 @@ cdef class VPoint:
                 # At pin joint.
                 p_x = p.c[1][0]
                 p_y = p.c[1][1]
+        else:
+            m_x = self.c[0][0]
+            m_y = self.c[0][1]
+            p_x = p.c[0][0]
+            p_y = p.c[0][1]
         return hypot(p_x - m_x, p_y - m_y)
     
     cpdef bool has_offset(self):
@@ -284,7 +284,7 @@ cdef class VPoint:
     
     def __repr__(self):
         """Use to generate script."""
-        return f"VPoint({self.links}, {self.type}, {self.angle}, {self.c})"
+        return f"VPoint({self.links}, {self.type}, {self.angle}, {list(self.c)})"
 
 
 cdef class VLink:

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3
 
-"""PMKS simbolics."""
+"""PMKS symbolics."""
 
 # __author__ = "Yuan Chang"
 # __copyright__ = "Copyright (C) 2016-2018"
@@ -10,6 +10,7 @@
 
 from cpython cimport bool
 from numpy cimport ndarray
+
 
 cdef class VPoint:
     
@@ -27,21 +28,21 @@ cdef class VPoint:
     cdef bool __has_offset
     
     # Set values
-    cpdef void move(self, tuple, tuple c2 = *) except *
+    cpdef void move(self, tuple c1, tuple c2 = *) except *
     cpdef void rotate(self, double)
     cpdef void set_offset(self, double)
     cpdef void disable_offset(self)
     
     # Get or calculate values.
-    cpdef double distance(self, VPoint)
+    cpdef double distance(self, VPoint p)
     cpdef bool has_offset(self)
     cpdef double offset(self)
     cpdef double true_offset(self)
-    cpdef double slope_angle(self, VPoint, int num1 = *, int num2 = *)
+    cpdef double slope_angle(self, VPoint p, int num1 = *, int num2 = *)
     
     # Link operators.
     cpdef bool grounded(self)
     cpdef bool pin_grounded(self)
     cpdef bool same_link(self, VPoint p)
     cpdef bool no_link(self)
-    cpdef bool is_slot_link(self, str)
+    cpdef bool is_slot_link(self, str link_name)
