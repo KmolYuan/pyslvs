@@ -36,7 +36,7 @@ cdef class Planar(Verification):
     
     """This class is used to verified kinematics of the linkage mechanism."""
     
-    cdef int target_count, vars
+    cdef int target_count, var_count
     cdef list link_list, driver_list, follower_list
     cdef ndarray constraints, target_names, exprs, target, upper, lower
     
@@ -112,7 +112,7 @@ cdef class Planar(Verification):
         
         """Limitations
         
-        self.vars = length before matching angles.
+        self.var_count = length before matching angles.
         
         The data format will same as chromosome.
         [Ax, Ay, Dx, Dy, ..., L0, L1, ..., A00, A01, ..., A10, A11, ...]
@@ -123,7 +123,7 @@ cdef class Planar(Verification):
         """
         cdef int link_count = len(self.link_list)
         # The number of all variables (except angles).
-        self.vars = 2 * len(self.driver_list) + 2 * len(self.follower_list) + link_count
+        self.var_count = 2 * len(self.driver_list) + 2 * len(self.follower_list) + link_count
         
         cdef dict tmp_dict = {}
         tmp_dict.update(mech_params['Driver'])
@@ -249,7 +249,7 @@ cdef class Planar(Verification):
             # a0: random angle to generate target point.
             # match to path points.
             for j in range(len(self.driver_list)):
-                test_dict[f'a{j}'] = radians(v[self.vars + i * len(self.driver_list) + j])
+                test_dict[f'a{j}'] = radians(v[self.var_count + i * len(self.driver_list) + j])
             for e in self.exprs:
                 # target
                 target_coord = self.from_formula(e, test_dict)
@@ -284,7 +284,7 @@ cdef class Planar(Verification):
         cdef object value
         cdef dict final_dict = self.get_data_dict(v)
         for j in range(len(self.driver_list)):
-            final_dict[f'a{j}'] = radians(v[self.vars + j])
+            final_dict[f'a{j}'] = radians(v[self.var_count + j])
         for e in self.exprs:
             # target
             final_dict[e[1]] = self.from_formula(e, final_dict)
@@ -295,7 +295,7 @@ cdef class Planar(Verification):
         for j in range(len(self.driver_list)):
             tmp_list = []
             for i in range(self.target_count):
-                tmp_list.append(v[self.vars + i * len(self.driver_list) + j])
+                tmp_list.append(v[self.var_count + i * len(self.driver_list) + j])
             final_dict[f'a{j}'] = tuple(tmp_list)
         return final_dict
     

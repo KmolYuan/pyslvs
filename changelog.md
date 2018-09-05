@@ -6,6 +6,7 @@ Version 18.09
 
 + Simulation corrections.
 + Add joint types of "VPoint" class.
++ Using "RuntimeError" instead of normal exception.
 
 Version 18.08
 ===

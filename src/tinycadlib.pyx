@@ -304,7 +304,7 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     cdef list vpoints = list(vpoints_)
     
     # First, we create a "VLinks" that can help us to
-    # find a releationship just like adjacency matrix.
+    # find a relationship just like adjacency matrix.
     cdef int node
     cdef str link
     cdef VPoint vpoint
@@ -502,8 +502,8 @@ cpdef list expr_solving(
     if exprs and has_not_solved:
         try:
             solved_bfgs = vpoint_solving(vpoints, [], p_data_dict)
-        except Exception as e:
-            raise Exception("result contains failure: Sketch Solve") from e
+        except RuntimeError as e:
+            raise RuntimeError("result contains failure: Sketch Solve") from e
     
     """Format:
     
@@ -518,7 +518,7 @@ cpdef list expr_solving(
         if mapping[i] in data_dict:
             # These points solved by Pyslvs.
             if isnan(data_dict[mapping[i]][0]):
-                raise Exception(f"result contains failure: Point{i}")
+                raise RuntimeError(f"result contains failure: Point{i}")
             if vpoints[i].type == VPoint.R:
                 solved_points.append(data_dict[mapping[i]])
             else:
