@@ -8,7 +8,6 @@
 # __license__ = "AGPL"
 # __email__ = "pyslvs@gmail.com"
 
-from libc.math cimport M_PI
 from numpy import (
     array as np_array,
     object as np_object,
