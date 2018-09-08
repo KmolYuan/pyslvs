@@ -65,6 +65,7 @@ _color_list = {
 
 colorNames = tuple(sorted(_color_list.keys()))
 
+
 def colorRGB(name: str) -> Tuple[int, int, int]:
     """Get color by name.
     
@@ -73,17 +74,19 @@ def colorRGB(name: str) -> Tuple[int, int, int]:
     + RGB string.
     """
     if not name:
-        return (0, 0, 0)
+        return 0, 0, 0
     elif name in _color_list:
         return _color_list[name]
     else:
         # Input RGB as a "(255, 255, 255)" string.
-        return tuple(int(i) for i in (
+        color_text = tuple(int(i) for i in (
             name.replace('(', '')
             .replace(')', '')
             .replace(" ", '')
-            .split(',')
+            .split(',', maxsplit=3)
         ))
+        return color_text[:3]
+
 
 _colors = "|".join(f'"{color}"' for color in reversed(colorNames))
 
@@ -134,7 +137,7 @@ _pmks_grammar = Lark(
     %ignore NEWLINE
     COMMENT: "#" /[^\\n]/*
     %ignore COMMENT
-    """, start = 'mechanism'
+    """, start='mechanism'
 )
 
 
@@ -180,18 +183,19 @@ class _PMKSParams(Transformer):
         ([2])[3]: point (coordinate)
         ([3])[4]: link
         """
-        hasAngle = args[0] != 'R'
+        has_angle = args[0] != 'R'
         x, y = args[-2]
         return [
             ','.join(args[-1]),
-            f'{args[0]}:{args[1]}' if hasAngle else 'R',
-            args[2] if hasAngle else args[1],
+            f'{args[0]}:{args[1]}' if has_angle else 'R',
+            args[2] if has_angle else args[1],
             x,
             y
         ]
     
     def mechanism(self, j: List[Token]) -> List[Token]:
         return j
+
 
 class _PMKSVPoints(_PMKSParams):
     
@@ -203,13 +207,13 @@ class _PMKSVPoints(_PMKSParams):
     
     def joint(self, args: List[Token]) -> VPoint:
         """Same as parent."""
-        hasAngle = args[0] != 0
+        has_angle = args[0] != 0
         x, y = args[-2]
         return VPoint(
             ','.join(args[-1]),
             args[0],
-            args[1] if hasAngle else 0.,
-            args[2] if hasAngle else args[1],
+            args[1] if has_angle else 0.,
+            args[2] if has_angle else args[1],
             x,
             y
         )
@@ -223,6 +227,7 @@ def parse_params(expr: str) -> List[List[Union[str, float]]]:
 def parse_vpoints(expr: str) -> List[VPoint]:
     """Parse as VPoints."""
     return _PMKSVPoints().transform(_pmks_grammar.parse(expr))
+
 
 if HAS_PYGMENTS:
     
