@@ -276,7 +276,7 @@ cdef class Planar(Verification):
                 fitness += path[k][i].distance(self.target[k][i])
         return fitness
     
-    cpdef dict get_coordinates(self, ndarray v):
+    cpdef object result(self, ndarray v):
         """Return the last answer."""
         cdef str k
         cdef tuple e
