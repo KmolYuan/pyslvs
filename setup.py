@@ -26,16 +26,16 @@ extra_compile_args = [
 
 ext_modules = [Extension(
     "bfgs",
-    sources = [
+    sources=[
         'src/' + 'bfgs.pyx',
         'src/bfgs_solver/' + 'geometric_constraint.cpp',
         'src/bfgs_solver/' + 'derivatives.cpp',
         'src/bfgs_solver/' + 'solve.cpp',
         'src/bfgs_solver/' + 'calc.cpp',
     ],
-    language = "c++",
-    include_dirs = ['src/bfgs_solver/', np_include],
-    extra_compile_args = extra_compile_args,
+    language="c++",
+    include_dirs=['src/bfgs_solver/', np_include],
+    extra_compile_args=extra_compile_args,
 )]
 
 for source in sources:
@@ -45,10 +45,10 @@ for source in sources:
         # Base name
         source.split('.')[0],
         # path + file name
-        sources = ['src/' + source],
-        language = "c++",
-        include_dirs = [np_include],
-        extra_compile_args = extra_compile_args,
+        sources=['src/' + source],
+        language="c++",
+        include_dirs=[np_include],
+        extra_compile_args=extra_compile_args,
     ))
 
-setup(ext_modules = ext_modules, cmdclass = {'build_ext': build_ext})
+setup(ext_modules=ext_modules, cmdclass={'build_ext': build_ext})
