@@ -9,7 +9,8 @@ __email__ = "pyslvs@gmail.com"
 
 
 example_list = {
-    "Arm": ("M["
+    "Arm": (
+        "M["
         "J[R, color[Green], P[-34.25, -20.625], L[ground, link_1, link_2]], "
         "J[R, color[Green], P[29.75, 77.375], L[link_2, link_5, link_6]], "
         "J[R, color[Green], P[-54.0, 10.875], L[link_1, link_3]], "
@@ -22,7 +23,8 @@ example_list = {
         "J[R, color[Green], P[163.5, 47.875], L[link_7]], "
         "]", ((0, 1), (0, 2))),
     
-    "Ball lifter (Double)": ("M["
+    "Ball lifter (Double)": (
+        "M["
         "J[R, color[Green], P[10.2, 10.4], L[ground, link_1]], "
         "J[R, color[Green], P[7.44, 20.01], L[link_1, link_2, link_6]], "
         "J[R, color[Green], P[-10.52, 11.21], L[link_2, link_3]], "
@@ -39,7 +41,8 @@ example_list = {
         "J[R, color[Green], P[8.73, 80.39], L[link_8]], "
         "]", ((0, 1),)),
     
-    "Ball lifter (Triple)": ("M["
+    "Ball lifter (Triple)": (
+        "M["
         "J[R, color[Green], P[10.2, 10.4], L[ground, link_1]], "
         "J[R, color[Green], P[7.44, 20.01], L[link_1, link_2, link_6, link_10]], "
         "J[R, color[Green], P[-10.52, 11.21], L[link_2, link_3]], "
@@ -62,7 +65,8 @@ example_list = {
         "J[R, color[Green], P[7.50, 93.44], L[link_12]], "
         "]", ((0, 1),)),
     
-    "Crank lifter": ("M["
+    "Crank lifter": (
+        "M["
         "J[R, color[Green], P[-67.38, 36.13], L[ground, link_1]], "
         "J[R, color[Green], P[-68.925, 55.925], L[link_1, link_2]], "
         "J[RP, A[0.0], color[Green], P[11.88, 0.0], L[ground, link_2, link_3]], "
@@ -72,7 +76,8 @@ example_list = {
         "J[RP, A[0.0], color[Green], P[0.82, 64.42], L[link_5, link_4]], "
         "]", ((0, 1),)),
     
-    "Crank rocker": ("M["
+    "Crank rocker": (
+        "M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
         "J[R, color[Green], P[12.92, 32.53], L[link_1, link_2]], "
         "J[R, color[Green], P[73.28, 67.97], L[link_2, link_3]], "
@@ -80,7 +85,8 @@ example_list = {
         "J[R, color[Green], P[90.0, 0.0], L[ground, link_3]], "
         "]", ((0, 1),)),
     
-    "Crank slider (P joint)": ("M["
+    "Crank slider (P joint)": (
+        "M["
         "J[R, color[Green], P[-33.625, -19.625], L[ground, link_1]],"
         "J[R, color[Green], P[-48.375, 12.125], L[link_1, link_3]],"
         "J[R, color[Green], P[17.125, 33.875], L[link_2, link_3]],"
@@ -90,7 +96,8 @@ example_list = {
         "J[R, color[Green], P[99.244, 20.447], L[ground, link_4]], "
         "]", ((0, 1),)),
     
-    "Crank slider (RP joint)": ("M["
+    "Crank slider (RP joint)": (
+        "M["
         "J[R, color[Green], P[-67.38, 36.13], L[ground, link_1]], "
         "J[R, color[Green], P[-68.925, 55.925], L[link_1, link_2]], "
         "J[RP, A[0.0], color[Green], P[11.88, 0.0], L[ground, link_2, link_3]], "
@@ -99,20 +106,23 @@ example_list = {
         "J[R, color[Green], P[95.1972, 52.8805], L[link_3]], "
         "]", ((0, 1),)),
     
-    "Crank slider (Three bar)": ("M["
+    "Crank slider (Three bar)": (
+        "M["
         "J[R, color[Green], P[-30.0, -10.0], L[ground, link_1]], "
         "J[R, color[Green], P[-9.9986, 4.999], L[link_1, link_2]], "
         "J[RP, A[0.0], color[Green], P[65.0, -45.0], L[link_2, ground]], "
         "]", ((0, 1),)),
     
-    "Inverted slider": ("M["
+    "Inverted slider": (
+        "M["
         "J[R, color[Green], P[-15.0, 0.0], L[ground, link_1]], "
         "J[R, color[Green], P[41.0, 0.0], L[ground, link_3]], "
         "J[R, color[Green], P[-8.0, 25.0], L[link_1, link_2]], "
         "J[P, A[0.0], color[Green], P[44.0, 41.0], L[link_3, link_2]], "
         "]", ((0, 2),)),
     
-    "Jansen's linkage (Single)": ("M["
+    "Jansen's linkage (Single)": (
+        "M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
         "J[R, color[Green], P[9.61, 11.52], L[link_1, link_2, link_4]], "
         "J[R, color[Blue], P[-38.0, -7.8], L[ground, link_3, link_5]], "
@@ -123,7 +133,8 @@ example_list = {
         "J[R, color[Green], P[-22.22, -91.74], L[link_7]], "
         "]", ((0, 1),)),
     
-    "Jansen's linkage (Double)": ("M["
+    "Jansen's linkage (Double)": (
+        "M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
         "J[R, color[Green], P[9.61, 11.52], L[link_1, link_2, link_4, link_8, link_10]], "
         "J[R, color[Blue], P[-38.0, -7.8], L[ground, link_3, link_5]], "
@@ -140,7 +151,8 @@ example_list = {
         "J[R, color[Green], P[4.79, -87.79], L[link_13]], "
         "]", ((0, 1),)),
     
-    "Stephenson I": ("M["
+    "Stephenson I": (
+        "M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
         "J[R, color[Green], P[29.4258, 46.6507], L[link_1, link_5]], "
         "J[R, color[Green], P[10.7895, 114.378], L[link_1, link_2]], "
@@ -150,7 +162,8 @@ example_list = {
         "J[R, color[Green], P[113.75, 0.0], L[ground, link_4]], "
         "]", ((0, 1),)),
     
-    "Stephenson II": ("M["
+    "Stephenson II": (
+        "M["
         "J[R, color[Green], P[-45.0, -15.5], L[ground, link_1]], "
         "J[R, color[Green], P[-52.0, 25.5], L[link_1, link_2]], "
         "J[R, color[Green], P[-36.0, 76.25], L[link_2, link_5]], "
@@ -160,7 +173,8 @@ example_list = {
         "J[R, color[Green], P[57.5, 77.0], L[link_3, link_5]], "
         "]", ((0, 1),)),
     
-    "Stephenson III": ("M["
+    "Stephenson III": (
+        "M["
         "J[R, color[Green], P[0.25, -0.625], L[ground, link_1]], "
         "J[R, color[Green], P[15.375, 41.125], L[link_1, link_2]], "
         "J[R, color[Green], P[61.375, 95.125], L[link_2, link_3]], "
@@ -170,7 +184,8 @@ example_list = {
         "J[R, color[Green], P[138.875, 33.125], L[ground, link_5]], "
         "]", ((0, 1),)),
     
-    "Ten Fold's levers": ("M["
+    "Ten Fold's levers": (
+        "M["
         "J[R, color[Green], P[17.0, -19.0], L[ground, link_2]], "
         "J[R, color[Green], P[17.0, -107.0833], L[ground, link_3, link_4]], "
         "J[R, color[Green], P[42.0, -45.25], L[link_1, link_2]], "
@@ -186,7 +201,8 @@ example_list = {
         "J[R, color[Green], P[221.6968, -20.8773], L[link_10]], "
         "]", ((0, 2),)),
     
-    "Watt I": ("M["
+    "Watt I": (
+        "M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
         "J[R, color[Green], P[-18.6154, 41.3846], L[link_1, link_2]], "
         "J[R, color[Green], P[29.0, 116.5], L[link_2, link_3]], "
@@ -196,7 +212,8 @@ example_list = {
         "J[R, color[Green], P[64.0, 0.0], L[ground, link_5]], "
         "]", ((0, 1),)),
     
-    "Watt II": ("M["
+    "Watt II": (
+        "M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
         "J[R, color[Green], P[-5.3333, 36.0], L[link_1, link_2]], "
         "J[R, color[Green], P[42.6667, 48.3333], L[link_2, link_3]], "

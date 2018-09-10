@@ -62,9 +62,10 @@ class CoreTest(TestCase):
                 (-128.63, -49.74),
                 (-117.56, -65.45),
             ]},
-            'Expression': ("PLAP[P0,L0,a0](P2);"
+            'Expression':
+                "PLAP[P0,L0,a0](P2);"
                 "PLLP[P2,L1,L2,P1](P3);"
-                "PLLP[P2,L3,L4,P3](P4)"),
+                "PLLP[P2,L3,L4,P3](P4)",
             'constraints': [('P0', 'P1', 'P2', 'P3')],
             'upper': [100., 100., 100., 100., 100., 360.],
             'lower': [5., 5., 5., 5., 5., 0.],
@@ -173,7 +174,8 @@ class CoreTest(TestCase):
     def test_algorithm_rga(self):
         """Real-coded genetic algorithm."""
         fun1 = Genetic(self.planar_object(), {
-            'maxTime': 1, 'report': 10,
+            'maxTime': 1,
+            'report': 10,
             # Genetic
             'nPop': 500,
             'pCross': 0.95,
@@ -186,7 +188,8 @@ class CoreTest(TestCase):
     def test_algorithm_firefly(self):
         """Firefly algorithm."""
         fun2 = Firefly(self.planar_object(), {
-            'maxTime': 1, 'report': 10,
+            'maxTime': 1,
+            'report': 10,
             # Firefly
             'n': 80,
             'alpha': 0.01,
@@ -199,7 +202,8 @@ class CoreTest(TestCase):
     def test_algorithm_de(self):
         """Differtial evolution."""
         fun3 = DiffertialEvolution(self.planar_object(), {
-            'maxTime': 1, 'report': 10,
+            'maxTime': 1,
+            'report': 10,
             # DE
             'strategy': 1,
             'NP': 400,
