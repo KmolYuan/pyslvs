@@ -28,7 +28,7 @@ cdef inline bool isAllLock(dict status, dict same = {}):
 cdef inline bool clockwise(tuple c1, tuple c2, tuple c3):
     """Check orientation of three points."""
     cdef double val = (c2[1] - c1[1])*(c3[0] - c2[0]) - (c2[0] - c1[0])*(c3[1] - c2[1])
-    return ((val == 0) or (val > 0))
+    return (val == 0) or (val > 0)
 
 
 def _get_reliable_friend(
@@ -252,7 +252,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
             """Need to solve P joint itself here. (only grounded)"""
             fi = _get_notbase_friend(node, vpoints, vlinks, status)
             try:
-                if not vpoints[node].grounded():
+                if vpoints[node].pin_grounded() or not vpoints[node].grounded():
                     raise StopIteration
                 friend_a = next(fi)
             except StopIteration:
@@ -294,6 +294,8 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
             tmp_x += cos(angle)
             tmp_y += sin(angle)
             try:
+                if vpoints[node].pin_grounded() or not vpoints[node].grounded():
+                    raise StopIteration
                 friend_a = next(_get_notbase_friend(node, vpoints, vlinks, status))
                 friend_b = next(fi)
                 # Slot is not grounded.

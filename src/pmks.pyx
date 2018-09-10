@@ -67,12 +67,12 @@ cdef class VPoint:
         self.__offset = 0
     
     @staticmethod
-    def from_R_joint(links: str, x: double, y: double) -> VPoint:
+    def r_joint(links: str, x: double, y: double) -> VPoint:
         """Create by coordinate."""
         return VPoint(links, 0, 0., '', x, y)
     
     @staticmethod
-    def from_Slider_joint(links: str, type_int: int, angle: double, x: double, y: double) -> VPoint:
+    def slider_joint(links: str, type_int: int, angle: double, x: double, y: double) -> VPoint:
         """Create by coordinate."""
         return VPoint(links, type_int, angle, '', x, y)
     
@@ -132,7 +132,7 @@ cdef class VPoint:
     
     @property
     def cx(self):
-        """X value of frist current coordinate."""
+        """X value of first current coordinate."""
         if self.type == VPoint.R:
             return self.c[0][0]
         else:
