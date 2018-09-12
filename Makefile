@@ -1,18 +1,18 @@
-#Pyslvs Makefile
+# Pyslvs Makefile
 
-#author: Yuan Chang
-#copyright: Copyright (C) 2016-2018
-#license: AGPL
-#email: pyslvs@gmail.com
+# author: Yuan Chang
+# copyright: Copyright (C) 2016-2018
+# license: AGPL
+# email: pyslvs@gmail.com
 
 all: build
 
-#Submodule files
+# Submodule files
 ADESIGN = $(notdir $(wildcard Adesign/src/*.pyx) $(wildcard Adesign/src/*.pxd))
 
 .PHONY: build
 
-# into package folder
+# Into package folder
 build: src/*.pyx src/*.pxd src/bfgs_solver/*.cpp Adesign/src/*.pyx Adesign/src/*.pxd
 ifeq ($(OS),Windows_NT)
 	copy Adesign\src\*.pyx src
