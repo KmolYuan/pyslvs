@@ -252,7 +252,11 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
             """Need to solve P joint itself here. (only grounded)"""
             fi = _get_notbase_friend(node, vpoints, vlinks, status)
             try:
-                if vpoints[node].pin_grounded() or not vpoints[node].grounded():
+                if vpoints[node].pin_grounded():
+                    raise StopIteration
+                if not vpoints[node].grounded():
+                    raise StopIteration
+                if vpoints[node].has_offset():
                     raise StopIteration
                 friend_a = next(fi)
             except StopIteration:
@@ -294,7 +298,11 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
             tmp_x += cos(angle)
             tmp_y += sin(angle)
             try:
-                if vpoints[node].pin_grounded() or not vpoints[node].grounded():
+                if vpoints[node].pin_grounded():
+                    raise StopIteration
+                if not vpoints[node].grounded():
+                    raise StopIteration
+                if vpoints[node].has_offset():
                     raise StopIteration
                 friend_a = next(_get_notbase_friend(node, vpoints, vlinks, status))
                 friend_b = next(fi)
