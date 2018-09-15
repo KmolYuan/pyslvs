@@ -8,6 +8,7 @@
 # __license__ = "AGPL"
 # __email__ = "pyslvs@gmail.com"
 
+cimport cython
 from libc.math cimport (
     M_PI,
     sqrt,
@@ -33,6 +34,7 @@ cdef inline double distance(double x1, double y1, double x2, double y2):
     return hypot(x2 - x1, y2 - y1)
 
 
+@cython.final
 cdef class Coordinate:
     
     """A class to store the coordinate."""

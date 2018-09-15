@@ -8,6 +8,7 @@
 # __license__ = "AGPL"
 # __email__ = "pyslvs@gmail.com"
 
+cimport cython
 from numpy import (
     array as np_array,
     object as np_object,
@@ -31,6 +32,7 @@ from tinycadlib cimport (
 cdef double FAILURE = 9487945
 
 
+@cython.final
 cdef class Planar(Verification):
     
     """This class is used to verified kinematics of the linkage mechanism."""

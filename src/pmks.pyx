@@ -8,6 +8,7 @@
 # __license__ = "AGPL"
 # __email__ = "pyslvs@gmail.com"
 
+cimport cython
 from libc.math cimport (
     M_PI,
     atan2,
@@ -17,6 +18,7 @@ from cpython.object cimport Py_EQ, Py_NE
 from numpy import object as np_object
 
 
+@cython.final
 cdef class VPoint:
     
     """Symbol of joints."""
@@ -287,6 +289,7 @@ cdef class VPoint:
         return f"VPoint({self.links}, {self.type}, {self.angle}, {list(self.c)})"
 
 
+@cython.final
 cdef class VLink:
     
     """Symbol of links."""

@@ -7,12 +7,13 @@ Version 18.09
 + Simulation corrections.
 + Add joint types of "VPoint" class.
 + Using "RuntimeError" instead of normal exception.
++ Change module name of "atlas".
 
 Version 18.08
 ===
 
 + Add "same link" operator for "VPoint" class.
-+ Fix bug of BFGS transform in tinycadlib.
++ Fix bug of BFGS transform in "tinycadlib".
 + Remove test function of Sketch Solve.
 + Support for multi slider joint.
 

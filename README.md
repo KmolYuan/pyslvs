@@ -58,7 +58,7 @@ In Pyslvs, expression is mainly to [PMKS](http://designengrlab.github.io/PMKS/),
 
     Number synthesis function for searching solutions of the number of joints and links.
 
-+ **topologic** library:
++ **atlas** library:
 
     Graph combination algorithm.
 

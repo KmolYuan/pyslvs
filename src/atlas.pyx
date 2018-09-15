@@ -8,6 +8,7 @@
 # __license__ = "AGPL"
 # __email__ = "pyslvs@gmail.com"
 
+cimport cython
 from typing import (
     Sequence,
     Tuple,
@@ -25,6 +26,7 @@ from numpy import (
 )
 
 
+@cython.final
 cdef class Graph:
     
     """NetworkX-like graph class."""
@@ -105,6 +107,7 @@ cdef class Graph:
         return 0
 
 
+@cython.final
 cdef class GraphMatcher:
     
     """GraphMatcher and GMState class from NetworkX.
@@ -139,7 +142,7 @@ cdef class GraphMatcher:
         # Initialize state
         self.initialize()
     
-    # Reinitializes the state of the algorithm.
+    # Re-initializes the state of the algorithm.
     cdef inline void initialize(self):
         # core_1[n] contains the index of the node paired with n, which is m,
         #            provided n is in the mapping.
@@ -313,6 +316,7 @@ cdef class GraphMatcher:
         return num1 == num2
 
 
+@cython.final
 cdef class GMState:
     
     cdef GraphMatcher GM

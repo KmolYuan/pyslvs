@@ -29,7 +29,7 @@ from rga import Genetic
 from firefly import Firefly
 from de import DiffertialEvolution
 from number import number_synthesis
-from topologic import topo, Graph
+from atlas import topo, Graph
 from triangulation import vpoints_configure
 from _parser import parse_vpoints
 from examples import example_list
@@ -200,7 +200,7 @@ class CoreTest(TestCase):
         fun2.run()
     
     def test_algorithm_de(self):
-        """Differtial evolution."""
+        """Differential evolution."""
         fun3 = DiffertialEvolution(self.planar_object(), {
             'maxTime': 1,
             'report': 10,

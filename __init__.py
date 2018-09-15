@@ -12,8 +12,8 @@ Modules:
     + triangulation
 + Number synthesis:
     + number
-+ Topologic synthesis:
-    + topologic
++ Structure Synthesis:
+    + atlas
 + Dimensional synthesis:
     + planarlinkage
     + rga
@@ -50,7 +50,7 @@ from .rga import Genetic
 from .firefly import Firefly
 from .de import DiffertialEvolution
 from .number import number_synthesis
-from .topologic import topo, Graph
+from .atlas import topo, Graph
 from .triangulation import vpoints_configure
 from ._parser import (
     colorNames,
