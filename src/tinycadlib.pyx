@@ -447,7 +447,7 @@ cpdef list expr_solving(
     object exprs,
     dict mapping,
     object vpoints,
-    object angles = []
+    object angles = None
 ):
     """Solving function.
     
@@ -457,6 +457,10 @@ cpdef list expr_solving(
     + vpoints: [VPoint]
     + angles: [[a0]: a0, [a1]: a1, ...]
     """
+    # Blank sequences.
+    if angles is None:
+        angles = []
+    
     cdef dict data_dict
     cdef int dof_input
     data_dict, dof_input = data_collecting(exprs, mapping, vpoints)
@@ -472,7 +476,7 @@ cpdef list expr_solving(
     cdef object k, v
     cdef dict mapping_r = {v: k for k, v in mapping.items() if (type(k) == int)}
     
-    # Check input paires.
+    # Check input pairs.
     cdef tuple expr
     for expr in exprs:
         if expr[0] == 'PLAP':

@@ -24,21 +24,17 @@ from libc.math cimport (
     sin,
 )
 from libcpp.map cimport map
-from cpython cimport bool
 from sketch_solve cimport (
     Rough,
     Succsess,
     Point,
     Line,
     Constraint,
-    HorizontalConstraint,
-    PointOnPointConstraint,
     P2PDistanceConstraint,
     InternalAngleConstraint,
     PointOnLineConstraint,
     LineInternalAngleConstraint,
     solve,
-    derivatives,
 )
 from pmks cimport VPoint
 
@@ -57,8 +53,8 @@ cdef inline tuple sort_pair(tuple pair):
 
 cpdef list vpoint_solving(
     object vpoints,
-    object inputs = [],
-    dict data_dict = {}
+    object inputs = None,
+    object data_dict = None
 ):
     """Solving function from vpoint list.
     
@@ -68,6 +64,12 @@ cpdef list vpoint_solving(
     Known coordinates import from data_dict.
     + data_dict: {0: (10.0, 20.0), ..., (0, 2): 30.0, ...}
     """
+    # Blank sequences.
+    if inputs is None:
+        inputs = []
+    if data_dict is None:
+        data_dict = {}
+    
     # Sort pairs in data_dict.
     cdef object k
     for k in data_dict:
@@ -270,7 +272,13 @@ cpdef list vpoint_solving(
         slider_offset = <double *>malloc(slider_offset_count * sizeof(double))
     
     # Pre-count number of angle constraints.
-    cdef int input_count = len(inputs)
+    cdef int input_count = 0
+    cdef double angle
+    for b, d, angle in inputs:
+        if b == d:
+            continue
+        input_count += 1
+    
     cdef double *angles = NULL
     cdef Line *lines = NULL
     if input_count:
@@ -351,12 +359,12 @@ cpdef list vpoint_solving(
             if vpoints[a].has_offset():
                 i += 1
                 slider_offset[slider_offset_count] = vpoints[a].offset()
-                slider_offset_count += 1
                 cons[i] = P2PDistanceConstraint(
                     slider_bases + b,
                     points + a,
                     slider_offset + slider_offset_count
                 )
+                slider_offset_count += 1
         else:
             # Slider between links.
             for vlink in vpoints[a].links[:1]:
@@ -386,12 +394,12 @@ cpdef list vpoint_solving(
                 if vpoints[a].has_offset():
                     i += 1
                     slider_offset[slider_offset_count] = vpoints[a].offset()
-                    slider_offset_count += 1
                     cons[i] = P2PDistanceConstraint(
                         slider_bases + b,
                         points + a,
                         slider_offset + slider_offset_count
                     )
+                    slider_offset_count += 1
         d += 1
         c += 1
         i += 1
@@ -424,8 +432,9 @@ cpdef list vpoint_solving(
     # Add angle constraints for input angles.
     # c: Input data count.
     c = 0
-    cdef double angle
     for b, d, angle in inputs:
+        if b == d:
+            continue
         lines[c] = [points + b, points + d]
         angles[c] = radians(angle)
         cons[i] = LineInternalAngleConstraint(lines + c, angles + c)
