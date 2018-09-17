@@ -151,6 +151,13 @@ example_list = {
         "J[R, color[Green], P[4.79, -87.79], L[link_13]], "
         "]", ((0, 1),)),
     
+    "Slider crank": (
+        "M["
+        "J[RP, A[0.0], color[Green], P[-35.0, -7.0], L[ground, link_2]], "
+        "J[R, color[Green], P[19.0, -6.0], L[ground, link_1]], "
+        "J[R, color[Green], P[-11.0, 35.0], L[link_1, link_2]], "
+        "]", ((0, 0),)),
+    
     "Stephenson I": (
         "M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "

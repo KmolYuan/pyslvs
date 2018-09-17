@@ -30,6 +30,7 @@ from sketch_solve cimport (
     Point,
     Line,
     Constraint,
+    PointOnPointConstraint,
     P2PDistanceConstraint,
     InternalAngleConstraint,
     PointOnLineConstraint,
@@ -144,6 +145,7 @@ cpdef list vpoint_solving(
     a = 0
     b = 0
     cdef str vlink
+    cdef double offset
     for i, vpoint in enumerate(vpoints):
         if vpoint.no_link():
             constants[b], constants[b + 1] = vpoint.c[0]
@@ -168,15 +170,19 @@ cpdef list vpoint_solving(
             if vpoint.type in {VPoint.P, VPoint.RP}:
                 # Base point (slot) is fixed.
                 slider_bases[slider_count] = [constants + b, constants + b + 1]
-                # Slot point (slot) is moveable.
+                # Slot point (slot) is movable.
                 parameters[a] = vpoint.c[0][0] + cos(vpoint.angle)
                 parameters[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
                 pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
                 slider_slots[slider_count] = [pparameters[a], pparameters[a + 1]]
                 a += 2
                 slider_count += 1
-                # Pin is moveable.
+                # Pin is movable.
                 parameters[a], parameters[a + 1] = vpoint.c[1]
+                if vpoint.has_offset() and (vpoint.true_offset() <= 0.1):
+                    offset = 0.1 if vpoint.offset() > 0 else -0.1
+                    parameters[a] += offset
+                    parameters[a + 1] += offset
                 pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
                 points[i] = [pparameters[a], pparameters[a + 1]]
                 a += 2
@@ -192,12 +198,12 @@ cpdef list vpoint_solving(
                 b += 2
                 continue
             if vpoint.type in {VPoint.P, VPoint.RP}:
-                # Base point (slot) is moveable.
+                # Base point (slot) is movable.
                 parameters[a], parameters[a + 1] = vpoint.c[0]
                 pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
                 slider_bases[slider_count] = [pparameters[a], pparameters[a + 1]]
                 a += 2
-                # Slot point (slot) is moveable.
+                # Slot point (slot) is movable.
                 parameters[a] = vpoint.c[0][0] + cos(vpoint.angle)
                 parameters[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
                 pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
@@ -209,13 +215,17 @@ cpdef list vpoint_solving(
                     constants[b], constants[b + 1] = vpoint.c[1]
                     points[i] = [constants + b, constants + b + 1]
                 else:
-                    # Pin is moveable.
+                    # Pin is movable.
                     parameters[a], parameters[a + 1] = vpoint.c[1]
+                    if vpoint.has_offset() and (vpoint.true_offset() <= 0.1):
+                        offset = 0.1 if vpoint.offset() > 0 else -0.1
+                        parameters[a] += offset
+                        parameters[a + 1] += offset
                     pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
                     points[i] = [pparameters[a], pparameters[a + 1]]
                     a += 2
             else:
-                # Point is moveable.
+                # Point is movable.
                 parameters[a], parameters[a + 1] = vpoint.c[0]
                 pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
                 points[i] = [pparameters[a], pparameters[a + 1]]
@@ -249,7 +259,9 @@ cpdef list vpoint_solving(
         if vpoints[a].grounded():
             cons_count += 2
             if vpoints[a].has_offset():
-                slider_offset_count += 1
+                cons_count += 1
+                if vpoints[a].offset():
+                    slider_offset_count += 1
         else:
             for vlink in vpoints[a].links[:1]:
                 f1 = vlinks[vlink][0]
@@ -260,7 +272,9 @@ cpdef list vpoint_solving(
                 c += 1
                 cons_count += 2
                 if vpoints[a].has_offset():
-                    slider_offset_count += 1
+                    cons_count += 1
+                    if vpoints[a].offset():
+                        slider_offset_count += 1
         if vpoints[a].type == VPoint.P:
             cons_count += 1
             c += 1
@@ -347,27 +361,33 @@ cpdef list vpoint_solving(
     slider_offset_count = 0
     cdef Line *slider_slot
     for a, b in sliders:
+        # Base point.
+        vpoint = vpoints[a]
+        p1 = points + a
         # Base slot.
         slider_lines[c] = [slider_bases + b, slider_slots + b]
         slider_slot = slider_lines + c
-        if vpoints[a].grounded():
+        if vpoint.grounded():
             # Slot is grounded.
-            cons_angles[d] = radians(vpoints[a].angle)
+            cons_angles[d] = radians(vpoint.angle)
             cons[i] = LineInternalAngleConstraint(slider_slot, cons_angles + d)
             i += 1
-            cons[i] = PointOnLineConstraint(points + a, slider_slot)
-            if vpoints[a].has_offset():
+            cons[i] = PointOnLineConstraint(p1, slider_slot)
+            if vpoint.has_offset():
                 i += 1
-                slider_offset[slider_offset_count] = vpoints[a].offset()
-                cons[i] = P2PDistanceConstraint(
-                    slider_bases + b,
-                    points + a,
-                    slider_offset + slider_offset_count
-                )
-                slider_offset_count += 1
+                if vpoint.offset():
+                    slider_offset[slider_offset_count] = vpoint.offset()
+                    cons[i] = P2PDistanceConstraint(
+                        slider_bases + b,
+                        p1,
+                        slider_offset + slider_offset_count
+                    )
+                    slider_offset_count += 1
+                else:
+                    cons[i] = PointOnPointConstraint(slider_bases + b, p1)
         else:
             # Slider between links.
-            for vlink in vpoints[a].links[:1]:
+            for vlink in vpoint.links[:1]:
                 # A base link friend.
                 f1 = vlinks[vlink][0]
                 if f1 == a:
@@ -378,33 +398,36 @@ cpdef list vpoint_solving(
                 c += 1
                 if vpoints[f1].is_slot_link(vlink):
                     # f1 is a slider, and it is be connected with slot link.
-                    p1 = slider_bases + sliders[f1]
+                    p2 = slider_bases + sliders[f1]
                 else:
                     # f1 is a R joint or it is not connected with slot link.
-                    p1 = points + f1
-                slider_lines[c] = [slider_bases + b, p1]
-                cons_angles[d] = radians(vpoints[a].slope_angle(vpoints[f1]) - vpoints[a].angle)
+                    p2 = points + f1
+                slider_lines[c] = [slider_bases + b, p2]
+                cons_angles[d] = radians(vpoint.slope_angle(vpoints[f1]) - vpoint.angle)
                 cons[i] = InternalAngleConstraint(
                     slider_slot,
                     slider_lines + c,
                     cons_angles + d
                 )
                 i += 1
-                cons[i] = PointOnLineConstraint(points + a, slider_slot)
-                if vpoints[a].has_offset():
+                cons[i] = PointOnLineConstraint(p1, slider_slot)
+                if vpoint.has_offset():
                     i += 1
-                    slider_offset[slider_offset_count] = vpoints[a].offset()
-                    cons[i] = P2PDistanceConstraint(
-                        slider_bases + b,
-                        points + a,
-                        slider_offset + slider_offset_count
-                    )
-                    slider_offset_count += 1
+                    if vpoint.offset():
+                        slider_offset[slider_offset_count] = vpoint.offset()
+                        cons[i] = P2PDistanceConstraint(
+                            slider_bases + b,
+                            p1,
+                            slider_offset + slider_offset_count
+                        )
+                        slider_offset_count += 1
+                    else:
+                        cons[i] = PointOnPointConstraint(slider_bases + b, p1)
         d += 1
         c += 1
         i += 1
-        if vpoints[a].type == VPoint.P:
-            for vlink in vpoints[a].links[1:]:
+        if vpoint.type == VPoint.P:
+            for vlink in vpoint.links[1:]:
                 # A base link friend.
                 f1 = vlinks[vlink][0]
                 if f1 == a:
@@ -414,12 +437,12 @@ cpdef list vpoint_solving(
                     f1 = vlinks[vlink][1]
                 if vpoints[f1].is_slot_link(vlink):
                     # f1 is a slider, and it is be connected with slot link.
-                    p1 = slider_bases + sliders[f1]
+                    p2 = slider_bases + sliders[f1]
                 else:
                     # f1 is a R joint or it is not connected with slot link.
-                    p1 = points + f1
-                slider_lines[c] = [points + a, p1]
-                cons_angles[d] = radians(vpoints[a].slope_angle(vpoints[f1]) - vpoints[a].angle)
+                    p2 = points + f1
+                slider_lines[c] = [p1, p2]
+                cons_angles[d] = radians(vpoint.slope_angle(vpoints[f1]) - vpoint.angle)
                 cons[i] = InternalAngleConstraint(
                     slider_slot,
                     slider_lines + c,
