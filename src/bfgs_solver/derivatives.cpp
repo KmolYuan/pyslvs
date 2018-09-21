@@ -21,7 +21,7 @@ void derivatives(
     for(int i = 0; i < consLength; i++)
         switch((int)cons[i].type) {
         //////////////////////////////////////
-        //Point on Point GeoConstraint derivative
+        // Point on Point GeoConstraint derivative
         //////////////////////////////////////
         case Constraint::PointOnPoint:
             // Derivative with respect to p1x
@@ -46,7 +46,7 @@ void derivatives(
             break;
 
         //////////////////////////////////////
-        //Point to Point Distance GeoConstraint derivative
+        // Point to Point Distance GeoConstraint derivative
         //////////////////////////////////////
         case Constraint::P2PDistance:
             // Derivative with respect to p1x
@@ -96,7 +96,7 @@ void derivatives(
             break;
 
         //////////////////////////////////////
-        //Point to Point Horz Distance GeoConstraint derivative
+        // Point to Point Horz Distance GeoConstraint derivative
         //////////////////////////////////////
         case Constraint::P2PDistanceHorz:
             // Derivative with respect to p1x
@@ -116,7 +116,7 @@ void derivatives(
             break;
 
         //////////////////////////////////////
-        //Point on line GeoConstraint derivatives
+        // Point on line GeoConstraint derivatives
         //////////////////////////////////////
         case Constraint::PointOnLine:
             // Derivative with respect to p1x

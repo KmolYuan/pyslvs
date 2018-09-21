@@ -88,7 +88,8 @@ double calc(Constraint *cons, const int consLength) {
         switch((int)cons[i].type) {
 
         case Constraint::PointOnPoint:
-            //Hopefully avoid this constraint, make coincident points use the same parameters
+            // Hopefully avoid this constraint,
+            // make coincident points use the same parameters
             dx = P1_x - P2_x;
             dy = P1_y - P2_y;
             error += dx * dx + dy * dy;
@@ -170,7 +171,7 @@ double calc(Constraint *cons, const int consLength) {
             dx = L1_P2_x - L1_P1_x;
             dy = L1_P2_y - L1_P1_y;
             hyp1 = _hypot(dx, dy);
-            //Calculate the expected tangent intersection points
+            // Calculate the expected tangent intersection points
             temp = (-dy * (C1_Center_x - dy / hyp1 * C1_rad) +
                     dx * (C1_Center_y + dx / hyp1 * C1_rad) +
                     (L1_P1_x * L1_P2_y - L1_P2_x * L1_P1_y)) / hyp1;
@@ -320,14 +321,14 @@ double calc(Constraint *cons, const int consLength) {
             // and the true point of the second lines two end points on the
             // first line
             if(m <= 1 && m > -1) {
-                //Calculate the expected y point given the x coordinate of the point
+                // Calculate the expected y point given the x coordinate of the point
                 Ey = L1_P1_y + m * (L2_P1_x - L1_P1_x);
                 error += (Ey - L2_P1_y) * (Ey - L2_P1_y);
 
                 Ey = L1_P1_y + m * (L2_P2_x - L1_P1_x);
                 error += (Ey - L2_P2_y) * (Ey - L2_P2_y);
             } else {
-                //Calculate the expected x point given the y coordinate of the point
+                // Calculate the expected x point given the y coordinate of the point
                 Ex = L1_P1_x + n * (L2_P1_y - L1_P1_y);
                 error += (Ex - L2_P1_x) * (Ex - L2_P1_x);
 
@@ -337,18 +338,18 @@ double calc(Constraint *cons, const int consLength) {
             break;
 
         case Constraint::PointOnCircle:
-            //see what the current radius to the point is
+            // see what the current radius to the point is
             rad1 = _hypot(C1_Center_x - P1_x, C1_Center_y - P1_y);
-            //Compare this radius to the radius of the circle, return the error squared
+            // Compare this radius to the radius of the circle, return the error squared
             temp = rad1 - C1_rad;
             error += temp * temp;
             break;
 
         case Constraint::PointOnArc:
-            //see what the current radius to the point is
+            // see what the current radius to the point is
             rad1 = _hypot(A1_Center_x - P1_x, A1_Center_y - P1_y);
             rad2 = _hypot(A1_Center_x - A1_Start_x, A1_Center_y - A1_Start_y);
-            //Compare this radius to the radius of the circle, return the error squared
+            // Compare this radius to the radius of the circle, return the error squared
             temp = rad1 - rad2;
             error += temp * temp;
             break;

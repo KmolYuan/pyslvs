@@ -19,7 +19,7 @@
 #define ValidSoltuionRough 1e-4
 #define Rough              0
 #define Fine               1
-//Note that the total number of iterations allowed is MaxIterations *xLength
+// Note that the total number of iterations allowed is MaxIterations *xLength
 #define MaxIterations      50
 
 ///////////////////////////////////////
@@ -50,7 +50,7 @@ struct Circle {
 struct Constraint {
 
     enum Types {
-        //Geometric Constraint types
+        // Geometric Constraint types
         PointOnPoint,
         PointToLine,
         PointOnLine,
@@ -92,12 +92,12 @@ struct Constraint {
         SymmetricArcs,
         LineInternalAngle,
         LineExternalAngle,
-        //Velocity Constraint types
+        // Velocity Constraint types
         CircularVelocity,
         JointJointVelocity,
         JointSliderVelocity,
         SliderSliderVelocity,
-        //Acceleration Constraint types
+        // Acceleration Constraint types
         CircularAcceleration,
         JointJointAcceleration,
         JointSliderAcceleration,
@@ -109,7 +109,7 @@ struct Constraint {
     Line *line1, *line2, *SymLine;
     Circle *circle1, *circle2;
     Arc *arc1, *arc2;
-    //radius, length, angle etc...
+    // radius, length, angle etc...
     double *parameter;
 };
 
@@ -117,7 +117,7 @@ struct Constraint {
 /// Constraint Functions (for safe access of mebers)
 ///////////////////////////////////////
 
-//Geometric Constrants
+// Geometric Constrants
 Constraint PointOnPointConstraint(Point *, Point *);
 Constraint P2PDistanceConstraint(Point *, Point *, double *);
 Constraint P2PDistanceVertConstraint(Point *, Point *, double *);

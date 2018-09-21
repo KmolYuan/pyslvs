@@ -11,7 +11,7 @@
 using namespace std;
 
 
-//Show coordinates.
+// Show coordinates.
 template<size_t N> inline void printpoints(Point (&points)[N]) {
     for(int i = 0; i < (int)N; i++)
         cout << "Point " << i << ": (" << *points[i].x << ", " << *points[i].y << ")" << endl;
@@ -19,7 +19,7 @@ template<size_t N> inline void printpoints(Point (&points)[N]) {
 
 
 int main(void) {
-    //Input a parameter list.
+    // Input a parameter list.
     double parameters[] = {
         0, 0,
         5, 0,
@@ -27,14 +27,14 @@ int main(void) {
         6, 5,
     };
     const int param_count = sizeof(parameters) / sizeof(*parameters);
-    //Make a list of pointers of parameters.
+    // Make a list of pointers of parameters.
     double **pparameters = new double *[param_count];
     for(int i = 0; i < param_count; i++)
         pparameters[i] = &parameters[i];
-    //Input a constant parameter list.
+    // Input a constant parameter list.
     double constants[] = {30, 10, 24};
 
-    //Create geometric objects and constraints with pointers.
+    // Create geometric objects and constraints with pointers.
     Point points[] = {
         {pparameters[0], pparameters[1]},
         {pparameters[2], pparameters[3]},
@@ -59,7 +59,7 @@ int main(void) {
 
     printpoints<point_count>(points);
 
-    //Solve
+    // Solve
     if (solve(pparameters, param_count, cons, cons_count, Rough) == Succsess)
         cout << "A good Solution was found." << endl;
     else
