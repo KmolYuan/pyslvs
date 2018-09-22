@@ -29,7 +29,7 @@ branches:
     - master
     - /^dev\d*[.]?\d*$/
 
-# For OSX
+# For OS X
 before_install:
   
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
@@ -42,7 +42,6 @@ before_install:
     yes | sudo port install py$PYTHON-pip;
     sudo port select --set python3 python$PYTHON;
     sudo port select --set pip pip$PYTHON;
-    export PATH=$PATH:/Users/travis/Library/Python/3.6/bin;
     fi
   
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
