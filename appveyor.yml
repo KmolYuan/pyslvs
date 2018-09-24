@@ -11,10 +11,6 @@ environment:
       MSYS_DIR: C:\msys64
       PYTHON_DIR: C:\Python36-x64
 
-    - MINGW_DIR: C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0
-      MSYS_DIR: C:\msys64
-      PYTHON_DIR: C:\Python37-x64
-
 branches:
   only:
     - master
@@ -57,6 +53,3 @@ build_script:
 
 test_script:
   - python test_pyslvs.py
-
-matrix:
-  fast_finish: true
