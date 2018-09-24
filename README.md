@@ -1,4 +1,5 @@
-[![Build Status](https://img.shields.io/travis/KmolYuan/pyslvs.svg?logo=travis)](https://travis-ci.org/KmolYuan/pyslvs)
+[![Build status](https://ci.appveyor.com/api/projects/status/6l1bh1197ncahd0q?svg=true)](https://ci.appveyor.com/project/KmolYuan/pyslvs)
+[![Build status](https://img.shields.io/travis/KmolYuan/pyslvs.svg?logo=travis)](https://travis-ci.org/KmolYuan/pyslvs)
 
 # Pyslvs Libraries
 
