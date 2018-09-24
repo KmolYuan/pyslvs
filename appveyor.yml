@@ -55,7 +55,8 @@ before_build:
 build_script:
   - mingw32-make SHELL=cmd
 
-test: off
+test_script:
+  - python test_pyslvs.py
 
 matrix:
   fast_finish: true
