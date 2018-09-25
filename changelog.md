@@ -8,6 +8,7 @@ Version 18.09
 + Add joint types of "VPoint" class.
 + Using "RuntimeError" instead of normal exception.
 + Change module name of "atlas".
++ Add support for slider variable input.
 
 Version 18.08
 ===

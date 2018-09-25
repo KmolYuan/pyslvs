@@ -160,7 +160,7 @@ example_list = {
         "J[R, color[Green], P[50.0, 53.0], L[link_2]], "
         "]", ((0, 0),)),
     
-    "Stephenson graph3": (
+    "Stephenson I": (
         "M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
         "J[R, color[Green], P[29.4258, 46.6507], L[link_1, link_5]], "
@@ -210,7 +210,7 @@ example_list = {
         "J[R, color[Green], P[221.6968, -20.8773], L[link_10]], "
         "]", ((0, 2),)),
     
-    "Watt graph3": (
+    "Watt I": (
         "M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, link_1]], "
         "J[R, color[Green], P[-18.6154, 41.3846], L[link_1, link_2]], "

@@ -490,7 +490,8 @@ cpdef list expr_solving(
         data_dict[f'a{i}'] = radians(a)
     
     # Solve
-    expr_parser(exprs, data_dict)
+    if exprs:
+        expr_parser(exprs, data_dict)
     
     cdef dict p_data_dict = {}
     cdef bool has_not_solved = False
@@ -505,19 +506,15 @@ cpdef list expr_solving(
     
     # Calling Sketch Solve kernel and try to get the result.
     cdef list solved_bfgs = []
-    if exprs and has_not_solved:
+    if has_not_solved:
         try:
             solved_bfgs = vpoint_solving(vpoints, [], p_data_dict)
         except RuntimeError as e:
             raise RuntimeError("result contains failure: Sketch Solve") from e
     
     """Format:
-    
-    + R joint
-        [p0]: (p0_x, p0_y)
-        [p1]: (p1_x, p1_y)
-    + P or RP joint
-        [p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))
+    + R joint: [[p0]: (p0_x, p0_y), [p1]: (p1_x, p1_y)]
+    + P or RP joint: [[p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))]
     """
     cdef list solved_points = []
     for i in range(len(vpoints)):

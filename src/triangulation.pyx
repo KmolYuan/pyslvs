@@ -15,7 +15,7 @@ from pmks cimport VPoint
 from cpython cimport bool
 
 
-cdef inline bool isAllLock(dict status, dict same = {}):
+cdef inline bool is_all_lock(dict status, dict same = {}):
     """Test is all status done."""
     cdef int node
     cdef bool n_status
@@ -50,7 +50,7 @@ def _get_reliable_friend(
                 yield friend
 
 
-def _get_notbase_friend(
+def _get_not_base_friend(
     node: int,
     vpoints: Sequence[VPoint],
     vlinks: dict,
@@ -88,7 +88,7 @@ cdef inline int get_input_base(int node, object inputs):
     return -1
 
 
-cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = {}):
+cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None):
     """Auto configuration algorithm.
     
     For VPoint list.
@@ -98,13 +98,20 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
     
     vpoints will make a copy that we don't want to modified itself.
     """
+    if inputs is None:
+        inputs = []
+    if status is None:
+        status = {}
+    
     if not vpoints_:
+        return []
+    if not inputs:
         return []
     
     cdef list vpoints = list(vpoints_)
     
     # First, we create a "VLinks" that can help us to
-    #    find a releationship just like adjacency matrix.
+    # find a relationship just like adjacency matrix.
     cdef int node
     cdef str link
     cdef VPoint vpoint
@@ -187,7 +194,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
     cdef bool reverse
     # Friend iterator.
     cdef object fi
-    while not isAllLock(status):
+    while not is_all_lock(status):
         
         if node not in status:
             node = 0
@@ -250,7 +257,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
         
         elif type_num == 1:
             """Need to solve P joint itself here. (only grounded)"""
-            fi = _get_notbase_friend(node, vpoints, vlinks, status)
+            fi = _get_not_base_friend(node, vpoints, vlinks, status)
             try:
                 if vpoints[node].pin_grounded():
                     raise StopIteration
@@ -304,7 +311,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs = [], dict status = 
                     raise StopIteration
                 if vpoints[node].has_offset():
                     raise StopIteration
-                friend_a = next(_get_notbase_friend(node, vpoints, vlinks, status))
+                friend_a = next(_get_not_base_friend(node, vpoints, vlinks, status))
                 friend_b = next(fi)
                 # Slot is not grounded.
                 if not vpoints[node].grounded():
