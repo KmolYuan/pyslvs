@@ -31,9 +31,9 @@ cdef class Graph:
     
     """NetworkX-like graph class."""
     
+    cdef public tuple edges
     cdef tuple nodes
     cdef dict adj
-    cdef public tuple edges
     
     def __cinit__(self, edges: Sequence[Tuple[int, int]]):
         # edges
@@ -94,9 +94,9 @@ cdef class Graph:
             index += 1
         return len(nodes) == len(self.nodes)
     
-    cpdef bool is_isomorphic(self, Graph H):
-        cdef GraphMatcher GM_GH = GraphMatcher(self, H)
-        return GM_GH.is_isomorphic()
+    cpdef bool is_isomorphic(self, Graph graph):
+        cdef GraphMatcher gm_gh = GraphMatcher(self, graph)
+        return gm_gh.is_isomorphic()
     
     cpdef list links(self):
         return sorted([len(neighbors) for neighbors in self.adj.values()])
@@ -111,6 +111,7 @@ cdef class Graph:
 cdef class GraphMatcher:
     
     """GraphMatcher and GMState class from NetworkX.
+    
     Copyright (C) 2007-2009 by the NetworkX maintainers
     All rights reserved.
     BSD license.
@@ -196,7 +197,7 @@ cdef class GraphMatcher:
     cpdef bool is_isomorphic(self):
         # Let's do two very quick checks!
         # QUESTION: Should we call faster_graph_could_be_isomorphic(G1,G2)?
-        # For now, I just copy the code.
+        # For now, graph3 just copy the code.
         
         # Check global properties
         if len(self.G1.nodes) != len(self.G2.nodes):
@@ -405,13 +406,11 @@ cdef class GMState:
                     del vector[node]
 
 
-cdef inline bool verify(Graph G, list answer):
-    if not G.is_connected():
-        # is not connected
-        return True
-    cdef Graph H
-    for H in answer:
-        if G.is_isomorphic(H):
+cdef inline bool is_isomorphic(Graph graph1, list answer):
+    """Return True if the graph is isomorphic with list."""
+    cdef Graph graph2
+    for i, graph2 in enumerate(answer):
+        if graph1.is_isomorphic(graph2):
             return True
     return False
 
@@ -421,22 +420,20 @@ cdef inline list connection_get(int i, tuple connection):
     return [c for c in connection if (i in c)]
 
 
-cpdef topo(
+cpdef tuple topo(
     object link_num,
     bool degenerate = True,
-    object setjobFunc = None,
-    object stopFunc = None
+    object job_func = None,
+    object stop_func = None
 ):
     """Linkage mechanism topological function.
     
     link_num = [L2, L3, L4, ...]
-    links = [
-        [number_code]: joint_number,
-        ...
-    ]
+    links = [[number_code]: joint_number, ...]
     """
-    
+    # Initial time.
     cdef double t0 = time()
+    
     cdef int joint_count = sum(link_num)
     cdef ndarray links = np_zeros((joint_count,), dtype=np_int32)
     cdef int i, j, t, name, link_joint_count
@@ -445,52 +442,67 @@ cpdef topo(
         link_joint_count = 0
         for j, t in enumerate(link_num):
             if i < t:
-                link_joint_count = j+2
+                link_joint_count = j + 2
                 break
             i -= t
         links[name] = link_joint_count
     
     # connection = [(1, 2), (1, 3), ..., (2, 3), (2, 4), ...]
     cdef tuple connection = tuple(combinations(range(joint_count), 2))
-    # ALL results.
+    
+    # Find ALL results.
     cdef list edges_combinations = []
+    cdef list matched = []
     cdef int link, count, n
-    cdef list match, matched
+    cdef list match
     cdef tuple m
-    cdef Graph G, H
-    cdef GraphMatcher GM_GH
+    cdef Graph graph1, graph2, graph3
     for link, count in enumerate(links):
         # Other of joints that the link connect with.
-        match = [Graph(m) for m in combinations(connection_get(link, connection), count)]
+        match = [Graph(m) for m in combinations(
+            connection_get(link, connection),
+            count
+        )]
+        
         if not edges_combinations:
+            print([graph1.edges for graph1 in match])
             edges_combinations = match
             continue
-        if setjobFunc:
-            setjobFunc(
+        
+        if job_func:
+            job_func(
                 f"Match link # {link} / {len(links) - 1}",
-                len(edges_combinations)*len(match)
+                len(edges_combinations) * len(match)
             )
-        matched = []
-        for G, H in product(edges_combinations, match):
-            if stopFunc and stopFunc():
-                return None, time()-t0
-            G = G.compose(H)
+        
+        matched.clear()
+        for graph1, graph2 in product(edges_combinations, match):
+            if stop_func and stop_func():
+                break
+            graph3 = graph1.compose(graph2)
             # Out of limit.
-            if G.out_of_limit(links):
+            if graph3.out_of_limit(links):
                 continue
             # Has triangles.
-            if degenerate and G.has_triangles():
+            if degenerate and graph3.has_triangles():
                 continue
-            matched.append(G)
-        edges_combinations = matched
+            # TODO: Check isomorphic here?
+            #if is_isomorphic(graph3, matched):
+            #    continue
+            matched.append(graph3)
+        edges_combinations.clear()
+        edges_combinations.extend(matched)
     
-    if setjobFunc:
-        setjobFunc("Verify the graphs...", len(edges_combinations))
+    if job_func:
+        job_func("Verify the graphs...", len(edges_combinations))
+    
     cdef list answer = []
-    for G in edges_combinations:
-        if stopFunc and stopFunc():
-            return answer, time()-t0
-        if verify(G, answer):
+    for graph1 in edges_combinations:
+        if stop_func and stop_func():
+            break
+        if not graph1.is_connected():
             continue
-        answer.append(G)
-    return answer, time()-t0
+        if is_isomorphic(graph1, answer):
+            continue
+        answer.append(graph1)
+    return answer, (time() - t0)
