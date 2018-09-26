@@ -119,7 +119,7 @@ class CoreTest(TestCase):
         I = Graph([(0, 1), (0, 2), (1, 4), (2, 5), (3, 4), (3, 5), (4, 5)])
         self.assertTrue(G.is_isomorphic(H))
         self.assertFalse(G.is_isomorphic(I))
-        answer, time = topo([4, 2], degenerate=True)
+        answer, time = topo([4, 2])
         self.assertEqual(len(answer), 2)
     
     def test_solving(self):
