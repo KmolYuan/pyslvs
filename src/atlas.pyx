@@ -62,10 +62,10 @@ cdef class Graph:
                 neighbors.append(l1)
         return tuple(neighbors)
     
-    cpdef Graph compose(self, Graph graph):
+    cdef Graph compose(self, Graph graph):
         return Graph(set(self.edges) | set(graph.edges))
     
-    cpdef bool out_of_limit(self, ndarray limit):
+    cdef bool out_of_limit(self, ndarray limit):
         cdef int n
         for n in self.adj:
             if len(self.adj[n]) > limit[n]:
@@ -98,10 +98,10 @@ cdef class Graph:
         cdef GraphMatcher gm_gh = GraphMatcher(self, graph)
         return gm_gh.is_isomorphic()
     
-    cpdef list links(self):
+    cdef list links(self):
         return sorted([len(neighbors) for neighbors in self.adj.values()])
     
-    cpdef int number_of_edges(self, int u, int v):
+    cdef int number_of_edges(self, int u, int v):
         if v in self.adj[u]:
             return 1
         return 0
@@ -194,7 +194,7 @@ cdef class GraphMatcher:
         # For all other cases, we don't have any candidate pairs.
     
     # Returns True if g1 and g2 are isomorphic graphs.
-    cpdef bool is_isomorphic(self):
+    cdef bool is_isomorphic(self):
         # Let's do two very quick checks!
         # QUESTION: Should we call faster_graph_could_be_isomorphic(g1,g2)?
         # For now, graph3 just copy the code.
@@ -388,7 +388,7 @@ cdef class GMState:
                 if node not in gm.inout_2:
                     gm.inout_2[node] = self.depth
     
-    cpdef void restore(self):
+    cdef void restore(self):
         """Deletes the GMState object and restores the class variables."""
         # First we remove the node that was added from the core vectors.
         # Watch out! g1_node == 0 should evaluate to True.
@@ -469,6 +469,7 @@ cpdef tuple topo(
             count
         )]
         
+        # First population.
         if not edges_combinations:
             edges_combinations = match
             continue
@@ -481,26 +482,35 @@ cpdef tuple topo(
                 progress_value
             )
         
+        # Matching.
         matched.clear()
         for graph1, graph2 in product(edges_combinations, match):
             if stop_func and stop_func():
                 break
+            
             graph3 = graph1.compose(graph2)
+            
             # Out of limit.
             if graph3.out_of_limit(links):
                 continue
+            
             # Has triangles.
             if degenerate and graph3.has_triangles():
                 continue
+            
             # TODO: Check isomorphic here?
             #if is_isomorphic(graph3, matched):
             #    continue
+            
             matched.append(graph3)
+        
+        # Collecting.
         edges_combinations.clear()
         edges_combinations.extend(matched)
     
     if job_func:
-        job_func("Verify the graphs...", len(edges_combinations))
+        progress_value = len(edges_combinations)
+        job_func(f"Verify the graphs ... ({progress_value})", progress_value)
     
     cdef list answer = []
     for graph1 in edges_combinations:
@@ -511,4 +521,6 @@ cpdef tuple topo(
         if is_isomorphic(graph1, answer):
             continue
         answer.append(graph1)
+    
+    # Return graph list and time.
     return answer, (time() - t0)
