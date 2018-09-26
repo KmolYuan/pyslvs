@@ -453,7 +453,7 @@ cpdef tuple topo(
     # Find ALL results.
     cdef list edges_combinations = []
     cdef list matched = []
-    cdef int link, count, n
+    cdef int link, count, n, progress_value
     cdef list match
     cdef tuple m
     cdef Graph graph1, graph2, graph3
@@ -465,14 +465,15 @@ cpdef tuple topo(
         )]
         
         if not edges_combinations:
-            print([graph1.edges for graph1 in match])
             edges_combinations = match
             continue
         
         if job_func:
+            progress_value = len(edges_combinations) * len(match)
             job_func(
-                f"Match link # {link} / {len(links) - 1}",
-                len(edges_combinations) * len(match)
+                f"Match link # {link} / {len(links) - 1}\n"
+                f"Possibilities: {progress_value}",
+                progress_value
             )
         
         matched.clear()
