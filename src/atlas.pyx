@@ -415,7 +415,7 @@ cdef inline bool is_isomorphic(Graph graph1, list answer):
     return False
 
 
-cdef inline list connection_get(int i, tuple connection):
+cdef inline list get_bind(int i, tuple connection):
     cdef tuple c
     return [c for c in connection if (i in c)]
 
@@ -450,28 +450,27 @@ cpdef tuple topo(
         else:
             raise RuntimeError("AAA")
     
-    # connections = [(1, 2), (1, 3), ..., (2, 3), (2, 4), ...]
-    cdef tuple connections = tuple(combinations(range(joint_count), 2))
+    # binds = [(0, 1), (0, 2), ..., (1, 2), (1, 3), ...]
+    cdef tuple binds = tuple(combinations(range(joint_count), 2))
     
     # Result list.
     cdef list edges_combinations = []
+    cdef list match = []
     cdef list matched = []
     
     # Find ALL results.
     cdef int link, count, progress_value
-    cdef list match
     cdef tuple m
     cdef Graph graph1, graph2, graph3
     for link, count in enumerate(links):
         # Other of joints that the link connect with.
-        match = [Graph(m) for m in combinations(
-            connection_get(link, connections),
-            count
-        )]
+        match.clear()
+        for m in combinations(get_bind(link, binds), count):
+            match.append(Graph(m))
         
         # First population.
         if not edges_combinations:
-            edges_combinations = match
+            edges_combinations.extend(match)
             continue
         
         if job_func:
