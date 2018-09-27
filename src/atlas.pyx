@@ -142,9 +142,9 @@ cdef class GraphMatcher:
         
         # Initialize state
         self.initialize()
-    
-    # Re-initializes the state of the algorithm.
+
     cdef inline void initialize(self):
+        """Re-initializes the state of the algorithm."""
         # core_1[n] contains the index of the node paired with n, which is m,
         #            provided n is in the mapping.
         # core_2[m] contains the index of the node paired with m, which is n,
@@ -166,8 +166,7 @@ cdef class GraphMatcher:
         
         # Provide a convenient way to access the isomorphism mapping.
         self.mapping = self.core_1.copy()
-    
-    # Generator candidate_pairs_iter()
+
     def candidate_pairs_iter(self) -> Iterator[Tuple[int, int]]:
         """Iterator over candidate pairs of nodes in g1 and g2."""
         cdef int node
@@ -192,9 +191,9 @@ cdef class GraphMatcher:
                 if node not in self.core_1:
                     yield node, min(self.g2_nodes - set(self.core_2))
         # For all other cases, we don't have any candidate pairs.
-    
-    # Returns True if g1 and g2 are isomorphic graphs.
+
     cdef bool is_isomorphic(self):
+        """Returns True if g1 and g2 are isomorphic graphs."""
         # Let's do two very quick checks!
         # QUESTION: Should we call faster_graph_could_be_isomorphic(g1,g2)?
         # For now, graph3 just copy the code.
@@ -211,22 +210,19 @@ cdef class GraphMatcher:
             return True
         except StopIteration:
             return False
-    
-    # Generator isomorphisms_iter()
-    # Generator over isomorphisms between g1 and g2.
+
     def isomorphisms_iter(self) -> Iterator[Dict[int, Tuple[int]]]:
-        # Declare that we are looking for a graph-graph isomorphism.
+        """Generator over isomorphisms between g1 and g2.
+
+        Declare that we are looking for a graph-graph isomorphism.
+        """
         self.initialize()
-        cdef dict mapping
-        for mapping in self.match():
-            yield mapping
-    
-    # Generator match()
-    # Extends the isomorphism mapping.
+        yield from self.match()
+
     def match(self) -> Iterator[Dict[int, Tuple[int]]]:
+        """Extends the isomorphism mapping."""
         cdef int g1_node, g2_node
         cdef GMState new_state
-        cdef dict mapping
         if len(self.core_1) == len(self.g2.nodes):
             # Save the final mapping, otherwise garbage collection deletes it.
             self.mapping = self.core_1.copy()
@@ -237,27 +233,30 @@ cdef class GraphMatcher:
                 if self.syntactic_feasibility(g1_node, g2_node):
                     # Recursive call, adding the feasible state.
                     new_state = self.state.__class__(self, g1_node, g2_node)
-                    for mapping in self.match():
-                        yield mapping
+
+                    yield from self.match()
+
                     # restore data structures
                     new_state.restore()
-    
-    # Returns True if adding (g1_node, g2_node) is syntactically feasible.
+
     cdef inline bool syntactic_feasibility(self, int g1_node, int g2_node):
-        # The VF2 algorithm was designed to work with graphs having, at most,
-        # one edge connecting any two nodes.  This is not the case when
-        # dealing with an MultiGraphs.
-        # 
-        # Basically, when we test the look-ahead rules R_neighbor, we will
-        # make sure that the number of edges are checked. We also add
-        # a R_self check to verify that the number of self loops is acceptable.
-        # 
-        # Users might be comparing Graph instances with MultiGraph instances.
-        # So the generic GraphMatcher class must work with MultiGraphs.
-        # Care must be taken since the value in the innermost dictionary is a
-        # singlet for Graph instances.  For MultiGraphs, the value in the
-        # innermost dictionary is a list.
+        """Returns True if adding (g1_node, g2_node) is syntactically feasible.
         
+        The VF2 algorithm was designed to work with graphs having, at most,
+        one edge connecting any two nodes.  This is not the case when
+        dealing with an MultiGraphs.
+        
+        Basically, when we test the look-ahead rules R_neighbor, we will
+        make sure that the number of edges are checked. We also add
+        a R_self check to verify that the number of self loops is acceptable.
+        
+        Users might be comparing Graph instances with MultiGraph instances.
+        So the generic GraphMatcher class must work with MultiGraphs.
+        Care must be taken since the value in the innermost dictionary is a
+        singlet for Graph instances.  For MultiGraphs, the value in the
+        innermost dictionary is a list.
+        """
+
         # ## Test at each step to get a return value as soon as possible.
         
         # ## Look ahead 0
@@ -275,19 +274,25 @@ cdef class GraphMatcher:
         cdef int neighbor
         for neighbor in self.g1.adj[g1_node]:
             if neighbor in self.core_1:
-                if not (self.core_1[neighbor] in self.g2.adj[g2_node]):
+                if self.core_1[neighbor] not in self.g2.adj[g2_node]:
                     return False
-                elif self.g1.number_of_edges(neighbor, g1_node) != self.g2.number_of_edges(self.core_1[neighbor], g2_node):
+                elif (
+                    self.g1.number_of_edges(neighbor, g1_node) !=
+                    self.g2.number_of_edges(self.core_1[neighbor], g2_node)
+                ):
                     return False
         for neighbor in self.g2.adj[g2_node]:
             if neighbor in self.core_2:
-                if not (self.core_2[neighbor] in self.g1.adj[g1_node]):
+                if self.core_2[neighbor] not in self.g1.adj[g1_node]:
                     return False
-                elif self.g1.number_of_edges(self.core_2[neighbor], g1_node) != self.g2.number_of_edges(neighbor, g2_node):
+                elif (
+                    self.g1.number_of_edges(self.core_2[neighbor], g1_node) !=
+                    self.g2.number_of_edges(neighbor, g2_node)
+                ):
                     return False
         
         # ## Look ahead 1
-        # R_terminout
+        # R_term_inout
         # The number of neighbors of n that are in T_1^{inout} is equal to the
         # number of neighbors of m that are in T_2^{inout}, and vice versa.
         cdef int num1 = 0
@@ -392,7 +397,7 @@ cdef class GMState:
         """Deletes the GMState object and restores the class variables."""
         # First we remove the node that was added from the core vectors.
         # Watch out! g1_node == 0 should evaluate to True.
-        if self.g1_node!=-1 and self.g2_node!=-1:
+        if self.g1_node != -1 and self.g2_node != -1:
             del self.gm.core_1[self.g1_node]
             del self.gm.core_2[self.g2_node]
         
