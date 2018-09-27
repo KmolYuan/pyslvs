@@ -448,7 +448,7 @@ cpdef tuple topo(
                 break
             i -= t
         else:
-            raise RuntimeError("AAA")
+            raise RuntimeError("Invalid number")
     
     # binds = [(0, 1), (0, 2), ..., (1, 2), (1, 3), ...]
     cdef tuple binds = tuple(combinations(range(joint_count), 2))
@@ -477,7 +477,8 @@ cpdef tuple topo(
             progress_value = len(edges_combinations) * len(match)
             job_func(
                 f"Match link # {link} / {len(links) - 1}\n"
-                f"Founded: {len(edges_combinations)}\n"
+                f"Connections: {count}\n\n"
+                f"Feasible: {len(edges_combinations)}\n"
                 f"Matching: {len(match)}\n"
                 f"Possibilities: {progress_value}",
                 progress_value
@@ -499,10 +500,6 @@ cpdef tuple topo(
             if degenerate and graph3.has_triangles():
                 continue
             
-            # TODO: Check isomorphic here?
-            #if is_isomorphic(graph3, matched):
-            #    continue
-            
             matched.append(graph3)
         
         # Collecting.
@@ -511,7 +508,11 @@ cpdef tuple topo(
     
     if job_func:
         progress_value = len(edges_combinations)
-        job_func(f"Verify the graphs ... ({progress_value})", progress_value)
+        job_func(
+            f"Verify the graphs ...\n"
+            f"Count: {progress_value}",
+            progress_value
+        )
     
     cdef list answer = []
     for graph1 in edges_combinations:
