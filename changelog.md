@@ -9,6 +9,7 @@ Version 18.09
 + Using "RuntimeError" instead of normal exception.
 + Change module name of "atlas".
 + Add support for slider variable input.
++ Add more information in atlas algorithm.
 
 Version 18.08
 ===

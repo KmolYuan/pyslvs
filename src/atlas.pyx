@@ -477,6 +477,8 @@ cpdef tuple topo(
             progress_value = len(edges_combinations) * len(match)
             job_func(
                 f"Match link # {link} / {len(links) - 1}\n"
+                f"Founded: {len(edges_combinations)}\n"
+                f"Matching: {len(match)}\n"
                 f"Possibilities: {progress_value}",
                 progress_value
             )
