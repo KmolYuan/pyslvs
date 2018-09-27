@@ -10,6 +10,7 @@ Version 18.09
 + Change module name of "atlas".
 + Add support for slider variable input.
 + Add more information in atlas algorithm.
++ Change atlas algorithm "cancel" behavior to "skip".
 
 Version 18.08
 ===
