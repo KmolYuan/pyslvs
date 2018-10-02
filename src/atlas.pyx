@@ -12,7 +12,6 @@ cimport cython
 from typing import (
     Tuple,
     Iterator,
-    Callable,
 )
 from itertools import combinations, product
 from time import time
@@ -44,30 +43,6 @@ def _graphs(c: Iterator[Tuple[Tuple[int, int], ...]]) -> Iterator[Graph]:
     cdef tuple m
     for m in c:
         yield Graph(m)
-
-
-def _matching(
-    p: Iterator[Tuple[Graph, Graph]],
-    links: ndarray,
-    degenerate: bool,
-    stop_func: Callable[[], bool]
-) -> Graph:
-    """Matching function."""
-    cdef Graph graph1, graph2, graph3
-    for graph1, graph2 in p:
-        if stop_func and stop_func():
-            break
-        graph3 = graph1.compose(graph2)
-        
-        # Out of limit.
-        if graph3.out_of_limit(links):
-            continue
-        
-        # Has triangles.
-        if degenerate and graph3.has_triangles():
-            continue
-        
-        yield graph3
 
 
 cdef inline int factorial(int x):
@@ -105,9 +80,28 @@ cpdef tuple topo(
     # Number of all joints.
     cdef int joint_count = sum(link_num)
     
+    # Number of multiple link joints.
+    cdef int mj = 0
+    cdef int i
+    for i in range(1, len(link_num)):
+        mj += (i + 2) * link_num[i]
+    
+    # Contracted link.
+    cdef int cj = link_num[0]
+    cdef int s
+    cdef tuple m
+    for m in product(range(cj + 1), repeat=cj):
+        s = 0
+        for i in range(cj):
+            s += (i + 1) * m[i]
+        if sum(m) * 2 >= mj:
+            continue
+        if s == cj:
+            print(m)
+    
     # Number of joins in each links.
     cdef ndarray links = np_zeros((joint_count,), dtype=np_int32)
-    cdef int i, j, t, name
+    cdef int j, t, name
     for i in range(joint_count):
         name = i
         for j, t in enumerate(link_num):
@@ -130,7 +124,7 @@ cpdef tuple topo(
     
     # Find ALL results.
     cdef int link, count, progress_value
-    cdef Graph graph1
+    cdef Graph graph1, graph2, graph3
     for link, count in enumerate(links):
         # Other of joints that the link connect with.
         current_binds = get_bind(link, binds)
@@ -154,14 +148,22 @@ cpdef tuple topo(
             )
         
         # Collecting.
-        matched = _matching(
-            product(edges_combinations, match),
-            links,
-            degenerate,
-            stop_func
-        )
+        matched = product(edges_combinations, match)
         edges_combinations.clear()
-        edges_combinations.extend(matched)
+        for graph1, graph2 in matched:
+            if stop_func and stop_func():
+                break
+            graph3 = graph1.compose(graph2)
+            
+            # Out of limit.
+            if graph3.out_of_limit(links):
+                continue
+            
+            # Has triangles.
+            if degenerate and graph3.has_triangles():
+                continue
+            
+            edges_combinations.append(graph3)
     
     if job_func:
         progress_value = len(edges_combinations)
