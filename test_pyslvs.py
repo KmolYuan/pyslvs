@@ -29,7 +29,8 @@ from rga import Genetic
 from firefly import Firefly
 from de import DiffertialEvolution
 from number import number_synthesis
-from atlas import topo, Graph
+from atlas import topo
+from graph import Graph
 from triangulation import vpoints_configure
 from _parser import parse_vpoints
 from examples import example_list

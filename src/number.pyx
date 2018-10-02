@@ -9,7 +9,7 @@
 # __email__ = "pyslvs@gmail.com"
 
 
-cdef list product(object pool, int repeat=1):
+cdef list product(object pool, int repeat = 1):
     """Product function as same as iteration tools."""
     cdef list x, tmp_list
     cdef int i, y

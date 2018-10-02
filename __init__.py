@@ -50,7 +50,8 @@ from .rga import Genetic
 from .firefly import Firefly
 from .de import DiffertialEvolution
 from .number import number_synthesis
-from .atlas import topo, Graph
+from .graph import Graph
+from .atlas import topo
 from .triangulation import vpoints_configure
 from ._parser import (
     colorNames,
