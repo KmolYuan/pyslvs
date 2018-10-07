@@ -11,8 +11,8 @@
 
 cdef list product(object pool, int repeat = 1):
     """Product function as same as iteration tools."""
-    cdef list x, tmp_list
     cdef int i, y
+    cdef list x, tmp_list
     cdef list result = [[]]
     for i in range(repeat):
         tmp_list = []
@@ -23,7 +23,7 @@ cdef list product(object pool, int repeat = 1):
     return result
 
 
-cdef inline int mmax(int nl, int nj):
+cdef inline int m_max(int nl, int nj):
     """Find max number of joint on each link.
     
     + nl <= nj and nj <= (2 * nl - 3)
@@ -50,12 +50,12 @@ cdef inline int sum_factors(list factors):
 
 cpdef tuple number_synthesis(int nl, int nj):
     cdef list result = []
-    cdef int m_max = mmax(nl, nj)
-    if m_max == -1:
+    cdef int m_max_v = m_max(nl, nj)
+    if m_max_v == -1:
         raise Exception("incorrect mechanism.")
     cdef int i, p
     cdef list symbols
-    for symbols in product(range(nl + 1), m_max - 2):
+    for symbols in product(range(nl + 1), m_max_v - 2):
         nl_m_max = nl - sum(symbols)
         if nl_m_max < 0:
             continue
