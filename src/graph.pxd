@@ -13,13 +13,13 @@ from numpy cimport ndarray
 
 
 cdef class Graph:
-    
+
     """NetworkX-like graph class."""
-    
+
     cdef public tuple edges
     cdef tuple nodes
     cdef dict adj
-    
+
     cdef inline tuple neighbors(self, int n)
     cdef Graph compose(self, Graph graph)
     cdef bool out_of_limit(self, ndarray limit)

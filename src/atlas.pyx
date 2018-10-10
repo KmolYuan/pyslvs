@@ -76,16 +76,16 @@ cpdef tuple topo(
     """
     # Initial time.
     cdef double t0 = time()
-    
+
     # Number of all joints.
     cdef int joint_count = sum(link_num)
-    
+
     # Number of multiple link joints.
     cdef int mj = 0
     cdef int i
     for i in range(1, len(link_num)):
         mj += (i + 2) * link_num[i]
-    
+
     # Contracted link.
     cdef int cj = link_num[0]
     cdef int s
@@ -98,7 +98,7 @@ cpdef tuple topo(
             continue
         if s == cj:
             print(m)
-    
+
     # Number of joins in each links.
     cdef ndarray links = np_zeros((joint_count,), dtype=np_int32)
     cdef int j, t, name
@@ -111,17 +111,17 @@ cpdef tuple topo(
             i -= t
         else:
             raise RuntimeError("Invalid number")
-    
+
     # binds = [(0, 1), (0, 2), ..., (1, 2), (1, 3), ...]
     cdef tuple binds = tuple(combinations(range(joint_count), 2))
-    
+
     # Result list.
     cdef list edges_combinations = []
     # Iterator.
     cdef object match, matched
     cdef list current_binds
     cdef int match_count
-    
+
     # Find ALL results.
     cdef int link, count, progress_value
     cdef Graph graph1, graph2, graph3
@@ -130,12 +130,12 @@ cpdef tuple topo(
         current_binds = get_bind(link, binds)
         match = _graphs(combinations(current_binds, count))
         match_count = c_count(len(current_binds), count)
-        
+
         # First population.
         if not edges_combinations:
             edges_combinations.extend(match)
             continue
-        
+
         if job_func:
             progress_value = len(edges_combinations) * match_count
             job_func(
@@ -146,7 +146,7 @@ cpdef tuple topo(
                 f"Possibilities: {progress_value}",
                 progress_value
             )
-        
+
         # Collecting.
         matched = product(edges_combinations, match)
         edges_combinations.clear()
@@ -154,17 +154,17 @@ cpdef tuple topo(
             if stop_func and stop_func():
                 break
             graph3 = graph1.compose(graph2)
-            
+
             # Out of limit.
             if graph3.out_of_limit(links):
                 continue
-            
+
             # Has triangles.
             if degenerate and graph3.has_triangles():
                 continue
-            
+
             edges_combinations.append(graph3)
-    
+
     if job_func:
         progress_value = len(edges_combinations)
         job_func(
@@ -172,7 +172,7 @@ cpdef tuple topo(
             f"Count: {progress_value}",
             progress_value
         )
-    
+
     cdef list answer = []
     for graph1 in edges_combinations:
         if stop_func and stop_func():
@@ -182,6 +182,6 @@ cpdef tuple topo(
         if is_isomorphic(graph1, answer):
             continue
         answer.append(graph1)
-    
+
     # Return graph list and time.
     return answer, (time() - t0)

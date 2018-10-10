@@ -70,14 +70,14 @@ cpdef list vpoint_solving(
         inputs = []
     if data_dict is None:
         data_dict = {}
-    
+
     # Sort pairs in data_dict.
     cdef object k
     for k in data_dict:
         if type(k) == tuple:
             data_dict[sort_pair(k)] = data_dict.pop(k)
     cdef dict vlinks = {}
-    
+
     # Pre-count number of parameters.
     cdef int params_count = 0
     cdef int constants_count = 0
@@ -85,7 +85,7 @@ cpdef list vpoint_solving(
     cdef int slider_rp_count = 0
     # sliders = {p_num: base_num}
     cdef map[int, int] sliders
-    
+
     cdef int a = 0
     cdef int b = 0
     cdef int i
@@ -119,11 +119,11 @@ cpdef list vpoint_solving(
                 slider_p_count += 1
             else:
                 slider_rp_count += 1
-    
+
     # Avoid no parameters.
     if not params_count:
         return []
-    
+
     cdef double *parameters = <double *>malloc(params_count * sizeof(double))
     cdef double **pparameters = <double **>malloc(params_count * sizeof(double *))
     cdef double *constants = <double *>malloc(constants_count * sizeof(double))
@@ -139,7 +139,7 @@ cpdef list vpoint_solving(
         # Base point and slot point to determine a slot line.
         slider_bases = <Point *>malloc(slider_count * sizeof(Point))
         slider_slots = <Point *>malloc(slider_count * sizeof(Point))
-    
+
     # Create parameters and link data.
     slider_count = 0
     a = 0
@@ -230,7 +230,7 @@ cpdef list vpoint_solving(
                 pparameters[a], pparameters[a + 1] = (parameters + a), (parameters + a + 1)
                 points[i] = [pparameters[a], pparameters[a + 1]]
                 a += 2
-    
+
     # Pre-count number of distance constraints.
     cdef int cons_count = 0
     cdef int c, d
@@ -247,7 +247,7 @@ cpdef list vpoint_solving(
                 continue
             cons_count += 2
     cdef double *distances = <double *>malloc(cons_count * sizeof(double))
-    
+
     # Pre-count number of slider constraints.
     c = 0
     d = 0
@@ -284,7 +284,7 @@ cpdef list vpoint_solving(
         cons_angles = <double *>malloc(d * sizeof(double))
     if slider_offset_count:
         slider_offset = <double *>malloc(slider_offset_count * sizeof(double))
-    
+
     # Pre-count number of angle constraints.
     cdef int input_count = 0
     cdef double angle
@@ -292,17 +292,17 @@ cpdef list vpoint_solving(
         if b == d:
             continue
         input_count += 1
-    
+
     cdef double *angles = NULL
     cdef Line *lines = NULL
     if input_count:
         angles = <double *>malloc(input_count * sizeof(double))
         lines = <Line *>malloc(input_count * sizeof(Line))
         cons_count += input_count
-    
+
     # Pre-count number of constraints.
     cdef Constraint *cons = <Constraint *>malloc(cons_count * sizeof(Constraint))
-    
+
     # Create distance constraints of each link.
     i = 0
     cdef Point *p1
@@ -351,7 +351,7 @@ cpdef list vpoint_solving(
                     p2 = points + d
                 cons[i] = P2PDistanceConstraint(p1, p2, distances + i)
                 i += 1
-    
+
     # Add slider constraints.
     # i: Constraint number.
     # c: Slider line number.
@@ -451,7 +451,7 @@ cpdef list vpoint_solving(
                 d += 1
                 c += 1
                 i += 1
-    
+
     # Add angle constraints for input angles.
     # c: Input data count.
     c = 0
@@ -463,11 +463,11 @@ cpdef list vpoint_solving(
         cons[i] = LineInternalAngleConstraint(lines + c, angles + c)
         i += 1
         c += 1
-    
+
     # Solve
     if solve(pparameters, params_count, cons, cons_count, Rough) != Succsess:
         raise RuntimeError("No valid Solutions were found from this start point.")
-    
+
     """solved_points: List[
         # R joint
         [p1]: (p1_x, p1_y)

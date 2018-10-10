@@ -20,9 +20,9 @@ from typing import (
 
 @cython.final
 cdef class Graph:
-    
+
     """NetworkX-like graph class."""
-    
+
     def __cinit__(self, edges: Sequence[Tuple[int, int]]):
         # edges
         """edges: ((l1, l2), ...)"""
@@ -38,7 +38,7 @@ cdef class Graph:
         # adj
         cdef int n
         self.adj = {n: self.neighbors(n) for n in self.nodes}
-    
+
     cdef inline tuple neighbors(self, int n):
         """Neighbors except the node."""
         cdef list neighbors = []
@@ -49,17 +49,17 @@ cdef class Graph:
             if n == l2:
                 neighbors.append(l1)
         return tuple(neighbors)
-    
+
     cdef Graph compose(self, Graph graph):
         return Graph(set(self.edges) | set(graph.edges))
-    
+
     cdef bool out_of_limit(self, ndarray limit):
         cdef int n
         for n in self.adj:
             if len(self.adj[n]) > limit[n]:
                 return True
         return False
-    
+
     cpdef bool has_triangles(self):
         cdef int n1, n2
         cdef tuple neighbors
@@ -71,7 +71,7 @@ cdef class Graph:
                     if n1 in self.adj[n2]:
                         return True
         return False
-    
+
     cpdef bool is_connected(self):
         cdef int index = 0
         cdef list nodes = [self.nodes[index]]
@@ -81,14 +81,14 @@ cdef class Graph:
                     nodes.append(neighbor)
             index += 1
         return len(nodes) == len(self.nodes)
-    
+
     cpdef bool is_isomorphic(self, Graph graph):
         cdef GraphMatcher gm_gh = GraphMatcher(self, graph)
         return gm_gh.is_isomorphic()
-    
+
     cdef list links(self):
         return sorted([len(neighbors) for neighbors in self.adj.values()])
-    
+
     cdef int number_of_edges(self, int u, int v):
         if v in self.adj[u]:
             return 1
@@ -97,37 +97,37 @@ cdef class Graph:
 
 @cython.final
 cdef class GraphMatcher:
-    
+
     """GraphMatcher and GMState class from NetworkX.
-    
+
     Copyright (C) 2007-2009 by the NetworkX maintainers
     All rights reserved.
     BSD license.
-    
+
     This work was originally coded by Christopher Ellison
     as part of the Computational Mechanics Python (CMPy) project.
     James P. Crutchfield, principal investigator.
     Complexity Sciences Center and Physics Department, UC Davis.
     """
-    
+
     cdef Graph g1, g2
     cdef set g1_nodes, g2_nodes
     cdef dict core_1, core_2, inout_1, inout_2, mapping
     cdef GMState state
-    
+
     def __cinit__(self, g1: Graph, g2: Graph):
         self.g1 = g1
         self.g2 = g2
         self.g1_nodes = set(g1.nodes)
         self.g2_nodes = set(g2.nodes)
-        
+
         # Set recursion limit.
         cdef int old_recursion_limit = sys.getrecursionlimit()
         cdef int expected_max_recursion_level = len(self.g2.nodes)
         if old_recursion_limit < 1.5 * expected_max_recursion_level:
             # Give some breathing room.
             sys.setrecursionlimit(int(1.5 * expected_max_recursion_level))
-        
+
         # Initialize state
         self.initialize()
 
@@ -139,19 +139,19 @@ cdef class GraphMatcher:
         #            provided m is in the mapping.
         self.core_1 = {}
         self.core_2 = {}
-        
+
         # See the paper for definitions of M_x and T_x^{y}
         # inout_1[n]  is non-zero if n is in M_1 or in T_1^{inout}
         # inout_2[m]  is non-zero if m is in M_2 or in T_2^{inout}
-        # 
+        #
         # The value stored is the depth of the SSR tree when the node became
         # part of the corresponding set.
         self.inout_1 = {}
         self.inout_2 = {}
         # Practically, these sets simply store the nodes in the subgraph.
-        
+
         self.state = GMState(self)
-        
+
         # Provide a convenient way to access the isomorphism mapping.
         self.mapping = self.core_1.copy()
 
@@ -185,11 +185,11 @@ cdef class GraphMatcher:
         # Let's do two very quick checks!
         # QUESTION: Should we call faster_graph_could_be_isomorphic(g1,g2)?
         # For now, graph3 just copy the code.
-        
+
         # Check global properties
         if len(self.g1.nodes) != len(self.g2.nodes):
             return False
-        
+
         # Check local properties
         if self.g1.links() != self.g2.links():
             return False
@@ -246,7 +246,7 @@ cdef class GraphMatcher:
         """
 
         # ## Test at each step to get a return value as soon as possible.
-        
+
         # ## Look ahead 0
         # R_self
         # The number of self loops for g1_node must equal the number of
@@ -278,7 +278,7 @@ cdef class GraphMatcher:
                     self.g2.number_of_edges(neighbor, g2_node)
                 ):
                     return False
-        
+
         # ## Look ahead 1
         # R_term_inout
         # The number of neighbors of n that are in T_1^{inout} is equal to the
@@ -293,7 +293,7 @@ cdef class GraphMatcher:
                 num2 += 1
         if num1 != num2:
             return False
-        
+
         # ## Look ahead 2
         # R_new
         # The number of neighbors of n that are neither in the core_1 nor
@@ -312,10 +312,10 @@ cdef class GraphMatcher:
 
 @cython.final
 cdef class GMState:
-    
+
     cdef GraphMatcher gm
     cdef int g1_node, g2_node, depth
-    
+
     def __cinit__(
         self,
         gm: GraphMatcher,
@@ -323,18 +323,18 @@ cdef class GMState:
         g2_node: int = -1
     ):
         """Initializes GMState object.
-        
+
         Pass in the GraphMatcher to which this GMState belongs and the
         new node pair that will be added to the GraphMatcher's current
         isomorphism mapping.
         """
         self.gm = gm
-        
+
         # Initialize the last stored node pair.
         self.g1_node = -1
         self.g2_node = -1
         self.depth = len(gm.core_1)
-        
+
         if g1_node == -1 or g2_node == -1:
             # Then we reset the class variables
             gm.core_1 = {}
@@ -348,23 +348,23 @@ cdef class GMState:
             # Add the node pair to the isomorphism mapping.
             gm.core_1[g1_node] = g2_node
             gm.core_2[g2_node] = g1_node
-            
+
             # Store the node that was added last.
             self.g1_node = g1_node
             self.g2_node = g2_node
-            
+
             # Now we must update the other two vectors.
             # We will add only if it is not in there already!
             self.depth = len(gm.core_1)
-            
+
             # First we add the new nodes...
             if g1_node not in gm.inout_1:
                 gm.inout_1[g1_node] = self.depth
             if g2_node not in gm.inout_2:
                     gm.inout_2[g2_node] = self.depth
-            
+
             # Now we add every other node...
-            
+
             # Updates for T_1^{inout}
             new_nodes = set()
             for node in gm.core_1:
@@ -372,7 +372,7 @@ cdef class GMState:
             for node in new_nodes:
                 if node not in gm.inout_1:
                     gm.inout_1[node] = self.depth
-            
+
             # Updates for T_2^{inout}
             new_nodes = set()
             for node in gm.core_2:
@@ -380,7 +380,7 @@ cdef class GMState:
             for node in new_nodes:
                 if node not in gm.inout_2:
                     gm.inout_2[node] = self.depth
-    
+
     cdef void restore(self):
         """Deletes the GMState object and restores the class variables."""
         # First we remove the node that was added from the core vectors.
@@ -388,7 +388,7 @@ cdef class GMState:
         if self.g1_node != -1 and self.g2_node != -1:
             del self.gm.core_1[self.g1_node]
             del self.gm.core_2[self.g2_node]
-        
+
         # Now we revert the other two vectors.
         # Thus, we delete all entries which have this depth level.
         cdef dict vector

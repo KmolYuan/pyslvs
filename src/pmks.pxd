@@ -13,9 +13,9 @@ from numpy cimport ndarray
 
 
 cdef class VPoint:
-    
+
     # VPoint(links, type_int, angle, color_str, x, y, color_func=None)
-    
+
     # Members
     cdef readonly tuple links
     cdef readonly ndarray c
@@ -26,20 +26,20 @@ cdef class VPoint:
     cdef readonly double x, y, angle
     cdef double __offset
     cdef bool __has_offset
-    
+
     # Set values
     cpdef void move(self, tuple c1, tuple c2 = *) except *
     cpdef void rotate(self, double)
     cpdef void set_offset(self, double)
     cpdef void disable_offset(self)
-    
+
     # Get or calculate values.
     cpdef double distance(self, VPoint p)
     cpdef bool has_offset(self)
     cpdef double offset(self)
     cpdef double true_offset(self)
     cpdef double slope_angle(self, VPoint p, int num1 = *, int num2 = *)
-    
+
     # Link operators.
     cpdef bool grounded(self)
     cpdef bool pin_grounded(self)

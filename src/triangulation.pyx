@@ -102,14 +102,14 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
         inputs = []
     if status is None:
         status = {}
-    
+
     if not vpoints_:
         return []
     if not inputs:
         return []
-    
+
     cdef list vpoints = list(vpoints_)
-    
+
     # First, we create a "VLinks" that can help us to
     # find a relationship just like adjacency matrix.
     cdef int node
@@ -130,7 +130,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
                     vlinks[link].add(node)
         else:
             status[node] = True
-    
+
     # Replace the P joints and their friends with RP joint.
     # DOF must be same after properties changed.
     cdef int base
@@ -159,16 +159,16 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
                     vpoint_.x,
                     vpoint_.y
                 )
-    
+
     # Add positions parameters.
     cdef list pos = []
     for vpoint in vpoints:
         pos.append(vpoint.c[0 if vpoint.type == VPoint.R else 1])
-    
+
     cdef list exprs = []
     cdef int link_symbol = 0
     cdef int angle_symbol = 0
-    
+
     # Input joints (R) that was connect with ground.
     for base, node in inputs:
         if status[base]:
@@ -182,42 +182,42 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
             status[node] = True
             link_symbol += 1
             angle_symbol += 1
-    
+
     # Now let we search around all of points, until find the solutions that we could.
     cdef set input_targets = {node for base, node in inputs}
     node = 0
     cdef int skip_times = 0
     cdef int around = len(status)
-    
+
     cdef int type_num, friend_a, friend_b, friend_c, friend_d
     cdef double tmp_x, tmp_y, angle
     cdef bool reverse
     # Friend iterator.
     cdef object fi
     while not is_all_lock(status):
-        
+
         if node not in status:
             node = 0
             continue
-        
+
         # Check and break the loop if it's re-scan again.
         if skip_times >= around:
             break
-        
+
         if status[node]:
             node += 1
             skip_times += 1
             continue
-        
+
         type_num = vpoints[node].type
-        
+
         if type_num == 0:
             """R joint.
             
             + Is input node?
             + Normal revolute joint.
             """
-            
+
             if node in input_targets:
                 base = get_input_base(node, inputs)
                 if status[base]:
@@ -254,7 +254,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
                     status[node] = True
                     link_symbol += 2
                     skip_times = 0
-        
+
         elif type_num == 1:
             """Need to solve P joint itself here. (only grounded)"""
             fi = _get_not_base_friend(node, vpoints, vlinks, status)
@@ -293,7 +293,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
                         status[friend_b] = True
                         link_symbol += 2
                 skip_times = 0
-        
+
         elif type_num == 2:
             """RP joint."""
             fi = _get_base_friend(node, vpoints, vlinks, status)
@@ -366,8 +366,8 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
                 status[node] = True
                 link_symbol += 3
                 skip_times = 0
-        
+
         node += 1
-    
+
     # exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1', 'P2'), ...]
     return exprs

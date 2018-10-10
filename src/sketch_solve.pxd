@@ -9,35 +9,35 @@
 # __email__ = "pyslvs@gmail.com"
 
 cdef extern from "solve.h":
-    
+
     cdef int Rough
     cdef int Fine
     cdef int MaxIterations
-    
+
     cdef int Succsess
     cdef int NoSolution
-    
+
     struct Point:
         double *x
         double *y
-    
+
     struct Line:
         Point *p1
         Point *p2
-    
+
     struct Arc:
         double *startAngle
         double *endAngle
         double *rad
         Point *center
-    
+
     struct Circle:
         Point *center
         double *rad
-    
+
     cdef enum ConstraintTypes "Constraint::Types":
         pass
-    
+
     struct Constraint:
         ConstraintTypes type
         Point *point1
@@ -50,7 +50,7 @@ cdef extern from "solve.h":
         Arc *arc1
         Arc *arc2
         double *parameter
-    
+
     Constraint PointOnPointConstraint(Point *, Point *);
     Constraint P2PDistanceConstraint(Point *, Point *, double *)
     Constraint P2PDistanceVertConstraint(Point *, Point *, double *)
@@ -90,6 +90,6 @@ cdef extern from "solve.h":
     Constraint SymmetricArcsConstraint(Arc *, Arc *, Line *)
     Constraint LineInternalAngleConstraint(Line *, double *)
     Constraint LineExternalAngleConstraint(Line *, double *)
-    
+
     int solve(double **, int, Constraint *, int, int)
     void derivatives(double **, double *, int, Constraint *, int)

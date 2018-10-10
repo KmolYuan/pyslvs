@@ -49,6 +49,7 @@ cdef inline int sum_factors(list factors):
 
 
 cpdef tuple number_synthesis(int nl, int nj):
+    """Number synthesis try-error function."""
     cdef list result = []
     cdef int m_max_v = m_max(nl, nj)
     if m_max_v == -1:
