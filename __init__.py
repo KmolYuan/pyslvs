@@ -44,11 +44,11 @@ from .tinycadlib import (
     expr_solving,
     data_collecting,
 )
-from .verify import Verification
+from . import verify
 from .planarlinkage import Planar
 from .rga import Genetic
 from .firefly import Firefly
-from .de import DiffertialEvolution
+from .de import Differential
 from .number import number_synthesis
 from .graph import Graph
 from .atlas import topo
@@ -60,14 +60,14 @@ from ._parser import (
     parse_vpoints,
     HAS_PYGMENTS,
 )
+from .examples import example_list
 if HAS_PYGMENTS:
     from ._parser import PMKSLexer
-from .examples import example_list
 
 __all__ = [
     'Genetic',
     'Firefly',
-    'DiffertialEvolution',
+    'Differential',
     'Coordinate',
     'PLAP',
     'PLLP',
@@ -79,7 +79,6 @@ __all__ = [
     'VPoint',
     'VLink',
     'bfgs_vpoint_solving',
-    'Verification',
     'Planar',
     'number_synthesis',
     'topo',

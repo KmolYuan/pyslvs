@@ -7,7 +7,7 @@ from typing import (
     Dict,
     Optional,
 )
-from pmks import VPoint
+from .pmks import VPoint
 
 
 def vpoints_configure(
