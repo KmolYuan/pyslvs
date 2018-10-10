@@ -13,7 +13,7 @@ from cpython cimport bool
 
 cdef class Coordinate:
     cdef readonly double x, y
-    
+
     cpdef double distance(self, Coordinate p)
     cpdef bool is_nan(self)
 
@@ -25,5 +25,5 @@ cpdef tuple PLPP(Coordinate A, double L0, Coordinate B, Coordinate C, bool inver
 cpdef tuple PXY(Coordinate A, double x, double y)
 
 cdef bool legal_crank(Coordinate A, Coordinate B, Coordinate C, Coordinate D)
-cdef str strbetween(str s, str front, str back)
-cdef str strbefore(str s, str front)
+cdef str str_between(str s, str front, str back)
+cdef str str_before(str s, str front)

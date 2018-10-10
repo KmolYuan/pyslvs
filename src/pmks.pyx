@@ -317,4 +317,4 @@ cdef class VLink:
     
     def __repr__(self):
         """Use to generate script."""
-        return f"VLink('{self.name}', {self.points}, colorQt)"
+        return f"VLink('{self.name}', {self.points}, color_qt)"

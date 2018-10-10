@@ -24,8 +24,8 @@ from tinycadlib cimport (
     PLPP,
     PXY,
     legal_crank,
-    strbetween,
-    strbefore,
+    str_between,
+    str_before,
 )
 
 # A large fitness. Infinity can not used in chart.
@@ -34,13 +34,13 @@ cdef double FAILURE = 9487945
 
 @cython.final
 cdef class Planar(Verification):
-    
+
     """This class is used to verified kinematics of the linkage mechanism."""
-    
+
     cdef int target_count, var_count
     cdef list link_list, driver_list, follower_list
     cdef ndarray constraints, target_names, exprs, target, upper, lower
-    
+
     def __cinit__(self, mech_params: dict):
         """mech_params = {
             'Driver': {'pt': (x, y, r)},
@@ -70,14 +70,14 @@ cdef class Planar(Verification):
             self.target_names[i] = name
             self.target[i] = tuple(Coordinate(x, y) for x, y in target)
             i += 1
-        
+
         # Constraint
         self.constraints = np_array(mech_params['constraints'])
-        
+
         # Expression
         # ['A', 'B', 'C', 'D', 'E', 'L0', 'L1', 'L2', 'L3', 'L4', 'a0']
         cdef tuple exprs = tuple(mech_params['Expression'].split(';'))
-        
+
         """
         link_list: L0, L1, L2, L3, ...
         driver_list: The name of the point in "self.Driver" (Sorted).
@@ -93,12 +93,12 @@ cdef class Planar(Verification):
         self.exprs = ndarray((len(exprs),), dtype=np_object)
         cdef str expr, params, p
         for i, expr in enumerate(exprs):
-            params = strbetween(expr, '[', ']')
+            params = str_between(expr, '[', ']')
             self.exprs[i] = (
                 # [0]: relate
-                strbefore(expr, '['),
+                str_before(expr, '['),
                 # [1]: target
-                strbetween(expr, '(', ')'),
+                str_between(expr, '(', ')'),
                 # [2]: params
                 params.split(','),
             )
@@ -110,7 +110,7 @@ cdef class Planar(Verification):
                     self.driver_list.append(p)
                 if (p in mech_params['Follower']) and (p not in self.follower_list):
                     self.follower_list.append(p)
-        
+
         """Limitations
         
         self.var_count = length before matching angles.
@@ -125,13 +125,13 @@ cdef class Planar(Verification):
         cdef int link_count = len(self.link_list)
         # The number of all variables (except angles).
         self.var_count = 2 * len(self.driver_list) + 2 * len(self.follower_list) + link_count
-        
+
         cdef dict tmp_dict = {}
         tmp_dict.update(mech_params['Driver'])
         tmp_dict.update(mech_params['Follower'])
-        
+
         cdef list tmp_list = []
-        
+
         # upper
         for name in self.driver_list + self.follower_list:
             for i in range(2):
@@ -140,9 +140,9 @@ cdef class Planar(Verification):
         for i in range(len(self.driver_list)):
             tmp_list.extend([mech_params['upper'][link_count + i]] * self.target_count)
         self.upper = np_array(tmp_list, dtype=np_float32)
-        
+
         tmp_list.clear()
-        
+
         # lower
         for name in self.driver_list + self.follower_list:
             for i in range(2):
@@ -151,21 +151,21 @@ cdef class Planar(Verification):
         for i in range(len(self.driver_list)):
             tmp_list.extend([mech_params['lower'][link_count + i]] * self.target_count)
         self.lower = np_array(tmp_list, dtype=np_float32)
-        
+
         # Swap sorting.
         for i in range(len(self.upper)):
             if self.upper[i] < self.lower[i]:
                 self.upper[i], self.lower[i] = self.lower[i], self.upper[i]
-    
+
     cdef ndarray get_upper(self):
         return self.upper
-    
+
     cdef ndarray get_lower(self):
         return self.lower
-    
+
     cdef int get_nParm(self):
         return len(self.upper)
-    
+
     cdef inline dict get_data_dict(self, ndarray v):
         """Create and return data dict."""
         cdef str name
@@ -180,7 +180,7 @@ cdef class Planar(Verification):
             tmp_dict[name] = v[vi]
             vi += 1
         return tmp_dict
-    
+
     cdef inline ndarray get_path_array(self):
         """Create and return path array."""
         cdef ndarray path = ndarray((len(self.target_names),), dtype=np_object)
@@ -188,7 +188,7 @@ cdef class Planar(Verification):
         for i in range(len(self.target_names)):
             path[i] = []
         return path
-    
+
     cdef Coordinate from_formula(self, tuple expr, dict data_dict):
         """Formulas using PLAP and PLLP."""
         cdef str fun = expr[0]
@@ -202,7 +202,7 @@ cdef class Planar(Verification):
             else:
                 params.append(data_dict[p])
         cdef int params_count = len(params)
-        
+
         # We should unpack as C++'s way.
         cdef double x = float('nan')
         cdef double y = x
@@ -227,7 +227,7 @@ cdef class Planar(Verification):
             if params_count == 3:
                 x, y = PXY(params[0], params[1], params[2])
         return Coordinate(x, y)
-    
+
     cdef double run(self, ndarray v) except *:
         """Chromosome format: (decided by upper and lower)
         
@@ -277,7 +277,7 @@ cdef class Planar(Verification):
             for i in range(self.target_count):
                 fitness += path[k][i].distance(self.target[k][i])
         return fitness
-    
+
     cpdef object result(self, ndarray v):
         """Return the last answer."""
         cdef str k
@@ -299,7 +299,7 @@ cdef class Planar(Verification):
                 tmp_list.append(v[self.var_count + i * len(self.driver_list) + j])
             final_dict[f'a{j}'] = tuple(tmp_list)
         return final_dict
-    
+
     def __call__(self, v: ndarray) -> double:
         """Python callable object."""
         return self.run(v)

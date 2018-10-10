@@ -36,21 +36,21 @@ cdef inline double distance(double x1, double y1, double x2, double y2):
 
 @cython.final
 cdef class Coordinate:
-    
+
     """A class to store the coordinate."""
-    
+
     def __cinit__(self, double x, double y):
         self.x = x
         self.y = y
-    
+
     cpdef double distance(self, Coordinate p):
         """Distance."""
         return distance(self.x, self.y, p.x, p.y)
-    
+
     cpdef bool is_nan(self):
         """Test this coordinate is a error-occured answer."""
         return bool(isnan(self.x))
-    
+
     def __repr__(self):
         """Debug printing."""
         return f"Coordinate({self.x:.02f}, {self.y:.02f})"
@@ -82,15 +82,15 @@ cpdef tuple PLLP(
     cdef double dx = B.x - A.x
     cdef double dy = B.y - A.y
     cdef double d = A.distance(B)
-    
+
     # No solutions, the circles are separate.
     if d > L0 + L1:
         return (nan, nan)
-    
+
     # No solutions because one circle is contained within the other.
     if d < abs(L0 - L1):
         return (nan, nan)
-    
+
     # Circles are coincident and there are an infinite number of solutions.
     if (d == 0) and (L0 == L1):
         return (nan, nan)
@@ -98,7 +98,7 @@ cpdef tuple PLLP(
     cdef double h = sqrt(L0 * L0 - a * a)
     cdef double xm = A.x + a * dx / d
     cdef double ym = A.y + a * dy / d
-    
+
     if inverse:
         return (xm + h * dy / d, ym - h * dx / d)
     else:
@@ -118,7 +118,7 @@ cpdef tuple PLPP(
     cdef double dy = C.y - B.y
     cdef double u = ((A.x - B.x) * dx + (A.y - B.y) * dy) / (line_mag * line_mag)
     cdef Coordinate I = Coordinate(B.x + u * dx, B.y + u * dy)
-    
+
     # Test distance between point A and intersection.
     cdef double d = A.distance(I)
     if d > L0:
@@ -127,7 +127,7 @@ cpdef tuple PLPP(
     elif d == L0:
         # One intersection point.
         return (I.x, I.y)
-    
+
     # Two intersection points.
     d = sqrt(L0 * L0 - d * d) / line_mag
     if inverse:
@@ -158,12 +158,12 @@ cdef inline bool legal_crank(Coordinate A, Coordinate B, Coordinate C, Coordinat
     )
 
 
-cdef inline str strbetween(str s, str front, str back):
+cdef inline str str_between(str s, str front, str back):
     """Get the string that is inside of parenthesis."""
     return s[s.find(front) + 1:s.find(back)]
 
 
-cdef inline str strbefore(str s, str front):
+cdef inline str str_before(str s, str front):
     """Get the string that is front of parenthesis."""
     return s[:s.find(front)]
 
@@ -196,7 +196,7 @@ cpdef void expr_parser(object exprs, dict data_dict):
             else:
                 params.append(data_dict[p])
         params_count = len(params)
-        
+
         # We should unpack as C++'s way.
         x = float('nan')
         y = x
@@ -240,9 +240,9 @@ cpdef tuple expr_parse(str exprs):
         if not expr:
             return ()
         params = []
-        params.append(strbefore(expr, '['))
-        params.extend(strbetween(expr, '[', ']').split(','))
-        params.append(strbetween(expr, '(', ')'))
+        params.append(str_before(expr, '['))
+        params.extend(str_between(expr, '[', ']').split(','))
+        params.append(str_between(expr, '(', ')'))
         tmp_list.append(tuple(params))
     return tuple(tmp_list)
 
@@ -255,7 +255,7 @@ cpdef int vpoint_dof(object vpoints):
     cdef int j2 = 0
     # First link 'ground'.
     cdef set vlinks = {'ground'}
-    
+
     cdef int link_count
     cdef VPoint vpoint
     for vpoint in vpoints:
@@ -304,7 +304,7 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     vpoints will make a copy that we don't want to modified origin data.
     """
     cdef list vpoints = list(vpoints_)
-    
+
     # First, we create a "VLinks" that can help us to
     # find a relationship just like adjacency matrix.
     cdef int node
@@ -318,7 +318,7 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
                 vlinks[link] = [node]
             else:
                 vlinks[link].append(node)
-    
+
     # Replace the P joints and their friends with RP joint.
     # DOF must be same after properties changed.
     cdef int base
@@ -347,18 +347,18 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
                     vpoint_.cx,
                     vpoint_.cy
                 )
-    
+
     # Reverse mapping, exclude specified link length.
     cdef object k, v
     cdef dict mapping_r = {v: k for k, v in mapping.items() if (type(k) == int)}
-    
+
     cdef list pos = []
     for vpoint in vpoints:
         if vpoint.type == VPoint.R:
             pos.append(vpoint.c[0])
         else:
             pos.append(vpoint.c[1])
-    
+
     cdef int i, bf
     cdef double angle
     # Add slider slot virtual coordinates.
@@ -374,7 +374,7 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
         )
         pos.append((vpoint.c[1][0] + cos(angle), vpoint.c[1][1] + sin(angle)))
         mapping_r[f'S{i}'] = len(pos) - 1
-    
+
     cdef int dof = 0
     cdef dict data_dict = {}
     cdef int target
@@ -460,39 +460,39 @@ cpdef list expr_solving(
     # Blank sequences.
     if angles is None:
         angles = []
-    
+
     cdef dict data_dict
     cdef int dof_input
     data_dict, dof_input = data_collecting(exprs, mapping, vpoints)
-    
+
     # Check input number.
     cdef int dof = vpoint_dof(vpoints)
     if dof_input > dof:
         raise Exception(
             f"wrong number of input parameters: {dof_input} / {dof}"
         )
-    
+
     # Reverse mapping, exclude specified link length.
     cdef object k, v
     cdef dict mapping_r = {v: k for k, v in mapping.items() if (type(k) == int)}
-    
+
     # Check input pairs.
     cdef tuple expr
     for expr in exprs:
         if expr[0] == 'PLAP':
             if vpoints[mapping_r[expr[1]]].grounded() and vpoints[mapping_r[expr[-1]]].grounded():
                 raise Exception("wrong driver definition.")
-    
+
     # Angles.
     cdef double a
     cdef int i
     for i, a in enumerate(angles):
         data_dict[f'a{i}'] = radians(a)
-    
+
     # Solve
     if exprs:
         expr_parser(exprs, data_dict)
-    
+
     cdef dict p_data_dict = {}
     cdef bool has_not_solved = False
     # Add coordinate of known points.
@@ -501,9 +501,9 @@ cpdef list expr_solving(
             p_data_dict[i] = data_dict[mapping[i]]
         else:
             has_not_solved = True
-    
+
     # TODO: Add specified link lengths.
-    
+
     # Calling Sketch Solve kernel and try to get the result.
     cdef list solved_bfgs = []
     if has_not_solved:
@@ -511,7 +511,7 @@ cpdef list expr_solving(
             solved_bfgs = vpoint_solving(vpoints, [], p_data_dict)
         except RuntimeError as e:
             raise RuntimeError("result contains failure: Sketch Solve") from e
-    
+
     """Format:
     + R joint: [[p0]: (p0_x, p0_y), [p1]: (p1_x, p1_y)]
     + P or RP joint: [[p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))]
