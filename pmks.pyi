@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from typing import Tuple, Optional
+from numpy import ndarray
 
 
 class VPoint:
@@ -10,6 +11,16 @@ class VPoint:
     R: int
     P: int
     RP: int
+
+    links: Tuple[str, ...]
+    c: ndarray
+    type: int
+    color: Optional[int]
+    colorSTR: str
+    typeSTR: str
+    x: float
+    y: float
+    angle: float
 
     def __init__(
         self,
