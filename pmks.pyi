@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from typing import Tuple, Optional
+from typing import (
+    Tuple,
+    Callable,
+    Optional,
+    Any,
+)
 from numpy import ndarray
 
 
@@ -30,7 +35,7 @@ class VPoint:
         color_str: str,
         x: float,
         y: float,
-        color_func: object = None
+        color_func: Optional[Callable[[str], Any]] = None
     ):
         ...
 

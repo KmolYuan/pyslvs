@@ -5,10 +5,9 @@ from typing import (
     List,
     Sequence,
     Dict,
-    Mapping,
     Optional,
 )
-from pmks import VPoint
+from .pmks import VPoint
 
 
 class Coordinate:
@@ -78,7 +77,7 @@ def expr_solving(
     exprs: Sequence[Tuple[str, ...]],
     mapping: Dict[int, str],
     vpoints: Sequence[VPoint],
-    angles: Mapping[int, float] = None
+    angles: Sequence[float] = None
 ) -> List[Tuple[float, float]]:
     """Solving function."""
     ...

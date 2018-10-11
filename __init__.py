@@ -55,7 +55,7 @@ from .atlas import topo
 from .triangulation import vpoints_configure
 from ._parser import (
     colorNames,
-    colorRGB,
+    color_rgb,
     parse_params,
     parse_vpoints,
     HAS_PYGMENTS,
@@ -86,7 +86,7 @@ __all__ = [
     'vpoints_configure',
     'vpoint_dof',
     'colorNames',
-    'colorRGB',
+    'color_rgb',
     'parse_params',
     'parse_vpoints',
     'PMKSLexer',

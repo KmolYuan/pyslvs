@@ -18,7 +18,7 @@ from typing import (
 )
 from lark import Lark, Transformer
 from lark.lexer import Token
-
+from .pmks import VPoint
 try:
     from pygments.lexer import RegexLexer
     from pygments.token import (
@@ -31,11 +31,6 @@ except ImportError:
     HAS_PYGMENTS = False
 else:
     HAS_PYGMENTS = True
-
-try:
-    from .pmks import VPoint
-except (SystemError, ImportError):
-    from pmks import VPoint
 
 
 # Color dictionary.
@@ -66,9 +61,9 @@ _color_list = {
 colorNames = tuple(sorted(_color_list.keys()))
 
 
-def colorRGB(name: str) -> Tuple[int, int, int]:
+def color_rgb(name: str) -> Tuple[int, int, int]:
     """Get color by name.
-    
+
     + Invalid color
     + Color key
     + RGB string.
@@ -142,41 +137,41 @@ _pmks_grammar = Lark(
 
 
 class _PMKSParams(Transformer):
-    
+
     """Usage: tree = parser.parse(expr)
-    
+
     args = transformer().transform(tree)
     args: Dict[str, value]
     """
-    
+
     def type(self, n: List[Token]) -> str:
         return str(n[0])
-    
+
     name = type
-    
+
     def color(self, n: List[Token]) -> str:
         return str(n[0]) if (len(n) == 1) else str(tuple(n))
-    
+
     def colorv(self, n: List[Token]) -> int:
         return int(n[0])
-    
+
     def neg(self, n: List[Token]) -> Token:
         return -n[0]
-    
+
     def number(self, n: List[Token]) -> float:
         return float(n[0])
-    
+
     def point(self, c: List[Token]) -> Tuple[Token]:
         return tuple(c)
-    
+
     angle = number
-    
+
     def link(self, a: List[Token]) -> Tuple[Token]:
         return tuple(a)
-    
+
     def joint(self, args: List[Token]) -> List[Union[str, int, float]]:
         """Sort the argument list.
-        
+
         [0]: type
         ([1]: angle)
         ([1])[2]: color
@@ -192,19 +187,19 @@ class _PMKSParams(Transformer):
             x,
             y
         ]
-    
+
     def mechanism(self, j: List[Token]) -> List[Token]:
         return j
 
 
 class _PMKSVPoints(_PMKSParams):
-    
+
     """Using same grammar return as VPoints."""
-    
+
     def type(self, n: List[Token]) -> int:
         """Return as int type."""
         return ('R', 'P', 'RP').index(str(n[0]))
-    
+
     def joint(self, args: List[Token]) -> VPoint:
         """Same as parent."""
         has_angle = args[0] != 0
@@ -230,13 +225,13 @@ def parse_vpoints(expr: str) -> List[VPoint]:
 
 
 if HAS_PYGMENTS:
-    
+
     class PMKSLexer(RegexLexer):
-        
+
         """PMKS highlighter by Pygments."""
-        
+
         name = 'PMKS'
-        
+
         tokens = {'root': [
             ('#.*$', Comment.Single),
             ('(M)|(J)|(L)|(P)|(A)|(color)', Name.Function),
