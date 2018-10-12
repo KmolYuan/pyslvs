@@ -18,20 +18,11 @@ from typing import (
 )
 from lark import Lark, Transformer
 from lark.lexer import Token
-from .pmks import VPoint
-try:
-    from pygments.lexer import RegexLexer
-    from pygments.token import (
-        Comment,
-        Keyword,
-        Name,
-        Number,
-    )
-except ImportError:
-    HAS_PYGMENTS = False
-else:
-    HAS_PYGMENTS = True
 
+try:
+    from .pmks import VPoint
+except ImportError:
+    from pmks import VPoint
 
 # Color dictionary.
 _color_list = {
@@ -224,7 +215,18 @@ def parse_vpoints(expr: str) -> List[VPoint]:
     return _PMKSVPoints().transform(_pmks_grammar.parse(expr))
 
 
-if HAS_PYGMENTS:
+try:
+    from pygments.lexer import RegexLexer
+    from pygments.token import (
+        Comment,
+        Keyword,
+        Name,
+        Number,
+    )
+except ImportError:
+    HAS_PYGMENTS = False
+else:
+    HAS_PYGMENTS = True
 
     class PMKSLexer(RegexLexer):
 
@@ -232,10 +234,12 @@ if HAS_PYGMENTS:
 
         name = 'PMKS'
 
-        tokens = {'root': [
-            ('#.*$', Comment.Single),
-            ('(M)|(J)|(L)|(P)|(A)|(color)', Name.Function),
-            ('|'.join(f"({color})" for color in colorNames), Name.Variable),
-            ('(RP)|(R)|(P)', Keyword.Constant),
-            (r'(\d+\.\d*|\d*\.\d+)([eE][+-]?[0-9]+)?j?', Number.Float),
-        ]}
+        tokens = {
+            'root': [
+                ('#.*$', Comment.Single),
+                ('(M)|(J)|(L)|(P)|(A)|(color)', Name.Function),
+                ('|'.join(f"({color})" for color in colorNames), Name.Variable),
+                ('(RP)|(R)|(P)', Keyword.Constant),
+                (r'(\d+\.\d*|\d*\.\d+)([eE][+-]?[0-9]+)?j?', Number.Float),
+            ]
+        }
