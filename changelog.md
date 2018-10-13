@@ -1,6 +1,11 @@
 Change Log
 ===
 
+Version 18.09.1
+===
+
++ Add PYI type hints for libraries.
+
 Version 18.09
 ===
 
