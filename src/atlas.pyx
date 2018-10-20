@@ -9,7 +9,6 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-cimport cython
 from itertools import combinations, product
 from time import time
 from cpython cimport bool
@@ -27,21 +26,21 @@ cdef inline bool is_isomorphic(Graph graph1, list answer):
     return False
 
 
-cdef int j_m(ndarray[int, ndim=1] multiple_link_num):
+cdef int j_m(ndarray[int, ndim=1] link_num):
     """Return value of Jm."""
     cdef int num
     cdef int i = 3
     cdef double c = 0
-    for num in multiple_link_num[1:]:
+    for num in link_num[1:]:
         c += i / 2 * num
         i += 1
     return <int>c
 
 
-cdef int jp_m(ndarray[int, ndim=1] multiple_link_num):
+cdef int jp_m(ndarray[int, ndim=1] link_num):
     """Return value of J'm."""
     # Number of multiple links.
-    cdef int n_m = sum(multiple_link_num[1:])
+    cdef int n_m = sum(link_num[1:])
     if n_m <= 1:
         return 0
     elif n_m % 2 == 0:
@@ -50,11 +49,42 @@ cdef int jp_m(ndarray[int, ndim=1] multiple_link_num):
         return <int>((3 * (n_m - 1) - 2) / 2)
 
 
-cdef tuple n_c(ndarray[int, ndim=1] multiple_link_num):
+cdef tuple n_c(ndarray[int, ndim=1] link_num):
     """Return all values of Nc."""
-    cdef int j_m_v = j_m(multiple_link_num)
-    cdef int jp_m_v = jp_m(multiple_link_num)
-    return max(1, j_m_v - jp_m_v), min(multiple_link_num[0], j_m_v)
+    cdef int j_m_v = j_m(link_num)
+    cdef int jp_m_v = jp_m(link_num)
+    return max(1, j_m_v - jp_m_v), min(link_num[0], j_m_v)
+
+
+cdef ndarray[int, ndim=2] contracted_link(ndarray[int, ndim=1] link_num):
+    """Generate the contracted link assortments."""
+    # Contracted link.
+    cdef int n_c_max, n_c_min
+    n_c_max, n_c_min = n_c(link_num)
+    if n_c_max < n_c_min:
+        n_c_max, n_c_min = n_c_min, n_c_max
+
+    # NL2 - Nc + 2
+    cdef int i_max = link_num[0] - n_c_min + 2
+    cdef int i_min = link_num[0] - n_c_max + 2
+
+    cdef tuple m
+    cdef int count, factor, index
+    cdef list cj_list = []
+    for m in product(range(i_max + 1), repeat=i_max - 1):
+        # First formula.
+        if not (n_c_min <= sum(m) <= n_c_max):
+            continue
+        # Second formula.
+        count = 0
+        index = 1
+        for factor in m:
+            count += index * factor
+            index += 1
+        if count == link_num[0]:
+            cj_list.append(m)
+
+    return np_array(cj_list)
 
 
 cpdef tuple topo(
@@ -74,21 +104,13 @@ cpdef tuple topo(
     # Initial time.
     cdef double t0 = time()
 
-    # Number of all joints.
-    cdef int joint_count = sum(link_num_)
-
     # NumPy array type.
     cdef ndarray[int, ndim=1] link_num = np_array(link_num_)
 
     # Contracted link.
-    cdef int n_c_max, n_c_min
-    n_c_max, n_c_min = n_c(link_num)
-    if n_c_max < n_c_min:
-        n_c_max, n_c_min = n_c_min, n_c_max
-    # NL2 - Nc + 2
-    cdef int i_max = link_num[0] - n_c_min + 2
-    cdef int i_min = link_num[0] - n_c_max + 2
-    print(i_max, i_min)
+    cdef ndarray[int, ndim=1] cj
+    for cj in contracted_link(link_num):
+        print(cj)
 
     """
     # Number of multiple link joints.
