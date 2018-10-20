@@ -10,12 +10,12 @@ Note of Pointer:
     please use "index" operator.
 + Pointers can be plus with C's Integer, but not Python's.
     So please copy or declare to C's Integer.
-"""
 
-# __author__ = "Yuan Chang"
-# __copyright__ = "Copyright (C) 2016-2018"
-# __license__ = "AGPL"
-# __email__ = "pyslvs@gmail.com"
+author: Yuan Chang
+copyright: Copyright (C) 2016-2018
+license: AGPL
+email: pyslvs@gmail.com
+"""
 
 from libc.stdlib cimport malloc, free
 from libc.math cimport (

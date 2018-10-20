@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3
 
-"""Number synthesis."""
+"""Number synthesis.
 
-# __author__ = "Yuan Chang"
-# __copyright__ = "Copyright (C) 2016-2018"
-# __license__ = "AGPL"
-# __email__ = "pyslvs@gmail.com"
+author: Yuan Chang
+copyright: Copyright (C) 2016-2018
+license: AGPL
+email: pyslvs@gmail.com
+"""
 
 
 cdef list product(object pool, int repeat = 1):

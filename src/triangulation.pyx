@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3
 
-"""Triangular expressions."""
+"""Triangular expressions.
 
-# __author__ = "Yuan Chang"
-# __copyright__ = "Copyright (C) 2016-2018"
-# __license__ = "AGPL"
-# __email__ = "pyslvs@gmail.com"
+author: Yuan Chang
+copyright: Copyright (C) 2016-2018
+license: AGPL
+email: pyslvs@gmail.com
+"""
 
 from typing import Sequence, Iterator
 from libc.math cimport sin, cos
