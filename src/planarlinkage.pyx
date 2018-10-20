@@ -49,8 +49,8 @@ cdef class Planar(Verification):
             'Target': {'pt': [(x0, y0), (x1, y1), ...]},
             'constraints': [('pt', 'pt', 'pt', 'pt')],
             'Expression': str,
-            'upper': ndarray[np_float32],
-            'lower': ndarray[np_float32],
+            'upper': ndarray[double, ndim=1],
+            'lower': ndarray[double, ndim=1],
         }
         """
         cdef set check_set = set(map(len, mech_params['Target'].values()))
@@ -62,8 +62,8 @@ cdef class Planar(Verification):
         # [Coordinate(x0, y0), Coordinate(x1, y1), Coordinate(x2, y2), ...]
         cdef int i = 0
         cdef int target_count = len(mech_params['Target'])
-        self.target_names = ndarray((target_count,), dtype=np_object)
-        self.target = ndarray((target_count,), dtype=np_object)
+        self.target_names = ndarray(target_count, dtype=np_object)
+        self.target = ndarray(target_count, dtype=np_object)
         cdef double x, y
         cdef str name
         cdef list target
@@ -91,7 +91,7 @@ cdef class Planar(Verification):
         self.link_list = []
         self.driver_list = []
         self.follower_list = []
-        self.exprs = ndarray((len(exprs),), dtype=np_object)
+        self.exprs = ndarray(len(exprs), dtype=np_object)
         cdef str expr, params, p
         for i, expr in enumerate(exprs):
             params = str_between(expr, '[', ']')
@@ -158,16 +158,16 @@ cdef class Planar(Verification):
             if self.upper[i] < self.lower[i]:
                 self.upper[i], self.lower[i] = self.lower[i], self.upper[i]
 
-    cdef ndarray get_upper(self):
+    cdef ndarray[double, ndim=1] get_upper(self):
         return self.upper
 
-    cdef ndarray get_lower(self):
+    cdef ndarray[double, ndim=1] get_lower(self):
         return self.lower
 
     cdef int get_nParm(self):
         return len(self.upper)
 
-    cdef inline dict get_data_dict(self, ndarray v):
+    cdef dict get_data_dict(self, ndarray[double, ndim=1] v):
         """Create and return data dict."""
         cdef str name
         cdef dict tmp_dict = {}
@@ -184,7 +184,7 @@ cdef class Planar(Verification):
 
     cdef inline ndarray get_path_array(self):
         """Create and return path array."""
-        cdef ndarray path = ndarray((len(self.target_names),), dtype=np_object)
+        cdef ndarray path = ndarray(len(self.target_names), dtype=np_object)
         cdef int i
         for i in range(len(self.target_names)):
             path[i] = []
@@ -229,7 +229,7 @@ cdef class Planar(Verification):
                 x, y = PXY(params[0], params[1], params[2])
         return Coordinate(x, y)
 
-    cdef double run(self, ndarray v) except *:
+    cdef double run(self, ndarray[double, ndim=1] v) except *:
         """Chromosome format: (decided by upper and lower)
         
         v: [Ax, Ay, Dx, Dy, ..., L0, L1, ..., A00, A01, ..., A10, A11, ...]
