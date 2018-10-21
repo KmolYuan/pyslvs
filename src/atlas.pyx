@@ -9,21 +9,12 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from itertools import combinations, product
+from itertools import product, permutations
 from time import time
 from cpython cimport bool
 from numpy cimport ndarray
 from numpy import array as np_array
 from graph cimport Graph
-
-
-cdef inline bool is_isomorphic(Graph graph1, list answer):
-    """Return True if the graph is isomorphic with list."""
-    cdef Graph graph2
-    for i, graph2 in enumerate(answer):
-        if graph1.is_isomorphic(graph2):
-            return True
-    return False
 
 
 cdef int j_m(ndarray[int, ndim=1] link_num):
@@ -87,6 +78,17 @@ cdef ndarray[int, ndim=2] contracted_link(ndarray[int, ndim=1] link_num):
     return np_array(cj_list)
 
 
+cdef ndarray[int, ndim=1] labels(ndarray[int, ndim=1] numbers, int index, int offset):
+    """Generate labels from numbers."""
+    cdef int i, num
+    cdef list labels = []
+    for num in numbers[offset:]:
+        for i in range(num):
+            labels.append(index)
+        index += 1
+    return np_array(labels)
+
+
 cpdef tuple topo(
     object link_num_,
     bool degenerate = True,
@@ -107,30 +109,16 @@ cpdef tuple topo(
     # NumPy array type.
     cdef ndarray[int, ndim=1] link_num = np_array(link_num_)
 
-    # Contracted link.
-    cdef ndarray[int, ndim=1] cj
-    for cj in contracted_link(link_num):
-        print(cj)
+    # Multiple links.
+    cdef ndarray[int, ndim=1] m_link = labels(link_num, 3, 1)
 
-    """
-    # Number of multiple link joints.
-    cdef int mj = 0
-    cdef int i
-    for i in range(1, len(link_num_)):
-        mj += (i + 2) * link_num_[i]
+    # Synthesis of contracted link and multiple link combination.
+    cdef int ml
+    cdef ndarray[int, ndim=1] c_j, c_link
+    cdef list result = []
+    for c_j in contracted_link(link_num):
+        c_link = -labels(c_j, 1, 0)
 
-    # Contracted link.
-    cdef int cj = link_num_[0]
-    cdef int s
-    cdef tuple m
-    for m in product(range(cj + 1), repeat=cj):
-        s = 0
-        for i in range(cj):
-            s += (i + 1) * m[i]
-        if s == cj:
-            print(m)
-    """
-
-    cdef list answer = []
+    print(time() - t0)
     # Return graph list and time.
-    return answer, (time() - t0)
+    return result, (time() - t0)
