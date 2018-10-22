@@ -14,7 +14,10 @@ from time import time
 from cpython cimport bool
 from libcpp.map cimport map
 from numpy cimport ndarray, int64_t
-from numpy import array as np_array
+from numpy import (
+    array as np_array,
+    int64,
+)
 from graph cimport Graph
 
 
@@ -76,7 +79,7 @@ cdef ndarray[int64_t, ndim=2] contracted_link(ndarray[int64_t, ndim=1] link_num)
         if count == link_num[0]:
             cj_list.append(m)
 
-    return np_array(cj_list, dtype=int)
+    return np_array(cj_list, dtype=int64)
 
 
 cdef ndarray[int64_t, ndim=1] labels(ndarray[int64_t, ndim=1] numbers, int index, int offset):
@@ -87,7 +90,7 @@ cdef ndarray[int64_t, ndim=1] labels(ndarray[int64_t, ndim=1] numbers, int index
         for i in range(num):
             labels.append(index)
         index += 1
-    return np_array(labels, dtype=int)
+    return np_array(labels, dtype=int64)
 
 
 cdef bool is_isomorphic(Graph g, list result):
@@ -131,7 +134,7 @@ cdef void splice(
     # TODO: Break point of stop_func.
     cdef int ml, p, b, num3, pick_count
     cdef tuple combine, dyad, edge
-    cdef list pool = []
+    cdef set pool = set()
     cdef set edges = set()
     for ml, num1 in limit:
         pool.clear()
@@ -143,15 +146,15 @@ cdef void splice(
                     continue
                 # If p is a contracted link.
                 for b, num3 in limit:
-                    if num3 < 0 or num3 - count[b] <= 0:
+                    if num3 < 0 or num3 - count[b] <= 0 or b == ml:
                         continue
                     # If b is a multiple link.
-                    pool.append((p, b))
+                    pool.add((p, b))
             else:
                 if num2 - count[p] <= 0:
                     continue
                 # If p is a multiple link.
-                pool.append((p,))
+                pool.add((p,))
 
         pick_count = num1 - count[ml]
         if pick_count <= 0:
@@ -189,7 +192,7 @@ cpdef tuple topo(
     cdef double t0 = time()
 
     # NumPy array type.
-    cdef ndarray[int64_t, ndim=1] link_num = np_array(link_num_, dtype=int)
+    cdef ndarray[int64_t, ndim=1] link_num = np_array(link_num_, dtype=int64)
 
     # Multiple links.
     cdef ndarray[int64_t, ndim=1] m_link = labels(link_num, 3, 1)
