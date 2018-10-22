@@ -12,6 +12,7 @@ email: pyslvs@gmail.com
 from itertools import product, combinations
 from time import time
 from cpython cimport bool
+from libcpp.map cimport map
 from numpy cimport ndarray, int64_t
 from numpy import array as np_array
 from graph cimport Graph
@@ -89,23 +90,44 @@ cdef ndarray[int64_t, ndim=1] labels(ndarray[int64_t, ndim=1] numbers, int index
     return np_array(labels, dtype=int)
 
 
-cdef void splice(list result, ndarray[int64_t, ndim=1] m_link, ndarray[int64_t, ndim=1] c_link):
+cdef bool is_isomorphic(Graph g, list result):
+    """Return True is graph is isomorphic with result list."""
+    cdef Graph h
+    for h in result:
+        if g.is_isomorphic(h):
+            return True
+    return False
+
+
+cdef void splice(
+    list result,
+    ndarray[int64_t, ndim=1] m_link,
+    ndarray[int64_t, ndim=1] c_link,
+    object stop_func = None
+):
     """Splice multiple links by:
     
     + Connect to contracted links.
     + Connect to other multiple links.
     """
     print("Contracted links:", c_link)
-    cdef dict labels = {}
+    cdef map[int, int] limit
+    cdef map[int, int] count
     cdef int num
     cdef int i = 0
     for num in m_link:
-        labels[i] = num
+        limit[i] = num
+        count[i] = 0
         i += 1
     for num in c_link:
-        labels[i] = num
+        # Actual limit is 1.
+        limit[i] = num
+        count[i] = 0
         i += 1
-    print(labels)
+
+    # TODO: Synthesis of multiple links.
+    cdef int roads = <int>(sum(m_link) / 2)
+    print(roads)
 
 
 cpdef tuple topo(
@@ -133,12 +155,15 @@ cpdef tuple topo(
     print("Multiple link:", m_link)
 
     # Synthesis of contracted link and multiple link combination.
-    cdef int ml
     cdef ndarray[int64_t, ndim=1] c_j
     cdef list result = []
     for c_j in contracted_link(link_num):
-        splice(result, m_link, -labels(c_j, 1, 0))
+        print("Contracted links assortments:", c_j)
+        # TODO: Limitation of job_func.
+        # job_func(str(c_j), len(m_link) * len(c_j))
+        splice(result, m_link, -labels(c_j, 1, 0), stop_func)
 
+    print(f"Count: {len(result)}")
     print(f"Time: {time() - t0:.04f}")
     # Return graph list and time.
     return result, (time() - t0)
