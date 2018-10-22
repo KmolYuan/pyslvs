@@ -142,16 +142,22 @@ cdef int feasible_link(map[int, int] limit, map[int, int] count):
 cdef void synthesis(
     int node,
     list result,
-    set edges,
+    set edges_origin,
     map[int, int] limit,
-    map[int, int] count
+    map[int, int] count_origin,
+    object stop_func = None
 ):
     """Recursive synthesis function."""
+    # TODO: Break point of stop_func.
+    # Copied edge list.
+    cdef set edges
     # Combinations.
     cdef int b, d, next_node
     cdef Graph g
     cdef tuple combine, dyad
-    for combine in pool(node, limit, count):
+    for combine in pool(node, limit, count_origin):
+        edges = edges_origin.copy()
+        count = count_origin
         # Collecting to edges.
         for dyad in combine:
             b = node
@@ -168,13 +174,12 @@ cdef void synthesis(
         if next_node == -1:
             # TODO: Transform function of contracted links.
             g = Graph(edges)
-            if is_isomorphic(g, result):
+            if not g.is_connected():
                 continue
             # Collecting to result.
-            print(edges)
             result.append(g)
         else:
-            synthesis(next_node, result, edges.copy(), limit, count)
+            synthesis(next_node, result, edges, limit, count, stop_func)
 
 
 cdef void splice(
@@ -201,13 +206,9 @@ cdef void splice(
         count[i] = 0
         i += 1
 
-    for num1, num2 in limit:
-        print(num1, num2)
-
     # Synthesis of multiple links.
-    # TODO: Break point of stop_func.
     cdef set edges = set()
-    synthesis(0, result, edges, limit, count)
+    synthesis(0, result, edges, limit, count, stop_func)
 
 
 cpdef tuple topo(
@@ -241,7 +242,13 @@ cpdef tuple topo(
         # job_func(str(c_j), len(m_link) * len(c_j))
         splice(result, m_link, -labels(c_j, 1, 0), stop_func)
 
-    print(f"Count: {len(result)}")
+    cdef Graph g
+    cdef list result_no_repeat = []
+    for g in result:
+        if not is_isomorphic(g, result_no_repeat):
+            result_no_repeat.append(g)
+
+    print(f"Count: {len(result_no_repeat)}")
     print(f"Time: {time() - t0:.04f}")
     # Return graph list and time.
-    return result, (time() - t0)
+    return result_no_repeat, (time() - t0)
