@@ -102,6 +102,75 @@ cdef bool is_isomorphic(Graph g, list result):
     return False
 
 
+cdef object pool(int node, map[int, int] limit, map[int, int] count):
+    """Return feasible node for combination."""
+    cdef int pick = limit[node] - count[node]
+    if pick <= 0:
+        return []
+
+    cdef int n1, n2, c1, c2
+    cdef list pool_list = []
+    for n1, c1 in limit:
+        if c1 > 0 and count[n1] < c1:
+            # Multiple links.
+            pool_list.append((n1,))
+        else:
+            # Contracted links.
+            if count[n1] > 0:
+                continue
+            for n2, c2 in limit:
+                if c2 > 0 and count[n2] < c2:
+                    pool_list.append((n1, n2))
+    return combinations(pool_list, pick)
+
+
+cdef int feasible_link(map[int, int] limit, map[int, int] count):
+    """Return next feasible multiple link, return -1 if no any matched."""
+    cdef int n, c
+    for n, c in limit:
+        if c > 0 and count[n] < c:
+            return n
+    return -1
+
+
+cdef void synthesis(
+    int node,
+    list result,
+    set edges,
+    map[int, int] limit,
+    map[int, int] count
+):
+    """Recursive synthesis function."""
+    # Combinations.
+    cdef int b, d, next_node
+    cdef Graph g
+    cdef tuple combine, dyad
+    for combine in pool(node, limit, count):
+        # Collecting to edges.
+        for dyad in combine:
+            b = node
+            for d in dyad:
+                if b < d:
+                    edges.add((b , d))
+                else:
+                    edges.add((d , b))
+                count[b] += 1
+                count[d] += 1
+                b = d
+        # Recursive or end.
+        next_node = feasible_link(limit, count)
+        if next_node == -1:
+            # Collecting to result.
+            # TODO: Transform function of contracted links.
+            g = Graph(edges)
+            if is_isomorphic(g, result):
+                continue
+            print(edges)
+            result.append(g)
+        else:
+            synthesis(next_node, result, edges.copy(), limit, count)
+
+
 cdef void splice(
     list result,
     ndarray[int64_t, ndim=1] m_link,
@@ -126,52 +195,10 @@ cdef void splice(
         count[i] = 0
         i += 1
 
-    # Number of all connection.
-    cdef int roads = <int>((sum(m_link) + 2 * len(c_link)) / 2)
-    print(roads)
-
-    # TODO: Synthesis of multiple links.
+    # Synthesis of multiple links.
     # TODO: Break point of stop_func.
-    cdef int ml, p, b, num3, pick_count
-    cdef tuple combine, dyad, edge
-    cdef set pool = set()
     cdef set edges = set()
-    for ml, num1 in limit:
-        pool.clear()
-        for p, num2 in limit:
-            if p == ml:
-                continue
-            if num2 < 0:
-                if count[p] > 0:
-                    continue
-                # If p is a contracted link.
-                for b, num3 in limit:
-                    if num3 < 0 or num3 - count[b] <= 0 or b == ml:
-                        continue
-                    # If b is a multiple link.
-                    pool.add((p, b))
-            else:
-                if num2 - count[p] <= 0:
-                    continue
-                # If p is a multiple link.
-                pool.add((p,))
-
-        pick_count = num1 - count[ml]
-        if pick_count <= 0:
-            continue
-        for combine in combinations(pool, num1 - count[ml]):
-            # TODO: Add connection.
-            for dyad in combine:
-                b = ml
-                for p in dyad:
-                    if b < p:
-                        edge = (b, p)
-                    else:
-                        edge = (p, b)
-                    edges.add(edge)
-                    count[b] += 1
-                    count[p] += 1
-                    b = p
+    synthesis(0, result, edges, limit, count)
 
 
 cpdef tuple topo(
@@ -201,12 +228,11 @@ cpdef tuple topo(
     cdef ndarray[int64_t, ndim=1] c_j
     cdef list result = []
     for c_j in contracted_link(link_num):
+        print(c_j)
         # TODO: Limitation of job_func.
         # job_func(str(c_j), len(m_link) * len(c_j))
         splice(result, m_link, -labels(c_j, 1, 0), stop_func)
 
-    cdef Graph g
-    print([g.edges for g in result])
     print(f"Count: {len(result)}")
     print(f"Time: {time() - t0:.04f}")
     # Return graph list and time.
