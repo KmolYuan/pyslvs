@@ -9,15 +9,15 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from itertools import product, permutations
+from itertools import product, combinations
 from time import time
 from cpython cimport bool
-from numpy cimport ndarray
+from numpy cimport ndarray, int64_t
 from numpy import array as np_array
 from graph cimport Graph
 
 
-cdef int j_m(ndarray[int, ndim=1] link_num):
+cdef int j_m(ndarray[int64_t, ndim=1] link_num):
     """Return value of Jm."""
     cdef int num
     cdef int i = 3
@@ -28,7 +28,7 @@ cdef int j_m(ndarray[int, ndim=1] link_num):
     return <int>c
 
 
-cdef int jp_m(ndarray[int, ndim=1] link_num):
+cdef int jp_m(ndarray[int64_t, ndim=1] link_num):
     """Return value of J'm."""
     # Number of multiple links.
     cdef int n_m = sum(link_num[1:])
@@ -40,14 +40,14 @@ cdef int jp_m(ndarray[int, ndim=1] link_num):
         return <int>((3 * (n_m - 1) - 2) / 2)
 
 
-cdef tuple n_c(ndarray[int, ndim=1] link_num):
+cdef tuple n_c(ndarray[int64_t, ndim=1] link_num):
     """Return all values of Nc."""
     cdef int j_m_v = j_m(link_num)
     cdef int jp_m_v = jp_m(link_num)
     return max(1, j_m_v - jp_m_v), min(link_num[0], j_m_v)
 
 
-cdef ndarray[int, ndim=2] contracted_link(ndarray[int, ndim=1] link_num):
+cdef ndarray[int64_t, ndim=2] contracted_link(ndarray[int64_t, ndim=1] link_num):
     """Generate the contracted link assortments."""
     # Contracted link.
     cdef int n_c_max, n_c_min
@@ -75,10 +75,10 @@ cdef ndarray[int, ndim=2] contracted_link(ndarray[int, ndim=1] link_num):
         if count == link_num[0]:
             cj_list.append(m)
 
-    return np_array(cj_list)
+    return np_array(cj_list, dtype=int)
 
 
-cdef ndarray[int, ndim=1] labels(ndarray[int, ndim=1] numbers, int index, int offset):
+cdef ndarray[int64_t, ndim=1] labels(ndarray[int64_t, ndim=1] numbers, int index, int offset):
     """Generate labels from numbers."""
     cdef int i, num
     cdef list labels = []
@@ -86,10 +86,10 @@ cdef ndarray[int, ndim=1] labels(ndarray[int, ndim=1] numbers, int index, int of
         for i in range(num):
             labels.append(index)
         index += 1
-    return np_array(labels)
+    return np_array(labels, dtype=int)
 
 
-cdef void splice(list result, ndarray[int, ndim=1] m_link, ndarray[int, ndim=1] c_link):
+cdef void splice(list result, ndarray[int64_t, ndim=1] m_link, ndarray[int64_t, ndim=1] c_link):
     """Splice multiple links by:
     
     + Connect to contracted links.
@@ -126,15 +126,15 @@ cpdef tuple topo(
     cdef double t0 = time()
 
     # NumPy array type.
-    cdef ndarray[int, ndim=1] link_num = np_array(link_num_, dtype=int)
+    cdef ndarray[int64_t, ndim=1] link_num = np_array(link_num_, dtype=int)
 
     # Multiple links.
-    cdef ndarray[int, ndim=1] m_link = labels(link_num, 3, 1)
+    cdef ndarray[int64_t, ndim=1] m_link = labels(link_num, 3, 1)
     print("Multiple link:", m_link)
 
     # Synthesis of contracted link and multiple link combination.
     cdef int ml
-    cdef ndarray[int, ndim=1] c_j
+    cdef ndarray[int64_t, ndim=1] c_j
     cdef list result = []
     for c_j in contracted_link(link_num):
         splice(result, m_link, -labels(c_j, 1, 0))
