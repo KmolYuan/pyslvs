@@ -89,6 +89,25 @@ cdef ndarray[int, ndim=1] labels(ndarray[int, ndim=1] numbers, int index, int of
     return np_array(labels)
 
 
+cdef void splice(list result, ndarray[int, ndim=1] m_link, ndarray[int, ndim=1] c_link):
+    """Splice multiple links by:
+    
+    + Connect to contracted links.
+    + Connect to other multiple links.
+    """
+    print("Contracted links:", c_link)
+    cdef dict labels = {}
+    cdef int num
+    cdef int i = 0
+    for num in m_link:
+        labels[i] = num
+        i += 1
+    for num in c_link:
+        labels[i] = num
+        i += 1
+    print(labels)
+
+
 cpdef tuple topo(
     object link_num_,
     bool degenerate = True,
@@ -107,18 +126,19 @@ cpdef tuple topo(
     cdef double t0 = time()
 
     # NumPy array type.
-    cdef ndarray[int, ndim=1] link_num = np_array(link_num_)
+    cdef ndarray[int, ndim=1] link_num = np_array(link_num_, dtype=int)
 
     # Multiple links.
     cdef ndarray[int, ndim=1] m_link = labels(link_num, 3, 1)
+    print("Multiple link:", m_link)
 
     # Synthesis of contracted link and multiple link combination.
     cdef int ml
-    cdef ndarray[int, ndim=1] c_j, c_link
+    cdef ndarray[int, ndim=1] c_j
     cdef list result = []
     for c_j in contracted_link(link_num):
-        c_link = -labels(c_j, 1, 0)
+        splice(result, m_link, -labels(c_j, 1, 0))
 
-    print(time() - t0)
+    print(f"Time: {time() - t0:.04f}")
     # Return graph list and time.
     return result, (time() - t0)
