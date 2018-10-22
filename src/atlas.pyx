@@ -111,16 +111,22 @@ cdef object pool(int node, map[int, int] limit, map[int, int] count):
     cdef int n1, n2, c1, c2
     cdef list pool_list = []
     for n1, c1 in limit:
-        if c1 > 0 and count[n1] < c1:
+        if node == n1:
+            continue
+        if c1 > 0:
             # Multiple links.
-            pool_list.append((n1,))
+            if count[n1] < c1:
+                pool_list.append((n1,))
         else:
             # Contracted links.
             if count[n1] > 0:
                 continue
             for n2, c2 in limit:
-                if c2 > 0 and count[n2] < c2:
+                if node == n2:
+                    continue
+                if c2 > 0 and count[n2] == 0:
                     pool_list.append((n1, n2))
+    # TODO: Need to avoid the point that has picked.
     return combinations(pool_list, pick)
 
 
@@ -160,11 +166,11 @@ cdef void synthesis(
         # Recursive or end.
         next_node = feasible_link(limit, count)
         if next_node == -1:
-            # Collecting to result.
             # TODO: Transform function of contracted links.
             g = Graph(edges)
             if is_isomorphic(g, result):
                 continue
+            # Collecting to result.
             print(edges)
             result.append(g)
         else:
@@ -176,7 +182,7 @@ cdef void splice(
     ndarray[int64_t, ndim=1] m_link,
     ndarray[int64_t, ndim=1] c_link,
     object stop_func = None
-) except *:
+):
     """Splice multiple links by:
     
     + Connect to contracted links.
@@ -194,6 +200,9 @@ cdef void splice(
         limit[i] = num2
         count[i] = 0
         i += 1
+
+    for num1, num2 in limit:
+        print(num1, num2)
 
     # Synthesis of multiple links.
     # TODO: Break point of stop_func.
@@ -228,7 +237,6 @@ cpdef tuple topo(
     cdef ndarray[int64_t, ndim=1] c_j
     cdef list result = []
     for c_j in contracted_link(link_num):
-        print(c_j)
         # TODO: Limitation of job_func.
         # job_func(str(c_j), len(m_link) * len(c_j))
         splice(result, m_link, -labels(c_j, 1, 0), stop_func)
