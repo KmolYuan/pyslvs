@@ -104,30 +104,71 @@ cdef void splice(
     ndarray[int64_t, ndim=1] m_link,
     ndarray[int64_t, ndim=1] c_link,
     object stop_func = None
-):
+) except *:
     """Splice multiple links by:
     
     + Connect to contracted links.
     + Connect to other multiple links.
     """
-    print("Contracted links:", c_link)
-    cdef map[int, int] limit
-    cdef map[int, int] count
-    cdef int num
+    cdef map[int, int] limit, count
+    cdef int num1, num2
     cdef int i = 0
-    for num in m_link:
-        limit[i] = num
+    for num1 in m_link:
+        limit[i] = num1
         count[i] = 0
         i += 1
-    for num in c_link:
+    for num2 in c_link:
         # Actual limit is 1.
-        limit[i] = num
+        limit[i] = num2
         count[i] = 0
         i += 1
 
-    # TODO: Synthesis of multiple links.
-    cdef int roads = <int>(sum(m_link) / 2)
+    # Number of all connection.
+    cdef int roads = <int>((sum(m_link) + 2 * len(c_link)) / 2)
     print(roads)
+
+    # TODO: Synthesis of multiple links.
+    # TODO: Break point of stop_func.
+    cdef int ml, p, b, num3, pick_count
+    cdef tuple combine, dyad, edge
+    cdef list pool = []
+    cdef set edges = set()
+    for ml, num1 in limit:
+        pool.clear()
+        for p, num2 in limit:
+            if p == ml:
+                continue
+            if num2 < 0:
+                if count[p] > 0:
+                    continue
+                # If p is a contracted link.
+                for b, num3 in limit:
+                    if num3 < 0 or num3 - count[b] <= 0:
+                        continue
+                    # If b is a multiple link.
+                    pool.append((p, b))
+            else:
+                if num2 - count[p] <= 0:
+                    continue
+                # If p is a multiple link.
+                pool.append((p,))
+
+        pick_count = num1 - count[ml]
+        if pick_count <= 0:
+            continue
+        for combine in combinations(pool, num1 - count[ml]):
+            # TODO: Add connection.
+            for dyad in combine:
+                b = ml
+                for p in dyad:
+                    if b < p:
+                        edge = (b, p)
+                    else:
+                        edge = (p, b)
+                    edges.add(edge)
+                    count[b] += 1
+                    count[p] += 1
+                    b = p
 
 
 cpdef tuple topo(
@@ -152,17 +193,17 @@ cpdef tuple topo(
 
     # Multiple links.
     cdef ndarray[int64_t, ndim=1] m_link = labels(link_num, 3, 1)
-    print("Multiple link:", m_link)
 
     # Synthesis of contracted link and multiple link combination.
     cdef ndarray[int64_t, ndim=1] c_j
     cdef list result = []
     for c_j in contracted_link(link_num):
-        print("Contracted links assortments:", c_j)
         # TODO: Limitation of job_func.
         # job_func(str(c_j), len(m_link) * len(c_j))
         splice(result, m_link, -labels(c_j, 1, 0), stop_func)
 
+    cdef Graph g
+    print([g.edges for g in result])
     print(f"Count: {len(result)}")
     print(f"Time: {time() - t0:.04f}")
     # Return graph list and time.
