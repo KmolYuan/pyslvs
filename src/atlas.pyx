@@ -82,7 +82,11 @@ cdef ndarray[int64_t, ndim=2] contracted_link(ndarray[int64_t, ndim=1] link_num)
     return np_array(cj_list, dtype=int64)
 
 
-cdef ndarray[int64_t, ndim=1] labels(ndarray[int64_t, ndim=1] numbers, int index, int offset):
+cdef ndarray[int64_t, ndim=1] labels(
+    ndarray[int64_t, ndim=1] numbers,
+    int index,
+    int offset
+):
     """Generate labels from numbers."""
     cdef int i, num
     cdef list labels = []
@@ -156,7 +160,65 @@ cdef inline int feasible_link(map[int, int] limit, map[int, int] count):
     return -1
 
 
-cdef void synthesis(
+cdef inline bool all_connected(set edges, map[int, int] limit, map[int, int] count):
+    """Return True if all multiple links and contracted links is connected."""
+    cdef int n, c
+    for n, c in limit:
+        if c < 0:
+            # Contracted links.
+            if count[n] == 0:
+                return False
+        else:
+            # Multiple links.
+            if count[n] < c:
+                return False
+    return True
+
+
+cdef inline tuple contracted_chain(int node, int num, set edges):
+    """Get the max key and return chain."""
+    cdef int m, n
+    cdef int max_n = 0
+    for m, n in edges:
+        if m > max_n:
+            max_n = m
+        if n > max_n:
+            max_n = n
+    max_n += 1
+    cdef int b = node
+    cdef set chain = set()
+    for n in range(num - 1):
+        chain.add((b, max_n))
+        b = max_n
+        max_n += 1
+    return chain, b
+
+
+cdef inline set dyad_patch(set edges, map[int, int] limit):
+    """Return a patched edges for contracted links."""
+    cdef int n, c, b, u, v
+    cdef set new_chain
+    cdef set new_edges = edges.copy()
+    for n, c in limit:
+        # Only for contracted links.
+        if not c < 0 or c == -1:
+            continue
+        new_chain, b = contracted_chain(n, abs(c), edges)
+        # TODO: Fix bug.
+        for u, v in edges:
+            # Find once.
+            if n == u or n == v:
+                new_edges.remove((u, v))
+                if n == u:
+                    new_edges.add((v, b))
+                else:
+                    new_edges.add((u, b))
+                break
+        new_edges.update(new_chain)
+    return new_edges
+
+
+cdef bool synthesis(
     int node,
     list result,
     set edges_origin,
@@ -189,14 +251,20 @@ cdef void synthesis(
         # Recursive or end.
         next_node = feasible_link(limit, count)
         if next_node == -1:
-            # TODO: Transform function of contracted links.
-            g = Graph(edges)
+            # Is all links connected.
+            if not all_connected(edges, limit, count):
+                continue
+            # Transform function of contracted links.
+            g = Graph(dyad_patch(edges, limit))
+            # Is graph all connected.
             if not g.is_connected():
                 continue
             # Collecting to result.
             result.append(g)
         else:
-            synthesis(next_node, result, edges, limit, count, stop_func)
+            if not synthesis(next_node, result, edges, limit, count, stop_func):
+                return False
+    return True
 
 
 cdef void splice(
@@ -271,8 +339,12 @@ cpdef tuple topo(
     cdef Graph g
     cdef list result_no_repeat = []
     for g in result:
-        if not is_isomorphic(g, result_no_repeat):
-            result_no_repeat.append(g)
+        # If has triangles.
+        if not degenerate and g.has_triangles():
+            continue
+        if is_isomorphic(g, result_no_repeat):
+            continue
+        result_no_repeat.append(g)
 
     print(f"Count: {len(result_no_repeat)}")
     print(f"Time: {time() - t0:.04f}")

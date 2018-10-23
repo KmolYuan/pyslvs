@@ -74,6 +74,7 @@ cdef class Graph:
         return False
 
     cpdef bool is_connected(self):
+        """Return True if the graph is not isolated."""
         cdef int index = 0
         cdef list nodes = [self.nodes[index]]
         while index < len(nodes):
@@ -84,6 +85,7 @@ cdef class Graph:
         return len(nodes) == len(self.nodes)
 
     cpdef bool is_isomorphic(self, Graph graph):
+        """Return True if two graphs is isomorphic."""
         cdef GraphMatcher gm_gh = GraphMatcher(self, graph)
         return gm_gh.is_isomorphic()
 
