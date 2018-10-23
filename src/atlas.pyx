@@ -147,7 +147,8 @@ cdef inline list pool(int node, map[int, int] limit, map[int, int] count):
             for n2, c2 in limit:
                 if node == n2:
                     continue
-                if c2 > 0 and count[n2] == 0:
+                # Multiple links.
+                if c2 > 0 and count[n2] < c2:
                     pool_list.append((n1, n2))
 
     # Combine.
@@ -270,9 +271,10 @@ cdef void synthesis(
                     edges.add((b , d))
                 else:
                     edges.add((d , b))
-                count[b] += 1
-                count[d] += 1
                 b = d
+            count[node] += 1
+            for d in dyad:
+                count[d] += 1
         # Recursive or end.
         next_node = feasible_link(limit, count)
         if next_node == -1:
