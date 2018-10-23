@@ -203,8 +203,7 @@ cdef inline set dyad_patch(set edges, map[int, int] limit):
         # Only for contracted links.
         if not c < 0 or c == -1:
             continue
-        new_chain, b = contracted_chain(n, abs(c), edges)
-        # TODO: Fix bug.
+        new_chain, b = contracted_chain(n, abs(c), new_edges)
         for u, v in edges:
             # Find once.
             if n == u or n == v:
@@ -223,11 +222,9 @@ cdef bool synthesis(
     list result,
     set edges_origin,
     map[int, int] limit,
-    map[int, int] count_origin,
-    object stop_func = None
+    map[int, int] count_origin
 ):
     """Recursive synthesis function."""
-    # TODO: Break point of stop_func.
     # Copied edge list.
     cdef set edges
     # Combinations.
@@ -262,7 +259,7 @@ cdef bool synthesis(
             # Collecting to result.
             result.append(g)
         else:
-            if not synthesis(next_node, result, edges, limit, count, stop_func):
+            if not synthesis(next_node, result, edges, limit, count):
                 return False
     return True
 
@@ -270,8 +267,7 @@ cdef bool synthesis(
 cdef void splice(
     list result,
     ndarray[int64_t, ndim=1] m_link,
-    ndarray[int64_t, ndim=1] c_link,
-    object stop_func = None
+    ndarray[int64_t, ndim=1] c_link
 ):
     """Splice multiple links by:
     
@@ -293,7 +289,7 @@ cdef void splice(
 
     # Synthesis of multiple links.
     cdef set edges = set()
-    synthesis(0, result, edges, limit, count, stop_func)
+    synthesis(0, result, edges, limit, count)
 
 
 cdef bool is_isomorphic(Graph g, list result):
@@ -307,7 +303,7 @@ cdef bool is_isomorphic(Graph g, list result):
 
 cpdef tuple topo(
     object link_num_,
-    bool degenerate = True,
+    bool no_degenerate = True,
     object job_func = None,
     object stop_func = None
 ):
@@ -328,19 +324,23 @@ cpdef tuple topo(
     # Multiple links.
     cdef ndarray[int64_t, ndim=1] m_link = labels(link_num, 3, 1)
 
+    # Start job.
+    cdef ndarray[int64_t, ndim=2] c_links = contracted_link(link_num)
+    job_func(str(c_links), len(c_links))
+
     # Synthesis of contracted link and multiple link combination.
     cdef ndarray[int64_t, ndim=1] c_j
     cdef list result = []
-    for c_j in contracted_link(link_num):
-        # TODO: Limitation of job_func.
-        # job_func(str(c_j), len(m_link) * len(c_j))
-        splice(result, m_link, -labels(c_j, 1, 0), stop_func)
+    for c_j in c_links:
+        if stop_func and stop_func():
+            break
+        splice(result, m_link, -labels(c_j, 1, 0))
 
     cdef Graph g
     cdef list result_no_repeat = []
     for g in result:
         # If has triangles.
-        if not degenerate and g.has_triangles():
+        if g.has_triangles() and no_degenerate:
             continue
         if is_isomorphic(g, result_no_repeat):
             continue
