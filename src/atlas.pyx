@@ -329,6 +329,18 @@ cdef bool is_isomorphic(Graph g, list result):
     return False
 
 
+cdef inline list loop_chain(int num):
+    """Loop chain."""
+    cdef int i
+    cdef int b = 0
+    cdef list chain = []
+    for i in range(1, num):
+        chain.append((b, i))
+        b = i
+    chain.append((0, b))
+    return chain
+
+
 cpdef tuple topo(
     object link_num_,
     bool no_degenerate = True,
@@ -343,11 +355,15 @@ cpdef tuple topo(
     if not link_num_:
         return [], 0.
 
-    # Initial time.
-    cdef double t0 = time()
-
     # NumPy array type.
     cdef ndarray[int64_t, ndim=1] link_num = np_array(link_num_, dtype=int64)
+
+    # Single loop (Special case).
+    if len(link_num) == 1:
+        return [Graph(loop_chain(link_num[0]))], 0.
+
+    # Initial time.
+    cdef double t0 = time()
 
     # Multiple links.
     cdef ndarray[int64_t, ndim=1] m_link = labels(link_num, 3, 1)
