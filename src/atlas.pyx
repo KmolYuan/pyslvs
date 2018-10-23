@@ -124,7 +124,7 @@ cdef inline bool is_same_pool(
     return False
 
 
-cdef list pool(int node, map[int, int] limit, map[int, int] count):
+cdef inline list pool(int node, map[int, int] limit, map[int, int] count):
     """Return feasible node for combination."""
     cdef int pick_count = limit[node] - count[node]
     if pick_count <= 0:
@@ -155,9 +155,12 @@ cdef list pool(int node, map[int, int] limit, map[int, int] count):
     cdef int pool_size = len(pool_list)
     if pick_count > pool_size:
         return []
+    cdef tuple p
     cdef list combine_list = []
     cdef vector[int] indices = range(pick_count)
-    combine_list.append(tuple(pool_list[n1] for n1 in indices))
+    cdef list pick_list = [pool_list[n1] for n1 in indices]
+    if len({p[0] for p in pick_list}) == pick_count:
+        combine_list.append(tuple(pick_list))
     while True:
         for n1 in reversed(range(pick_count)):
             if indices[n1] != n1 + pool_size - pick_count:
@@ -167,7 +170,12 @@ cdef list pool(int node, map[int, int] limit, map[int, int] count):
         indices[n1] += 1
         for n2 in range(n1 + 1, pick_count):
             indices[n2] = indices[n2 - 1] + 1
-        combine_list.append(tuple(pool_list[n1] for n1 in indices))
+        pick_list.clear()
+        for n1 in indices:
+            pick_list.append(pool_list[n1])
+        if len({p[0] for p in pick_list}) != pick_count:
+            continue
+        combine_list.append(tuple(pick_list))
 
 
 cdef inline int feasible_link(map[int, int] limit, map[int, int] count):
@@ -249,7 +257,8 @@ cdef void synthesis(
     # Combinations.
     cdef int b, d, next_node
     cdef Graph g
-    cdef tuple combine, dyad
+    cdef tuple combine
+    cdef tuple dyad
     for combine in pool(node, limit, count_origin):
         edges = edges_origin.copy()
         count = count_origin
@@ -349,6 +358,7 @@ cpdef tuple topo(
     cdef ndarray[int64_t, ndim=1] c_j
     cdef list result = []
     for c_j in c_links:
+        print(c_j)
         if stop_func and stop_func():
             break
         splice(result, m_link, -labels(c_j, 1, 0))
