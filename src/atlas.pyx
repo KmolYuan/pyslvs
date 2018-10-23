@@ -9,9 +9,10 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from itertools import product, combinations
+from itertools import product
 from time import time
 from cpython cimport bool
+from libcpp.vector cimport vector
 from libcpp.map cimport map
 from numpy cimport ndarray, int64_t
 from numpy import (
@@ -123,12 +124,13 @@ cdef inline bool is_same_pool(
     return False
 
 
-cdef inline object pool(int node, map[int, int] limit, map[int, int] count):
+cdef list pool(int node, map[int, int] limit, map[int, int] count):
     """Return feasible node for combination."""
     cdef int pick_count = limit[node] - count[node]
     if pick_count <= 0:
         return []
 
+    # Create pool.
     cdef int n1, n2, c1, c2
     cdef list pool_list = []
     for n1, c1 in limit:
@@ -147,8 +149,25 @@ cdef inline object pool(int node, map[int, int] limit, map[int, int] count):
                     continue
                 if c2 > 0 and count[n2] == 0:
                     pool_list.append((n1, n2))
+
+    # Combine.
     # TODO: Need to avoid the point that has picked.
-    return combinations(pool_list, pick_count)
+    cdef int pool_size = len(pool_list)
+    if pick_count > pool_size:
+        return []
+    cdef list combine_list = []
+    cdef vector[int] indices = range(pick_count)
+    combine_list.append(tuple(pool_list[n1] for n1 in indices))
+    while True:
+        for n1 in reversed(range(pick_count)):
+            if indices[n1] != n1 + pool_size - pick_count:
+                break
+        else:
+            return combine_list
+        indices[n1] += 1
+        for n2 in range(n1 + 1, pick_count):
+            indices[n2] = indices[n2 - 1] + 1
+        combine_list.append(tuple(pool_list[n1] for n1 in indices))
 
 
 cdef inline int feasible_link(map[int, int] limit, map[int, int] count):
@@ -170,7 +189,7 @@ cdef inline bool all_connected(set edges, map[int, int] limit, map[int, int] cou
                 return False
         else:
             # Multiple links.
-            if count[n] < c:
+            if count[n] != c:
                 return False
     return True
 
@@ -217,7 +236,7 @@ cdef inline set dyad_patch(set edges, map[int, int] limit):
     return new_edges
 
 
-cdef bool synthesis(
+cdef void synthesis(
     int node,
     list result,
     set edges_origin,
@@ -259,9 +278,7 @@ cdef bool synthesis(
             # Collecting to result.
             result.append(g)
         else:
-            if not synthesis(next_node, result, edges, limit, count):
-                return False
-    return True
+            synthesis(next_node, result, edges, limit, count)
 
 
 cdef void splice(
