@@ -26,7 +26,7 @@ cdef class Graph:
 
     def __cinit__(self, edges: Sequence[Tuple[int, int]]):
         # edges
-        """edges: ((l1, l2), ...)"""
+        """edges: [(l1, l2), ...]"""
         self.edges = tuple(edges)
         # nodes
         cdef list nodes = []
@@ -51,17 +51,8 @@ cdef class Graph:
                 neighbors.append(l1)
         return tuple(neighbors)
 
-    cdef Graph compose(self, Graph graph):
-        return Graph(set(self.edges) | set(graph.edges))
-
-    cdef bool out_of_limit(self, ndarray limit):
-        cdef int n
-        for n in self.adj:
-            if len(self.adj[n]) > limit[n]:
-                return True
-        return False
-
     cpdef bool has_triangles(self):
+        """Return True if the graph has triangles."""
         cdef int n1, n2
         cdef tuple neighbors
         for neighbors in self.adj.values():
@@ -90,12 +81,19 @@ cdef class Graph:
         return gm_gh.is_isomorphic()
 
     cdef list links(self):
+        """Return types of each link."""
+        cdef tuple neighbors
         return sorted([len(neighbors) for neighbors in self.adj.values()])
 
     cdef int number_of_edges(self, int u, int v):
+        """Find the distance between u and v."""
         if v in self.adj[u]:
             return 1
         return 0
+
+    cpdef Graph copy(self):
+        """Copy self."""
+        return Graph(self.edges)
 
 
 @cython.final
