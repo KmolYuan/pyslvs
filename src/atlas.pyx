@@ -93,25 +93,42 @@ cdef ndarray[int64_t, ndim=1] labels(ndarray[int64_t, ndim=1] numbers, int index
     return np_array(labels, dtype=int64)
 
 
-cdef bool is_isomorphic(Graph g, list result):
-    """Return True is graph is isomorphic with result list."""
-    cdef Graph h
-    for h in result:
-        if g.is_isomorphic(h):
-            return True
+cdef inline bool is_same_pool(
+    int n1,
+    map[int, int] limit,
+    map[int, int] count,
+    list pool_list,
+    int pick_count
+):
+    """Return True if the multiple link is a duplicate status."""
+    # self status should be unconnected.
+    if count[n1] != 0:
+        return False
+    # Another status.
+    cdef int n2
+    cdef tuple pair
+    cdef int counter = 0
+    for pair in pool_list:
+        for n2 in pair:
+            if n2 == n1:
+                continue
+            if count[n2] == 0 and limit[n2] == limit[n1]:
+                if counter > pick_count:
+                    return True
+                counter += 1
     return False
 
 
-cdef object pool(int node, map[int, int] limit, map[int, int] count):
+cdef inline object pool(int node, map[int, int] limit, map[int, int] count):
     """Return feasible node for combination."""
-    cdef int pick = limit[node] - count[node]
-    if pick <= 0:
+    cdef int pick_count = limit[node] - count[node]
+    if pick_count <= 0:
         return []
 
     cdef int n1, n2, c1, c2
     cdef list pool_list = []
     for n1, c1 in limit:
-        if node == n1:
+        if node == n1 or is_same_pool(n1, limit, count, pool_list, pick_count):
             continue
         if c1 > 0:
             # Multiple links.
@@ -127,10 +144,10 @@ cdef object pool(int node, map[int, int] limit, map[int, int] count):
                 if c2 > 0 and count[n2] == 0:
                     pool_list.append((n1, n2))
     # TODO: Need to avoid the point that has picked.
-    return combinations(pool_list, pick)
+    return combinations(pool_list, pick_count)
 
 
-cdef int feasible_link(map[int, int] limit, map[int, int] count):
+cdef inline int feasible_link(map[int, int] limit, map[int, int] count):
     """Return next feasible multiple link, return -1 if no any matched."""
     cdef int n, c
     for n, c in limit:
@@ -209,6 +226,15 @@ cdef void splice(
     # Synthesis of multiple links.
     cdef set edges = set()
     synthesis(0, result, edges, limit, count, stop_func)
+
+
+cdef bool is_isomorphic(Graph g, list result):
+    """Return True is graph is isomorphic with result list."""
+    cdef Graph h
+    for h in result:
+        if g.is_isomorphic(h):
+            return True
+    return False
 
 
 cpdef tuple topo(
