@@ -286,6 +286,9 @@ cdef void synthesis(
             # Is graph all connected.
             if not g.is_connected():
                 continue
+            # Is graph has cut link.
+            if g.has_cut_link():
+                continue
             # Collecting to result.
             result.append(g)
         else:

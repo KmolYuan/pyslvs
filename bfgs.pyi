@@ -8,7 +8,7 @@ from typing import (
     Optional,
     Union,
 )
-from pmks import VPoint
+from .pmks import VPoint
 
 def vpoint_solving(
     vpoints: Sequence[VPoint],

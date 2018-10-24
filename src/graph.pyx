@@ -29,6 +29,7 @@ cdef class Graph:
         """edges: [(l1, l2), ...]"""
         self.edges = tuple(edges)
         # nodes
+        cdef int p1, p2
         cdef list nodes = []
         for p1, p2 in self.edges:
             if p1 not in nodes:
@@ -64,16 +65,40 @@ cdef class Graph:
                         return True
         return False
 
-    cpdef bool is_connected(self):
+    cpdef bool is_connected(self, int with_out = -1):
         """Return True if the graph is not isolated."""
+        cdef int neighbor
         cdef int index = 0
-        cdef list nodes = [self.nodes[index]]
+        cdef list nodes = []
+        # Change start node if index zero has been excluded.
+        if with_out == self.nodes[0]:
+            nodes.append(self.nodes[1])
+        else:
+            nodes.append(self.nodes[0])
+
+        # Search node by node.
         while index < len(nodes):
             for neighbor in self.adj[nodes[index]]:
-                if neighbor not in nodes:
+                if (neighbor not in nodes) and (neighbor != with_out):
                     nodes.append(neighbor)
             index += 1
+
+        if with_out != -1:
+            nodes.append(with_out)
+            print(with_out, nodes, self.nodes)
         return len(nodes) == len(self.nodes)
+
+    cpdef bool has_cut_link(self):
+        """Return True if the graph has any cut links."""
+        cdef int node
+        cdef tuple neighbors
+        for node, neighbors in self.adj.items():
+            # Only for multiple links.
+            if len(neighbors) > 2:
+                # Remove a multiple link should be keep connected.
+                if not self.is_connected(node):
+                    return True
+        return False
 
     cpdef bool is_isomorphic(self, Graph graph):
         """Return True if two graphs is isomorphic."""
