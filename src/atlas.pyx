@@ -3,6 +3,9 @@
 
 """Structure synthesis.
 
+The algorithms references:
++ https://doi.org/10.1016/j.mechmachtheory.2014.08.012
+
 author: Yuan Chang
 copyright: Copyright (C) 2016-2018
 license: AGPL
@@ -390,9 +393,10 @@ cpdef tuple topo(
     cdef Graph g
     cdef list result_no_repeat = []
     for g in result:
-        # If has triangles.
-        if g.has_triangles() and no_degenerate:
+        # If graph is degenerate.
+        if g.is_degenerate() and no_degenerate:
             continue
+        # If graph is repeated.
         if is_isomorphic(g, result_no_repeat):
             continue
         result_no_repeat.append(g)

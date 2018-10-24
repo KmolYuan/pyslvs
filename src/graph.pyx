@@ -3,6 +3,9 @@
 
 """Graph class.
 
+The algorithms references:
++ NetworkX
+
 author: Yuan Chang
 copyright: Copyright (C) 2016-2018
 license: AGPL
@@ -56,19 +59,6 @@ cdef class Graph:
         """Return degrees of freedom."""
         return 3 * (len(self.nodes) - 1) - 2 * len(self.edges)
 
-    cpdef bool has_triangles(self):
-        """Return True if the graph has triangles."""
-        cdef int n1, n2
-        cdef tuple neighbors
-        for neighbors in self.adj.values():
-            for n1 in neighbors:
-                for n2 in neighbors:
-                    if n1 == n2:
-                        continue
-                    if n1 in self.adj[n2]:
-                        return True
-        return False
-
     cpdef bool is_connected(self, int with_out = -1):
         """Return True if the graph is not isolated."""
         cdef int neighbor
@@ -103,12 +93,41 @@ cdef class Graph:
                     return True
         return False
 
+    cpdef bool is_degenerate(self):
+        """Return True if this kinematic chain is degenerate.
+        
+        + Prue all multiple contracted links recursively.
+        + Check the DOF of sub-graph if it is lower then zero.
+        """
+        if self.has_triangles():
+            return True
+        cdef int n1, n2
+        cdef tuple neighbors
+        cdef list c_l
+        cdef Graph g = self.copy()
+        cdef set mcl = set()
+        while True:
+            mcl.clear()
+            mcl.update(g.multi_contracted_links())
+            if not mcl:
+                break
+            c_l = []
+            for n1, n2 in g.edges:
+                if not {n1, n2} & mcl:
+                    c_l.append((n1, n2))
+            g = Graph(c_l)
+            if {len(neighbors) for neighbors in g.adj.values()} == {2}:
+                # The graph is a basic loop.
+                break
+
+        return g.dof() < 1
+
     cpdef bool is_isomorphic(self, Graph graph):
         """Return True if two graphs is isomorphic."""
         cdef GraphMatcher gm_gh = GraphMatcher(self, graph)
         return gm_gh.is_isomorphic()
 
-    cdef list links(self):
+    cdef list link_types(self):
         """Return types of each link."""
         cdef tuple neighbors
         return sorted([len(neighbors) for neighbors in self.adj.values()])
@@ -118,6 +137,40 @@ cdef class Graph:
         if v in self.adj[u]:
             return 1
         return 0
+
+    cdef list multi_contracted_links(self):
+        """Return a list of multiple contracted links."""
+        cdef int n1, n2, index, neighbor
+        cdef list m_links
+        for n1 in self.adj:
+            # Only for binary link.
+            if len(self.adj[n1]) != 2:
+                continue
+            # n1 is not collected yet.
+            index = 0
+            m_links = [n1]
+            while index < len(m_links):
+                for neighbor in self.adj[m_links[index]]:
+                    if len(self.adj[neighbor]) == 2:
+                        if neighbor not in m_links:
+                            m_links.append(neighbor)
+                index += 1
+            if len(m_links) > 1:
+                return m_links
+        return []
+
+    cdef bool has_triangles(self):
+        """Return True if the graph has triangles."""
+        cdef int n1, n2
+        cdef tuple neighbors
+        for neighbors in self.adj.values():
+            for n1 in neighbors:
+                for n2 in neighbors:
+                    if n1 == n2:
+                        continue
+                    if n1 in self.adj[n2]:
+                        return True
+        return False
 
     cpdef Graph copy(self):
         """Copy self."""
@@ -220,7 +273,7 @@ cdef class GraphMatcher:
             return False
 
         # Check local properties
-        if self.g1.links() != self.g2.links():
+        if self.g1.link_types() != self.g2.link_types():
             return False
         try:
             next(self.isomorphisms_iter())
