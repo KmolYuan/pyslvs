@@ -28,9 +28,9 @@ cdef class Graph:
     """NetworkX-like graph class."""
 
     def __cinit__(self, edges: Sequence[Tuple[int, int]]):
-        # edges
         """edges: [(l1, l2), ...]"""
         self.edges = tuple(edges)
+
         # nodes
         cdef int p1, p2
         cdef list nodes = []
@@ -40,6 +40,7 @@ cdef class Graph:
             if p2 not in nodes:
                 nodes.append(p2)
         self.nodes = tuple(nodes)
+
         # adj
         cdef int n
         self.adj = {n: self.neighbors(n) for n in self.nodes}
@@ -57,7 +58,7 @@ cdef class Graph:
 
     cpdef int dof(self):
         """Return degrees of freedom."""
-        return 3 * (len(self.nodes) - 1) - 2 * len(self.edges)
+        return 3 * (len(self.nodes) - 1) - (2 * len(self.edges))
 
     cpdef bool is_connected(self, int with_out = -1):
         """Return True if the graph is not isolated."""

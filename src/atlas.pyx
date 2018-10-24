@@ -57,6 +57,7 @@ cdef tuple n_c(ndarray[int64_t, ndim=1] link_num):
 
 cdef ndarray[int64_t, ndim=2] contracted_link(ndarray[int64_t, ndim=1] link_num):
     """Generate the contracted link assortments."""
+    print("Link assortment:", link_num)
     # Contracted link.
     cdef int n_c_max, n_c_min
     n_c_max, n_c_min = n_c(link_num)
@@ -65,12 +66,12 @@ cdef ndarray[int64_t, ndim=2] contracted_link(ndarray[int64_t, ndim=1] link_num)
 
     # NL2 - Nc + 2
     cdef int i_max = link_num[0] - n_c_min + 2
-    cdef int i_min = link_num[0] - n_c_max + 2
+    print("i max:", f"{link_num[0]} - {n_c_min} + 2 =", i_max)
 
-    cdef tuple m
     cdef int count, factor, index
+    cdef tuple m
     cdef list cj_list = []
-    for m in product(range(i_max + 1), repeat=i_max - 1):
+    for m in product(range(link_num[0] + 1), repeat=i_max - 1):
         # First formula.
         if not (n_c_min <= sum(m) <= n_c_max):
             continue
@@ -83,7 +84,7 @@ cdef ndarray[int64_t, ndim=2] contracted_link(ndarray[int64_t, ndim=1] link_num)
         if count == link_num[0]:
             cj_list.append(m)
 
-    return np_array(cj_list, dtype=int64)
+    return np_array(cj_list, ndmin=2, dtype=int64)
 
 
 cdef ndarray[int64_t, ndim=1] labels(
@@ -158,7 +159,6 @@ cdef inline list pool(int node, map[int, int] limit, map[int, int] count):
                     pool_list.append((n1, n2))
 
     # Combine.
-    # TODO: Need to avoid the point that has picked.
     cdef int pool_size = len(pool_list)
     if pick_count > pool_size:
         return []
