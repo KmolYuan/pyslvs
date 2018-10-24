@@ -52,6 +52,10 @@ cdef class Graph:
                 neighbors.append(l1)
         return tuple(neighbors)
 
+    cpdef int dof(self):
+        """Return degrees of freedom."""
+        return 3 * (len(self.nodes) - 1) - 2 * len(self.edges)
+
     cpdef bool has_triangles(self):
         """Return True if the graph has triangles."""
         cdef int n1, n2

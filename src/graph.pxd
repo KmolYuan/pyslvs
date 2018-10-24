@@ -21,6 +21,7 @@ cdef class Graph:
     cdef dict adj
 
     cdef inline tuple neighbors(self, int n)
+    cpdef int dof(self)
     cpdef bool has_triangles(self)
     cpdef bool is_connected(self, int with_out=*)
     cpdef bool has_cut_link(self)
