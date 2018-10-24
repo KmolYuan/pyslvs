@@ -89,7 +89,6 @@ cdef class Graph:
 
         if with_out != -1:
             nodes.append(with_out)
-            print(with_out, nodes, self.nodes)
         return len(nodes) == len(self.nodes)
 
     cpdef bool has_cut_link(self):

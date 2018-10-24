@@ -103,7 +103,8 @@ cdef inline bool is_same_pool(
     map[int, int] limit,
     map[int, int] count,
     list pool_list,
-    int pick_count
+    int pick_count,
+    int index
 ):
     """Return True if the multiple link is a duplicate status."""
     # self status should be unconnected.
@@ -114,13 +115,15 @@ cdef inline bool is_same_pool(
     cdef tuple pair
     cdef int counter = 0
     for pair in pool_list:
-        for n2 in pair:
-            if n2 == n1:
-                continue
-            if count[n2] == 0 and limit[n2] == limit[n1]:
-                if counter > pick_count:
-                    return True
-                counter += 1
+        if not index < len(pair):
+            continue
+        n2 = pair[index]
+        if n2 == n1:
+            continue
+        if count[n2] == 0 and limit[n2] == limit[n1]:
+            if counter > pick_count:
+                return True
+            counter += 1
     return False
 
 
@@ -134,7 +137,7 @@ cdef inline list pool(int node, map[int, int] limit, map[int, int] count):
     cdef int n1, n2, c1, c2
     cdef list pool_list = []
     for n1, c1 in limit:
-        if node == n1 or is_same_pool(n1, limit, count, pool_list, pick_count):
+        if node == n1 or is_same_pool(n1, limit, count, pool_list, pick_count, 0):
             continue
         if c1 > 0:
             # Multiple links.
@@ -145,7 +148,7 @@ cdef inline list pool(int node, map[int, int] limit, map[int, int] count):
             if count[n1] > 0:
                 continue
             for n2, c2 in limit:
-                if node == n2:
+                if node == n2 or is_same_pool(n2, limit, count, pool_list, pick_count, 1):
                     continue
                 # Multiple links.
                 if c2 > 0 and count[n2] < c2:
