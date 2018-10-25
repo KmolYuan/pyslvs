@@ -27,6 +27,8 @@ from numpy import (
 )
 from graph cimport Graph
 
+ctypedef map[int, int] map_int
+
 
 cdef int j_m(ndarray[int64_t, ndim=1] link_num):
     """Return value of Jm."""
@@ -107,8 +109,8 @@ cdef ndarray[int64_t, ndim=1] labels(
 
 cdef inline bool is_same_pool(
     int n1,
-    map[int, int] &limit,
-    map[int, int] &count,
+    map_int &limit,
+    map_int &count,
     list pool_list,
     int pick_count,
     int index
@@ -134,7 +136,29 @@ cdef inline bool is_same_pool(
     return False
 
 
-cdef inline list picked_branch(int node, map[int, int] &limit, map[int, int] &count):
+cdef inline bool feasible_pick_list(list pick_list, map_int &limit, map_int &count):
+    """Return True if it is a feasible pick list."""
+    cdef int n
+    cdef tuple combine
+    cdef map_int pre_count
+    for combine in pick_list:
+        for n in combine:
+            if pre_count.find(n) != pre_count.end():
+                pre_count[n] = 1
+            else:
+                pre_count[n] += 1
+            if limit[n] < 0:
+                # Contracted links.
+                if pre_count[n] + count[n] > 1:
+                    return False
+            else:
+                # Multiple links.
+                if limit[n] < pre_count[n] + count[n]:
+                    return False
+    return True
+
+
+cdef inline list picked_branch(int node, map_int &limit, map_int &count):
     """Return feasible node for combination."""
     cdef int pick_count = limit[node] - count[node]
     if pick_count <= 0:
@@ -176,10 +200,9 @@ cdef inline list picked_branch(int node, map[int, int] &limit, map[int, int] &co
     cdef vector[int] indices = range(pick_count)
 
     # Combinations loop with number checking.
-    # TODO: Need to be optimized.
     cdef list pick_list = [pool_list[n1] for n1 in indices]
     # Check if contracted link is over selected.
-    if len({p[0] for p in pick_list}) == pick_count:
+    if feasible_pick_list(pick_list, limit, count):
         combine_list.append(tuple(pick_list))
     while True:
         for n1 in reversed(range(pick_count)):
@@ -194,12 +217,12 @@ cdef inline list picked_branch(int node, map[int, int] &limit, map[int, int] &co
         for n1 in indices:
             pick_list.append(pool_list[n1])
         # Check if contracted link is over selected.
-        if len({p[0] for p in pick_list}) != pick_count:
+        if not feasible_pick_list(pick_list, limit, count):
             continue
         combine_list.append(tuple(pick_list))
 
 
-cdef inline int feasible_link(map[int, int] &limit, map[int, int] &count):
+cdef inline int feasible_link(map_int &limit, map_int &count):
     """Return next feasible multiple link, return -1 if no any matched."""
     cdef int n, c
     for n, c in limit:
@@ -208,7 +231,7 @@ cdef inline int feasible_link(map[int, int] &limit, map[int, int] &count):
     return -1
 
 
-cdef inline bool all_connected(set edges, map[int, int] &limit, map[int, int] &count):
+cdef inline bool all_connected(set edges, map_int &limit, map_int &count):
     """Return True if all multiple links and contracted links is connected."""
     cdef int n, c
     for n, c in limit:
@@ -242,7 +265,7 @@ cdef inline tuple contracted_chain(int node, int num, set edges):
     return chain, b
 
 
-cdef inline set dyad_patch(set edges, map[int, int] &limit):
+cdef inline set dyad_patch(set edges, map_int &limit):
     """Return a patched edges for contracted links."""
     cdef int n, c, b, u, v
     cdef set new_chain
@@ -269,15 +292,15 @@ cdef void synthesis(
     int node,
     list result,
     set edges_origin,
-    map[int, int] &limit,
-    map[int, int] &count_origin,
+    map_int &limit,
+    map_int &count_origin,
     object stop_func
 ):
     """Recursive synthesis function."""
     # Copied edge list.
     cdef set edges
-    cdef map[int, int] tmp
-    cdef map[int, int] *count
+    cdef map_int tmp
+    cdef map_int *count
     # Combinations.
     cdef int b, d, next_node
     cdef Graph g
@@ -338,7 +361,7 @@ cdef void splice(
     + Connect to contracted links.
     + Connect to other multiple links.
     """
-    cdef map[int, int] limit, count
+    cdef map_int limit, count
     cdef int num1, num2
     cdef int i = 0
     for num1 in m_link:
@@ -387,7 +410,7 @@ cpdef tuple topo(
     """Linkage mechanism topological function.
     
     link_num_ = [L2, L3, L4, ...]
-    job_func: Optional[Callable[[list], None]]
+    job_func: Optional[Callable[[List[int]], None]]
     step_func: Optional[Callable[[], None]]
     stop_func: Optional[Callable[[], None]]
     """
