@@ -270,7 +270,8 @@ cdef void synthesis(
     list result,
     set edges_origin,
     map[int, int] &limit,
-    map[int, int] &count_origin
+    map[int, int] &count_origin,
+    object stop_func
 ):
     """Recursive synthesis function."""
     # Copied edge list.
@@ -284,6 +285,9 @@ cdef void synthesis(
     cdef tuple dyad
     cdef list branches = picked_branch(node, limit, count_origin)
     for combine in branches:
+        # Check if stop.
+        if stop_func and stop_func():
+            return
         if len(branches) > 1:
             edges = edges_origin.copy()
             tmp = count_origin
@@ -320,13 +324,14 @@ cdef void synthesis(
             # Collecting to result.
             result.append(g)
         else:
-            synthesis(next_node, result, edges, limit, count[0])
+            synthesis(next_node, result, edges, limit, count[0], stop_func)
 
 
 cdef void splice(
     list result,
     ndarray[int64_t, ndim=1] m_link,
-    ndarray[int64_t, ndim=1] c_link
+    ndarray[int64_t, ndim=1] c_link,
+    object stop_func,
 ):
     """Splice multiple links by:
     
@@ -348,7 +353,7 @@ cdef void splice(
 
     # Synthesis of multiple links.
     cdef set edges = set()
-    synthesis(0, result, edges, limit, count)
+    synthesis(0, result, edges, limit, count, stop_func)
 
 
 cdef bool is_isomorphic(Graph g, list result):
@@ -376,12 +381,15 @@ cpdef tuple topo(
     object link_num_,
     bool no_degenerate = True,
     object job_func = None,
+    object step_func = None,
     object stop_func = None
 ):
     """Linkage mechanism topological function.
     
     link_num_ = [L2, L3, L4, ...]
-    links = [[number_code]: joint_number, ...]
+    job_func: Optional[Callable[[list], None]]
+    step_func: Optional[Callable[[], None]]
+    stop_func: Optional[Callable[[], None]]
     """
     if not link_num_:
         return [], 0.
@@ -401,16 +409,17 @@ cpdef tuple topo(
 
     # Start job.
     cdef ndarray[int64_t, ndim=2] c_links = contracted_link(link_num)
-    job_func(str(c_links), len(c_links))
 
     # Synthesis of contracted link and multiple link combination.
     cdef ndarray[int64_t, ndim=1] c_j
+    for c_j in c_links:
+        job_func(list(c_j))
+
     cdef list result = []
     for c_j in c_links:
         print(c_j)
-        if stop_func and stop_func():
-            break
-        splice(result, m_link, -labels(c_j, 1, 0))
+        splice(result, m_link, -labels(c_j, 1, 0), stop_func)
+        step_func()
 
     cdef Graph g
     cdef list result_no_repeat = []
@@ -422,6 +431,7 @@ cpdef tuple topo(
         if is_isomorphic(g, result_no_repeat):
             continue
         result_no_repeat.append(g)
+    step_func()
 
     print(f"Count: {len(result_no_repeat)}")
     print(f"Time: {time() - t0:.04f}")
