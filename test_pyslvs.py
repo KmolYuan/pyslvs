@@ -109,8 +109,8 @@ class CoreTest(TestCase):
         self.assertTrue(isclose(x, 120))
         self.assertTrue(isclose(y, 70))
 
-    def test_topologic(self):
-        """Testing 'topologic' libraries.
+    def test_atlas(self):
+        """Testing 'atlas' and 'graph' libraries.
 
         + 'topo' function.
         + 'Graph' class.
@@ -120,8 +120,17 @@ class CoreTest(TestCase):
         I = Graph([(0, 1), (0, 2), (1, 4), (2, 5), (3, 4), (3, 5), (4, 5)])
         self.assertTrue(G.is_isomorphic(H))
         self.assertFalse(G.is_isomorphic(I))
-        answer, time = topo([4, 2])
+        answer, _ = topo([4, 2])
         self.assertEqual(len(answer), 2)
+        answers = []
+        answers_degenerate = []
+        for link_assortment in ([4, 4, 0], [5, 2, 1], [6, 0, 2]):
+            answer, _ = topo(link_assortment)
+            answers.extend(answer)
+            answer, _ = topo(link_assortment, False)
+            answers_degenerate.extend(answer)
+        self.assertEqual(len(answers), 16)
+        self.assertEqual(len(answers_degenerate), 40)
 
     def test_solving(self):
         """Test triangular formula solving.
