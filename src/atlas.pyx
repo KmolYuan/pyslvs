@@ -4,7 +4,10 @@
 """Structure synthesis.
 
 The algorithms references:
-+ https://doi.org/10.1016/j.mechmachtheory.2014.08.012
++ On the Number Synthesis of Kinematic Chains
+    + author: Hong-Sen Yan, Yu-Ting Chiu
+    + Mechanism and Machine Theory, Volume 89, 2015, Pages 128-144, ISSN 0094-114X
+    + https://doi.org/10.1016/j.mechmachtheory.2014.08.012
 
 author: Yuan Chang
 copyright: Copyright (C) 2016-2018
@@ -104,8 +107,8 @@ cdef ndarray[int64_t, ndim=1] labels(
 
 cdef inline bool is_same_pool(
     int n1,
-    map[int, int] limit,
-    map[int, int] count,
+    map[int, int] &limit,
+    map[int, int] &count,
     list pool_list,
     int pick_count,
     int index
@@ -131,7 +134,7 @@ cdef inline bool is_same_pool(
     return False
 
 
-cdef inline list pool(int node, map[int, int] limit, map[int, int] count):
+cdef inline list picked_branch(int node, map[int, int] &limit, map[int, int] &count):
     """Return feasible node for combination."""
     cdef int pick_count = limit[node] - count[node]
     if pick_count <= 0:
@@ -141,7 +144,9 @@ cdef inline list pool(int node, map[int, int] limit, map[int, int] count):
     cdef int n1, n2, c1, c2
     cdef list pool_list = []
     for n1, c1 in limit:
-        if node == n1 or is_same_pool(n1, limit, count, pool_list, pick_count, 0):
+        if node == n1:
+            continue
+        if is_same_pool(n1, limit, count, pool_list, pick_count, 0):
             continue
         if c1 > 0:
             # Multiple links.
@@ -152,20 +157,28 @@ cdef inline list pool(int node, map[int, int] limit, map[int, int] count):
             if count[n1] > 0:
                 continue
             for n2, c2 in limit:
-                if node == n2 or is_same_pool(n2, limit, count, pool_list, pick_count, 1):
+                if node == n2:
+                    continue
+                if is_same_pool(n2, limit, count, pool_list, pick_count, 1):
                     continue
                 # Multiple links.
                 if c2 > 0 and count[n2] < c2:
                     pool_list.append((n1, n2))
 
-    # Combine.
+    # Over picked (error graph).
     cdef int pool_size = len(pool_list)
     if pick_count > pool_size:
         return []
+
+    # Combine.
     cdef tuple p
     cdef list combine_list = []
     cdef vector[int] indices = range(pick_count)
+
+    # Combinations loop with number checking.
+    # TODO: Need to be optimized.
     cdef list pick_list = [pool_list[n1] for n1 in indices]
+    # Check if contracted link is over selected.
     if len({p[0] for p in pick_list}) == pick_count:
         combine_list.append(tuple(pick_list))
     while True:
@@ -180,12 +193,13 @@ cdef inline list pool(int node, map[int, int] limit, map[int, int] count):
         pick_list.clear()
         for n1 in indices:
             pick_list.append(pool_list[n1])
+        # Check if contracted link is over selected.
         if len({p[0] for p in pick_list}) != pick_count:
             continue
         combine_list.append(tuple(pick_list))
 
 
-cdef inline int feasible_link(map[int, int] limit, map[int, int] count):
+cdef inline int feasible_link(map[int, int] &limit, map[int, int] &count):
     """Return next feasible multiple link, return -1 if no any matched."""
     cdef int n, c
     for n, c in limit:
@@ -194,7 +208,7 @@ cdef inline int feasible_link(map[int, int] limit, map[int, int] count):
     return -1
 
 
-cdef inline bool all_connected(set edges, map[int, int] limit, map[int, int] count):
+cdef inline bool all_connected(set edges, map[int, int] &limit, map[int, int] &count):
     """Return True if all multiple links and contracted links is connected."""
     cdef int n, c
     for n, c in limit:
@@ -228,7 +242,7 @@ cdef inline tuple contracted_chain(int node, int num, set edges):
     return chain, b
 
 
-cdef inline set dyad_patch(set edges, map[int, int] limit):
+cdef inline set dyad_patch(set edges, map[int, int] &limit):
     """Return a patched edges for contracted links."""
     cdef int n, c, b, u, v
     cdef set new_chain
@@ -255,20 +269,28 @@ cdef void synthesis(
     int node,
     list result,
     set edges_origin,
-    map[int, int] limit,
-    map[int, int] count_origin
+    map[int, int] &limit,
+    map[int, int] &count_origin
 ):
     """Recursive synthesis function."""
     # Copied edge list.
     cdef set edges
+    cdef map[int, int] tmp
+    cdef map[int, int] *count
     # Combinations.
     cdef int b, d, next_node
     cdef Graph g
     cdef tuple combine
     cdef tuple dyad
-    for combine in pool(node, limit, count_origin):
-        edges = edges_origin.copy()
-        count = count_origin
+    cdef list branches = picked_branch(node, limit, count_origin)
+    for combine in branches:
+        if len(branches) > 1:
+            edges = edges_origin.copy()
+            tmp = count_origin
+            count = &tmp
+        else:
+            edges = edges_origin
+            count = &count_origin
         # Collecting to edges.
         for dyad in combine:
             b = node
@@ -278,14 +300,14 @@ cdef void synthesis(
                 else:
                     edges.add((d , b))
                 b = d
-            count[node] += 1
+            count[0][node] += 1
             for d in dyad:
-                count[d] += 1
+                count[0][d] += 1
         # Recursive or end.
-        next_node = feasible_link(limit, count)
+        next_node = feasible_link(limit, count[0])
         if next_node == -1:
             # Is all links connected.
-            if not all_connected(edges, limit, count):
+            if not all_connected(edges, limit, count[0]):
                 continue
             # Transform function of contracted links.
             g = Graph(dyad_patch(edges, limit))
@@ -298,7 +320,7 @@ cdef void synthesis(
             # Collecting to result.
             result.append(g)
         else:
-            synthesis(next_node, result, edges, limit, count)
+            synthesis(next_node, result, edges, limit, count[0])
 
 
 cdef void splice(
@@ -330,7 +352,7 @@ cdef void splice(
 
 
 cdef bool is_isomorphic(Graph g, list result):
-    """Return True is graph is isomorphic with result list."""
+    """Return True if graph is isomorphic with result list."""
     cdef Graph h
     for h in result:
         if g.is_isomorphic(h):
