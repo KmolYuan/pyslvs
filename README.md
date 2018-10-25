@@ -83,3 +83,7 @@ In Pyslvs, expression is mainly to [PMKS](http://designengrlab.github.io/PMKS/),
 + **de** library:
 
     Differential Evolution for dimensional synthesis.
+
++ **verify** library:
+
+    Provide base fitness function class for algorithm.
