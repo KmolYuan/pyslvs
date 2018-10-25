@@ -160,6 +160,7 @@ cdef inline bool feasible_pick_list(list pick_list, map_int &limit, map_int &cou
 
 cdef inline list picked_branch(int node, map_int &limit, map_int &count):
     """Return feasible node for combination."""
+    # TODO: Need to be optimized.
     cdef int pick_count = limit[node] - count[node]
     if pick_count <= 0:
         return []
@@ -231,7 +232,7 @@ cdef inline int feasible_link(map_int &limit, map_int &count):
     return -1
 
 
-cdef inline bool all_connected(set edges, map_int &limit, map_int &count):
+cdef inline bool all_connected(map_int &limit, map_int &count):
     """Return True if all multiple links and contracted links is connected."""
     cdef int n, c
     for n, c in limit:
@@ -334,7 +335,7 @@ cdef void synthesis(
         next_node = feasible_link(limit, count[0])
         if next_node == -1:
             # Is all links connected.
-            if not all_connected(edges, limit, count[0]):
+            if not all_connected(limit, count[0]):
                 continue
             # Transform function of contracted links.
             g = Graph(dyad_patch(edges, limit))
@@ -435,18 +436,24 @@ cpdef tuple topo(
 
     # Synthesis of contracted link and multiple link combination.
     cdef ndarray[int64_t, ndim=1] c_j
-    for c_j in c_links:
-        job_func(list(c_j))
+    if job_func:
+        for c_j in c_links:
+            job_func(list(c_j))
 
     cdef list result = []
     for c_j in c_links:
         print(c_j)
         splice(result, m_link, -labels(c_j, 1, 0), stop_func)
-        step_func()
+        if step_func:
+            step_func()
+
+    print(f"Done. Start compare results ({len(result)}) ...")
 
     cdef Graph g
     cdef list result_no_repeat = []
     for g in result:
+        if stop_func and stop_func():
+            break
         # If graph is degenerate.
         if g.is_degenerate() and no_degenerate:
             continue
@@ -454,7 +461,8 @@ cpdef tuple topo(
         if is_isomorphic(g, result_no_repeat):
             continue
         result_no_repeat.append(g)
-    step_func()
+    if step_func:
+        step_func()
 
     print(f"Count: {len(result_no_repeat)}")
     print(f"Time: {time() - t0:.04f}")
