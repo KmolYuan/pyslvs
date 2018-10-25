@@ -127,12 +127,12 @@ cdef inline bool is_same_pool(
         if not index < len(pair):
             continue
         n2 = pair[index]
-        if n2 == n1:
+        # Same type unlink nodes.
+        if limit[n2] != limit[n1] or n2 == n1 or count[n2] != 0:
             continue
-        if count[n2] == 0 and limit[n2] == limit[n1]:
-            if counter > pick_count:
-                return True
-            counter += 1
+        if counter > pick_count:
+            return True
+        counter += 1
     return False
 
 
@@ -153,7 +153,7 @@ cdef inline bool feasible_pick_list(list pick_list, map_int &limit, map_int &cou
                     return False
             else:
                 # Multiple links.
-                if limit[n] < pre_count[n] + count[n]:
+                if pre_count[n] + count[n] > limit[n]:
                     return False
     return True
 
