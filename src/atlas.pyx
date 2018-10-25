@@ -160,7 +160,6 @@ cdef inline bool feasible_pick_list(list pick_list, map_int &limit, map_int &cou
 
 cdef inline list picked_branch(int node, map_int &limit, map_int &count):
     """Return feasible node for combination."""
-    # TODO: Need to be optimized.
     cdef int pick_count = limit[node] - count[node]
     if pick_count <= 0:
         return []
@@ -195,32 +194,34 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
     if pick_count > pool_size:
         return []
 
-    # Combine.
-    cdef tuple p
+    # Combination used containers.
     cdef list combine_list = []
     cdef vector[int] indices = range(pick_count)
 
     # Combinations loop with number checking.
-    cdef list pick_list = [pool_list[n1] for n1 in indices]
-    # Check if contracted link is over selected.
-    if feasible_pick_list(pick_list, limit, count):
-        combine_list.append(tuple(pick_list))
+    # TODO: Need to be optimized: Remove same type link picking.
+    cdef list pick_list = []
     while True:
+        for n1 in indices:
+            pick_list.append(pool_list[n1])
+
+        # Check if contracted link is over selected.
+        if not feasible_pick_list(pick_list, limit, count):
+            continue
+
+        # Collecting.
+        combine_list.append(tuple(pick_list))
+
         for n1 in reversed(range(pick_count)):
-            if indices[n1] != n1 + pool_size - pick_count:
+            if indices[n1] != (n1 + pool_size - pick_count):
                 break
         else:
             return combine_list
+
         indices[n1] += 1
         for n2 in range(n1 + 1, pick_count):
             indices[n2] = indices[n2 - 1] + 1
         pick_list.clear()
-        for n1 in indices:
-            pick_list.append(pool_list[n1])
-        # Check if contracted link is over selected.
-        if not feasible_pick_list(pick_list, limit, count):
-            continue
-        combine_list.append(tuple(pick_list))
 
 
 cdef inline int feasible_link(map_int &limit, map_int &count):
