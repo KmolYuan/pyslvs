@@ -196,20 +196,52 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
 
     # Combinations loop with number checking.
     # TODO: Need to be optimized: Remove same type link picking.
+    cdef tuple hash_code, hash_codes
     cdef vector[int] indices = range(pick_count)
+    cdef bool failed = False
     cdef set types = set()
     cdef list pick_list = []
+    cdef list hash_list = []
     cdef list combine_list = []
     while True:
+        # Combine.
         for n1 in indices:
             pick_list.append(pool_list[n1])
+            c1 = pool_list[n1][0]
+            if len(pool_list[n1]) == 1:
+                if count[c1] == 0:
+                    hash_code = (limit[c1],)
+                else:
+                    hash_code = (hash(str(c1)),)
+            else:
+                c2 = pool_list[n1][1]
+                if count[c2] == 0:
+                    hash_code = (limit[c1], limit[c2])
+                else:
+                    hash_code = (limit[c1], hash(str(c2)))
+            hash_list.append(hash_code)
+
+        # Check hash codes.
+        if not failed and hash_list:
+            hash_list.sort()
+            hash_codes = tuple(hash_list)
+            if hash_codes in types:
+                # Fixme: failed = True
+                pass
+            else:
+                types.add(hash_codes)
 
         # Check if contracted link is over selected.
-        if is_over_count(pick_list, limit, count):
-            continue
+        if not failed and is_over_count(pick_list, limit, count):
+            failed = True
 
         # Collecting.
-        combine_list.append(tuple(pick_list))
+        if not failed:
+            combine_list.append(tuple(pick_list))
+
+        # Initialize.
+        failed = False
+        hash_list.clear()
         pick_list.clear()
 
         # Check combination is over.
@@ -219,6 +251,7 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
         else:
             return combine_list
 
+        # Next indexing.
         indices[n1] += 1
         for n2 in range(n1 + 1, pick_count):
             indices[n2] = indices[n2 - 1] + 1
