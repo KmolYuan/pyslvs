@@ -1,6 +1,11 @@
 Change Log
 ===
 
+Version 18.10
+===
+
++ Three types of degenerate filter for 'topo' function.
+
 Version 18.09.1
 ===
 

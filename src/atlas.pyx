@@ -143,7 +143,7 @@ cdef inline bool is_over_count(list pick_list, map_int &limit, map_int &count):
     cdef map_int pre_count
     for candidate in pick_list:
         for n in candidate:
-            if pre_count.find(n) != pre_count.end():
+            if pre_count.find(n) == pre_count.end():
                 pre_count[n] = 1
             else:
                 pre_count[n] += 1
@@ -194,6 +194,9 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
     if pick_count > pool_size:
         return []
 
+    for n1, n2 in limit:
+        print(n1, n2, count[n1])
+
     # Combinations loop with number checking.
     # TODO: Need to be optimized: Remove same type link picking.
     cdef tuple hash_code, hash_codes
@@ -209,11 +212,13 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
             pick_list.append(pool_list[n1])
             c1 = pool_list[n1][0]
             if len(pool_list[n1]) == 1:
+                # Multiple links.
                 if count[c1] == 0:
                     hash_code = (limit[c1],)
                 else:
                     hash_code = (hash(str(c1)),)
             else:
+                # Contracted links.
                 c2 = pool_list[n1][1]
                 if count[c2] == 0:
                     hash_code = (limit[c1], limit[c2])
@@ -221,19 +226,21 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
                     hash_code = (limit[c1], hash(str(c2)))
             hash_list.append(hash_code)
 
+        # Check if contracted link is over selected.
+        if not failed and is_over_count(pick_list, limit, count):
+            failed = True
+
         # Check hash codes.
         if not failed and hash_list:
             hash_list.sort()
             hash_codes = tuple(hash_list)
             if hash_codes in types:
-                # Fixme: failed = True
+                #print("Pick failed:", pick_list)
+                #failed = True
                 pass
             else:
+                print(node, "Pick got:", pick_list)
                 types.add(hash_codes)
-
-        # Check if contracted link is over selected.
-        if not failed and is_over_count(pick_list, limit, count):
-            failed = True
 
         # Collecting.
         if not failed:
@@ -329,7 +336,7 @@ cdef void synthesis(
     set edges_origin,
     map_int &limit,
     map_int &count_origin,
-    bool no_degenerate,
+    int no_degenerate,
     object stop_func
 ):
     """Recursive synthesis function."""
@@ -381,7 +388,9 @@ cdef void synthesis(
             if g.has_cut_link():
                 continue
             # Is graph degenerated.
-            if g.is_degenerate() and no_degenerate:
+            if no_degenerate == 0 and not g.is_degenerate():
+                continue
+            elif no_degenerate == 1 and g.is_degenerate():
                 continue
             # Collecting to result.
             result.append(g)
@@ -393,7 +402,7 @@ cdef void splice(
     list result,
     ndarray[int64_t, ndim=1] m_link,
     ndarray[int64_t, ndim=1] c_link,
-    bool no_degenerate,
+    int no_degenerate,
     object stop_func,
 ):
     """Splice multiple links by:
@@ -442,7 +451,7 @@ cdef inline list loop_chain(int num):
 
 cpdef tuple topo(
     object link_num_,
-    bool no_degenerate = True,
+    int no_degenerate = 1,
     object job_func = None,
     object step_func = None,
     object stop_func = None
@@ -450,6 +459,10 @@ cpdef tuple topo(
     """Linkage mechanism topological function.
     
     link_num_ = [L2, L3, L4, ...]
+    no_degenerate:
+        0: only degenerate.
+        1: no degenerate.
+        2: all.
     job_func: Optional[Callable[[List[int], int], None]]
     step_func: Optional[Callable[[], None]]
     stop_func: Optional[Callable[[], None]]
