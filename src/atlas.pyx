@@ -115,7 +115,7 @@ cdef inline bool is_same_pool(
     int pick_count,
     int index
 ):
-    """Return True if the multiple link is a duplicate status."""
+    """Return True if 'n1' is duplicated in 'pool_list' with 'index' order."""
     # self status should be unconnected.
     if count[n1] != 0:
         return False
@@ -136,13 +136,13 @@ cdef inline bool is_same_pool(
     return False
 
 
-cdef inline bool feasible_pick_list(list pick_list, map_int &limit, map_int &count):
+cdef inline bool is_over_count(list pick_list, map_int &limit, map_int &count):
     """Return True if it is a feasible pick list."""
     cdef int n
-    cdef tuple combine
+    cdef tuple candidate
     cdef map_int pre_count
-    for combine in pick_list:
-        for n in combine:
+    for candidate in pick_list:
+        for n in candidate:
             if pre_count.find(n) != pre_count.end():
                 pre_count[n] = 1
             else:
@@ -150,12 +150,12 @@ cdef inline bool feasible_pick_list(list pick_list, map_int &limit, map_int &cou
             if limit[n] < 0:
                 # Contracted links.
                 if pre_count[n] + count[n] > 1:
-                    return False
+                    return True
             else:
                 # Multiple links.
                 if pre_count[n] + count[n] > limit[n]:
-                    return False
-    return True
+                    return True
+    return False
 
 
 cdef inline list picked_branch(int node, map_int &limit, map_int &count):
@@ -206,7 +206,7 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
             pick_list.append(pool_list[n1])
 
         # Check if contracted link is over selected.
-        if not feasible_pick_list(pick_list, limit, count):
+        if is_over_count(pick_list, limit, count):
             continue
 
         # Collecting.
