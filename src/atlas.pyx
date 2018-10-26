@@ -161,7 +161,7 @@ cdef inline bool is_over_count(list pick_list, map_int &limit, map_int &count):
 cdef inline list picked_branch(int node, map_int &limit, map_int &count):
     """Return feasible node for combination."""
     cdef int pick_count = limit[node] - count[node]
-    if pick_count <= 0:
+    if pick_count < 1:
         return []
 
     # Create pool.
@@ -194,13 +194,12 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
     if pick_count > pool_size:
         return []
 
-    # Combination used containers.
-    cdef list combine_list = []
-    cdef vector[int] indices = range(pick_count)
-
     # Combinations loop with number checking.
     # TODO: Need to be optimized: Remove same type link picking.
+    cdef vector[int] indices = range(pick_count)
+    cdef set types = set()
     cdef list pick_list = []
+    cdef list combine_list = []
     while True:
         for n1 in indices:
             pick_list.append(pool_list[n1])
@@ -211,7 +210,9 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
 
         # Collecting.
         combine_list.append(tuple(pick_list))
+        pick_list.clear()
 
+        # Check combination is over.
         for n1 in reversed(range(pick_count)):
             if indices[n1] != (n1 + pool_size - pick_count):
                 break
@@ -221,7 +222,6 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
         indices[n1] += 1
         for n2 in range(n1 + 1, pick_count):
             indices[n2] = indices[n2 - 1] + 1
-        pick_list.clear()
 
 
 cdef inline int feasible_link(map_int &limit, map_int &count):
@@ -458,7 +458,6 @@ cpdef tuple topo(
         job_func([], len(result) - 1)
 
     cdef Graph g
-    cdef int repeated = 0
     cdef list result_no_repeat = []
     for g in result:
         if stop_func and stop_func():
@@ -467,11 +466,9 @@ cpdef tuple topo(
             step_func()
         # If graph is repeated.
         if is_isomorphic(g, result_no_repeat):
-            repeated += 1
             continue
         result_no_repeat.append(g)
 
-    print(f"Repeated: {repeated}")
     print(f"Count: {len(result_no_repeat)}")
     print(f"Time: {time() - t0:.04f}")
     # Return graph list and time.
