@@ -296,6 +296,7 @@ cdef void synthesis(
     set edges_origin,
     map_int &limit,
     map_int &count_origin,
+    bool no_degenerate,
     object stop_func
 ):
     """Recursive synthesis function."""
@@ -346,16 +347,20 @@ cdef void synthesis(
             # Is graph has cut link.
             if g.has_cut_link():
                 continue
+            # Is graph degenerated.
+            if g.is_degenerate() and no_degenerate:
+                continue
             # Collecting to result.
             result.append(g)
         else:
-            synthesis(next_node, result, edges, limit, count[0], stop_func)
+            synthesis(next_node, result, edges, limit, count[0], no_degenerate, stop_func)
 
 
 cdef void splice(
     list result,
     ndarray[int64_t, ndim=1] m_link,
     ndarray[int64_t, ndim=1] c_link,
+    bool no_degenerate,
     object stop_func,
 ):
     """Splice multiple links by:
@@ -378,7 +383,7 @@ cdef void splice(
 
     # Synthesis of multiple links.
     cdef set edges = set()
-    synthesis(0, result, edges, limit, count, stop_func)
+    synthesis(0, result, edges, limit, count, no_degenerate, stop_func)
 
 
 cdef bool is_isomorphic(Graph g, list result):
@@ -412,7 +417,7 @@ cpdef tuple topo(
     """Linkage mechanism topological function.
     
     link_num_ = [L2, L3, L4, ...]
-    job_func: Optional[Callable[[List[int]], None]]
+    job_func: Optional[Callable[[List[int], int], None]]
     step_func: Optional[Callable[[], None]]
     stop_func: Optional[Callable[[], None]]
     """
@@ -439,32 +444,34 @@ cpdef tuple topo(
     cdef ndarray[int64_t, ndim=1] c_j
     if job_func:
         for c_j in c_links:
-            job_func(list(c_j))
+            job_func(list(c_j), 1)
 
     cdef list result = []
     for c_j in c_links:
         print(c_j)
-        splice(result, m_link, -labels(c_j, 1, 0), stop_func)
+        splice(result, m_link, -labels(c_j, 1, 0), no_degenerate, stop_func)
         if step_func:
             step_func()
 
     print(f"Done. Start compare results ({len(result)}) ...")
+    if job_func:
+        job_func([], len(result) - 1)
 
     cdef Graph g
+    cdef int repeated = 0
     cdef list result_no_repeat = []
     for g in result:
         if stop_func and stop_func():
             break
-        # If graph is degenerate.
-        if g.is_degenerate() and no_degenerate:
-            continue
+        if step_func:
+            step_func()
         # If graph is repeated.
         if is_isomorphic(g, result_no_repeat):
+            repeated += 1
             continue
         result_no_repeat.append(g)
-    if step_func:
-        step_func()
 
+    print(f"Repeated: {repeated}")
     print(f"Count: {len(result_no_repeat)}")
     print(f"Time: {time() - t0:.04f}")
     # Return graph list and time.
