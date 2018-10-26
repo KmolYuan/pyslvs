@@ -71,8 +71,8 @@ cdef ndarray[int64_t, ndim=2] contracted_link(ndarray[int64_t, ndim=1] link_num)
 
     # NL2 - Nc + 2
     cdef int i_max = link_num[0] - n_c_min + 2
-    print("i max:", f"{link_num[0]} - {n_c_min} + 2 =", i_max)
 
+    # Matching formula.
     cdef int count, factor, index
     cdef tuple m
     cdef list cj_list = []
@@ -105,35 +105,6 @@ cdef ndarray[int64_t, ndim=1] labels(
             labels.append(index)
         index += 1
     return np_array(labels, dtype=int64)
-
-
-cdef inline bool is_same_pool(
-    int n1,
-    map_int &limit,
-    map_int &count,
-    list pool_list,
-    int pick_count,
-    int index
-):
-    """Return True if 'n1' is duplicated in 'pool_list' with 'index' order."""
-    # self status should be unconnected.
-    if count[n1] != 0:
-        return False
-    # Another status.
-    cdef int n2
-    cdef tuple pair
-    cdef int counter = 0
-    for pair in pool_list:
-        if not index < len(pair):
-            continue
-        n2 = pair[index]
-        # Same type unlink nodes.
-        if limit[n2] != limit[n1] or n2 == n1 or count[n2] != 0:
-            continue
-        if counter > pick_count:
-            return True
-        counter += 1
-    return False
 
 
 cdef inline bool is_over_count(list pick_list, map_int &limit, map_int &count):
@@ -170,8 +141,6 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
     for n1, c1 in limit:
         if node == n1:
             continue
-        if is_same_pool(n1, limit, count, pool_list, pick_count, 0):
-            continue
         if c1 > 0:
             # Multiple links.
             if count[n1] < c1:
@@ -183,8 +152,6 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
             for n2, c2 in limit:
                 if node == n2:
                     continue
-                if is_same_pool(n2, limit, count, pool_list, pick_count, 1):
-                    continue
                 # Multiple links.
                 if c2 > 0 and count[n2] < c2:
                     pool_list.append((n1, n2))
@@ -193,9 +160,6 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
     cdef int pool_size = len(pool_list)
     if pick_count > pool_size:
         return []
-
-    for n1, n2 in limit:
-        print(n1, n2, count[n1])
 
     # Combinations loop with number checking.
     # TODO: Need to be optimized: Remove same type link picking.
@@ -213,17 +177,11 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
             c1 = pool_list[n1][0]
             if len(pool_list[n1]) == 1:
                 # Multiple links.
-                if count[c1] == 0:
-                    hash_code = (limit[c1],)
-                else:
-                    hash_code = (hash(str(c1)),)
+                hash_code = (hash(str(c1)),)
             else:
                 # Contracted links.
                 c2 = pool_list[n1][1]
-                if count[c2] == 0:
-                    hash_code = (limit[c1], limit[c2])
-                else:
-                    hash_code = (limit[c1], hash(str(c2)))
+                hash_code = (limit[c1], hash(str(c2)))
             hash_list.append(hash_code)
 
         # Check if contracted link is over selected.
@@ -235,11 +193,8 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
             hash_list.sort()
             hash_codes = tuple(hash_list)
             if hash_codes in types:
-                #print("Pick failed:", pick_list)
-                #failed = True
-                pass
+                failed = True
             else:
-                print(node, "Pick got:", pick_list)
                 types.add(hash_codes)
 
         # Collecting.

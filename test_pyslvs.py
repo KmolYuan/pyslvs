@@ -127,7 +127,7 @@ class CoreTest(TestCase):
         for link_assortment in ([4, 4, 0], [5, 2, 1], [6, 0, 2]):
             answer, _ = topo(link_assortment)
             answers.extend(answer)
-            answer, _ = topo(link_assortment, False)
+            answer, _ = topo(link_assortment, 2)
             answers_degenerate.extend(answer)
         self.assertEqual(len(answers), 16)
         self.assertEqual(len(answers_degenerate), 40)

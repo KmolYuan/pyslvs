@@ -12,7 +12,7 @@ from .graph import Graph
 
 def topo(
     link_num: Sequence[int],
-    no_degenerate: bool = True,
+    no_degenerate: int = 1,
     job_func: Optional[Callable[[List[int], int], None]] = None,
     step_func: Optional[Callable[[], None]] = None,
     stop_func: Optional[Callable[[], bool]] = None
