@@ -41,8 +41,8 @@ cdef int j_m(ndarray[int64_t, ndim=1] link_num):
     return <int>c
 
 
-cdef int jp_m(ndarray[int64_t, ndim=1] link_num):
-    """Return value of J'm."""
+cdef int j_m_p(ndarray[int64_t, ndim=1] link_num):
+    """Return value of Jm'."""
     # Number of multiple links.
     cdef int n_m = sum(link_num[1:])
     if n_m <= 1:
@@ -56,27 +56,29 @@ cdef int jp_m(ndarray[int64_t, ndim=1] link_num):
 cdef tuple n_c(ndarray[int64_t, ndim=1] link_num):
     """Return all values of Nc."""
     cdef int j_m_v = j_m(link_num)
-    cdef int jp_m_v = jp_m(link_num)
-    return max(1, j_m_v - jp_m_v), min(link_num[0], j_m_v)
+    cdef int j_m_p_v = j_m_p(link_num)
+    print("Jm:", j_m_v)
+    print("Jm':", j_m_p_v)
+    return max(1, j_m_v - j_m_p_v), min(link_num[0], j_m_v)
 
 
 cdef ndarray[int64_t, ndim=2] contracted_link(ndarray[int64_t, ndim=1] link_num):
     """Generate the contracted link assortments."""
     print("Link assortment:", link_num)
     # Contracted link.
-    cdef int n_c_max, n_c_min
-    n_c_max, n_c_min = n_c(link_num)
-    if n_c_max < n_c_min:
-        n_c_max, n_c_min = n_c_min, n_c_max
+    cdef int n_c_min, n_c_max
+    n_c_min, n_c_max = n_c(link_num)
 
     # NL2 - Nc + 2
     cdef int i_max = link_num[0] - n_c_min + 2
+    print("i max:", i_max)
+    print("Nc:", n_c_min, "~", n_c_max)
 
     # Matching formula.
     cdef int count, factor, index
     cdef tuple m
     cdef list cj_list = []
-    for m in product(range(link_num[0] + 1), repeat=i_max - 1):
+    for m in product(range(link_num[0] + 1), repeat=i_max):
         # First formula.
         if not (n_c_min <= sum(m) <= n_c_max):
             continue
@@ -347,6 +349,9 @@ cdef void synthesis(
                 continue
             elif no_degenerate == 1 and g.is_degenerate():
                 continue
+            # Is graph repeated.
+            if is_isomorphic(g, result):
+                continue
             # Collecting to result.
             result.append(g)
         else:
@@ -366,15 +371,15 @@ cdef void splice(
     + Connect to other multiple links.
     """
     cdef map_int limit, count
-    cdef int num1, num2
+    cdef int num
     cdef int i = 0
-    for num1 in m_link:
-        limit[i] = num1
+    for num in m_link:
+        limit[i] = num
         count[i] = 0
         i += 1
-    for num2 in c_link:
+    for num in c_link:
         # Actual limit is 1.
-        limit[i] = num2
+        limit[i] = num
         count[i] = 0
         i += 1
 
@@ -419,8 +424,11 @@ cpdef tuple topo(
         1: no degenerate.
         2: all.
     job_func: Optional[Callable[[List[int], int], None]]
+        job function can create the process count.
     step_func: Optional[Callable[[], None]]
+        step function can increase the progress.
     stop_func: Optional[Callable[[], None]]
+        stop function can check the break point and send response.
     """
     if not link_num_:
         return [], 0.
@@ -447,28 +455,18 @@ cpdef tuple topo(
         for c_j in c_links:
             job_func(list(c_j), 1)
 
+    cdef Graph g
     cdef list result = []
+    cdef list each_result = []
+    cdef list result_no_repeat = []
     for c_j in c_links:
         print(c_j)
         splice(result, m_link, -labels(c_j, 1, 0), no_degenerate, stop_func)
+        print(f"Done. Collected results ({len(result)}) ...")
+        result_no_repeat.extend(result)
+        result.clear()
         if step_func:
             step_func()
-
-    print(f"Done. Start compare results ({len(result)}) ...")
-    if job_func:
-        job_func([], len(result) - 1)
-
-    cdef Graph g
-    cdef list result_no_repeat = []
-    for g in result:
-        if stop_func and stop_func():
-            break
-        if step_func:
-            step_func()
-        # If graph is repeated.
-        if is_isomorphic(g, result_no_repeat):
-            continue
-        result_no_repeat.append(g)
 
     print(f"Count: {len(result_no_repeat)}")
     print(f"Time: {time() - t0:.04f}")
