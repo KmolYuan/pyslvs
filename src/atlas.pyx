@@ -20,28 +20,28 @@ from time import time
 from cpython cimport bool
 from libcpp.vector cimport vector
 from libcpp.map cimport map
-from numpy cimport ndarray, int64_t
+from numpy cimport ndarray, int16_t
 from numpy import (
+    int16,
     array as np_array,
-    int64,
 )
 from graph cimport Graph
 
 ctypedef map[int, int] map_int
 
 
-cdef int j_m(ndarray[int64_t, ndim=1] link_num):
+cdef int j_m(int16_t[:] link_num):
     """Return value of Jm."""
     cdef int num
     cdef int i = 3
-    cdef double c = 0
+    cdef float c = 0
     for num in link_num[1:]:
         c += i / 2 * num
         i += 1
     return <int>c
 
 
-cdef int j_m_p(ndarray[int64_t, ndim=1] link_num):
+cdef int j_m_p(int16_t[:] link_num):
     """Return value of Jm'."""
     # Number of multiple links.
     cdef int n_m = sum(link_num[1:])
@@ -53,7 +53,7 @@ cdef int j_m_p(ndarray[int64_t, ndim=1] link_num):
         return <int>((3 * (n_m - 1) - 2) / 2)
 
 
-cdef tuple n_c(ndarray[int64_t, ndim=1] link_num):
+cdef tuple n_c(int16_t[:] link_num):
     """Return all values of Nc."""
     cdef int j_m_v = j_m(link_num)
     cdef int j_m_p_v = j_m_p(link_num)
@@ -62,9 +62,8 @@ cdef tuple n_c(ndarray[int64_t, ndim=1] link_num):
     return max(1, j_m_v - j_m_p_v), min(link_num[0], j_m_v)
 
 
-cdef ndarray[int64_t, ndim=2] contracted_link(ndarray[int64_t, ndim=1] link_num):
+cdef int16_t[:, :] contracted_link(int16_t[:] link_num):
     """Generate the contracted link assortments."""
-    print("Link assortment:", link_num)
     # Contracted link.
     cdef int n_c_min, n_c_max
     n_c_min, n_c_max = n_c(link_num)
@@ -91,14 +90,10 @@ cdef ndarray[int64_t, ndim=2] contracted_link(ndarray[int64_t, ndim=1] link_num)
         if count == link_num[0]:
             cj_list.append(m)
 
-    return np_array(cj_list, ndmin=2, dtype=int64)
+    return np_array(cj_list, ndmin=2, dtype=int16)
 
 
-cdef ndarray[int64_t, ndim=1] labels(
-    ndarray[int64_t, ndim=1] numbers,
-    int index,
-    int offset
-):
+cdef int16_t[:] labels(int16_t[:] numbers, int index, int offset, bool negative):
     """Generate labels from numbers."""
     cdef int i, num
     cdef list labels = []
@@ -106,7 +101,10 @@ cdef ndarray[int64_t, ndim=1] labels(
         for i in range(num):
             labels.append(index)
         index += 1
-    return np_array(labels, dtype=int64)
+    if negative:
+        return -np_array(labels, dtype=int16)
+    else:
+        return np_array(labels, dtype=int16)
 
 
 cdef inline bool is_over_count(list pick_list, map_int &limit, map_int &count):
@@ -116,10 +114,7 @@ cdef inline bool is_over_count(list pick_list, map_int &limit, map_int &count):
     cdef map_int pre_count
     for candidate in pick_list:
         for n in candidate:
-            if pre_count.find(n) == pre_count.end():
-                pre_count[n] = 1
-            else:
-                pre_count[n] += 1
+            pre_count[n] += 1
             if limit[n] < 0:
                 # Contracted links.
                 if pre_count[n] + count[n] > 1:
@@ -360,8 +355,8 @@ cdef void synthesis(
 
 cdef void splice(
     list result,
-    ndarray[int64_t, ndim=1] m_link,
-    ndarray[int64_t, ndim=1] c_link,
+    int16_t[:] m_link,
+    int16_t[:] c_link,
     int no_degenerate,
     object stop_func,
 ):
@@ -434,7 +429,7 @@ cpdef tuple topo(
         return [], 0.
 
     # NumPy array type.
-    cdef ndarray[int64_t, ndim=1] link_num = np_array(link_num_, dtype=int64)
+    cdef ndarray[int16_t, ndim=1] link_num = np_array(link_num_, dtype=int16)
 
     # Single loop (Special case).
     if len(link_num) == 1:
@@ -444,13 +439,14 @@ cpdef tuple topo(
     cdef double t0 = time()
 
     # Multiple links.
-    cdef ndarray[int64_t, ndim=1] m_link = labels(link_num, 3, 1)
+    cdef int16_t[:] m_link = labels(link_num, 3, 1, False)
 
     # Start job.
-    cdef ndarray[int64_t, ndim=2] c_links = contracted_link(link_num)
+    print("Link assortment:", link_num)
+    cdef int16_t[:, :] c_links = contracted_link(link_num)
 
     # Synthesis of contracted link and multiple link combination.
-    cdef ndarray[int64_t, ndim=1] c_j
+    cdef int16_t[:] c_j
     if job_func:
         for c_j in c_links:
             job_func(list(c_j), 1)
@@ -460,8 +456,8 @@ cpdef tuple topo(
     cdef list each_result = []
     cdef list result_no_repeat = []
     for c_j in c_links:
-        print(c_j)
-        splice(result, m_link, -labels(c_j, 1, 0), no_degenerate, stop_func)
+        print(list(c_j))
+        splice(result, m_link, labels(c_j, 1, 0, True), no_degenerate, stop_func)
         print(f"Done. Collected results ({len(result)}) ...")
         result_no_repeat.extend(result)
         result.clear()
