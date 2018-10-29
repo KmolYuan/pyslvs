@@ -5,9 +5,12 @@ from typing import (
     List,
     Sequence,
     Dict,
+    Union,
     Optional,
 )
 from .pmks import VPoint
+
+TuplePoint = Tuple[float, float]
 
 
 class Coordinate:
@@ -37,7 +40,7 @@ def PLAP(
     a0: float,
     B: Optional[Coordinate],
     inverse: bool = False
-) -> Tuple[float, float]:
+) -> TuplePoint:
     """Point on circle by angle."""
     ...
 
@@ -47,7 +50,7 @@ def PLLP(
     L1: float,
     B: Coordinate,
     inverse: bool = False
-) -> Tuple[float, float]:
+) -> TuplePoint:
     """Two intersection points of two circles."""
     ...
 
@@ -57,11 +60,11 @@ def PLPP(
     B: Coordinate,
     C: Coordinate,
     inverse: bool = False
-) -> Tuple[float, float]:
+) -> TuplePoint:
     """Two intersection points of a line and a circle."""
     ...
 
-def PXY(A: Coordinate, x: float, y: float) -> Tuple[float, float]:
+def PXY(A: Coordinate, x: float, y: float) -> TuplePoint:
     """Using relative cartesian coordinate to get solution."""
     ...
 
@@ -78,7 +81,7 @@ def expr_solving(
     mapping: Dict[int, str],
     vpoints: Sequence[VPoint],
     angles: Sequence[float] = None
-) -> List[Tuple[float, float]]:
+) -> List[Union[TuplePoint, Tuple[TuplePoint, TuplePoint]]]:
     """Solving function."""
     ...
 
