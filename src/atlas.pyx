@@ -15,7 +15,6 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from itertools import product
 from time import time
 from cpython cimport bool
 from libcpp.vector cimport vector
@@ -25,72 +24,10 @@ from numpy import (
     int16,
     array as np_array,
 )
+from number cimport contracted_link
 from graph cimport Graph
 
 ctypedef map[int, int] map_int
-
-
-cdef int j_m(int16_t[:] link_num):
-    """Return value of Jm."""
-    cdef int num
-    cdef int i = 3
-    cdef float c = 0
-    for num in link_num[1:]:
-        c += i / 2 * num
-        i += 1
-    return <int>c
-
-
-cdef int j_m_p(int16_t[:] link_num):
-    """Return value of Jm'."""
-    # Number of multiple links.
-    cdef int n_m = sum(link_num[1:])
-    if n_m <= 1:
-        return 0
-    elif n_m % 2 == 0:
-        return <int>((3 * (n_m - 1) - 1) / 2)
-    else:
-        return <int>((3 * (n_m - 1) - 2) / 2)
-
-
-cdef tuple n_c(int16_t[:] link_num):
-    """Return all values of Nc."""
-    cdef int j_m_v = j_m(link_num)
-    cdef int j_m_p_v = j_m_p(link_num)
-    print("Jm:", j_m_v)
-    print("Jm':", j_m_p_v)
-    return max(1, j_m_v - j_m_p_v), min(link_num[0], j_m_v)
-
-
-cdef int16_t[:, :] contracted_link(int16_t[:] link_num):
-    """Generate the contracted link assortments."""
-    # Contracted link.
-    cdef int n_c_min, n_c_max
-    n_c_min, n_c_max = n_c(link_num)
-
-    # NL2 - Nc + 2
-    cdef int i_max = link_num[0] - n_c_min + 2
-    print("i max:", i_max)
-    print("Nc:", n_c_min, "~", n_c_max)
-
-    # Matching formula.
-    cdef int count, factor, index
-    cdef tuple m
-    cdef list cj_list = []
-    for m in product(range(link_num[0] + 1), repeat=i_max):
-        # First formula.
-        if not (n_c_min <= sum(m) <= n_c_max):
-            continue
-        # Second formula.
-        count = 0
-        index = 1
-        for factor in m:
-            count += index * factor
-            index += 1
-        if count == link_num[0]:
-            cj_list.append(m)
-
-    return np_array(cj_list, ndmin=2, dtype=int16)
 
 
 cdef int16_t[:] labels(int16_t[:] numbers, int index, int offset, bool negative):
