@@ -84,15 +84,22 @@ cdef int j_m(int16_t[:] link_num):
 
 
 cdef int j_m_p(int16_t[:] link_num):
-    """Return value of Jm'."""
+    """Return value of Jm'. This is improved function.
+    
+    + Origin equation:
+    if n_m % 2 == 0:
+        return <int>((3 * (n_m - 1) - 1) / 2)
+    else:
+        return <int>((3 * (n_m - 1) - 2) / 2)
+    """
     # Number of multiple links.
     cdef int n_m = sum(link_num[1:])
     if n_m <= 1:
         return 0
-    elif n_m % 2 == 0:
-        return <int>((3 * (n_m - 1) - 1) / 2)
+    elif 2 <= n_m <= 4:
+        return <int>(n_m * (n_m - 1) / 2)
     else:
-        return <int>((3 * (n_m - 1) - 2) / 2)
+        return <int>(2 * (n_m - 1))
 
 
 cdef tuple n_c(int16_t[:] link_num):
