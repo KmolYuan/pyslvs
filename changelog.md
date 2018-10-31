@@ -4,7 +4,9 @@ Change Log
 Version 18.10
 ===
 
++ Improvements of "Adesign" kernel.
 + Three types of degenerate filter for 'topo' function.
++ High performance improvements of atlas algorithm.
 
 Version 18.09.1
 ===
