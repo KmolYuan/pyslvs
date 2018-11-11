@@ -96,10 +96,10 @@ cdef int j_m_p(int16_t[:] link_num):
     cdef int n_m = sum(link_num[1:])
     if n_m <= 1:
         return 0
-    elif 2 <= n_m <= 4:
-        return <int>(n_m * (n_m - 1) / 2)
+    elif n_m == 2:
+        return 1
     else:
-        return <int>(2 * (n_m - 1))
+        return 3 * (n_m - 2)
 
 
 cdef tuple n_c(int16_t[:] link_num):
