@@ -110,8 +110,6 @@ cdef tuple n_c(int16_t[:] link_num):
     """Return all values of Nc."""
     cdef int j_m_v = j_m(link_num)
     cdef int j_m_p_v = j_m_p(link_num)
-    print("Jm:", j_m_v)
-    print("Jm':", j_m_p_v)
     return max(1, j_m_v - j_m_p_v), min(link_num[0], j_m_v)
 
 
@@ -125,8 +123,6 @@ cdef list contracted_link(list link_num_list):
 
     # NL2 - Nc + 2
     cdef int i_max = link_num[0] - n_c_min + 2
-    print("i max:", i_max)
-    print("Nc:", n_c_min, "~", n_c_max)
 
     # Matching formula.
     cdef int count, factor, index

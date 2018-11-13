@@ -402,6 +402,5 @@ cpdef tuple topo(
             step_func()
 
     print(f"Count: {len(result_no_repeat)}")
-    print(f"Time: {time() - t0:.04f}")
     # Return graph list and time.
     return result_no_repeat, (time() - t0)
