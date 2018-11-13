@@ -342,7 +342,7 @@ cdef inline list loop_chain(int num):
 
 
 cpdef tuple topo(
-    object link_num_,
+    object link_num_list,
     int no_degenerate = 1,
     object job_func = None,
     object step_func = None,
@@ -362,11 +362,11 @@ cpdef tuple topo(
     stop_func: Optional[Callable[[], None]]
         stop function can check the break point and send response.
     """
-    if not link_num_:
+    if not link_num_list:
         return [], 0.
 
     # NumPy array type.
-    cdef ndarray[int16_t, ndim=1] link_num = np_array(link_num_, dtype=int16)
+    cdef ndarray[int16_t, ndim=1] link_num = np_array(link_num_list, dtype=int16)
 
     # Single loop (Special case).
     if len(link_num) == 1:
@@ -380,7 +380,7 @@ cpdef tuple topo(
 
     # Start job.
     print("Link assortment:", link_num)
-    cdef int16_t[:, :] c_links = contracted_link(link_num)
+    cdef int16_t[:, :] c_links = np_array(contracted_link(link_num_list), ndmin=2, dtype=int16)
 
     # Synthesis of contracted link and multiple link combination.
     cdef int16_t[:] c_j

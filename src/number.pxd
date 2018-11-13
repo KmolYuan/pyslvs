@@ -9,6 +9,4 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from numpy cimport int16_t
-
-cdef int16_t[:, :] contracted_link(int16_t[:] link_num)
+cdef list contracted_link(list link_num)

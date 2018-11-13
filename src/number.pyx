@@ -13,6 +13,10 @@ from numpy import (
     int16,
     array as np_array,
 )
+from numpy cimport (
+    ndarray,
+    int16_t,
+)
 
 
 cdef inline list product(object pool, int repeat):
@@ -111,8 +115,10 @@ cdef tuple n_c(int16_t[:] link_num):
     return max(1, j_m_v - j_m_p_v), min(link_num[0], j_m_v)
 
 
-cdef int16_t[:, :] contracted_link(int16_t[:] link_num):
+cdef list contracted_link(list link_num_list):
     """Generate the contracted link assortments."""
+    cdef ndarray[int16_t, ndim=1] link_num = np_array(link_num_list, ndmin=1, dtype=int16)
+
     # Contracted link.
     cdef int n_c_min, n_c_max
     n_c_min, n_c_max = n_c(link_num)
@@ -139,4 +145,4 @@ cdef int16_t[:, :] contracted_link(int16_t[:] link_num):
         if count == link_num[0]:
             cj_list.append(tuple(m))
 
-    return np_array(cj_list, ndmin=2, dtype=int16)
+    return cj_list
