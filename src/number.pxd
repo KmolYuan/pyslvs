@@ -9,4 +9,4 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-cdef list contracted_link(list link_num)
+cpdef list contracted_link(list link_num)

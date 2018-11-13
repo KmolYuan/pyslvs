@@ -28,7 +28,7 @@ from planarlinkage import Planar
 from rga import Genetic
 from firefly import Firefly
 from de import Differential
-from number import number_synthesis
+from number import number_synthesis, contracted_link
 from atlas import topo
 from graph import Graph
 from triangulation import vpoints_configure
@@ -120,15 +120,23 @@ class CoreTest(TestCase):
         I = Graph([(0, 1), (0, 2), (1, 4), (2, 5), (3, 4), (3, 5), (4, 5)])
         self.assertTrue(G.is_isomorphic(H))
         self.assertFalse(G.is_isomorphic(I))
-        answer, _ = topo([4, 2])
-        self.assertEqual(len(answer), 2)
+
         answers = []
-        answers_degenerate = []
-        for link_assortment in ([4, 4, 0], [5, 2, 1], [6, 0, 2]):
-            answer, _ = topo(link_assortment)
+
+        type_1 = [4, 2]
+        for c_j in contracted_link(type_1):
+            answer, _ = topo(type_1, c_j)
             answers.extend(answer)
-            answer, _ = topo(link_assortment, 2)
-            answers_degenerate.extend(answer)
+        self.assertEqual(len(answers), 2)
+        answers.clear()
+
+        answers_degenerate = []
+        for type_2 in ([4, 4, 0], [5, 2, 1], [6, 0, 2]):
+            for c_j in contracted_link(type_2):
+                answer, _ = topo(type_2, c_j)
+                answers.extend(answer)
+                answer, _ = topo(type_2, c_j, 2)
+                answers_degenerate.extend(answer)
         self.assertEqual(len(answers), 16)
         self.assertEqual(len(answers_degenerate), 40)
 

@@ -49,7 +49,7 @@ from .planarlinkage import Planar
 from .rga import Genetic
 from .firefly import Firefly
 from .de import Differential
-from .number import number_synthesis
+from .number import number_synthesis, contracted_link
 from .graph import Graph
 from .atlas import topo
 from .triangulation import vpoints_configure
@@ -81,6 +81,7 @@ __all__ = [
     'bfgs_vpoint_solving',
     'Planar',
     'number_synthesis',
+    'contracted_link',
     'topo',
     'Graph',
     'vpoints_configure',

@@ -1,6 +1,11 @@
 Change Log
 ===
 
+Version 18.11
+===
+
++ Split out contracted link function to number synthesis.
+
 Version 18.10
 ===
 

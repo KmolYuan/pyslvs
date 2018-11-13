@@ -343,6 +343,7 @@ cdef inline list loop_chain(int num):
 
 cpdef tuple topo(
     object link_num_list,
+    object c_j_list,
     int no_degenerate = 1,
     object job_func = None,
     object step_func = None,
@@ -350,7 +351,8 @@ cpdef tuple topo(
 ):
     """Linkage mechanism topological function.
     
-    link_num_ = [L2, L3, L4, ...]
+    link_num_list = [L2, L3, L4, ...]
+    c_j_list = [Nc1, Nc2, Nc3, ...]
     no_degenerate:
         0: only degenerate.
         1: no degenerate.
@@ -367,10 +369,7 @@ cpdef tuple topo(
 
     # NumPy array type.
     cdef ndarray[int16_t, ndim=1] link_num = np_array(link_num_list, dtype=int16)
-
-    # Single loop (Special case).
-    if len(link_num) == 1:
-        return [Graph(loop_chain(link_num[0]))], 0.
+    print("Assortments:", link_num, c_j_list)
 
     # Initial time.
     cdef double t0 = time()
@@ -378,22 +377,18 @@ cpdef tuple topo(
     # Multiple links.
     cdef int16_t[:] m_link = labels(link_num, 3, 1, False)
 
-    # Start job.
-    print("Link assortment:", link_num)
-    cdef int16_t[:, :] c_links = np_array(contracted_link(link_num_list), ndmin=2, dtype=int16)
-
     # Synthesis of contracted link and multiple link combination.
-    cdef int16_t[:] c_j
+    cdef int16_t[:] c_j = np_array(c_j_list, ndmin=1, dtype=int16)
     if job_func:
-        for c_j in c_links:
-            job_func(list(c_j), 1)
+        job_func(list(c_j_list), 1)
 
     cdef Graph g
     cdef list result = []
-    cdef list each_result = []
     cdef list result_no_repeat = []
-    for c_j in c_links:
-        print(list(c_j))
+    if len(m_link) == 0:
+        # Single loop (Special case).
+        result_no_repeat.append(Graph(loop_chain(link_num[0])))
+    else:
         splice(result, m_link, labels(c_j, 1, 0, True), no_degenerate, stop_func)
         print(f"Done. Collected results ({len(result)}) ...")
         result_no_repeat.extend(result)

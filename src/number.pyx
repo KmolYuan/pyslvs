@@ -12,6 +12,7 @@ email: pyslvs@gmail.com
 from numpy import (
     int16,
     array as np_array,
+    zeros as np_zeros,
 )
 from numpy cimport (
     ndarray,
@@ -113,9 +114,16 @@ cdef tuple n_c(int16_t[:] link_num):
     return max(1, j_m_v - j_m_p_v), min(link_num[0], j_m_v)
 
 
-cdef list contracted_link(list link_num_list):
+cpdef list contracted_link(list link_num_list):
     """Generate the contracted link assortments."""
-    cdef ndarray[int16_t, ndim=1] link_num = np_array(link_num_list, ndmin=1, dtype=int16)
+    cdef ndarray[int16_t, ndim=1] link_num
+
+    if len(link_num_list) == 1:
+        link_num = np_zeros(link_num_list[0], dtype=int16)
+        link_num[-1] = 1
+        return [tuple(link_num.tolist())]
+
+    link_num = np_array(link_num_list, ndmin=1, dtype=int16)
 
     # Contracted link.
     cdef int n_c_min, n_c_max
