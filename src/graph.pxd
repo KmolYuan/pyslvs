@@ -21,13 +21,16 @@ cdef class Graph:
     cdef dict adj
 
     cdef inline tuple neighbors(self, int n)
+    cpdef list degrees(self)
     cpdef int dof(self)
     cpdef bool is_connected(self, int with_out=*)
     cpdef bool has_cut_link(self)
     cpdef bool is_degenerate(self)
     cpdef bool is_isomorphic(self, Graph graph)
+    cpdef bool is_planar(self)
     cdef list link_types(self)
-    cdef int number_of_edges(self, int u, int v)
+    cdef int node_distance(self, int u, int v)
     cdef list multi_contracted_links(self)
     cdef bool has_triangles(self)
     cpdef Graph copy(self)
+    cpdef Graph subgraph(self, tuple nodes)

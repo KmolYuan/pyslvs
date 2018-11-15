@@ -24,7 +24,6 @@ from numpy import (
     int16,
     array as np_array,
 )
-from number cimport contracted_link
 from graph cimport Graph
 
 ctypedef map[int, int] map_int
@@ -276,6 +275,9 @@ cdef void synthesis(
             # Is graph has cut link.
             if g.has_cut_link():
                 continue
+            # Is planar graph.
+            if not g.is_planar():
+                continue
             # Is graph degenerated.
             if no_degenerate == 0 and not g.is_degenerate():
                 continue
@@ -384,18 +386,18 @@ cpdef tuple topo(
 
     cdef Graph g
     cdef list result = []
-    cdef list result_no_repeat = []
+    cdef list result_all = []
     if len(m_link) == 0:
         # Single loop (Special case).
-        result_no_repeat.append(Graph(loop_chain(link_num[0])))
+        result_all.append(Graph(loop_chain(link_num[0])))
     else:
         splice(result, m_link, labels(c_j, 1, 0, True), no_degenerate, stop_func)
         print(f"Done. Collected results ({len(result)}) ...")
-        result_no_repeat.extend(result)
+        result_all.extend(result)
         result.clear()
         if step_func:
             step_func()
 
-    print(f"Count: {len(result_no_repeat)}")
+    print(f"Count: {len(result_all)}")
     # Return graph list and time.
-    return result_no_repeat, (time() - t0)
+    return result_all, (time() - t0)
