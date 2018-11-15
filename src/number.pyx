@@ -11,8 +11,10 @@ email: pyslvs@gmail.com
 
 from numpy import (
     int16,
+    arange as np_range,
     array as np_array,
     zeros as np_zeros,
+    append as np_append,
 )
 from numpy cimport (
     ndarray,
@@ -20,7 +22,7 @@ from numpy cimport (
 )
 
 
-cdef inline list product(object pool, int repeat):
+cdef inline int16_t[:, :] product(int16_t[:] pool, int repeat):
     """Product function as same as iteration tools."""
     cdef int i, y
     cdef list x, tmp_list
@@ -31,7 +33,7 @@ cdef inline list product(object pool, int repeat):
             for y in pool:
                 tmp_list.append(x + [y])
         result = tmp_list
-    return result
+    return np_array(result, ndmin=2, dtype=int16)
 
 
 cdef inline int m_max(int nl, int nj):
@@ -50,7 +52,7 @@ cdef inline int m_max(int nl, int nj):
     return -1
 
 
-cdef inline int sum_factors(list factors):
+cdef inline int sum_factors(int16_t[:] factors):
     """F0*N2 + F1*N3 + F2*N4 + ... + Fn*N(n+2)"""
     cdef int factor = 0
     cdef int i
@@ -66,18 +68,18 @@ cpdef tuple number_synthesis(int nl, int nj):
     if m_max_v == -1:
         raise Exception("incorrect mechanism.")
     cdef int i, p
-    cdef list symbols
-    for symbols in product(range(nl + 1), m_max_v - 2):
+    cdef int16_t[:] symbols
+    for symbols in product(np_range(nl + 1, dtype=int16), m_max_v - 2):
         nl_m_max = nl - sum(symbols)
         if nl_m_max < 0:
             continue
-        symbols.append(nl_m_max)
+        symbols = np_append(symbols, np_array([nl_m_max], dtype=int16))
         if sum_factors(symbols) == (2 * nj):
-            result.append(symbols)
+            result.append(tuple(symbols))
     return tuple(result)
 
 
-cdef int j_m(int16_t[:] link_num):
+cdef inline int j_m(int16_t[:] link_num):
     """Return value of Jm."""
     cdef int num
     cdef int i = 3
@@ -88,7 +90,7 @@ cdef int j_m(int16_t[:] link_num):
     return <int>c
 
 
-cdef int j_m_p(int16_t[:] link_num):
+cdef inline int j_m_p(int16_t[:] link_num):
     """Return value of Jm'. This is improved function.
     
     + Origin equation:
@@ -107,13 +109,6 @@ cdef int j_m_p(int16_t[:] link_num):
         return 3 * (n_m - 2)
 
 
-cdef tuple n_c(int16_t[:] link_num):
-    """Return all values of Nc."""
-    cdef int j_m_v = j_m(link_num)
-    cdef int j_m_p_v = j_m_p(link_num)
-    return max(1, j_m_v - j_m_p_v), min(link_num[0], j_m_v)
-
-
 cpdef list contracted_link(list link_num_list):
     """Generate the contracted link assortments."""
     cdef ndarray[int16_t, ndim=1] link_num
@@ -126,27 +121,34 @@ cpdef list contracted_link(list link_num_list):
     link_num = np_array(link_num_list, ndmin=1, dtype=int16)
 
     # Contracted link.
-    cdef int n_c_min, n_c_max
-    n_c_min, n_c_max = n_c(link_num)
+    cdef int j_m_v = j_m(link_num)
+    cdef int n_c_min = max(1, j_m_v - j_m_p(link_num))
+    cdef int n_c_max = min(link_num[0], j_m_v)
 
     # NL2 - Nc + 2
     cdef int i_max = link_num[0] - n_c_min + 2
 
     # Matching formula.
     cdef int count, factor, index
-    cdef list m
+    cdef float last_factor
+    cdef int16_t[:] m
     cdef list cj_list = []
-    for m in product(range(link_num[0] + 1), repeat=i_max):
-        # First formula.
-        if not (n_c_min <= sum(m) <= n_c_max):
-            continue
-        # Second formula.
+    for m in product(np_range(link_num[0] + 1, dtype=int16), repeat=i_max - 1):
         count = 0
         index = 1
         for factor in m:
-            count += index * factor
+            count +=  factor * index
             index += 1
-        if count == link_num[0]:
+
+        # Check if the last factor is a natural number.
+        last_factor = (link_num[0] - count) / index
+        factor = <int>last_factor
+        if last_factor < 0 or last_factor != factor:
+            continue
+
+        m = np_append(m, np_array([factor], dtype=int16))
+
+        if n_c_min <= sum(m) <= n_c_max:
             cj_list.append(tuple(m))
 
     return cj_list

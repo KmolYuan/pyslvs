@@ -20,8 +20,6 @@ from typing import (
     Dict,
     Iterator,
 )
-from itertools import combinations
-from libcpp.map cimport map
 
 
 @cython.final
