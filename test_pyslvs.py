@@ -36,14 +36,15 @@ from _parser import parse_vpoints
 from examples import example_list
 
 
+def vpoints_object() -> Tuple[List[VPoint], Tuple[Tuple[int, int]]]:
+    """Example: Jansen's linkage (Single)."""
+    expr, inputs = example_list["Jansen's linkage (Single)"]
+    return parse_vpoints(expr), inputs
+
+
 class CoreTest(TestCase):
 
     """Testing Cython libs."""
-
-    def vpoints_object(self) -> Tuple[List[VPoint], Tuple[Tuple[int, int]]]:
-        """Example: Jansen's linkage (Single)."""
-        expr, inputs = example_list["Jansen's linkage (Single)"]
-        return parse_vpoints(expr), inputs
 
     def planar_object(self) -> Planar:
         """Test-used mechanism for algorithm."""
@@ -147,7 +148,7 @@ class CoreTest(TestCase):
         + Test data collecting function.
         + Test expression solving function.
         """
-        vpoints, inputs = self.vpoints_object()
+        vpoints, inputs = vpoints_object()
         self.assertTrue(len(vpoints) == 8)
         exprs = vpoints_configure(vpoints, inputs)
         mapping = {n: f'P{n}' for n in range(len(vpoints))}
@@ -174,7 +175,7 @@ class CoreTest(TestCase):
 
     def test_bfgs(self):
         """Test Sketch Solve kernel."""
-        vpoints, inputs = self.vpoints_object()
+        vpoints, inputs = vpoints_object()
         result = vpoint_solving(vpoints, [(0, 1, 0.)])
         x, y = result[-1]
         self.assertTrue(isclose(round(x, 2), -43.17))

@@ -20,6 +20,7 @@ from typing import (
     Dict,
     Iterator,
 )
+from planar_check cimport is_planar
 
 
 @cython.final
@@ -44,6 +45,18 @@ cdef class Graph:
         # adj
         cdef int n
         self.adj = {n: self.neighbors(n) for n in self.nodes}
+
+    cpdef void add_edge(self, int n1, int n2):
+        """Add two nodes for an edge."""
+        self.edges += ((n1, n2),)
+        if n1 not in self.nodes:
+            self.nodes += (n1,)
+        if n2 not in self.nodes:
+            self.nodes += (n2,)
+
+    cpdef void add_nodes_from(self, tuple nodes):
+        """Add nodes from a tuple."""
+        self.nodes = tuple(set(self.nodes) | set(nodes))
 
     cdef inline tuple neighbors(self, int n):
         """Neighbors except the node."""
@@ -134,8 +147,7 @@ cdef class Graph:
 
     cpdef bool is_planar(self):
         """Return True if the graph is planar."""
-        # TODO: check_planarity.
-        return True
+        return is_planar(self)
 
     cdef list link_types(self):
         """Return types of each link."""

@@ -20,7 +20,9 @@ cdef class Graph:
     cdef tuple nodes
     cdef dict adj
 
-    cdef inline tuple neighbors(self, int n)
+    cpdef void add_edge(self, int n1, int n2)
+    cpdef void add_nodes_from(self, tuple nodes)
+    cdef tuple neighbors(self, int n)
     cpdef list degrees(self)
     cpdef int dof(self)
     cpdef bool is_connected(self, int with_out=*)
