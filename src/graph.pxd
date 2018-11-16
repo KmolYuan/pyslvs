@@ -29,7 +29,6 @@ cdef class Graph:
     cpdef bool has_cut_link(self)
     cpdef bool is_degenerate(self)
     cpdef bool is_isomorphic(self, Graph graph)
-    cpdef bool is_planar(self)
     cdef list link_types(self)
     cdef int node_distance(self, int u, int v)
     cdef list multi_contracted_links(self)

@@ -51,6 +51,7 @@ from .firefly import Firefly
 from .de import Differential
 from .number import number_synthesis, contracted_link
 from .graph import Graph
+from . import planar_check
 from .atlas import topo
 from .triangulation import vpoints_configure
 from ._parser import (
@@ -92,4 +93,8 @@ __all__ = [
     'parse_vpoints',
     'PMKSLexer',
     'example_list',
+
+    # Modules
+    'verify',
+    'planar_check',
 ]

@@ -20,7 +20,6 @@ from typing import (
     Dict,
     Iterator,
 )
-from planar_check cimport is_planar
 
 
 @cython.final
@@ -144,10 +143,6 @@ cdef class Graph:
         """Return True if two graphs is isomorphic."""
         cdef GraphMatcher gm_gh = GraphMatcher(self, graph)
         return gm_gh.is_isomorphic()
-
-    cpdef bool is_planar(self):
-        """Return True if the graph is planar."""
-        return is_planar(self)
 
     cdef list link_types(self):
         """Return types of each link."""

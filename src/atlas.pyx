@@ -25,6 +25,7 @@ from numpy import (
     array as np_array,
 )
 from graph cimport Graph
+from planar_check cimport is_planar
 
 ctypedef map[int, int] map_int
 
@@ -276,7 +277,7 @@ cdef void synthesis(
             if g.has_cut_link():
                 continue
             # Is planar graph.
-            if not g.is_planar():
+            if not is_planar(g):
                 continue
             # Is graph degenerated.
             if no_degenerate == 0 and not g.is_degenerate():
