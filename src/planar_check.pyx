@@ -12,9 +12,10 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from typing import Sequence, Tuple
+from typing import Tuple
 from collections import defaultdict
-from libcpp.map cimport map
+from libcpp.list cimport list as c_list
+from libcpp.map cimport map as c_map
 
 
 cpdef inline bool is_planar(Graph g):
@@ -27,7 +28,7 @@ cpdef inline bool is_planar(Graph g):
 
 
 cdef inline ConflictPair top_of_stack(list l):
-    """Returns the element on top of the stack."""
+    """Returns the conflict pair element on top of the stack."""
     if not l:
         return None
     return l[-1]
@@ -95,11 +96,11 @@ cdef class LRPlanarity:
             self.adjs[v] = list(self.g.adj[v])
 
         # orientation of the graph by depth first search traversal
-        cdef list roots = []
+        cdef c_list[int] roots = []
         for v in self.g.nodes:
             if self.height[v] is None:
                 self.height[v] = 0
-                roots.append(v)
+                roots.push_back(v)
                 self.dfs_orientation(v)
 
         # Free no longer used variables
@@ -132,6 +133,7 @@ cdef class LRPlanarity:
 
         self.embedding.add_nodes_from(self.DG.nodes)
 
+        cdef int previous_node
         for v in self.DG.nodes:
             # sort the adjacency lists again
             self.ordered_adjs[v] = sorted(
@@ -139,7 +141,7 @@ cdef class LRPlanarity:
                 key=lambda x: self.nesting_depth[v, x]
             )
             # initialize the embedding
-            previous_node = None
+            previous_node = -1
             for w in self.ordered_adjs[v]:
                 self.embedding.add_half_edge_cw(v, w, previous_node)
                 previous_node = w
@@ -158,17 +160,18 @@ cdef class LRPlanarity:
     cdef bool dfs_testing(self, int v):
         """Test for LR partition."""
         # the recursion stack
-        cdef list dfs_stack = [v]
+        cdef c_list[int] dfs_stack = [v]
         # index of next edge to handle in adjacency list of each node
-        cdef map[int, int] ind
+        cdef c_map[int, int] ind
         # boolean to indicate whether to skip the initial work for an edge
         cdef object skip_init = defaultdict(lambda: False)
 
         cdef bool skip_final
         cdef int w
         cdef tuple e, ei
-        while dfs_stack:
-            v = dfs_stack.pop()
+        while not dfs_stack.empty():
+            v = dfs_stack.back()
+            dfs_stack.pop_back()
             e = self.parent_edge[v]
             # to indicate whether to skip the final block after the for loop
             skip_final = False
@@ -180,8 +183,8 @@ cdef class LRPlanarity:
                     self.stack_bottom[ei] = top_of_stack(self.S)
 
                     if ei == self.parent_edge[w]:  # tree edge
-                        dfs_stack.append(v)  # revisit v after finishing w
-                        dfs_stack.append(w)  # visit w next
+                        dfs_stack.push_back(v)  # revisit v after finishing w
+                        dfs_stack.push_back(w)  # visit w next
                         skip_init[ei] = True  # don't redo this block
                         skip_final = True  # skip final work after breaking
                         break  # handle next node in dfs_stack (i.e. w)
@@ -210,12 +213,14 @@ cdef class LRPlanarity:
     cdef void dfs_embedding(self, int v):
         """Completes the embedding."""
         # the recursion stack
-        cdef list dfs_stack = [v]
+        cdef c_list[int] dfs_stack = [v]
         # index of next edge to handle in adjacency list of each node
-        cdef map[int, int] ind
+        cdef c_map[int, int] ind
 
-        while dfs_stack:
-            v = dfs_stack.pop()
+        cdef int w
+        while not dfs_stack.empty():
+            v = dfs_stack.back()
+            dfs_stack.pop_back()
 
             for w in self.ordered_adjs[v][ind[v]:]:
                 ind[v] += 1
@@ -226,8 +231,8 @@ cdef class LRPlanarity:
                     self.left_ref[v] = w
                     self.right_ref[v] = w
 
-                    dfs_stack.append(v)  # revisit v after finishing w
-                    dfs_stack.append(w)  # visit w next
+                    dfs_stack.push_back(v)  # revisit v after finishing w
+                    dfs_stack.push_back(w)  # visit w next
                     break  # handle next node in dfs_stack (i.e. w)
                 else:  # back edge
                     if self.side[ei] == 1:
@@ -239,16 +244,17 @@ cdef class LRPlanarity:
     cdef void dfs_orientation(self, int v):
         """Orient the graph by DFS, compute lowpoints and nesting order."""
         # the recursion stack
-        cdef list dfs_stack = [v]
+        cdef c_list[int] dfs_stack = [v]
         # index of next edge to handle in adjacency list of each node
-        cdef map[int, int] ind
+        cdef c_map[int, int] ind
         # boolean to indicate whether to skip the initial work for an edge
         cdef object skip_init = defaultdict(lambda: False)
 
         cdef int w
         cdef tuple e, vw
-        while dfs_stack:
-            v = dfs_stack.pop()
+        while not dfs_stack.empty():
+            v = dfs_stack.back()
+            dfs_stack.pop_back()
             e = self.parent_edge[v]
 
             for w in self.adjs[v][ind[v]:]:
@@ -267,8 +273,8 @@ cdef class LRPlanarity:
                         self.parent_edge[w] = vw
                         self.height[w] = self.height[v] + 1
 
-                        dfs_stack.append(v)  # revisit v after finishing w
-                        dfs_stack.append(w)  # visit w next
+                        dfs_stack.push_back(v)  # revisit v after finishing w
+                        dfs_stack.push_back(w)  # visit w next
                         skip_init[vw] = True  # don't redo this block
                         break  # handle next node in dfs_stack (i.e. w)
                     else:  # (v, w) is a back edge
@@ -293,6 +299,7 @@ cdef class LRPlanarity:
 
     cdef bool add_constraints(self, tuple ei, tuple e):
         cdef ConflictPair P = ConflictPair()
+
         # merge return edges of e_i into P.right
         cdef ConflictPair Q
         while True:
@@ -314,8 +321,10 @@ cdef class LRPlanarity:
                 break
 
         # merge conflicting return edges of e_1,...,e_i-1 into P.L
-        while (top_of_stack(self.S).left.conflicting(ei, self) or
-               top_of_stack(self.S).right.conflicting(ei, self)):
+        while (
+            top_of_stack(self.S).left.conflicting(ei, self) or
+            top_of_stack(self.S).right.conflicting(ei, self)
+        ):
             Q = self.S.pop()
             if Q.right.conflicting(ei, self):
                 Q.swap()
@@ -338,43 +347,44 @@ cdef class LRPlanarity:
         return True
 
     cdef void remove_back_edges(self, tuple e):
-        u = e[0]
+        cdef int u = e[0]
+
         # trim back edges ending at parent u
         # drop entire conflict pairs
-        cdef ConflictPair P
+        cdef ConflictPair p
         while self.S and top_of_stack(self.S).lowest(self) == self.height[u]:
-            P = self.S.pop()
-            if P.left.low is not None:
-                self.side[P.left.low] = -1
+            p = self.S.pop()
+            if p.left.low is not None:
+                self.side[p.left.low] = -1
 
         if self.S:  # one more conflict pair to consider
-            P = self.S.pop()
+            p = self.S.pop()
             # trim left interval
-            while P.left.high is not None and P.left.high[1] == u:
-                P.left.high = self.ref[P.left.high]
-            if P.left.high is None and P.left.low is not None:
+            while p.left.high is not None and p.left.high[1] == u:
+                p.left.high = self.ref[p.left.high]
+            if p.left.high is None and p.left.low is not None:
                 # just emptied
-                self.ref[P.left.low] = P.right.low
-                self.side[P.left.low] = -1
-                P.left.low = None
+                self.ref[p.left.low] = p.right.low
+                self.side[p.left.low] = -1
+                p.left.low = None
             # trim right interval
-            while P.right.high is not None and P.right.high[1] == u:
-                P.right.high = self.ref[P.right.high]
-            if P.right.high is None and P.right.low is not None:
+            while p.right.high is not None and p.right.high[1] == u:
+                p.right.high = self.ref[p.right.high]
+            if p.right.high is None and p.right.low is not None:
                 # just emptied
-                self.ref[P.right.low] = P.left.low
-                self.side[P.right.low] = -1
-                P.right.low = None
-            self.S.append(P)
+                self.ref[p.right.low] = p.left.low
+                self.side[p.right.low] = -1
+                p.right.low = None
+            self.S.append(p)
 
         # side of e is side of a highest return edge
+        cdef tuple hl, hr
         if self.lowpt[e] < self.height[u]:  # e has return edge
-            P = top_of_stack(self.S)
-            hl = P.left.high
-            hr = P.right.high
+            p = top_of_stack(self.S)
+            hl = p.left.high
+            hr = p.right.high
 
-            if hl is not None and (
-                            hr is None or self.lowpt[hl] > self.lowpt[hr]):
+            if (hl is not None) and (hr is None or self.lowpt[hl] > self.lowpt[hr]):
                 self.ref[e] = hl
             else:
                 self.ref[e] = hr
@@ -416,9 +426,7 @@ cdef class ConflictPair:
 
     cdef void swap(self):
         """Swap left and right intervals"""
-        cdef Interval temp = self.left
-        self.left = self.right
-        self.right = temp
+        self.left, self.right = self.right, self.left
 
     cdef int lowest(self, LRPlanarity planarity_state):
         """Return the lowest low point of a conflict pair"""
@@ -426,8 +434,10 @@ cdef class ConflictPair:
             return planarity_state.lowpt[self.right.low]
         if self.right.empty():
             return planarity_state.lowpt[self.left.low]
-        return min(planarity_state.lowpt[self.left.low],
-                   planarity_state.lowpt[self.right.low])
+        return min(
+            planarity_state.lowpt[self.left.low],
+            planarity_state.lowpt[self.right.low]
+        )
 
 
 cdef class Interval:
@@ -447,7 +457,7 @@ cdef class Interval:
 
     cdef bool empty(self):
         """Check if the interval is empty"""
-        return self.low is None and self.high is None
+        return (self.low is None) and (self.high is None)
 
     cdef Interval copy(self):
         """Return a copy of this interval"""
@@ -462,57 +472,49 @@ cdef class PlanarEmbedding(Graph):
 
     """Represents a planar graph with its planar embedding."""
 
-    cdef dict node_label, edge_label
+    cdef c_map[int, int] node_label
+    cdef c_map[int, c_map[int, c_map[int, int]]] edge_label
 
-    def __cinit__(self, edges: Sequence[Tuple[int, int]]):
-        """Initialized with label container attributes."""
-        # Graph.__cinit__ well be called automatically.
-        self.node_label = {}
-        self.edge_label = {}
-
-    cdef void add_half_edge_cw(self, int start_node, int end_node, object reference_neighbor):
-        """Adds a half-edge from start_node to end_node."""
+    cdef void add_half_edge_cw(self, int start_node, int end_node, int reference_neighbor):
+        """Adds a half-edge from start_node to end_node.
+        
+        edge_label[:, :, :] 0: cw
+        edge_label[:, :, :] 1: ccw
+        node_label[:]: first_nbr
+        """
         self.add_edge(start_node, end_node)  # Add edge to graph
 
-        if reference_neighbor is None:
+        if reference_neighbor == -1:
             # The start node has no neighbors
-            self.edge_label[start_node, end_node, 'cw'] = end_node
-            self.edge_label[start_node, end_node, 'ccw'] = end_node
-            self.node_label[start_node, 'first_nbr'] = end_node
+            self.edge_label[start_node][end_node][0] = end_node
+            self.edge_label[start_node][end_node][1] = end_node
+            self.node_label[start_node] = end_node
             return
 
         # Get half-edge at the other side
-        cw_reference = self.edge_label[start_node, reference_neighbor, 'cw']
+        cdef int cw_reference = self.edge_label[start_node][reference_neighbor][0]
         # Alter half-edge data structures
-        self.edge_label[start_node, reference_neighbor, 'cw'] = end_node
-        self.edge_label[start_node, end_node, 'cw'] = cw_reference
-        self.edge_label[start_node, cw_reference, 'ccw'] = end_node
-        self.edge_label[start_node, end_node, 'ccw'] = reference_neighbor
+        self.edge_label[start_node][reference_neighbor][0] = end_node
+        self.edge_label[start_node][end_node][0] = cw_reference
+        self.edge_label[start_node][cw_reference][1] = end_node
+        self.edge_label[start_node][end_node][1] = reference_neighbor
 
     cdef void add_half_edge_ccw(self, int start_node, int end_node, int reference_neighbor):
         """Adds a half-edge from start_node to end_node."""
-        if reference_neighbor is None:
-            # The start node has no neighbors
-            self.add_edge(start_node, end_node)  # Add edge to graph
-            self.edge_label[start_node, end_node, 'cw'] = end_node
-            self.edge_label[start_node, end_node, 'ccw'] = end_node
-            self.node_label[start_node, 'first_nbr'] = end_node
+        self.add_half_edge_cw(
+            start_node,
+            end_node,
+            self.edge_label[start_node][reference_neighbor][1]
+        )
+        cdef int s_f_label
+        if self.node_label.find(start_node) != self.node_label.end():
+            s_f_label = self.node_label[start_node]
         else:
-            self.add_half_edge_cw(
-                start_node,
-                end_node,
-                self.edge_label[start_node, reference_neighbor, 'ccw']
-            )
-
-            if reference_neighbor == self.node_label.get((start_node, 'first_nbr'), None):
-                # Update first neighbor
-                self.node_label[start_node, 'first_nbr'] = end_node
+            s_f_label = -1
+        if reference_neighbor == s_f_label:
+            # Update first neighbor
+            self.node_label[start_node] = end_node
 
     cdef void add_half_edge_first(self, int start_node, int end_node):
         """The added half-edge is inserted at the first position in the order."""
-        cdef object reference
-        if start_node in self.nodes and (start_node, 'first_nbr') in self.node_label:
-            reference = self.node_label[start_node, 'first_nbr']
-        else:
-            reference = None
-        self.add_half_edge_ccw(start_node, end_node, reference)
+        self.add_half_edge_ccw(start_node, end_node, self.node_label[start_node])
