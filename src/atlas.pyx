@@ -348,8 +348,6 @@ cpdef tuple topo(
     object link_num_list,
     object c_j_list,
     int no_degenerate = 1,
-    object job_func = None,
-    object step_func = None,
     object stop_func = None
 ):
     """Linkage mechanism topological function.
@@ -360,10 +358,6 @@ cpdef tuple topo(
         0: only degenerate.
         1: no degenerate.
         2: all.
-    job_func: Optional[Callable[[List[int], int], None]]
-        job function can create the process count.
-    step_func: Optional[Callable[[], None]]
-        step function can increase the progress.
     stop_func: Optional[Callable[[], None]]
         stop function can check the break point and send response.
     """
@@ -371,7 +365,7 @@ cpdef tuple topo(
         return [], 0.
 
     # NumPy array type.
-    cdef ndarray[int16_t, ndim=1] link_num = np_array(link_num_list, dtype=int16)
+    cdef ndarray[int16_t, ndim=1] link_num = np_array(link_num_list, ndmin=1, dtype=int16)
     print("Assortments:", link_num, c_j_list)
 
     # Initial time.
@@ -382,23 +376,16 @@ cpdef tuple topo(
 
     # Synthesis of contracted link and multiple link combination.
     cdef int16_t[:] c_j = np_array(c_j_list, ndmin=1, dtype=int16)
-    if job_func:
-        job_func(list(c_j_list), 1)
 
     cdef Graph g
     cdef list result = []
-    cdef list result_all = []
     if len(m_link) == 0:
         # Single loop (Special case).
-        result_all.append(Graph(loop_chain(link_num[0])))
+        result.append(Graph(loop_chain(link_num[0])))
     else:
         splice(result, m_link, labels(c_j, 1, 0, True), no_degenerate, stop_func)
         print(f"Done. Collected results ({len(result)}) ...")
-        result_all.extend(result)
-        result.clear()
-        if step_func:
-            step_func()
 
-    print(f"Count: {len(result_all)}")
+    print(f"Count: {len(result)}")
     # Return graph list and time.
-    return result_all, (time() - t0)
+    return result, (time() - t0)
