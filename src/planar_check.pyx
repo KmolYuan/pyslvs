@@ -96,7 +96,7 @@ cdef class LRPlanarity:
             self.adjs[v] = list(self.g.adj[v])
 
         # orientation of the graph by depth first search traversal
-        cdef c_list[int] roots = []
+        cdef c_list[int] roots
         for v in self.g.nodes:
             if self.height[v] is None:
                 self.height[v] = 0
@@ -133,7 +133,7 @@ cdef class LRPlanarity:
 
         self.embedding.add_nodes_from(self.DG.nodes)
 
-        cdef int previous_node
+        cdef int previous_node, w
         for v in self.DG.nodes:
             # sort the adjacency lists again
             self.ordered_adjs[v] = sorted(

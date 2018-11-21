@@ -17,8 +17,8 @@ email: pyslvs@gmail.com
 
 from time import time
 from cpython cimport bool
-from libcpp.vector cimport vector
-from libcpp.map cimport map
+from libcpp.vector cimport vector as c_vector
+from libcpp.map cimport map as c_map
 from numpy cimport ndarray, int16_t
 from numpy import (
     int16,
@@ -27,7 +27,7 @@ from numpy import (
 from graph cimport Graph
 from planar_check cimport is_planar
 
-ctypedef map[int, int] map_int
+ctypedef c_map[int, int] map_int
 
 
 cdef int16_t[:] labels(int16_t[:] numbers, int index, int offset, bool negative):
@@ -98,7 +98,7 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
     # Combinations loop with number checking.
     # TODO: Need to be optimized: Remove same type link picking.
     cdef tuple hash_code, hash_codes
-    cdef vector[int] indices = range(pick_count)
+    cdef c_vector[int] indices = range(pick_count)
     cdef bool failed = False
     cdef set types = set()
     cdef list pick_list = []
