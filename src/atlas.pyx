@@ -27,6 +27,7 @@ from numpy import (
 from graph cimport Graph
 from planar_check cimport is_planar
 
+ctypedef unsigned int uint
 ctypedef c_map[int, int] map_int
 
 
@@ -187,33 +188,33 @@ cdef inline tuple contracted_chain(int node, int num, set edges):
         if n > max_n:
             max_n = n
     max_n += 1
-    cdef int b = node
+    cdef int last_node = node
     cdef set chain = set()
     for n in range(num - 1):
-        chain.add((b, max_n))
-        b = max_n
+        chain.add((last_node, max_n))
+        last_node = max_n
         max_n += 1
-    return chain, b
+    return chain, last_node
 
 
 cdef inline set dyad_patch(set edges, map_int &limit):
     """Return a patched edges for contracted links."""
-    cdef int n, c, b, u, v
+    cdef int n, c, last_node, u, v
     cdef set new_chain
     cdef set new_edges = edges.copy()
     for n, c in limit:
         # Only for contracted links.
         if not c < 0 or c == -1:
             continue
-        new_chain, b = contracted_chain(n, abs(c), new_edges)
+        new_chain, last_node = contracted_chain(n, abs(c), new_edges)
         for u, v in edges:
             # Find once.
             if n == u or n == v:
                 new_edges.remove((u, v))
                 if n == u:
-                    new_edges.add((v, b))
+                    new_edges.add((v, last_node))
                 else:
-                    new_edges.add((u, b))
+                    new_edges.add((u, last_node))
                 break
         new_edges.update(new_chain)
     return new_edges
@@ -225,7 +226,7 @@ cdef void synthesis(
     set edges_origin,
     map_int &limit,
     map_int &count_origin,
-    int no_degenerate,
+    uint no_degenerate,
     object stop_func
 ):
     """Recursive synthesis function."""
@@ -268,8 +269,8 @@ cdef void synthesis(
             # Is all links connected.
             if not all_connected(limit, count[0]):
                 continue
-            # Transform function of contracted links.
-            g = Graph(dyad_patch(edges, limit))
+            # Preliminary test.
+            g = Graph(edges)
             # Is graph all connected.
             if not g.is_connected():
                 continue
@@ -279,7 +280,10 @@ cdef void synthesis(
             # Is planar graph.
             if not is_planar(g):
                 continue
-            # Is graph degenerated.
+
+            # Result graph.
+            g = Graph(dyad_patch(edges, limit))
+            # Graph filter depending on degenerate option.
             if no_degenerate == 0 and not g.is_degenerate():
                 continue
             elif no_degenerate == 1 and g.is_degenerate():
@@ -297,7 +301,7 @@ cdef void splice(
     list result,
     int16_t[:] m_link,
     int16_t[:] c_link,
-    int no_degenerate,
+    uint no_degenerate,
     object stop_func,
 ):
     """Splice multiple links by:
@@ -347,7 +351,7 @@ cdef inline list loop_chain(int num):
 cpdef tuple topo(
     object link_num_list,
     object c_j_list,
-    int no_degenerate = 1,
+    uint no_degenerate = 1,
     object stop_func = None
 ):
     """Linkage mechanism topological function.
