@@ -157,7 +157,7 @@ cdef class LRPlanarity:
 
         return self.embedding
 
-    cdef bool dfs_testing(self, int v):
+    cdef bint dfs_testing(self, int v):
         """Test for LR partition."""
         # the recursion stack
         cdef c_list[int] dfs_stack = [v]
@@ -166,7 +166,7 @@ cdef class LRPlanarity:
         # boolean to indicate whether to skip the initial work for an edge
         cdef object skip_init = defaultdict(lambda: False)
 
-        cdef bool skip_final
+        cdef bint skip_final
         cdef int w
         cdef tuple e, ei
         while not dfs_stack.empty():
@@ -297,7 +297,7 @@ cdef class LRPlanarity:
 
                 ind[v] += 1
 
-    cdef bool add_constraints(self, tuple ei, tuple e):
+    cdef bint add_constraints(self, tuple ei, tuple e):
         cdef ConflictPair P = ConflictPair()
 
         # merge return edges of e_i into P.right
@@ -455,7 +455,7 @@ cdef class Interval:
         self.low = low
         self.high = high
 
-    cdef bool empty(self):
+    cdef bint empty(self):
         """Check if the interval is empty"""
         return (self.low is None) and (self.high is None)
 
@@ -463,7 +463,7 @@ cdef class Interval:
         """Return a copy of this interval"""
         return Interval(self.low, self.high)
 
-    cdef bool conflicting(self, tuple b, LRPlanarity state):
+    cdef bint conflicting(self, tuple b, LRPlanarity state):
         """Return True if interval I conflicts with edge b"""
         return not self.empty() and state.lowpt[self.high] > state.lowpt[b]
 

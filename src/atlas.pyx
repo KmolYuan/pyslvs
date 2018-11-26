@@ -16,7 +16,6 @@ email: pyslvs@gmail.com
 """
 
 from time import time
-from cpython cimport bool
 from libcpp.vector cimport vector as c_vector
 from libcpp.map cimport map as c_map
 from numpy cimport ndarray, int16_t
@@ -31,21 +30,21 @@ ctypedef unsigned int uint
 ctypedef c_map[int, int] map_int
 
 
-cdef int16_t[:] labels(int16_t[:] numbers, int index, int offset, bool negative):
+cdef int16_t[:] labels(int16_t[:] numbers, int index, int offset, bint negative):
     """Generate labels from numbers."""
     cdef int i, num
     cdef list labels = []
     for num in numbers[offset:]:
         for i in range(num):
-            labels.append(index)
+            if negative:
+                labels.append(-index)
+            else:
+                labels.append(index)
         index += 1
-    if negative:
-        return -np_array(labels, dtype=int16)
-    else:
-        return np_array(labels, dtype=int16)
+    return np_array(labels, dtype=int16)
 
 
-cdef inline bool is_over_count(list pick_list, map_int &limit, map_int &count):
+cdef inline bint over_count(list pick_list, map_int &limit, map_int &count):
     """Return True if it is a feasible pick list."""
     cdef int n
     cdef tuple candidate
@@ -100,7 +99,7 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
     # TODO: Need to be optimized: Remove same type link picking.
     cdef tuple hash_code, hash_codes
     cdef c_vector[int] indices = range(pick_count)
-    cdef bool failed = False
+    cdef bint failed = False
     cdef set types = set()
     cdef list pick_list = []
     cdef list hash_list = []
@@ -120,7 +119,7 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
             hash_list.append(hash_code)
 
         # Check if contracted link is over selected.
-        if not failed and is_over_count(pick_list, limit, count):
+        if not failed and over_count(pick_list, limit, count):
             failed = True
 
         # Check hash codes.
@@ -163,7 +162,7 @@ cdef inline int feasible_link(map_int &limit, map_int &count):
     return -1
 
 
-cdef inline bool all_connected(map_int &limit, map_int &count):
+cdef inline bint all_connected(map_int &limit, map_int &count):
     """Return True if all multiple links and contracted links is connected."""
     cdef int n, c
     for n, c in limit:
@@ -327,7 +326,7 @@ cdef void splice(
     synthesis(0, result, edges, limit, count, no_degenerate, stop_func)
 
 
-cdef bool is_isomorphic(Graph g, list result):
+cdef bint is_isomorphic(Graph g, list result):
     """Return True if graph is isomorphic with result list."""
     cdef Graph h
     for h in result:

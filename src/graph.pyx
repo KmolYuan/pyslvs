@@ -285,7 +285,7 @@ cdef class GraphMatcher:
                     yield node, min(self.g2_nodes - set(self.core_2))
         # For all other cases, we don't have any candidate pairs.
 
-    cdef bool is_isomorphic(self):
+    cdef bint is_isomorphic(self):
         """Returns True if g1 and g2 are isomorphic graphs."""
         # Let's do two very quick checks!
         # QUESTION: Should we call faster_graph_could_be_isomorphic(g1,g2)?
@@ -332,7 +332,7 @@ cdef class GraphMatcher:
                     # restore data structures
                     new_state.restore()
 
-    cdef inline bool syntactic_feasibility(self, int g1_node, int g2_node):
+    cdef inline bint syntactic_feasibility(self, int g1_node, int g2_node):
         """Returns True if adding (g1_node, g2_node) is syntactically feasible.
         
         The VF2 algorithm was designed to work with graphs having, at most,

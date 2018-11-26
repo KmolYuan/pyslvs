@@ -67,9 +67,9 @@ cpdef tuple PLAP(
     """Point on circle by angle."""
     cdef double a1 = atan2(B.y - A.y, B.x - A.x) if B else 0
     if inverse:
-        return (A.x + L0 * cos(a1 - a0), A.y + L0 * sin(a1 - a0))
+        return (A.x + L0 * cos(a1 - a0)), (A.y + L0 * sin(a1 - a0))
     else:
-        return (A.x + L0 * cos(a1 + a0), A.y + L0 * sin(a1 + a0))
+        return (A.x + L0 * cos(a1 + a0)), (A.y + L0 * sin(a1 + a0))
 
 
 cpdef tuple PLLP(
@@ -86,24 +86,24 @@ cpdef tuple PLLP(
 
     # No solutions, the circles are separate.
     if d > L0 + L1:
-        return (nan, nan)
+        return nan, nan
 
     # No solutions because one circle is contained within the other.
     if d < abs(L0 - L1):
-        return (nan, nan)
+        return nan, nan
 
     # Circles are coincident and there are an infinite number of solutions.
-    if (d == 0) and (L0 == L1):
-        return (nan, nan)
+    if d == 0 and L0 == L1:
+        return nan, nan
     cdef double a = (L0 * L0 - L1 * L1 + d * d) / (2 * d)
     cdef double h = sqrt(L0 * L0 - a * a)
     cdef double xm = A.x + a * dx / d
     cdef double ym = A.y + a * dy / d
 
     if inverse:
-        return (xm + h * dy / d, ym - h * dx / d)
+        return (xm + h * dy / d), (ym - h * dx / d)
     else:
-        return (xm - h * dy / d, ym + h * dx / d)
+        return (xm - h * dy / d), (ym + h * dx / d)
 
 
 cpdef tuple PLPP(
@@ -124,22 +124,22 @@ cpdef tuple PLPP(
     cdef double d = A.distance(I)
     if d > L0:
         # No intersection.
-        return (nan, nan)
+        return nan, nan
     elif d == L0:
         # One intersection point.
-        return (I.x, I.y)
+        return I.x, I.y
 
     # Two intersection points.
     d = sqrt(L0 * L0 - d * d) / line_mag
     if inverse:
-        return (I.x - dx * d, I.y - dy * d)
+        return (I.x - dx * d), (I.y - dy * d)
     else:
-        return (I.x + dx * d, I.y + dy * d)
+        return (I.x + dx * d), (I.y + dy * d)
 
 
 cpdef tuple PXY(Coordinate A, double x, double y):
     """Using relative cartesian coordinate to get solution."""
-    return (A.x + x, A.y + y)
+    return (A.x + x), (A.y + y)
 
 
 cdef inline bool legal_crank(Coordinate A, Coordinate B, Coordinate C, Coordinate D):
@@ -235,12 +235,12 @@ cpdef tuple expr_parse(str exprs):
     """Parse expression as tuple."""
     exprs = exprs.replace(" ", '')
     cdef list tmp_list = []
-    cdef list params
+    cdef list params = []
     cdef str expr, p
     for expr in exprs.split(';'):
         if not expr:
             return ()
-        params = []
+        params.clear()
         params.append(str_before(expr, '['))
         params.extend(str_between(expr, '[', ']').split(','))
         params.append(str_between(expr, '(', ')'))
@@ -496,7 +496,7 @@ cpdef list expr_solving(
         expr_parser(exprs, data_dict)
 
     cdef dict p_data_dict = {}
-    cdef bool has_not_solved = False
+    cdef bint has_not_solved = False
     # Add coordinate of known points.
     for i in range(len(vpoints)):
         if mapping[i] in data_dict:

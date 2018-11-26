@@ -13,23 +13,25 @@ from typing import Sequence, Iterator
 from libc.math cimport sin, cos
 from tinycadlib cimport radians
 from pmks cimport VPoint
-from cpython cimport bool
 
 
-cdef inline bool is_all_lock(dict status, dict same = {}):
+cdef inline bint is_all_lock(dict status):
     """Test is all status done."""
     cdef int node
-    cdef bool n_status
+    cdef bint n_status
     for node, n_status in status.items():
-        if (not n_status) and (node not in same):
+        if not n_status:
             return False
     return True
 
 
-cdef inline bool clockwise(tuple c1, tuple c2, tuple c3):
+cdef inline bint clockwise(tuple c1, tuple c2, tuple c3):
     """Check orientation of three points."""
-    cdef double val = (c2[1] - c1[1])*(c3[0] - c2[0]) - (c2[0] - c1[0])*(c3[1] - c2[1])
-    return (val == 0) or (val > 0)
+    cdef double val = (
+        (c2[1] - c1[1]) * (c3[0] - c2[0])
+        - (c2[0] - c1[0]) * (c3[1] - c2[1])
+    )
+    return val == 0 or val > 0
 
 
 def _get_reliable_friend(
@@ -192,7 +194,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
 
     cdef int type_num, friend_a, friend_b, friend_c, friend_d
     cdef double tmp_x, tmp_y, angle
-    cdef bool reverse
+    cdef bint reverse
     # Friend iterator.
     cdef object fi
     while not is_all_lock(status):
