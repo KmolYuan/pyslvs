@@ -22,6 +22,9 @@ extra_compile_args = [
     '-Wno-cpp',
     # Avoid C++ math library.
     '-D_hypot=hypot',
+    # Avoid compile error with CYTHON_USE_PYLONG_INTERNALS.
+    # https://github.com/cython/cython/issues/2670#issuecomment-432212671
+    '-DMS_WIN64',
 ]
 
 ext_modules = [Extension(
