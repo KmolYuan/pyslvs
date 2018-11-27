@@ -2,16 +2,16 @@
 
 """Compile the Cython libraries of Pyslvs."""
 
+from os import listdir
 from distutils.core import setup, Extension
-import os
-
+from platform import system
 from Cython.Distutils import build_ext
 import numpy
 np_include = numpy.get_include()
 
 
 sources = []
-for source in os.listdir("./src"):
+for source in listdir("./src"):
     if source.split('.')[-1] == 'pyx':
         sources.append(source)
 
@@ -22,10 +22,16 @@ extra_compile_args = [
     '-Wno-cpp',
     # Avoid C++ math library.
     '-D_hypot=hypot',
+    # Disable NumPy warning.
+    '-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION',
+]
+
+if system() == 'Windows':
     # Avoid compile error with CYTHON_USE_PYLONG_INTERNALS.
     # https://github.com/cython/cython/issues/2670#issuecomment-432212671
-    '-DMS_WIN64',
-]
+    extra_compile_args.append('-DMS_WIN64')
+    # Disable format warning.
+    extra_compile_args.append('-Wno-format')
 
 ext_modules = [Extension(
     "bfgs",
