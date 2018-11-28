@@ -23,7 +23,7 @@ cpdef inline bool is_planar(Graph g):
     
     Only this function well be shown as public.
     """
-    cdef LRPlanarity planarity_state = LRPlanarity(g)
+    cdef LRPlanarity planarity_state = LRPlanarity.__new__(LRPlanarity, g)
     return planarity_state.lr_planarity() is not None
 
 
@@ -65,7 +65,7 @@ cdef class LRPlanarity:
         self.parent_edge = defaultdict(return_none)
 
         # oriented DFS graph
-        self.DG = Graph([])
+        self.DG = Graph.__new__(Graph, [])
         self.DG.add_nodes_from(g.nodes)
 
         self.adjs = {}
@@ -82,7 +82,7 @@ cdef class LRPlanarity:
         self.left_ref = {}
         self.right_ref = {}
 
-        self.embedding = PlanarEmbedding([])
+        self.embedding = PlanarEmbedding.__new__(PlanarEmbedding, [])
 
     cdef PlanarEmbedding lr_planarity(self):
         """Execute the LR planarity test."""
@@ -190,7 +190,7 @@ cdef class LRPlanarity:
                         break  # handle next node in dfs_stack (i.e. w)
                     else:  # back edge
                         self.lowpt_edge[ei] = ei
-                        self.S.append(ConflictPair(right=Interval(ei, ei)))
+                        self.S.append(ConflictPair.__new__(ConflictPair, right=Interval(ei, ei)))
 
                 # integrate new return edges
                 if self.lowpt[ei] < self.height[v]:
@@ -298,7 +298,7 @@ cdef class LRPlanarity:
                 ind[v] += 1
 
     cdef bint add_constraints(self, tuple ei, tuple e):
-        cdef ConflictPair P = ConflictPair()
+        cdef ConflictPair P = ConflictPair.__new__(ConflictPair)
 
         # merge return edges of e_i into P.right
         cdef ConflictPair Q
@@ -420,7 +420,7 @@ cdef class ConflictPair:
 
     cdef Interval left, right
 
-    def __cinit__(self, left=Interval(), right=Interval()):
+    def __cinit__(self, left=Interval.__new__(Interval), right=Interval.__new__(Interval)):
         self.left = left
         self.right = right
 
@@ -457,11 +457,11 @@ cdef class Interval:
 
     cdef bint empty(self):
         """Check if the interval is empty"""
-        return (self.low is None) and (self.high is None)
+        return self.low is self.high is None
 
     cdef Interval copy(self):
         """Return a copy of this interval"""
-        return Interval(self.low, self.high)
+        return Interval.__new__(Interval, self.low, self.high)
 
     cdef bint conflicting(self, tuple b, LRPlanarity state):
         """Return True if interval I conflicts with edge b"""

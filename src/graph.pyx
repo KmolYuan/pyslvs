@@ -22,6 +22,46 @@ from typing import (
 )
 
 
+cpdef tuple link_assortments(Graph g):
+    """Return link assortments of the graph."""
+    cdef list assortments = []
+    cdef c_map_int g_degrees = g.degrees()
+
+    cdef int n, d
+    for n, d in g_degrees:
+        while len(assortments) < d:
+            assortments.append(0)
+        assortments[d] += 1
+    return tuple(assortments)
+
+
+cpdef tuple contracted_link_assortments(Graph g):
+    """Return contracted link assortments of the graph."""
+    # TODO: contracted links.
+
+
+cdef list multi_contracted_links(Graph g):
+    """Return a list of multiple contracted links."""
+    cdef int n1, n2, index, neighbor
+    cdef list m_links
+    for n1 in g.nodes:
+        # Only for binary link.
+        if len(g.adj[n1]) != 2:
+            continue
+        # n1 is not collected yet.
+        index = 0
+        m_links = [n1]
+        while index < len(m_links):
+            for neighbor in g.adj[m_links[index]]:
+                if len(g.adj[neighbor]) == 2:
+                    if neighbor not in m_links:
+                        m_links.append(neighbor)
+            index += 1
+        if len(m_links) > 1:
+            return m_links
+    return []
+
+
 @cython.final
 cdef class Graph:
 
@@ -48,6 +88,12 @@ cdef class Graph:
     cpdef void add_edge(self, int n1, int n2):
         """Add two nodes for an edge."""
         self.edges += ((n1, n2),)
+
+        cdef int n
+        self.adj.clear()
+        for n in self.nodes:
+            self.adj[n] = self.neighbors(n)
+
         if n1 not in self.nodes:
             self.nodes += (n1,)
         if n2 not in self.nodes:
@@ -68,14 +114,18 @@ cdef class Graph:
                 neighbors.append(l1)
         return tuple(neighbors)
 
-    cpdef list degrees(self):
-        """Return number of neighbors par node."""
-        cdef int n
-        return [(n, len(neighbors)) for n, neighbors in self.adj.items()]
-
     cpdef int dof(self):
         """Return degrees of freedom."""
         return 3 * (len(self.nodes) - 1) - (2 * len(self.edges))
+
+    cdef c_map_int degrees(self):
+        """Return number of neighbors par node."""
+        cdef int n
+        cdef tuple neighbors
+        cdef c_map_int g_degrees
+        for n, neighbors in self.adj.items():
+            g_degrees[n] = len(neighbors)
+        return g_degrees
 
     cpdef bool is_connected(self, int with_out = -1):
         """Return True if the graph is not isolated."""
@@ -101,12 +151,14 @@ cdef class Graph:
 
     cpdef bool has_cut_link(self):
         """Return True if the graph has any cut links."""
-        cdef int node, degree
-        for node, degree in self.degrees():
+        cdef c_map_int g_degrees = self.degrees()
+
+        cdef int n, d
+        for n, d in g_degrees:
             # Only for multiple links.
-            if degree > 2:
+            if d > 2:
                 # Remove a multiple link should be keep connected.
-                if not self.is_connected(node):
+                if not self.is_connected(n):
                     return True
         return False
 
@@ -118,6 +170,7 @@ cdef class Graph:
         """
         if self.has_triangles():
             return True
+
         cdef int n1, n2
         cdef tuple neighbors
         cdef list c_l
@@ -125,14 +178,16 @@ cdef class Graph:
         cdef set mcl = set()
         while True:
             mcl.clear()
-            mcl.update(g.multi_contracted_links())
+            mcl.update(multi_contracted_links(g))
             if not mcl:
                 break
             c_l = []
             for n1, n2 in g.edges:
                 if not {n1, n2} & mcl:
                     c_l.append((n1, n2))
-            g = Graph(c_l)
+
+            # Pruned graph.
+            g = Graph.__new__(Graph, c_l)
             if {len(neighbors) for neighbors in g.adj.values()} == {2}:
                 # The graph is a basic loop.
                 break
@@ -141,42 +196,21 @@ cdef class Graph:
 
     cpdef bool is_isomorphic(self, Graph graph):
         """Return True if two graphs is isomorphic."""
-        cdef GraphMatcher gm_gh = GraphMatcher(self, graph)
+        cdef GraphMatcher gm_gh = GraphMatcher.__new__(GraphMatcher, self, graph)
         return gm_gh.is_isomorphic()
 
     cdef list link_types(self):
         """Return types of each link."""
-        cdef int n, d
-        return sorted([d for n, d in self.degrees()])
+        cdef tuple neighbors
+        return sorted([len(neighbors) for neighbors in self.adj.values()])
 
-    cdef int node_distance(self, int u, int v):
+    cdef bint is_adjacent(self, int u, int v):
         """Find the distance between u and v."""
         if v in self.adj[u]:
-            return 1
-        return 0
+            return True
+        return False
 
-    cdef list multi_contracted_links(self):
-        """Return a list of multiple contracted links."""
-        cdef int n1, n2, index, neighbor
-        cdef list m_links
-        for n1 in self.nodes:
-            # Only for binary link.
-            if len(self.adj[n1]) != 2:
-                continue
-            # n1 is not collected yet.
-            index = 0
-            m_links = [n1]
-            while index < len(m_links):
-                for neighbor in self.adj[m_links[index]]:
-                    if len(self.adj[neighbor]) == 2:
-                        if neighbor not in m_links:
-                            m_links.append(neighbor)
-                index += 1
-            if len(m_links) > 1:
-                return m_links
-        return []
-
-    cdef bool has_triangles(self):
+    cdef bint has_triangles(self):
         """Return True if the graph has triangles."""
         cdef int n1, n2
         cdef tuple neighbors
@@ -191,13 +225,7 @@ cdef class Graph:
 
     cpdef Graph copy(self):
         """Copy self."""
-        return Graph(self.edges)
-
-    cpdef Graph subgraph(self, tuple nodes):
-        """Return a sub-graph from self."""
-        cdef set nodes_set = set(nodes)
-        cdef tuple edge
-        return Graph([edge for edge in self.edges if set(edge) <= nodes_set])
+        return Graph.__new__(Graph, self.edges)
 
 
 @cython.final
@@ -255,7 +283,7 @@ cdef class GraphMatcher:
         self.inout_2 = {}
         # Practically, these sets simply store the nodes in the subgraph.
 
-        self.state = GMState(self)
+        self.state = GMState.__new__(GMState, self)
 
         # Provide a convenient way to access the isomorphism mapping.
         self.mapping = self.core_1.copy()
@@ -298,19 +326,13 @@ cdef class GraphMatcher:
         # Check local properties
         if self.g1.link_types() != self.g2.link_types():
             return False
+
+        self.initialize()
         try:
-            next(self.isomorphisms_iter())
+            next(self.match())
             return True
         except StopIteration:
             return False
-
-    def isomorphisms_iter(self) -> Iterator[Dict[int, Tuple[int]]]:
-        """Generator over isomorphisms between g1 and g2.
-
-        Declare that we are looking for a graph-graph isomorphism.
-        """
-        self.initialize()
-        yield from self.match()
 
     def match(self) -> Iterator[Dict[int, Tuple[int]]]:
         """Extends the isomorphism mapping."""
@@ -358,7 +380,7 @@ cdef class GraphMatcher:
         # self-loops for g2_node. Without this check, we would fail on
         # R_neighbor at the next recursion level. But it is good to prune the
         # search tree now.
-        if self.g1.node_distance(g1_node, g1_node) != self.g2.node_distance(g2_node, g2_node):
+        if self.g1.is_adjacent(g1_node, g1_node) != self.g2.is_adjacent(g2_node, g2_node):
             return False
         # R_neighbor
         # For each neighbor n' of n in the partial mapping, the corresponding
@@ -370,8 +392,8 @@ cdef class GraphMatcher:
                 if self.core_1[neighbor] not in self.g2.adj[g2_node]:
                     return False
                 elif (
-                        self.g1.node_distance(neighbor, g1_node) !=
-                        self.g2.node_distance(self.core_1[neighbor], g2_node)
+                    self.g1.is_adjacent(neighbor, g1_node)
+                    != self.g2.is_adjacent(self.core_1[neighbor], g2_node)
                 ):
                     return False
         for neighbor in self.g2.adj[g2_node]:
@@ -379,8 +401,8 @@ cdef class GraphMatcher:
                 if self.core_2[neighbor] not in self.g1.adj[g1_node]:
                     return False
                 elif (
-                        self.g1.node_distance(self.core_2[neighbor], g1_node) !=
-                        self.g2.node_distance(neighbor, g2_node)
+                    self.g1.is_adjacent(self.core_2[neighbor], g1_node)
+                    != self.g2.is_adjacent(neighbor, g2_node)
                 ):
                     return False
 

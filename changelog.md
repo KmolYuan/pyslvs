@@ -6,6 +6,7 @@ Version 18.11
 
 + Split out contracted link function to number synthesis.
 + Add planar graph checking function from NetworkX.
++ Performance optimization for instance creation.
 
 Version 18.10
 ===

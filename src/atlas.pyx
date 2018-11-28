@@ -269,7 +269,7 @@ cdef void synthesis(
             if not all_connected(limit, count[0]):
                 continue
             # Preliminary test.
-            g = Graph(edges)
+            g = Graph.__new__(Graph, edges)
             # Is graph all connected.
             if not g.is_connected():
                 continue
@@ -281,7 +281,7 @@ cdef void synthesis(
                 continue
 
             # Result graph.
-            g = Graph(dyad_patch(edges, limit))
+            g = Graph.__new__(Graph, dyad_patch(edges, limit))
             # Graph filter depending on degenerate option.
             if no_degenerate == 0 and not g.is_degenerate():
                 continue
@@ -384,7 +384,7 @@ cpdef tuple topo(
     cdef list result = []
     if len(m_link) == 0:
         # Single loop (Special case).
-        result.append(Graph(loop_chain(link_num[0])))
+        result.append(Graph.__new__(Graph, loop_chain(link_num[0])))
     else:
         splice(result, m_link, labels(c_j, 1, 0, True), no_degenerate, stop_func)
         print(f"Done. Collected results ({len(result)}) ...")
