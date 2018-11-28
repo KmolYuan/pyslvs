@@ -28,7 +28,11 @@ from firefly import Firefly
 from de import Differential
 from number import number_synthesis, contracted_link
 from atlas import topo
-from graph import Graph
+from graph import (
+    Graph,
+    link_assortments,
+    contracted_link_assortments,
+)
 from triangulation import vpoints_configure
 from _parser import parse_vpoints
 from examples import example_list
@@ -95,18 +99,23 @@ class CoreTest(TestCase):
         self.assertTrue(isclose(x, 120))
         self.assertTrue(isclose(y, 70))
 
-    def test_atlas(self):
-        """Testing 'atlas' and 'graph' libraries.
-
-        + 'topo' function.
-        + 'Graph' class.
-        """
+    def test_graph_function(self):
+        """Test 'graph' libraries."""
         g1 = Graph([(0, 1), (0, 4), (1, 5), (2, 3), (2, 4), (3, 5), (4, 5)])
+        self.assertFalse(g1.is_degenerate())
+        self.assertTrue(g1.is_connected())
+        self.assertEqual(1, g1.dof())
         g2 = Graph([(0, 2), (0, 4), (1, 3), (1, 4), (2, 5), (3, 5), (4, 5)])
         g3 = Graph([(0, 1), (0, 2), (1, 4), (2, 5), (3, 4), (3, 5), (4, 5)])
         self.assertTrue(g1.is_isomorphic(g2))
         self.assertFalse(g1.is_isomorphic(g3))
 
+        g1 = Graph([(1, 2), (1, 3), (1, 7), (2, 0), (2, 5), (2, 4), (3, 0), (4, 6), (6, 0), (5, 7)])
+        self.assertEqual([5, 2, 1], link_assortments(g1))
+        self.assertEqual([1, 2], contracted_link_assortments(g1))
+
+    def test_atlas(self):
+        """Test 'atlas' libraries."""
         answers = []
 
         type_1 = [4, 2]
@@ -116,15 +125,15 @@ class CoreTest(TestCase):
         self.assertEqual(2, len(answers))
         answers.clear()
 
-        answers_degenerate = []
+        answers_degenerated = []
         for type_2 in ([4, 4, 0], [5, 2, 1], [6, 0, 2]):
             for c_j in contracted_link(type_2):
                 answer, _ = topo(type_2, c_j)
                 answers.extend(answer)
                 answer, _ = topo(type_2, c_j, 2)
-                answers_degenerate.extend(answer)
+                answers_degenerated.extend(answer)
         self.assertEqual(16, len(answers))
-        self.assertEqual(40, len(answers_degenerate))
+        self.assertEqual(40, len(answers_degenerated))
 
     def test_solving(self):
         """Test triangular formula solving.

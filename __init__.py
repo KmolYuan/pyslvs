@@ -50,7 +50,11 @@ from .rga import Genetic
 from .firefly import Firefly
 from .de import Differential
 from .number import number_synthesis, contracted_link
-from .graph import Graph
+from .graph import (
+    Graph,
+    link_assortments,
+    contracted_link_assortments,
+)
 from . import planar_check
 from .atlas import topo
 from .triangulation import vpoints_configure
@@ -85,6 +89,8 @@ __all__ = [
     'contracted_link',
     'topo',
     'Graph',
+    'link_assortments',
+    'contracted_link_assortments',
     'vpoints_configure',
     'vpoint_dof',
     'colorNames',

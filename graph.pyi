@@ -1,6 +1,19 @@
 # -*- coding: utf-8 -*-
 
-from typing import Tuple, Sequence
+from typing import (
+    Tuple,
+    List,
+    Sequence,
+)
+
+
+def link_assortments(g: Graph) -> List[int]:
+    """Return link assortments of the graph."""
+    ...
+
+def contracted_link_assortments(g: Graph) -> List[int]:
+    """Return contracted link assortments of the graph."""
+    ...
 
 
 class Graph:
@@ -9,20 +22,40 @@ class Graph:
 
     edges: Tuple[Tuple[int, int], ...]
 
-    def __init__(self, edges: Sequence[Tuple[int, int]]):
+    def __init__(self, edges: Sequence[Tuple[int, int]]): ...
+
+    def add_edge(self):
+        """Add two nodes for an edge."""
         ...
 
-    def has_triangles(self) -> bool:
+    def add_nodes_from(self, nodes: Tuple[int, ...]):
+        """Add nodes from a tuple."""
+        ...
+
+    def dof(self) -> int:
+        """Return degrees of freedom."""
         ...
 
     def is_connected(self, with_out: int = ...) -> bool:
+        """Return True if the graph is not isolated."""
         ...
 
     def has_cut_link(self) -> bool:
+        """Return True if the graph has any cut links."""
+        ...
+
+    def is_degenerate(self) -> bool:
+        """Return True if this kinematic chain is degenerate.
+
+        + Prue all multiple contracted links recursively.
+        + Check the DOF of sub-graph if it is lower then zero.
+        """
         ...
 
     def is_isomorphic(self, graph: Graph) -> bool:
+        """Return True if two graphs is isomorphic."""
         ...
 
     def copy(self) -> Graph:
+        """Copy the graph."""
         ...

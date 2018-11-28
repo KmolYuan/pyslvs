@@ -25,14 +25,15 @@ cdef class Graph:
 
     cpdef void add_edge(self, int n1, int n2)
     cpdef void add_nodes_from(self, tuple nodes)
-    cdef tuple neighbors(self, int n)
+
     cpdef int dof(self)
+    cdef tuple neighbors(self, int n)
     cdef c_map_int degrees(self)
+
     cpdef bool is_connected(self, int with_out=*)
     cpdef bool has_cut_link(self)
     cpdef bool is_degenerate(self)
     cpdef bool is_isomorphic(self, Graph graph)
-    cdef list link_types(self)
-    cdef bint is_adjacent(self, int u, int v)
     cdef bint has_triangles(self)
+
     cpdef Graph copy(self)
