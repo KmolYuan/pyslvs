@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-18.10.0-yellow.svg)](https://github.com/KmolYuan/pyslvs/releases/latest)
+[![Version](https://img.shields.io/badge/version-18.11.0-yellow.svg)](https://github.com/KmolYuan/pyslvs/releases/latest)
 [![Build status](https://ci.appveyor.com/api/projects/status/6l1bh1197ncahd0q?svg=true)](https://ci.appveyor.com/project/KmolYuan/pyslvs)
 [![Build status](https://img.shields.io/travis/KmolYuan/pyslvs.svg?logo=travis)](https://travis-ci.org/KmolYuan/pyslvs)
 
@@ -11,7 +11,6 @@ A no-GUI module of mechanism synthesis system and a 2D geometric constraint solv
 Enter directory and execute the Makefile. Then, run the unit test script after compiling.
 
 ```bash
-cd pyslvs
 make
 python test_pyslvs.py
 ```
@@ -54,21 +53,25 @@ In Pyslvs, expression is mainly to [PMKS](http://designengrlab.github.io/PMKS/),
 
     Python wrapper of [Sketchsolve](https://code.google.com/archive/p/sketchsolve/). A simple and fast constraint solver with BFGS algorithm.
 
-### Synthesis
+### Graph Synthesis
 
 + **number** library:
 
     Number synthesis function for searching solutions of the number of joints and links.
 
++ **graph** library:
+
+    Graph expression came from NetworkX. Also contains graph verification functions. 
+
++ **planar_check** library:
+
+    Planar graph checking came from NetworkX.
+
 + **atlas** library:
 
     Graph combination algorithm.
 
-+ **planarlinkage** library:
-
-    Dimensional synthesis verification function objects.
-
-#### Adesign
+#### Adesign (Dimensional Synthesis)
 
 [Adesign](https://github.com/KmolYuan/Adesign) module: Cython algorithms libraries provide evolution designing.
 
@@ -87,3 +90,7 @@ In Pyslvs, expression is mainly to [PMKS](http://designengrlab.github.io/PMKS/),
 + **verify** library:
 
     Provide base fitness function class for algorithm.
+
++ **planarlinkage** library:
+
+    Dimensional synthesis verification function objects.
