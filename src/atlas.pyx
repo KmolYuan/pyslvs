@@ -387,7 +387,6 @@ cpdef tuple topo(
         result.append(Graph.__new__(Graph, loop_chain(link_num[0])))
     else:
         splice(result, m_link, labels(c_j, 1, 0, True), no_degenerate, stop_func)
-        print(f"Done. Collected results ({len(result)}) ...")
 
     print(f"Count: {len(result)}")
     # Return graph list and time.
