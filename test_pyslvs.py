@@ -112,7 +112,7 @@ class CoreTest(TestCase):
 
         g1 = Graph([(1, 2), (1, 3), (1, 7), (2, 0), (2, 5), (2, 4), (3, 0), (4, 6), (6, 0), (5, 7)])
         self.assertEqual([5, 2, 1], link_assortments(g1))
-        self.assertEqual([1, 2], contracted_link_assortments(g1))
+        self.assertEqual([1, 2, 0, 0, 0], contracted_link_assortments(g1))
 
     def test_atlas(self):
         """Test 'atlas' libraries."""
