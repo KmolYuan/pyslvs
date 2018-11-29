@@ -22,8 +22,6 @@ extra_compile_args = [
     '-Wno-cpp',
     # Avoid C++ math library.
     '-D_hypot=hypot',
-    # Disable NumPy warning.
-    '-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION',
 ]
 
 if system() == 'Windows':
@@ -32,6 +30,8 @@ if system() == 'Windows':
     extra_compile_args.append('-DMS_WIN64')
     # Disable format warning.
     extra_compile_args.append('-Wno-format')
+    # Disable NumPy warning.
+    extra_compile_args.append('-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION')
 
 ext_modules = [Extension(
     "bfgs",
