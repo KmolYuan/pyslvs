@@ -21,10 +21,11 @@ class Graph:
     """NetworkX-like graph class."""
 
     edges: Tuple[Tuple[int, int], ...]
+    nodes: Tuple[int, ...]
 
     def __init__(self, edges: Sequence[Tuple[int, int]]): ...
 
-    def add_edge(self):
+    def add_edge(self, n1: int, n2: int):
         """Add two nodes for an edge."""
         ...
 
@@ -34,6 +35,10 @@ class Graph:
 
     def dof(self) -> int:
         """Return degrees of freedom."""
+        ...
+
+    def neighbors(self, n: int) -> Tuple[int, ...]:
+        """Neighbors except the node."""
         ...
 
     def is_connected(self, with_out: int = ...) -> bool:

@@ -153,7 +153,7 @@ cdef class Graph:
         """Return degrees of freedom."""
         return 3 * (len(self.nodes) - 1) - (2 * len(self.edges))
 
-    cdef inline tuple neighbors(self, int n):
+    cpdef inline tuple neighbors(self, int n):
         """Neighbors except the node."""
         cdef list neighbors = []
         cdef int l1, l2

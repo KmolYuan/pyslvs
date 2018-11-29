@@ -20,14 +20,14 @@ cdef class Graph:
     """NetworkX-like graph class."""
 
     cdef readonly tuple edges
-    cdef tuple nodes
+    cdef readonly tuple nodes
     cdef dict adj
 
     cpdef void add_edge(self, int n1, int n2)
     cpdef void add_nodes_from(self, tuple nodes)
 
     cpdef int dof(self)
-    cdef tuple neighbors(self, int n)
+    cpdef tuple neighbors(self, int n)
     cdef c_map_int degrees(self)
 
     cpdef bool is_connected(self, int with_out=*)
