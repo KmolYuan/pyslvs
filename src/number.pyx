@@ -60,7 +60,7 @@ cdef inline int sum_factors(list factors):
     return factor
 
 
-cpdef tuple number_synthesis(int nl, int nj):
+cpdef list number_synthesis(int nl, int nj):
     """Number synthesis try-error function."""
     cdef list result = []
     cdef int m_max_v = m_max(nl, nj)
@@ -74,8 +74,8 @@ cpdef tuple number_synthesis(int nl, int nj):
             continue
         symbols.append(nl_m_max)
         if sum_factors(symbols) == (2 * nj):
-            result.append(symbols)
-    return tuple(result)
+            result.append(tuple(symbols))
+    return result
 
 
 cdef inline int j_m(int16_t[:] link_num):

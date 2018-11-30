@@ -31,6 +31,9 @@ cdef bint is_adjacent(Graph g, int u, int v):
 
 cpdef list link_assortments(Graph g):
     """Return link assortments of the graph."""
+    if not g.edges:
+        return [0]
+
     cdef list assortments = [0]
     cdef c_map_int g_degrees = g.degrees()
 
@@ -48,6 +51,9 @@ cpdef list link_assortments(Graph g):
 
 cpdef list contracted_link_assortments(Graph g):
     """Return contracted link assortments of the graph."""
+    if not g.edges:
+        return [0]
+
     cdef list assortments = [0] * link_assortments(g)[0]
 
     cdef int d

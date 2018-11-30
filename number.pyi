@@ -3,7 +3,7 @@
 from typing import List, Tuple, Sequence
 
 
-def number_synthesis(nl: int, nj: int) -> Tuple[Tuple[int, ...], ...]:
+def number_synthesis(nl: int, nj: int) -> List[Tuple[int, ...]]:
     """Number synthesis try-error function."""
     ...
 
