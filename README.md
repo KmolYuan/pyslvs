@@ -41,17 +41,23 @@ In Pyslvs, expression is mainly to [PMKS](http://designengrlab.github.io/PMKS/),
 
     Including PMKS expression object classes.
 
++ **bfgs** library:
+
+    **preload**: *pmks*
+
+    Python wrapper of [Sketchsolve](https://code.google.com/archive/p/sketchsolve/). A simple and fast constraint solver with BFGS algorithm.
+
 + **tinycadlib** library:
+
+    **preload**: *pmks*, *bfgs*
 
     Particular solution takes more faster then constraint solving.
 
 + **triangulation** library:
 
+    **preload**: *pmks*, *tinycadlib*
+
     Autometic configuration algorithm for particular solution function in "tinycadlib".
-
-+ **bfgs** library:
-
-    Python wrapper of [Sketchsolve](https://code.google.com/archive/p/sketchsolve/). A simple and fast constraint solver with BFGS algorithm.
 
 ### Graph Synthesis
 
@@ -65,9 +71,13 @@ In Pyslvs, expression is mainly to [PMKS](http://designengrlab.github.io/PMKS/),
 
 + **planar_check** library:
 
+    **preload**: *graph*
+
     Planar graph checking came from NetworkX.
 
 + **atlas** library:
+
+    **preload**: *graph*, *planar_check*
 
     Graph combination algorithm.
 
@@ -75,22 +85,30 @@ In Pyslvs, expression is mainly to [PMKS](http://designengrlab.github.io/PMKS/),
 
 [Adesign](https://github.com/KmolYuan/Adesign) module: Cython algorithms libraries provide evolution designing.
 
-+ **rga** library:
-
-    Real-coded genetic algorithm for dimensional synthesis.
-
-+ **firefly** library:
-
-    Firefly algorithm for dimensional synthesis.
-
-+ **de** library:
-
-    Differential Evolution for dimensional synthesis.
-
 + **verify** library:
 
     Provide base fitness function class for algorithm.
 
 + **planarlinkage** library:
 
+    **preload**: *pmks*, *bfgs*, *tinycadlib*, *verify*
+
     Dimensional synthesis verification function objects.
+
++ **rga** library:
+
+    **preload**: *verify*
+
+    Real-coded genetic algorithm for dimensional synthesis.
+
++ **firefly** library:
+
+    **preload**: *verify*
+
+    Firefly algorithm for dimensional synthesis.
+
++ **de** library:
+
+    **preload**: *verify*
+
+    Differential Evolution for dimensional synthesis.
