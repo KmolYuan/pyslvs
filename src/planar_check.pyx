@@ -18,7 +18,7 @@ from libcpp.list cimport list as c_list
 from libcpp.map cimport map as c_map
 
 
-cpdef inline bool is_planar(Graph g):
+cpdef inline bint is_planar(Graph g):
     """Return True if the graph is planar.
     
     Only this function well be shown as public.
@@ -163,7 +163,7 @@ cdef class LRPlanarity:
         cdef c_list[int] dfs_stack = [v]
         # index of next edge to handle in adjacency list of each node
         cdef c_map[int, int] ind
-        # boolean to indicate whether to skip the initial work for an edge
+        # bintean to indicate whether to skip the initial work for an edge
         cdef object skip_init = defaultdict(lambda: False)
 
         cdef bint skip_final
@@ -247,7 +247,7 @@ cdef class LRPlanarity:
         cdef c_list[int] dfs_stack = [v]
         # index of next edge to handle in adjacency list of each node
         cdef c_map[int, int] ind
-        # boolean to indicate whether to skip the initial work for an edge
+        # bintean to indicate whether to skip the initial work for an edge
         cdef object skip_init = defaultdict(lambda: False)
 
         cdef int w

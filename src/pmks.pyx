@@ -107,7 +107,7 @@ cdef class VPoint:
         """Copy method of Python."""
         return self.__copy__()
 
-    def __richcmp__(self, other: VPoint, op: int) -> bool:
+    def __richcmp__(self, other: VPoint, op: int) -> bint:
         """Rich comparison."""
         if op == Py_EQ:
             return (
@@ -205,7 +205,7 @@ cdef class VPoint:
             p_y = p.c[0][1]
         return hypot(p_x - m_x, p_y - m_y)
 
-    cpdef bool has_offset(self):
+    cpdef bint has_offset(self):
         """Return has offset."""
         return self.__has_offset
 
@@ -236,7 +236,7 @@ cdef class VPoint:
             x1, y1 = p.c[num2]
         return atan2(y1 - y2, x1 - x2) / M_PI * 180
 
-    cpdef bool grounded(self):
+    cpdef bint grounded(self):
         """Return True if the joint is connect with the ground."""
         if self.type == VPoint.R:
             return 'ground' in self.links
@@ -246,19 +246,19 @@ cdef class VPoint:
             else:
                 return False
 
-    cpdef bool pin_grounded(self):
+    cpdef bint pin_grounded(self):
         """Return True if the joint has any pin connect with the ground."""
         return 'ground' in self.links[1:]
 
-    cpdef bool same_link(self, VPoint p):
+    cpdef bint same_link(self, VPoint p):
         """Return True if the point is at the same link."""
-        return bool(set(self.links) & set(p.links))
+        return set(self.links) & set(p.links)
 
-    cpdef bool no_link(self):
+    cpdef bint no_link(self):
         """Return True if the point has no link."""
         return not self.links
 
-    cpdef bool is_slot_link(self, str link_name):
+    cpdef bint is_slot_link(self, str link_name):
         """Return True if the link name is first link."""
         if self.type == VPoint.R:
             return False
@@ -312,7 +312,7 @@ cdef class VLink:
             self.color = color_func(color_str)
         self.points = points
 
-    def __contains__(self, point: int) -> bool:
+    def __contains__(self, point: int) -> bint:
         """Check if point number is in the link."""
         return point in self.points
 

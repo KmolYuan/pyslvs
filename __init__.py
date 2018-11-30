@@ -55,7 +55,7 @@ from .graph import (
     link_assortments,
     contracted_link_assortments,
 )
-from . import planar_check
+from .planar_check import is_planar
 from .atlas import topo
 from .triangulation import vpoints_configure
 from ._parser import (
@@ -87,6 +87,7 @@ __all__ = [
     'Planar',
     'number_synthesis',
     'contracted_link',
+    'is_planar',
     'topo',
     'Graph',
     'link_assortments',
@@ -102,5 +103,4 @@ __all__ = [
 
     # Modules
     'verify',
-    'planar_check',
 ]

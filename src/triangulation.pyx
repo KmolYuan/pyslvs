@@ -97,7 +97,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
     For VPoint list.
     + vpoints_: [vpoint0, vpoint1, ...]
     + inputs: [(p0, p1), (p0, p2), ...]
-    + status: Dict[int, bool]
+    + status: Dict[int, bint]
     
     vpoints will make a copy that we don't want to modified itself.
     """

@@ -9,8 +9,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from cpython cimport bool
 from graph cimport Graph
 
 
-cpdef bool is_planar(Graph g)
+cpdef bint is_planar(Graph g)

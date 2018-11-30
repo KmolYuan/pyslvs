@@ -48,9 +48,9 @@ cdef class Coordinate:
         """Distance."""
         return distance(self.x, self.y, p.x, p.y)
 
-    cpdef bool is_nan(self):
+    cpdef bint is_nan(self):
         """Test this coordinate is a error-occurred answer."""
-        return bool(isnan(self.x))
+        return isnan(self.x)
 
     def __repr__(self):
         """Debug printing."""
@@ -62,7 +62,7 @@ cpdef tuple PLAP(
     double L0,
     double a0,
     Coordinate B = None,
-    bool inverse = False
+    bint inverse = False
 ):
     """Point on circle by angle."""
     cdef double a1 = atan2(B.y - A.y, B.x - A.x) if B else 0
@@ -77,7 +77,7 @@ cpdef tuple PLLP(
     double L0,
     double L1,
     Coordinate B,
-    bool inverse = False
+    bint inverse = False
 ):
     """Two intersection points of two circles."""
     cdef double dx = B.x - A.x
@@ -111,7 +111,7 @@ cpdef tuple PLPP(
     double L0,
     Coordinate B,
     Coordinate C,
-    bool inverse = False
+    bint inverse = False
 ):
     """Two intersection points of a line and a circle."""
     cdef double line_mag = B.distance(C)
@@ -142,7 +142,7 @@ cpdef tuple PXY(Coordinate A, double x, double y):
     return (A.x + x), (A.y + y)
 
 
-cdef inline bool legal_crank(Coordinate A, Coordinate B, Coordinate C, Coordinate D):
+cdef inline bint legal_crank(Coordinate A, Coordinate B, Coordinate C, Coordinate D):
     """
     verify the fourbar is satisfied the Gruebler's Equation, s + g <= p + q
         C - D

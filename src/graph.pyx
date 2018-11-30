@@ -171,7 +171,7 @@ cdef class Graph:
             g_degrees[n] = len(neighbors)
         return g_degrees
 
-    cpdef bool is_connected(self, int with_out = -1):
+    cpdef bint is_connected(self, int with_out = -1):
         """Return True if the graph is not isolated."""
         cdef int neighbors
         cdef int index = 0
@@ -193,7 +193,7 @@ cdef class Graph:
             nodes.append(with_out)
         return len(nodes) == len(self.nodes)
 
-    cpdef bool has_cut_link(self):
+    cpdef bint has_cut_link(self):
         """Return True if the graph has any cut links."""
         cdef c_map_int g_degrees = self.degrees()
 
@@ -206,7 +206,7 @@ cdef class Graph:
                     return True
         return False
 
-    cpdef bool is_degenerate(self):
+    cpdef bint is_degenerate(self):
         """Return True if this kinematic chain is degenerate.
         
         + Prue all multiple contracted links recursively.
@@ -241,7 +241,7 @@ cdef class Graph:
         # Check the DOF.
         return g.dof() < 1
 
-    cpdef bool is_isomorphic(self, Graph g):
+    cpdef bint is_isomorphic(self, Graph g):
         """Return True if two graphs is isomorphic."""
         cdef GraphMatcher gm_gh = GraphMatcher.__new__(GraphMatcher, self, g)
         return gm_gh.is_isomorphic()

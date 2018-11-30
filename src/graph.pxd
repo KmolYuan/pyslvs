@@ -9,7 +9,6 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from cpython cimport bool
 from libcpp.map cimport map as c_map
 
 ctypedef c_map[int, int] c_map_int
@@ -30,10 +29,10 @@ cdef class Graph:
     cpdef tuple neighbors(self, int n)
     cdef c_map_int degrees(self)
 
-    cpdef bool is_connected(self, int with_out=*)
-    cpdef bool has_cut_link(self)
-    cpdef bool is_degenerate(self)
-    cpdef bool is_isomorphic(self, Graph graph)
+    cpdef bint is_connected(self, int with_out=*)
+    cpdef bint has_cut_link(self)
+    cpdef bint is_degenerate(self)
+    cpdef bint is_isomorphic(self, Graph graph)
     cdef bint has_triangles(self)
 
     cpdef Graph copy(self)
