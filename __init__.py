@@ -29,7 +29,7 @@ __author__ = "Yuan Chang"
 __copyright__ = "Copyright (C) 2016-2018"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
-__version__ = (18, 11, 0, 'release')
+__version__ = (18, 12, 0, 'dev')
 
 from .pmks import VPoint, VLink
 from .bfgs import vpoint_solving as bfgs_vpoint_solving

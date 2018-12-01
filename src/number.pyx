@@ -20,16 +20,17 @@ from numpy cimport (
 )
 
 
-cdef inline list product(int pool_size, int repeat):
+cdef inline list product(int pool_size, int repeat, object stop_func):
     """Product function as same as iteration tools."""
     cdef int i, y
     cdef list x, tmp_list
     cdef list result = [[]]
-    cdef object pool = range(pool_size)
     for i in range(repeat):
         tmp_list = []
         for x in result:
-            for y in pool:
+            if stop_func and stop_func():
+                return []
+            for y in range(pool_size):
                 tmp_list.append(x + [y])
         result = tmp_list
     return result
@@ -60,15 +61,16 @@ cdef inline int sum_factors(list factors):
     return factor
 
 
-cpdef list number_synthesis(int nl, int nj):
+cpdef list number_synthesis(int nl, int nj, object stop_func = None):
     """Number synthesis try-error function."""
     cdef list result = []
     cdef int m_max_v = m_max(nl, nj)
     if m_max_v == -1:
         raise Exception("incorrect mechanism.")
+
     cdef int i, p
     cdef list symbols
-    for symbols in product(nl + 1, m_max_v - 2):
+    for symbols in product(nl + 1, m_max_v - 2, stop_func):
         nl_m_max = nl - sum(symbols)
         if nl_m_max < 0:
             continue
@@ -108,7 +110,7 @@ cdef inline int j_m_p(int16_t[:] link_num):
         return 3 * (n_m - 2)
 
 
-cpdef list contracted_link(list link_num_list):
+cpdef list contracted_link(list link_num_list, object stop_func = None):
     """Generate the contracted link assortments."""
     cdef ndarray[int16_t, ndim=1] link_num
 
@@ -132,7 +134,7 @@ cpdef list contracted_link(list link_num_list):
     cdef float last_factor
     cdef list m
     cdef list cj_list = []
-    for m in product(link_num[0] + 1, i_max - 1):
+    for m in product(link_num[0] + 1, i_max - 1, stop_func):
         count = 0
         index = 1
         for factor in m:
