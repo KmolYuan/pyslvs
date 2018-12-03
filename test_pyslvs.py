@@ -33,6 +33,8 @@ from graph import (
     link_assortments,
     contracted_link_assortments,
 )
+from planar_check import is_planar
+from graph_layout import outer_loop_layout
 from triangulation import vpoints_configure
 from _parser import parse_vpoints
 from examples import example_list
@@ -111,8 +113,13 @@ class CoreTest(TestCase):
         self.assertFalse(g1.is_isomorphic(g3))
 
         g1 = Graph([(1, 2), (1, 3), (1, 7), (2, 0), (2, 5), (2, 4), (3, 0), (4, 6), (6, 0), (5, 7)])
+        self.assertTrue(is_planar(g1))
         self.assertEqual([5, 2, 1], link_assortments(g1))
         self.assertEqual([1, 2, 0, 0, 0], contracted_link_assortments(g1))
+
+        outer_loop_layout(g1)
+        # from networkx import Graph as nx_Graph, cycle_basis
+        # print(cycle_basis(nx_Graph(g1.edges)))
 
     def test_atlas(self):
         """Test 'atlas' libraries."""
