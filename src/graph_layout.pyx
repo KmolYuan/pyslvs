@@ -14,6 +14,7 @@ email: pyslvs@gmail.com
 
 from collections.abc import Set, Iterable
 from cpython cimport PyDict_Contains, PyIndex_Check
+from libc.math cimport M_PI, sin, cos
 from graph cimport Graph
 
 cdef extern from "Python.h":
@@ -21,19 +22,61 @@ cdef extern from "Python.h":
 
 
 cpdef void outer_loop_layout(Graph graph, double scale = 1):
-    """Layout position decided by outer loop (max cycle)."""
-    print(cycle_basis(graph))
-    # TODO: Find the outer loop.
+    """Layout position decided by outer loop."""
+    cdef OrderedSet loop = outer_loop(graph)
+    cdef list outer_pos = regular_polygon_pos(len(loop))
+    print(len(outer_pos), outer_pos)
+    # TODO: Match the outer loop.
 
 
-cdef list cycle_basis(Graph graph, int root = -1):
+cdef list regular_polygon_pos(int edge_count):
+    """Return position of a regular polygon with radius 10.
+    Start from bottom with clockwise.
+    """
+    cdef double angle = M_PI * 3 / 2
+    cdef double angle_step = 2 * M_PI / edge_count
+    cdef list pos = []
+    cdef int i
+    for i in range(edge_count):
+        pos.append((10 * cos(angle), 10 * sin(angle)))
+        angle -= angle_step
+    return pos
+
+
+cdef OrderedSet outer_loop(Graph graph):
+    """Return nodes of outer loop. (unordered)"""
+    cdef list cycles = cycle_basis(graph)
+    cdef OrderedSet c1, c2
+    while len(cycles) > 1:
+        c1 = cycles.pop()
+
+        for c2 in cycles:
+            if len(c1 & c2) >= 2:
+                break
+        else:
+            if len(cycles) != 1:
+                # No contacted.
+                raise ValueError("Invalid graph.")
+            # Only me.
+            break
+
+        cycles.remove(c2)
+        cycles.append(c1 | c2)
+
+    return cycles.pop()
+
+
+cdef list cycle_basis(Graph graph):
     """ Returns a list of cycles which form a basis for cycles of G."""
-    cdef int z, nbr, p
-    cdef list stack, cycle
-    cdef set zused, pn
-    cdef dict pred, used
     cdef set g_nodes = set(graph.nodes)
     cdef list cycles = []
+    cdef int root = -1
+
+    cdef int z, nbr, p
+    cdef list stack
+    cdef set zused, pn
+    cdef OrderedSet cycle
+    cdef dict pred, used
     while g_nodes:
         # loop over connected components
         if root == -1:
@@ -58,13 +101,13 @@ cdef list cycle_basis(Graph graph, int root = -1):
                 elif nbr not in zused:
                     # found a cycle
                     pn = used[nbr]
-                    cycle = [nbr, z]
+                    cycle = OrderedSet([nbr, z])
                     p = pred[z]
                     while p not in pn:
-                        cycle.append(p)
+                        cycle.add(p)
                         p = pred[p]
-                    cycle.append(p)
-                    cycles.append(OrderedSet(cycle))
+                    cycle.add(p)
+                    cycles.append(cycle)
                     used[nbr].add(z)
         g_nodes -= set(pred)
         root = -1
