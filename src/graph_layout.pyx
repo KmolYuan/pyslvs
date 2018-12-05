@@ -21,22 +21,22 @@ cdef extern from "Python.h":
     int PySlice_GetIndicesEx(slice, ssize_t length, ssize_t *start, ssize_t *stop, ssize_t *step, ssize_t *slicelength) except -1
 
 
-cpdef void outer_loop_layout(Graph graph, double scale = 1):
+cpdef void outer_loop_layout(Graph graph, double scale = 1.):
     """Layout position decided by outer loop."""
     cdef OrderedSet loop = outer_loop(graph)
     cdef list outer_pos = regular_polygon_pos(len(loop))
-    print(len(outer_pos), outer_pos)
     # TODO: Match the outer loop.
+    print(loop)
 
 
 cdef list regular_polygon_pos(int edge_count):
     """Return position of a regular polygon with radius 10.
     Start from bottom with clockwise.
     """
+    cdef int i
     cdef double angle = M_PI * 3 / 2
     cdef double angle_step = 2 * M_PI / edge_count
     cdef list pos = []
-    cdef int i
     for i in range(edge_count):
         pos.append((10 * cos(angle), 10 * sin(angle)))
         angle -= angle_step
@@ -44,21 +44,22 @@ cdef list regular_polygon_pos(int edge_count):
 
 
 cdef OrderedSet outer_loop(Graph graph):
-    """Return nodes of outer loop. (unordered)"""
+    """Return nodes of outer loop."""
+    cdef OrderedSet c1, c2, c3
     cdef list cycles = cycle_basis(graph)
-    cdef OrderedSet c1, c2
     while len(cycles) > 1:
         c1 = cycles.pop()
 
         for c2 in cycles:
-            if len(c1 & c2) >= 2:
+            c3 = c1 & c2
+            if len(c3) >= 2:
+                if c1.isorderedsuperset(c3) == c2.isorderedsuperset(c3):
+                    # Cycle 1 and cycle 2 has same direction.
+                    c2.reverse()
                 break
         else:
-            if len(cycles) != 1:
-                # No contacted.
-                raise ValueError("Invalid graph.")
-            # Only me.
-            break
+            # No contacted.
+            raise ValueError("Invalid graph.")
 
         cycles.remove(c2)
         cycles.append(c1 | c2)
@@ -143,7 +144,7 @@ cdef void _discard(OrderedSet oset, object key):
         oset.os_used -= 1
 
 
-cdef inline object  _isorderedsubset(seq1, seq2):
+cdef inline bint _isorderedsubset(seq1, seq2):
     if not len(seq1) <= len(seq2):
             return False
     for self_elem, other_elem in zip(seq1, seq2):
@@ -153,6 +154,9 @@ cdef inline object  _isorderedsubset(seq1, seq2):
 
 
 cdef class OrderedSetIterator:
+
+    """Ordered set iterator."""
+
     cdef OrderedSet oset
     cdef Entry curr
     cdef ssize_t si_used
@@ -171,7 +175,7 @@ cdef class OrderedSetIterator:
         if self.si_used != self.oset.os_used:
             # make this state sticky
             self.si_used = -1
-            raise RuntimeError('%s changed size during iteration' % type(self.oset).__name__)
+            raise RuntimeError(f'{type(self.oset).__name__} changed size during iteration')
 
         item = self.curr.next
         if item == self.oset.end:
@@ -181,6 +185,9 @@ cdef class OrderedSetIterator:
 
 
 cdef class OrderedSetReverseIterator:
+
+    """Ordered set iterator with reversed order."""
+
     cdef OrderedSet oset
     cdef Entry curr
     cdef ssize_t si_used
@@ -194,14 +201,12 @@ cdef class OrderedSetReverseIterator:
         return self
 
     def __next__(self):
-        cdef Entry item
-
         if self.si_used != self.oset.os_used:
             # make this state sticky
             self.si_used = -1
-            raise RuntimeError('%s changed size during iteration' % type(self.oset).__name__)
+            raise RuntimeError(f'{type(self.oset).__name__} changed size during iteration')
 
-        item = self.curr.prev
+        cdef Entry item = self.curr.prev
         if item is self.oset.end:
             raise StopIteration()
         self.curr = item
@@ -209,6 +214,9 @@ cdef class OrderedSetReverseIterator:
 
 
 cdef class OrderedSet:
+
+    """Ordered set container."""
+
     cdef dict map
     cdef Entry end
     cdef ssize_t os_used
@@ -220,17 +228,18 @@ cdef class OrderedSet:
         end.prev = end.next = end
 
     def __init__(self, object iterable=None):
-        cdef dict map = self.map
-        cdef Entry end = self.end
-        cdef Entry next
+        if iterable is None:
+            return
 
-        if iterable is not None:
-            for elem in iterable:
-                if not PyDict_Contains(map, elem):
-                    next = Entry()
-                    next.key, next.prev, next.next = elem, end.prev, end
-                    end.prev.next = end.prev = map[elem] = next
-                    self.os_used += 1
+        cdef Entry next_e
+        cdef dict map_d = self.map
+        cdef Entry end = self.end
+        for elem in iterable:
+            if not PyDict_Contains(map_d, elem):
+                next_e = Entry()
+                next_e.key, next_e.prev, next_e.next = elem, end.prev, end
+                end.prev.next = end.prev = map_d[elem] = next_e
+                self.os_used += 1
 
     @classmethod
     def _from_iterable(cls, it):
@@ -239,23 +248,25 @@ cdef class OrderedSet:
     ##
     # set methods
     ##
-    cpdef add(self, elem):
+    cpdef void add(self, elem):
         """Add element `elem` to the set."""
         _add(self, elem)
 
-    cpdef discard(self, elem):
+    cpdef void discard(self, elem):
         """Remove element `elem` from the ``OrderedSet`` if it is present."""
         _discard(self, elem)
 
-    cpdef pop(self, last=True):
-        """Remove last element. Raises ``KeyError`` if the ``OrderedSet`` is empty."""
+    cpdef object pop(self, bint last=True):
+        """Remove and return the last element or an arbitrary set element.
+        Raises ``KeyError`` if the ``OrderedSet`` is empty.
+        """
         if not self:
             raise KeyError('OrderedSet is empty')
         key = self.end.prev.key if last else self.end.next.key
         _discard(self, key)
         return key
 
-    def remove(self, elem):
+    cpdef void remove(self, elem):
         """
         Remove element `elem` from the ``set``.
         Raises :class:`KeyError` if `elem` is not contained in the set.
@@ -264,43 +275,23 @@ cdef class OrderedSet:
             raise KeyError(elem)
         _discard(self, elem)
 
-    def clear(self):
+    cpdef void clear(self):
         """Remove all elements from the `set`."""
         cdef Entry end = self.end
         end.next.prev = end.next = None
 
         # reinitialize
-        self.map = {}
+        self.map.clear()
         self.os_used = 0
         self.end = end = Entry()
         end.prev = end.next = end
 
-    def copy(self):
-        """
-        :rtype: OrderedSet
-        :return: a new ``OrderedSet`` with a shallow copy of self.
-        """
+    cpdef OrderedSet copy(self):
+        """Copy the instance."""
         return self._from_iterable(self)
 
-    def difference(self, other):
-        """``OrderedSet - other``
-
-        :rtype: OrderedSet
-        :return: a new ``OrderedSet`` with elements in the set that are not in the others.
-        """
-        return self - other
-
-    def difference_update(self, other):
-        """``OrderedSet -= other``
-
-        Update the ``OrderedSet``, removing elements found in others.
-        """
-        self -= other
-
-    def __sub__(self, other):
-        """
-        :rtype: OrderedSet
-        """
+    def __sub__(self, other) -> OrderedSet:
+        """Implement of '-' operator."""
         ostyp = type(self if isinstance(self, OrderedSet) else other)
 
         if not isinstance(self, Iterable):
@@ -312,7 +303,8 @@ cdef class OrderedSet:
 
         return ostyp._from_iterable(value for value in self if value not in other)
 
-    def __isub__(self, other):
+    def __isub__(self, other) -> OrderedSet:
+        """Implement of '-=' operator."""
         if other is self:
             self.clear()
         else:
@@ -320,25 +312,12 @@ cdef class OrderedSet:
                 self.discard(value)
         return self
 
-    def intersection(self, other):
-        """``OrderedSet & other``
-
-        :rtype: OrderedSet
-        :return: a new ``OrderedSet`` with elements common to the set and all others.
-        """
+    cpdef OrderedSet intersection(self, other):
+        """Method of '&' operator."""
         return self & other
 
-    def intersection_update(self, other):
-        """``OrderedSet &= other``
-
-        Update the ``OrderedSet``, keeping only elements found in it and all others.
-        """
-        self &= other
-
-    def __and__(self, other):
-        """
-        :rtype: OrderedSet
-        """
+    def __and__(self, other) -> OrderedSet:
+        """Implement of '&' operator."""
         ostyp = type(self if isinstance(self, OrderedSet) else other)
 
         if not isinstance(self, Iterable):
@@ -351,66 +330,38 @@ cdef class OrderedSet:
         return ostyp._from_iterable(value for value in self if value in other)
 
     def __iand__(self, it):
+        """Implement of '&=' operator."""
         for value in (self - it):
             self.discard(value)
         return self
 
-    def isdisjoint(self, other):
-        """
-        Return True if the set has no elements in common with other.
+    cpdef bint isdisjoint(self, other):
+        """Return True if the set has no elements in common with other.
         Sets are disjoint if and only if their intersection is the empty set.
-
-        :rtype: bool
         """
         for value in other:
             if value in self:
                 return False
         return True
 
-    def issubset(self, other):
-        """``OrderedSet <= other``
-
-        :rtype: bool
-
-        Test whether the ``OrderedSet`` is a proper subset of other, that is,
-        ``OrderedSet <= other and OrderedSet != other``.
-        """
+    cpdef bint issubset(self, other):
+        """Method of '<=' operator."""
         return self <= other
 
-    def issuperset(self, other):
-        """``OrderedSet >= other``
-
-        :rtype: bool
-
-        Test whether every element in other is in the set.
-        """
+    cpdef bint issuperset(self, other):
+        """Method of '>=' operator."""
         return other <= self
 
-    def isorderedsubset(self, other):
+    cpdef bint isorderedsubset(self, other):
+        """Method of '<=' operator with ordered detection."""
         return _isorderedsubset(self, other)
 
-    def isorderedsuperset(self, other):
+    cpdef bint isorderedsuperset(self, other):
+        """Method of '>=' operator with ordered detection."""
         return _isorderedsubset(other, self)
 
-    def symmetric_difference(self, other):
-        """``OrderedSet ^ other``
-
-        :rtype: OrderedSet
-        :return: a new ``OrderedSet`` with elements in either the set or other but not both.
-        """
-        return self ^ other
-
-    def symmetric_difference_update(self, other):
-        """``OrderedSet ^= other``
-
-        Update the ``OrderedSet``, keeping only elements found in either set, but not in both.
-        """
-        self ^= other
-
-    def __xor__(self, other):
-        """
-        :rtype: OrderedSet
-        """
+    def __xor__(self, other) -> OrderedSet:
+        """Implement of '^' operator."""
         if not isinstance(self, Iterable):
             return NotImplemented
         if not isinstance(other, Iterable):
@@ -419,6 +370,7 @@ cdef class OrderedSet:
         return (self - other) | (other - self)
 
     def __ixor__(self, other):
+        """Implement of '^=' operator."""
         if other is self:
             self.clear()
         else:
@@ -431,25 +383,16 @@ cdef class OrderedSet:
                     self.add(value)
         return self
 
-    def union(self, other):
-        """``OrderedSet | other``
-
-        :rtype: OrderedSet
-        :return: a new ``OrderedSet`` with elements from the set and all others.
-        """
+    cpdef OrderedSet union(self, other):
+        """Method of '|' operator."""
         return self | other
 
-    def update(self, other):
-        """``OrderedSet |= other``
-
-        Update the ``OrderedSet``, adding elements from all others.
-        """
+    cpdef void update(self, other):
+        """Method of '|=' operator."""
         self |= other
 
-    def __or__(self, other):
-        """
-        :rtype: OrderedSet
-        """
+    def __or__(self, other) -> OrderedSet:
+        """Implement of '|' operator."""
         ostyp = type(self if isinstance(self, OrderedSet) else other)
 
         if not isinstance(self, Iterable):
@@ -459,7 +402,8 @@ cdef class OrderedSet:
         chain = (e for s in (self, other) for e in s)
         return ostyp._from_iterable(chain)
 
-    def __ior__(self, other):
+    def __ior__(self, other) -> OrderedSet:
+        """Implement of '|=' operator."""
         for elem in other:
             _add(self, elem)
         return self
@@ -467,10 +411,10 @@ cdef class OrderedSet:
     ##
     # list methods
     ##
-    def index(self, elem):
+    cpdef int index(self, elem):
         """Return the index of `elem`. Rases :class:`ValueError` if not in the OrderedSet."""
         if elem not in self:
-            raise ValueError("%s is not in %s" % (elem, type(self).__name__))
+            raise ValueError(f"{elem} is not in {type(self).__name__}")
         cdef Entry curr = self.end.next
         cdef ssize_t index = 0
         while curr.key != elem:
@@ -478,7 +422,7 @@ cdef class OrderedSet:
             index += 1
         return index
 
-    cdef _getslice(self, slice item):
+    cdef OrderedSet _getslice(self, slice item):
         cdef ssize_t start, stop, step, slicelength, place, i
         cdef Entry curr
         cdef OrderedSet result
@@ -512,7 +456,7 @@ cdef class OrderedSet:
                 slicelength -= 1
         return result
 
-    cdef _getindex(self, ssize_t index):
+    cdef object _getindex(self, ssize_t index):
         cdef ssize_t _len = len(self)
         if index >= _len or (index < 0 and abs(index) > _len):
             raise IndexError("list index out of range")
@@ -532,66 +476,82 @@ cdef class OrderedSet:
         return curr.key
 
     def __getitem__(self, item):
-        """Return the `elem` at `index`. Raises :class:`IndexError` if `index` is out of range."""
+        """Implement of '[]' operator."""
         if isinstance(item, slice):
             return self._getslice(item)
         if not PyIndex_Check(item):
-            raise TypeError("%s indices must be integers, not %s" % (type(self).__name__, type(item)))
+            raise TypeError(f"{type(self).__name__} indices must be integers, not {type(item)}")
         return self._getindex(item)
+
+    cpdef void reverse(self):
+        """Reverse objects."""
+        cdef list my_iter = list(OrderedSetReverseIterator(self))
+        self.clear()
+        self.update(my_iter)
 
     ##
     # sequence methods
     ##
-    def __len__(self):
+    def __len__(self) -> int:
+        """Implement of 'len()' operator."""
         return len(self.map)
 
-    def __contains__(self, elem):
+    def __contains__(self, elem) -> bool:
+        """Implement of 'in' operator."""
         return elem in self.map
 
-    def __iter__(self):
-        return OrderedSetIterator(self)
+    def __iter__(self) -> OrderedSetIterator:
+        """Implement of 'iter()' operator. (reference method)"""
+        return OrderedSetIterator.__new__(OrderedSetIterator, self)
 
-    def __reversed__(self):
-        return OrderedSetReverseIterator(self)
+    def __reversed__(self) -> OrderedSetReverseIterator:
+        """Implement of 'reversed()' operator."""
+        return OrderedSetReverseIterator.__new__(OrderedSetReverseIterator, self)
 
     def __reduce__(self):
         items = list(self)
         inst_dict = vars(self).copy()
         return self.__class__, (items, ), inst_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Implement of '!r' operator in string."""
         if not self:
-            return '%s()' % (self.__class__.__name__,)
-        return '%s(%r)' % (self.__class__.__name__, list(self))
+            return f'{self.__class__.__name__}()'
+        return f'{self.__class__.__name__}({list(self)!r})'
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
+        """Implement of '==' operator."""
         if isinstance(other, (OrderedSet, list)):
             return len(self) == len(other) and list(self) == list(other)
         elif isinstance(other, Set):
             return set(self) == set(other)
         return NotImplemented
 
-    def __le__(self, other):
+    def __le__(self, other) -> bool:
+        """Implement of '<=' operator."""
         if isinstance(other, Set):
             return len(self) <= len(other) and set(self) <= set(other)
         elif isinstance(other, list):
             return len(self) <= len(other) and list(self) <= list(other)
         return NotImplemented
 
-    def __lt__(self, other):
+    def __lt__(self, other) -> bool:
+        """Implement of '<' operator."""
         if isinstance(other, Set):
             return len(self) < len(other) and set(self) < set(other)
         elif isinstance(other, list):
             return len(self) < len(other) and list(self) < list(other)
         return NotImplemented
 
-    def __ge__(self, other):
+    def __ge__(self, other) -> bool:
+        """Implement of '>=' operator."""
         ret = self < other
         if ret is NotImplemented:
             return ret
         return not ret
 
-    def __gt__(self, other):
+    def __gt__(self, other) -> bool:
+        """Implement of '>' operator."""
         ret = self <= other
         if ret is NotImplemented:
             return ret
