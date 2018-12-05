@@ -18,15 +18,25 @@ from libc.math cimport M_PI, sin, cos
 from graph cimport Graph
 
 cdef extern from "Python.h":
-    int PySlice_GetIndicesEx(slice, ssize_t length, ssize_t *start, ssize_t *stop, ssize_t *step, ssize_t *slicelength) except -1
+    int PySlice_GetIndicesEx(
+        object slice,
+        ssize_t length,
+        ssize_t *start,
+        ssize_t *stop,
+        ssize_t *step,
+        ssize_t *slicelength
+    ) except -1
 
 
-cpdef void outer_loop_layout(Graph graph, double scale = 1.):
+cpdef void outer_loop_layout(Graph graph, bint node_mode, double scale = 1.):
     """Layout position decided by outer loop."""
     cdef OrderedSet loop = outer_loop(graph)
     cdef list outer_pos = regular_polygon_pos(len(loop))
-    # TODO: Match the outer loop.
-    print(loop)
+
+    # Match the outer loop.
+    cdef dict pos = dict(zip(loop, outer_pos))
+
+    # TODO: Find other connections from edges.
 
 
 cdef list regular_polygon_pos(int edge_count):
@@ -40,6 +50,28 @@ cdef list regular_polygon_pos(int edge_count):
     for i in range(edge_count):
         pos.append((10 * cos(angle), 10 * sin(angle)))
         angle -= angle_step
+    return pos
+
+
+cdef list linear_layout(
+    double x0,
+    double y0,
+    double x1,
+    double y1,
+    int count
+):
+    """Layout position decided by equal division between two points."""
+    if count < 1:
+        raise ValueError(f"Invalid point number {count}")
+
+    count += 1
+    cdef double sx = (x1 - x0) / count
+    cdef double sy = (y1 - y0) / count
+    cdef list pos = []
+
+    cdef int i
+    for i in range(1, count):
+        pos.append((x0 + i * sx, y0 + i * sy))
     return pos
 
 
