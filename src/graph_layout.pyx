@@ -28,15 +28,50 @@ cdef extern from "Python.h":
     ) except -1
 
 
-cpdef void outer_loop_layout(Graph graph, bint node_mode, double scale = 1.):
+cpdef dict outer_loop_layout(Graph graph, bint node_mode, double scale = 1.):
     """Layout position decided by outer loop."""
-    cdef OrderedSet loop = outer_loop(graph)
-    cdef list outer_pos = regular_polygon_pos(len(loop))
+    cdef OrderedSet o_loop = outer_loop(graph)
+    cdef list outer_pos = regular_polygon_pos(len(o_loop))
 
     # Match the outer loop.
-    cdef dict pos = dict(zip(loop, outer_pos))
+    cdef dict pos = dict(zip(o_loop, outer_pos))
 
-    # TODO: Find other connections from edges.
+    # Find other connections from edges.
+    cdef OrderedSet line = OrderedSet([])
+    cdef OrderedSet nodes = set(graph.nodes) - o_loop
+    cdef OrderedSet used_nodes = o_loop.copy()
+
+    # Layout for inner nodes of graph block.
+    cdef int n, start, end
+    cdef OrderedSet neighbors, new_neighbors, intersection
+    while nodes:
+        n = nodes.pop(0)
+        neighbors = OrderedSet(graph.adj[n])
+        intersection = neighbors & used_nodes
+        if not intersection:
+            # Not contacted yet.
+            nodes.add(n)
+            continue
+
+        line.add(n)
+        new_neighbors = neighbors - intersection
+        if new_neighbors:
+            # New nodes to add.
+            line.add(new_neighbors.pop())
+        else:
+            # Line is ended.
+            intersection = line & o_loop
+            start = intersection.pop()
+            end = intersection.pop()
+            pos.update(zip(line, linear_layout(pos[start], pos[end], len(line))))
+            line.clear()
+
+        used_nodes.add(n)
+        nodes.remove(n)
+
+    # TODO: node_mode
+
+    return pos
 
 
 cdef list regular_polygon_pos(int edge_count):
@@ -53,26 +88,16 @@ cdef list regular_polygon_pos(int edge_count):
     return pos
 
 
-cdef list linear_layout(
-    double x0,
-    double y0,
-    double x1,
-    double y1,
-    int count
-):
+cdef list linear_layout(tuple c0, tuple c1, int count):
     """Layout position decided by equal division between two points."""
     if count < 1:
         raise ValueError(f"Invalid point number {count}")
 
     count += 1
-    cdef double sx = (x1 - x0) / count
-    cdef double sy = (y1 - y0) / count
-    cdef list pos = []
-
+    cdef double sx = (c1[0] - c0[0]) / count
+    cdef double sy = (c1[1] - c0[1]) / count
     cdef int i
-    for i in range(1, count):
-        pos.append((x0 + i * sx, y0 + i * sy))
-    return pos
+    return [(c0[0] + i * sx, c0[1] + i * sy) for i in range(1, count)]
 
 
 cdef OrderedSet outer_loop(Graph graph):
@@ -91,7 +116,7 @@ cdef OrderedSet outer_loop(Graph graph):
                 break
         else:
             # No contacted.
-            raise ValueError("Invalid graph.")
+            raise ValueError("Invalid graph")
 
         cycles.remove(c2)
         cycles.append(c1 | c2)
@@ -99,7 +124,7 @@ cdef OrderedSet outer_loop(Graph graph):
     return cycles.pop()
 
 
-cdef list cycle_basis(Graph graph):
+cdef inline list cycle_basis(Graph graph):
     """ Returns a list of cycles which form a basis for cycles of G."""
     cdef set g_nodes = set(graph.nodes)
     cdef list cycles = []
@@ -288,13 +313,13 @@ cdef class OrderedSet:
         """Remove element `elem` from the ``OrderedSet`` if it is present."""
         _discard(self, elem)
 
-    cpdef object pop(self, bint last=True):
+    cpdef object pop(self, int index = -1):
         """Remove and return the last element or an arbitrary set element.
         Raises ``KeyError`` if the ``OrderedSet`` is empty.
         """
         if not self:
-            raise KeyError('OrderedSet is empty')
-        key = self.end.prev.key if last else self.end.next.key
+            raise KeyError(f'{self.__class__.__name__} is empty')
+        key = self[index]
         _discard(self, key)
         return key
 

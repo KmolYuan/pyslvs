@@ -117,7 +117,8 @@ class CoreTest(TestCase):
         self.assertEqual([5, 2, 1], link_assortments(g1))
         self.assertEqual([1, 2, 0, 0, 0], contracted_link_assortments(g1))
 
-        outer_loop_layout(g1, True)
+        pos = outer_loop_layout(g1, True)
+        self.assertEqual(set(g1.nodes), set(pos))
         # from networkx import Graph as nx_Graph, cycle_basis
         # print(cycle_basis(nx_Graph(g1.edges)))
 

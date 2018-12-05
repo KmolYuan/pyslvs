@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 
+from typing import Tuple, Dict
 from graph import Graph
 
 
-def outer_loop_layout(graph: Graph, node_mode: bool, scale: float = 1.):
+def outer_loop_layout(
+    graph: Graph,
+    node_mode: bool,
+    scale: float = 1.
+) -> Dict[int, Tuple[float, float]]:
     """Layout position decided by outer loop (max cycle)."""
     ...

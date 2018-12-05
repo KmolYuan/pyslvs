@@ -55,7 +55,7 @@ cdef class Planar(Verification):
         """
         cdef set check_set = set(map(len, mech_params['Target'].values()))
         if len(check_set) != 1:
-            raise ValueError("Target path should be in the same size.")
+            raise ValueError("Target path should be in the same size")
         # Counting how many action to satisfied require point.
         self.target_count = check_set.pop()
         # Target points
