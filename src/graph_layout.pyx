@@ -14,23 +14,14 @@ email: pyslvs@gmail.com
 
 from collections.abc import Set, Iterable
 from cpython cimport PyDict_Contains, PyIndex_Check
+from cpython.slice cimport PySlice_GetIndicesEx
 from libc.math cimport M_PI, sin, cos
 from graph cimport Graph
 
-cdef extern from "Python.h":
-    int PySlice_GetIndicesEx(
-        object slice,
-        ssize_t length,
-        ssize_t *start,
-        ssize_t *stop,
-        ssize_t *step,
-        ssize_t *slicelength
-    ) except -1
 
-
-cpdef dict outer_loop_layout(Graph graph, bint node_mode, double scale = 1.):
+cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
     """Layout position decided by outer loop."""
-    cdef OrderedSet o_loop = outer_loop(graph)
+    cdef OrderedSet o_loop = outer_loop(g)
     cdef list outer_pos = regular_polygon_pos(len(o_loop))
 
     # Match the outer loop.
@@ -38,7 +29,7 @@ cpdef dict outer_loop_layout(Graph graph, bint node_mode, double scale = 1.):
 
     # Find other connections from edges.
     cdef OrderedSet line = OrderedSet([])
-    cdef OrderedSet nodes = set(graph.nodes) - o_loop
+    cdef OrderedSet nodes = set(g.nodes) - o_loop
     cdef OrderedSet used_nodes = o_loop.copy()
 
     # Layout for inner nodes of graph block.
@@ -46,8 +37,8 @@ cpdef dict outer_loop_layout(Graph graph, bint node_mode, double scale = 1.):
     cdef OrderedSet neighbors, new_neighbors, intersection
     while nodes:
         n = nodes.pop(0)
-        neighbors = OrderedSet(graph.adj[n])
-        intersection = neighbors & used_nodes
+        neighbors = OrderedSet(g.adj[n])
+        intersection = neighbors & (used_nodes | line)
         if not intersection:
             # Not contacted yet.
             nodes.add(n)
@@ -64,9 +55,9 @@ cpdef dict outer_loop_layout(Graph graph, bint node_mode, double scale = 1.):
             start = intersection.pop()
             end = intersection.pop()
             pos.update(zip(line, linear_layout(pos[start], pos[end], len(line))))
+            used_nodes.update(line)
             line.clear()
 
-        used_nodes.add(n)
         nodes.remove(n)
 
     # TODO: node_mode
@@ -205,7 +196,7 @@ cdef inline bint _isorderedsubset(seq1, seq2):
     if not len(seq1) <= len(seq2):
             return False
     for self_elem, other_elem in zip(seq1, seq2):
-        if not self_elem == other_elem:
+        if self_elem != other_elem:
             return False
     return True
 

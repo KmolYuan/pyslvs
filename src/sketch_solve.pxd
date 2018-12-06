@@ -9,7 +9,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-cdef extern from "solve.h":
+cdef extern from "solve.h" nogil:
 
     cdef int Rough
     cdef int Fine
