@@ -22,17 +22,24 @@ from graph cimport Graph
 cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
     """Layout position decided by outer loop."""
     cdef OrderedSet o_loop = outer_loop(g)
-    cdef list outer_pos = regular_polygon_pos(len(o_loop))
+    cdef list o_pos = regular_polygon_pos(len(o_loop), scale)
+    cdef dict pos = dict(zip(o_loop, o_pos))
+    outer_loop_layout_inner(g, o_loop, pos)
 
-    # Match the outer loop.
-    cdef dict pos = dict(zip(o_loop, outer_pos))
+    # TODO: node_mode
 
-    # Find other connections from edges.
-    cdef OrderedSet line = OrderedSet([])
+    return pos
+
+
+cdef inline void outer_loop_layout_inner(Graph g, OrderedSet o_loop, dict pos):
+    """Layout for inner nodes of graph block."""
     cdef OrderedSet nodes = set(g.nodes) - o_loop
+    if not nodes:
+        return
+
+    cdef OrderedSet line = OrderedSet.__new__(OrderedSet)
     cdef OrderedSet used_nodes = o_loop.copy()
 
-    # Layout for inner nodes of graph block.
     cdef int n, start, end
     cdef OrderedSet neighbors, new_neighbors, intersection
     while nodes:
@@ -51,7 +58,7 @@ cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
             line.add(new_neighbors.pop())
         else:
             # Line is ended.
-            intersection = line & o_loop
+            intersection = line & used_nodes
             start = intersection.pop()
             end = intersection.pop()
             pos.update(zip(line, linear_layout(pos[start], pos[end], len(line))))
@@ -60,21 +67,18 @@ cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
 
         nodes.remove(n)
 
-    # TODO: node_mode
 
-    return pos
-
-
-cdef list regular_polygon_pos(int edge_count):
-    """Return position of a regular polygon with radius 10.
+cdef list regular_polygon_pos(int edge_count, double scale):
+    """Return position of a regular polygon with radius 100.
     Start from bottom with clockwise.
     """
+    scale *= 5
     cdef int i
     cdef double angle = M_PI * 3 / 2
     cdef double angle_step = 2 * M_PI / edge_count
     cdef list pos = []
     for i in range(edge_count):
-        pos.append((10 * cos(angle), 10 * sin(angle)))
+        pos.append((scale * cos(angle), scale * sin(angle)))
         angle -= angle_step
     return pos
 
@@ -115,9 +119,9 @@ cdef OrderedSet outer_loop(Graph graph):
     return cycles.pop()
 
 
-cdef inline list cycle_basis(Graph graph):
+cdef inline list cycle_basis(Graph g):
     """ Returns a list of cycles which form a basis for cycles of G."""
-    cdef set g_nodes = set(graph.nodes)
+    cdef set g_nodes = set(g.nodes)
     cdef list cycles = []
     cdef int root = -1
 
@@ -138,7 +142,7 @@ cdef inline list cycle_basis(Graph graph):
             # use last-in so cycles easier to find
             z = stack.pop()
             zused = used[z]
-            for nbr in graph.adj[z]:
+            for nbr in g.adj[z]:
                 if nbr not in used:
                     # new node
                     pred[nbr] = z
