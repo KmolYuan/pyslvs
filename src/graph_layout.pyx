@@ -13,6 +13,7 @@ email: pyslvs@gmail.com
 """
 
 from collections.abc import Set, Iterable
+cimport cython
 from cpython cimport PyDict_Contains, PyIndex_Check
 from cpython.slice cimport PySlice_GetIndicesEx
 from libc.math cimport M_PI, sin, cos
@@ -28,6 +29,9 @@ cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
 
     # TODO: node_mode
 
+    # Last check.
+    if set(g.nodes) != set(pos):
+        raise ValueError("number of node is wrong")
     return pos
 
 
@@ -108,17 +112,21 @@ cdef OrderedSet outer_loop(Graph g):
         c1 = cycles.pop()
 
         for c2 in cycles:
-            c3 = c1 & c2
+            c3 = c1.orderedintersection(c2, is_loop=True)
+            if not c3:
+                c2.reverse()
+                c3 = c1.orderedintersection(c2, is_loop=True)
             if not len(c3) >= 2:
                 continue
 
             if not c3.isorderedsubset(c1, is_loop=True):
+                # Cycle 3 and cycle 1 has wrong direction.
                 c3.reverse()
-            if c3.isorderedsubset(c1, is_loop=True) == c3.isorderedsubset(c2, is_loop=True) and len(c3) == 2:
-                # Cycle 1 and cycle 2 has same direction.
+            if c3.isorderedsubset(c2, is_loop=True):
+                # Cycle 1 and cycle 2 should has different direction.
                 c2.reverse()
 
-            c2 ^= c3[1:-1]
+            c2 -= c3[1:-1]
             # Remove connected nodes.
             c1.replace(c3, c2 if len(c2) > len(c3) else c3, is_loop=True)
             cycles.remove(c2)
@@ -292,6 +300,7 @@ cdef class OrderedSetReverseIterator:
         return item.key
 
 
+@cython.final
 cdef class OrderedSet:
 
     """Ordered set container."""
@@ -371,16 +380,12 @@ cdef class OrderedSet:
 
     def __sub__(self, other) -> OrderedSet:
         """Implement of '-' operator."""
-        ostyp = type(self if isinstance(self, OrderedSet) else other)
-
-        if not isinstance(self, Iterable):
-            return NotImplemented
         if not isinstance(other, Set):
             if not isinstance(other, Iterable):
                 return NotImplemented
-            other = ostyp._from_iterable(other)
+            other = OrderedSet._from_iterable(other)
 
-        return ostyp._from_iterable(value for value in self if value not in other)
+        return OrderedSet._from_iterable(value for value in self if value not in other)
 
     def __isub__(self, other) -> OrderedSet:
         """Implement of '-=' operator."""
@@ -397,22 +402,48 @@ cdef class OrderedSet:
 
     def __and__(self, other) -> OrderedSet:
         """Implement of '&' operator."""
-        ostyp = type(self if isinstance(self, OrderedSet) else other)
-
-        if not isinstance(self, Iterable):
-            return NotImplemented
         if not isinstance(other, Set):
             if not isinstance(other, Iterable):
                 return NotImplemented
-            other = ostyp._from_iterable(other)
+            other = OrderedSet._from_iterable(other)
 
-        return ostyp._from_iterable(value for value in self if value in other)
+        return OrderedSet._from_iterable(value for value in self if value in other)
 
     def __iand__(self, it):
         """Implement of '&=' operator."""
         for value in (self - it):
             self.discard(value)
         return self
+
+    cpdef OrderedSet orderedintersection(self, other, bint is_loop = False):
+        """Find the max length intersection with ordered detection."""
+        if not isinstance(other, Iterable):
+            raise NotImplemented
+
+        cdef list self_list = list(self)
+        cdef list other_list = list(other)
+        if is_loop:
+            self_list *= 2
+            other_list *= 2
+
+        cdef int matched = -1
+        cdef int matched_old = -1
+        cdef list subset = []
+        cdef list subset_old = []
+        for self_elem in self_list:
+            try:
+                matched = other_list.index(self_elem)
+            except ValueError:
+                continue
+
+            if subset and (matched_old + 1) != matched:
+                if len(subset) > len(subset_old):
+                    subset_old = subset
+                    subset = []
+            subset.append(self_elem)
+            matched_old = matched
+
+        return OrderedSet(subset if len(subset) > len(subset_old) else subset_old)
 
     cpdef bint isdisjoint(self, other):
         """Return True if the set has no elements in common with other.
@@ -441,8 +472,6 @@ cdef class OrderedSet:
 
     def __xor__(self, other) -> OrderedSet:
         """Implement of '^' operator."""
-        if not isinstance(self, Iterable):
-            return NotImplemented
         if not isinstance(other, Iterable):
             return NotImplemented
 
@@ -472,14 +501,10 @@ cdef class OrderedSet:
 
     def __or__(self, other) -> OrderedSet:
         """Implement of '|' operator."""
-        ostyp = type(self if isinstance(self, OrderedSet) else other)
-
-        if not isinstance(self, Iterable):
-            return NotImplemented
         if not isinstance(other, Iterable):
             return NotImplemented
         chain = (e for s in (self, other) for e in s)
-        return ostyp._from_iterable(chain)
+        return OrderedSet._from_iterable(chain)
 
     def __ior__(self, other) -> OrderedSet:
         """Implement of '|=' operator."""
@@ -570,6 +595,11 @@ cdef class OrderedSet:
 
     cdef void replace(self, subset, replacement, bint is_loop = False):
         """Replace 'subset' to 'replacement' for once."""
+        if not isinstance(subset, Iterable):
+            raise TypeError(f"{subset} must be a iterable object")
+        if not isinstance(replacement, Iterable):
+            raise TypeError(f"{replacement} must be a iterable object")
+
         cdef int subset_len = len(subset)
         if not subset_len <= len(self):
             # 'subset' is obviously not a subset.
