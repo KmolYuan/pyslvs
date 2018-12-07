@@ -23,15 +23,16 @@ from graph cimport Graph
 cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
     """Layout position decided by outer loop."""
     cdef OrderedSet o_loop = outer_loop(g)
+    o_loop.roll(min(o_loop))
     cdef list o_pos = regular_polygon_pos(len(o_loop), scale)
     cdef dict pos = dict(zip(o_loop, o_pos))
     outer_loop_layout_inner(g, o_loop, pos)
 
     # TODO: node_mode
 
-    # Last check.
+    # Last check for debug.
     if set(g.nodes) != set(pos):
-        raise ValueError("number of node is wrong")
+        raise ValueError(f"the algorithm is error with {g.edges}")
     return pos
 
 
@@ -128,6 +129,8 @@ cdef OrderedSet outer_loop(Graph g):
 
             c2 -= c3[1:-1]
             # Remove connected nodes.
+            c1.roll(c3[-1])
+            c2.roll(c3[0])
             c1.replace(c3, c2 if len(c2) > len(c3) else c3, is_loop=True)
             cycles.remove(c2)
             cycles.append(c1)
@@ -343,6 +346,14 @@ cdef class OrderedSet:
     cpdef void discard(self, elem):
         """Remove element `elem` from the ``OrderedSet`` if it is present."""
         _discard(self, elem)
+
+    cpdef void roll(self, elem):
+        """Roll the list to 'elem' as first item."""
+        if elem not in self:
+            raise ValueError(f"{elem} is not in {self}")
+
+        while elem != self[0]:
+            self.add(self.pop(0))
 
     cpdef object pop(self, int index = -1):
         """Remove and return the last element or an arbitrary set element.
