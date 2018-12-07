@@ -60,7 +60,7 @@ from .graph_layout import outer_loop_layout
 from .atlas import topo
 from .triangulation import vpoints_configure
 from ._parser import (
-    colorNames,
+    color_names,
     color_rgb,
     parse_params,
     parse_vpoints,
@@ -96,7 +96,7 @@ __all__ = [
     'contracted_link_assortments',
     'vpoints_configure',
     'vpoint_dof',
-    'colorNames',
+    'color_names',
     'color_rgb',
     'parse_params',
     'parse_vpoints',

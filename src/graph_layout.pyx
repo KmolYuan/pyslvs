@@ -58,14 +58,18 @@ cdef inline void outer_loop_layout_inner(Graph g, OrderedSet o_loop, dict pos):
             line.add(new_neighbors.pop())
         else:
             # Line is ended.
-            intersection = line & used_nodes
-            start = intersection.pop()
-            end = intersection.pop()
+            if line[0] == line[-1]:
+                neighbors = used_nodes & g.adj[line[0]]
+                start = neighbors.pop()
+                end = neighbors.pop()
+            else:
+                start = (used_nodes & g.adj[line[0]]).pop()
+                end = (used_nodes & g.adj[line[-1]]).pop()
             pos.update(zip(line, linear_layout(pos[start], pos[end], len(line))))
             used_nodes.update(line)
             line.clear()
 
-        nodes.remove(n)
+        nodes -= line
 
 
 cdef list regular_polygon_pos(int edge_count, double scale):
@@ -95,26 +99,34 @@ cdef list linear_layout(tuple c0, tuple c1, int count):
     return [(c0[0] + i * sx, c0[1] + i * sy) for i in range(1, count)]
 
 
-cdef OrderedSet outer_loop(Graph graph):
+cdef OrderedSet outer_loop(Graph g):
     """Return nodes of outer loop."""
+    cdef list cycles = cycle_basis(g)
+
     cdef OrderedSet c1, c2, c3
-    cdef list cycles = cycle_basis(graph)
     while len(cycles) > 1:
         c1 = cycles.pop()
 
         for c2 in cycles:
             c3 = c1 & c2
-            if len(c3) >= 2:
-                if c1.isorderedsuperset(c3) == c2.isorderedsuperset(c3):
-                    # Cycle 1 and cycle 2 has same direction.
-                    c2.reverse()
-                break
+            if not len(c3) >= 2:
+                continue
+
+            if not c3.isorderedsubset(c1, is_loop=True):
+                c3.reverse()
+            if c3.isorderedsubset(c1, is_loop=True) == c3.isorderedsubset(c2, is_loop=True) and len(c3) == 2:
+                # Cycle 1 and cycle 2 has same direction.
+                c2.reverse()
+
+            c2 ^= c3[1:-1]
+            # Remove connected nodes.
+            c1.replace(c3, c2 if len(c2) > len(c3) else c3, is_loop=True)
+            cycles.remove(c2)
+            cycles.append(c1)
+            break
         else:
             # No contacted.
             raise ValueError("Invalid graph")
-
-        cycles.remove(c2)
-        cycles.append(c1 | c2)
 
     return cycles.pop()
 
@@ -123,7 +135,7 @@ cdef inline list cycle_basis(Graph g):
     """ Returns a list of cycles which form a basis for cycles of G."""
     cdef set g_nodes = set(g.nodes)
     cdef list cycles = []
-    cdef int root = -1
+    cdef int root = 0
 
     cdef int z, nbr, p
     cdef list stack
@@ -196,13 +208,28 @@ cdef void _discard(OrderedSet oset, object key):
         oset.os_used -= 1
 
 
-cdef inline bint _isorderedsubset(seq1, seq2):
-    if not len(seq1) <= len(seq2):
-            return False
-    for self_elem, other_elem in zip(seq1, seq2):
-        if self_elem != other_elem:
-            return False
-    return True
+cdef inline bint _isorderedsubset(seq1, seq2, bint is_loop):
+    """Return True if 'seq1' is ordered subset of 'seq2'."""
+    cdef int seq1_len = len(seq1)
+    if not seq1_len <= len(seq2):
+        # 'seq1' is obviously not a subset.
+        return False
+
+    cdef list seq1_list = list(seq1)
+    cdef list seq2_list = list(seq2)
+    if is_loop:
+        seq2_list *= 2
+
+    cdef int matched = 0
+    for self_elem in seq2_list:
+        if self_elem == seq1_list[matched]:
+            matched += 1
+            if matched == seq1_len:
+                return True
+        else:
+            matched = 0
+
+    return matched == seq1_len
 
 
 cdef class OrderedSetIterator:
@@ -404,13 +431,13 @@ cdef class OrderedSet:
         """Method of '>=' operator."""
         return other <= self
 
-    cpdef bint isorderedsubset(self, other):
+    cpdef bint isorderedsubset(self, other, bint is_loop = False):
         """Method of '<=' operator with ordered detection."""
-        return _isorderedsubset(self, other)
+        return _isorderedsubset(self, other, is_loop)
 
-    cpdef bint isorderedsuperset(self, other):
+    cpdef bint isorderedsuperset(self, other, bint is_loop = False):
         """Method of '>=' operator with ordered detection."""
-        return _isorderedsubset(other, self)
+        return _isorderedsubset(other, self, is_loop)
 
     def __xor__(self, other) -> OrderedSet:
         """Implement of '^' operator."""
@@ -536,10 +563,42 @@ cdef class OrderedSet:
         return self._getindex(item)
 
     cpdef void reverse(self):
-        """Reverse objects."""
+        """Reverse all elements."""
         cdef list my_iter = list(OrderedSetReverseIterator(self))
         self.clear()
         self.update(my_iter)
+
+    cdef void replace(self, subset, replacement, bint is_loop = False):
+        """Replace 'subset' to 'replacement' for once."""
+        cdef int subset_len = len(subset)
+        if not subset_len <= len(self):
+            # 'subset' is obviously not a subset.
+            return
+
+        cdef list self_list = list(self)
+        cdef list subset_list = list(subset)
+        if is_loop:
+            self_list *= 2
+
+        cdef int i
+        cdef list head, tail
+        cdef int start = 0
+        cdef int matched = 0
+        for i, self_elem in enumerate(self_list):
+            if self_elem == subset_list[matched]:
+                if matched == 0:
+                    start = i
+                matched += 1
+                if matched == subset_len:
+                    head = self_list[:start]
+                    tail = self_list[i:]
+                    self.clear()
+                    self.update(head)
+                    self.update(replacement)
+                    self.update(tail)
+                    return
+            else:
+                matched = 0
 
     ##
     # sequence methods

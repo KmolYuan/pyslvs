@@ -49,7 +49,7 @@ _color_list = {
     'Dark-Pink': (225, 20, 147),
 }
 
-colorNames = tuple(sorted(_color_list.keys()))
+color_names = tuple(sorted(_color_list.keys()))
 
 
 def color_rgb(name: str) -> Tuple[int, int, int]:
@@ -74,7 +74,7 @@ def color_rgb(name: str) -> Tuple[int, int, int]:
         return color_text[:3]
 
 
-_colors = "|".join(f'"{color}"' for color in reversed(colorNames))
+_colors = "|".join(f'"{color}"' for color in reversed(color_names))
 
 _pmks_grammar = Lark(
     # Number
@@ -238,7 +238,7 @@ else:
             'root': [
                 ('#.*$', Comment.Single),
                 ('(M)|(J)|(L)|(P)|(A)|(color)', Name.Function),
-                ('|'.join(f"({color})" for color in colorNames), Name.Variable),
+                ('|'.join(f"({color})" for color in color_names), Name.Variable),
                 ('(RP)|(R)|(P)', Keyword.Constant),
                 (r'(\d+\.\d*|\d*\.\d+)([eE][+-]?[0-9]+)?j?', Number.Float),
             ]
