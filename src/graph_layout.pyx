@@ -113,39 +113,46 @@ cdef OrderedSet outer_loop(Graph g):
     """Return nodes of outer loop."""
     cdef list cycles = cycle_basis(g)
 
-    cdef int insert_index
-    cdef OrderedSet c1, c2, c3
+    cdef int insert_index, inter_real
+    cdef OrderedSet c1, c2, inter
     while len(cycles) > 1:
         c1 = cycles.pop()
 
         for c2 in cycles:
-            c3 = c1.ordered_intersection(c2, is_loop=True)
-            if not c3:
+            inter = c1.ordered_intersection(c2, is_loop=True)
+            if not len(inter) >= 2:
                 # Find by reversed cycle 2.
                 c2.reverse()
-                c3 = c1.ordered_intersection(c2, is_loop=True)
-            if not len(c3) >= 2:
-                continue
+                inter = c1.ordered_intersection(c2, is_loop=True)
+                if not len(inter) >= 2:
+                    continue
 
-            if not c3.is_ordered_subset(c1, is_loop=True):
-                # Cycle 3 and cycle 1 has wrong direction.
-                c3.reverse()
-            if c3.is_ordered_subset(c2, is_loop=True):
+            if not inter.is_ordered_subset(c1, is_loop=True):
+                # Intersection and cycle 1 has wrong direction.
+                inter.reverse()
+            if inter.is_ordered_subset(c2, is_loop=True):
                 # Cycle 1 and cycle 2 should has different direction.
                 c2.reverse()
 
             # Roll to interface.
-            c1.roll(c3[-1], -1)
-            c2.roll(c3[0], 0)
+            c1.roll(inter[-1], -1)
+            c2.roll(inter[0], 0)
+            inter_real = len(c1 & c2)
+
             # Remove intersection.
-            c2 -= c3[1:-1]
+            c2 -= inter[1:-1]
+
             # Remove connected nodes.
-            insert_index = c1.index(c3[0])
-            del c1[insert_index:c1.index(c3[-1])]
-            if len(c2) > len(c3):
+            insert_index = c1.index(inter[0])
+            del c1[insert_index:c1.index(inter[-1])]
+
+            # Insert new edges.
+            if len(c2) > len(inter) == inter_real:
+                # Cycle 2 should longer then intersection.
+                # And the ordered intersection should same as unordered one.
                 c1.insert(insert_index, c2)
             else:
-                c1.insert(insert_index, c3)
+                c1.insert(insert_index, inter)
             cycles.remove(c2)
             cycles.append(c1)
             break
@@ -447,7 +454,7 @@ cdef class OrderedSet:
     cpdef OrderedSet ordered_intersection(self, other, bint is_loop = False):
         """Find the max length intersection with ordered detection."""
         if not isinstance(other, Iterable):
-            raise NotImplemented
+            raise TypeError("object must be iterable")
 
         cdef list self_list = list(self)
         cdef list other_list = list(other)
@@ -455,7 +462,7 @@ cdef class OrderedSet:
             self_list *= 2
 
         cdef int matched = -1
-        cdef int matched_old = -1
+        cdef int matched_old = -2
         cdef list subset = []
         cdef list subset_old = []
         for self_elem in self_list:
@@ -463,7 +470,6 @@ cdef class OrderedSet:
                 matched = other_list.index(self_elem)
             except ValueError:
                 # Not found.
-                matched_old = -1
                 continue
 
             if subset and matched not in (
@@ -471,8 +477,10 @@ cdef class OrderedSet:
                 if is_loop else {matched_old + 1}
             ):
                 if len(subset) > len(subset_old):
+                    # If current set is longer then before.
                     subset_old = subset
-                    subset = []
+                # Start new record.
+                subset = []
             subset.append(self_elem)
             matched_old = matched
 
@@ -691,10 +699,11 @@ cdef class OrderedSet:
 
     def __eq__(self, other) -> bool:
         """Implement of '==' operator."""
-        if isinstance(other, (OrderedSet, list)):
-            return len(self) == len(other) and list(self) == list(other)
-        elif isinstance(other, Set):
+        if isinstance(other, Set):
+            # Set is no ordered.
             return set(self) == set(other)
+        if isinstance(other, Iterable):
+            return len(self) == len(other) and list(self) == list(other)
         return NotImplemented
 
     def __le__(self, other) -> bool:
