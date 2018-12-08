@@ -25,12 +25,12 @@ from pmks cimport VPoint
 from bfgs cimport vpoint_solving
 
 
-cdef inline double radians(double degree):
+cdef inline double radians(double degree) nogil:
     """Deg to rad."""
     return degree / 180 * M_PI
 
 
-cdef inline double distance(double x1, double y1, double x2, double y2):
+cdef inline double distance(double x1, double y1, double x2, double y2) nogil:
     """Distance of two cartesian coordinates."""
     return hypot(x2 - x1, y2 - y1)
 

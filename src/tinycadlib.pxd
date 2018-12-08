@@ -17,7 +17,7 @@ cdef class Coordinate:
     cpdef bint is_nan(self)
 
 
-cdef double radians(double degree)
+cdef double radians(double degree) nogil
 cpdef tuple PLAP(Coordinate A, double L0, double a0, Coordinate B = *, bint inverse = *)
 cpdef tuple PLLP(Coordinate A, double L0, double L1, Coordinate B, bint inverse = *)
 cpdef tuple PLPP(Coordinate A, double L0, Coordinate B, Coordinate C, bint inverse = *)

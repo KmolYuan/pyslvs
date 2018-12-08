@@ -36,7 +36,7 @@ cdef inline list product(int pool_size, int repeat, object stop_func):
     return result
 
 
-cdef inline int m_max(int nl, int nj):
+cdef inline int m_max(int nl, int nj) nogil:
     """Find max number of joint on each link.
     
     + nl <= nj and nj <= (2 * nl - 3)
@@ -91,8 +91,8 @@ cdef inline int j_m(int16_t[:] link_num):
     return <int>c
 
 
-cdef inline int j_m_p(int16_t[:] link_num):
-    """Return value of Jm'. This is improved function.
+cdef inline int j_m_p(int n_m) nogil:
+    """Return value of J'm. This is improved function.
     
     + Origin equation:
     if n_m % 2 == 0:
@@ -101,7 +101,6 @@ cdef inline int j_m_p(int16_t[:] link_num):
         return <int>((3 * (n_m - 1) - 2) / 2)
     """
     # Number of multiple links.
-    cdef int n_m = sum(link_num[1:])
     if n_m <= 1:
         return 0
     elif n_m == 2:
@@ -123,7 +122,7 @@ cpdef list contracted_link(list link_num_list, object stop_func = None):
 
     # Contracted link.
     cdef int j_m_v = j_m(link_num)
-    cdef int n_c_min = max(1, j_m_v - j_m_p(link_num))
+    cdef int n_c_min = max(1, j_m_v - j_m_p(sum(link_num[1:])))
     cdef int n_c_max = min(link_num[0], j_m_v)
 
     # NL2 - Nc + 2

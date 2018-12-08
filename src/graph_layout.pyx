@@ -32,7 +32,10 @@ cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
 
     # Last check for debug.
     if set(g.nodes) != set(pos):
-        raise ValueError(f"the algorithm is error with {g.edges}")
+        raise ValueError(
+            f"the algorithm is error with {g.edges}\n"
+            f"node {set(g.nodes) - set(pos)} are not included"
+        )
     return pos
 
 

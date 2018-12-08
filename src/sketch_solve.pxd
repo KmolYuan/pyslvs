@@ -11,12 +11,12 @@ email: pyslvs@gmail.com
 
 cdef extern from "solve.h" nogil:
 
-    cdef int Rough
-    cdef int Fine
-    cdef int MaxIterations
+    int Rough
+    int Fine
+    int MaxIterations
 
-    cdef int Succsess
-    cdef int NoSolution
+    int Succsess
+    int NoSolution
 
     struct Point:
         double *x
@@ -36,7 +36,7 @@ cdef extern from "solve.h" nogil:
         Point *center
         double *rad
 
-    cdef enum ConstraintTypes "Constraint::Types":
+    enum ConstraintTypes "Constraint::Types":
         pass
 
     struct Constraint:

@@ -1,6 +1,12 @@
 Change Log
 ===
 
+Version 18.12
+===
+
++ Outer loop layout for atlas.
++ Add "no global interpreter lock" decorator for pure C functions.
+
 Version 18.11
 ===
 
