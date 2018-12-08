@@ -12,7 +12,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from collections.abc import Set, Iterable
+from typing import Set, Iterable
 cimport cython
 from cpython cimport PyDict_Contains, PyIndex_Check
 from cpython.slice cimport PySlice_GetIndicesEx
@@ -23,7 +23,7 @@ from graph cimport Graph
 cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
     """Layout position decided by outer loop."""
     cdef OrderedSet o_loop = outer_loop(g)
-    o_loop.roll(min(o_loop))
+    o_loop.roll(min(o_loop), 0)
     cdef list o_pos = regular_polygon_pos(len(o_loop), scale)
     cdef dict pos = dict(zip(o_loop, o_pos))
     outer_loop_layout_inner(g, o_loop, pos)
@@ -34,6 +34,8 @@ cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
     if set(g.nodes) != set(pos):
         raise ValueError(
             f"the algorithm is error with {g.edges}\n"
+            f"outer loop: {o_loop}\n"
+            f"inner layout: {set(pos) - o_loop}\n"
             f"node {set(g.nodes) - set(pos)} are not included"
         )
     return pos
@@ -111,30 +113,39 @@ cdef OrderedSet outer_loop(Graph g):
     """Return nodes of outer loop."""
     cdef list cycles = cycle_basis(g)
 
+    cdef int insert_index
     cdef OrderedSet c1, c2, c3
     while len(cycles) > 1:
         c1 = cycles.pop()
 
         for c2 in cycles:
-            c3 = c1.orderedintersection(c2, is_loop=True)
+            c3 = c1.ordered_intersection(c2, is_loop=True)
             if not c3:
+                # Find by reversed cycle 2.
                 c2.reverse()
-                c3 = c1.orderedintersection(c2, is_loop=True)
+                c3 = c1.ordered_intersection(c2, is_loop=True)
             if not len(c3) >= 2:
                 continue
 
-            if not c3.isorderedsubset(c1, is_loop=True):
+            if not c3.is_ordered_subset(c1, is_loop=True):
                 # Cycle 3 and cycle 1 has wrong direction.
                 c3.reverse()
-            if c3.isorderedsubset(c2, is_loop=True):
+            if c3.is_ordered_subset(c2, is_loop=True):
                 # Cycle 1 and cycle 2 should has different direction.
                 c2.reverse()
 
+            # Roll to interface.
+            c1.roll(c3[-1], -1)
+            c2.roll(c3[0], 0)
+            # Remove intersection.
             c2 -= c3[1:-1]
             # Remove connected nodes.
-            c1.roll(c3[-1])
-            c2.roll(c3[0])
-            c1.replace(c3, c2 if len(c2) > len(c3) else c3, is_loop=True)
+            insert_index = c1.index(c3[0])
+            del c1[insert_index:c1.index(c3[-1])]
+            if len(c2) > len(c3):
+                c1.insert(insert_index, c2)
+            else:
+                c1.insert(insert_index, c3)
             cycles.remove(c2)
             cycles.append(c1)
             break
@@ -149,7 +160,7 @@ cdef inline list cycle_basis(Graph g):
     """ Returns a list of cycles which form a basis for cycles of G."""
     cdef set g_nodes = set(g.nodes)
     cdef list cycles = []
-    cdef int root = 0
+    cdef int root = min(g.nodes)
 
     cdef int z, nbr, p
     cdef list stack
@@ -200,26 +211,23 @@ cdef class Entry:
 
 
 cdef inline void _add(OrderedSet oset, object key):
-    cdef Entry end = oset.end
-    cdef dict map = oset.map
-    cdef Entry next
-
-    if not PyDict_Contains(map, key):
-        next = Entry()
-        next.key, next.prev, next.next = key, end.prev, end
-        end.prev.next = end.prev = map[key] = next
-        oset.os_used += 1
+    if PyDict_Contains(oset.map, key):
+        return
+    cdef Entry next_entry = Entry()
+    next_entry.key = key
+    next_entry.prev = oset.end.prev
+    next_entry.next = oset.end
+    oset.end.prev.next = oset.end.prev = oset.map[key] = next_entry
+    oset.os_used += 1
 
 
 cdef void _discard(OrderedSet oset, object key):
-    cdef dict map = oset.map
-    cdef Entry entry
-
-    if PyDict_Contains(map, key):
-        entry = map.pop(key)
-        entry.prev.next = entry.next
-        entry.next.prev = entry.prev
-        oset.os_used -= 1
+    if not PyDict_Contains(oset.map, key):
+        return
+    cdef Entry entry = oset.map.pop(key)
+    entry.prev.next = entry.next
+    entry.next.prev = entry.prev
+    oset.os_used -= 1
 
 
 cdef inline bint _isorderedsubset(seq1, seq2, bint is_loop):
@@ -343,24 +351,32 @@ cdef class OrderedSet:
     # set methods
     ##
     cpdef void add(self, elem):
-        """Add element `elem` to the set."""
+        """Add 'elem' to the set."""
         _add(self, elem)
 
+    cpdef void insert(self, int index, elem):
+        """Insert 'elem' to 'index'."""
+        cdef OrderedSet tail = self[index:]
+        del self[index:]
+        self.update(elem)
+        self.update(tail)
+
     cpdef void discard(self, elem):
-        """Remove element `elem` from the ``OrderedSet`` if it is present."""
+        """Remove element 'elem' from the 'OrderedSet' if it is present."""
         _discard(self, elem)
 
-    cpdef void roll(self, elem):
-        """Roll the list to 'elem' as first item."""
+    cpdef void roll(self, elem, int index):
+        """Roll the list to 'elem' as 'index' item."""
         if elem not in self:
             raise ValueError(f"{elem} is not in {self}")
 
-        while elem != self[0]:
+        while elem != self[index]:
+            # Rolling the list.
             self.add(self.pop(0))
 
     cpdef object pop(self, int index = -1):
         """Remove and return the last element or an arbitrary set element.
-        Raises ``KeyError`` if the ``OrderedSet`` is empty.
+        Raises 'KeyError' if the 'OrderedSet' is empty.
         """
         if not self:
             raise KeyError(f'{self.__class__.__name__} is empty')
@@ -369,16 +385,15 @@ cdef class OrderedSet:
         return key
 
     cpdef void remove(self, elem):
-        """
-        Remove element `elem` from the ``set``.
-        Raises :class:`KeyError` if `elem` is not contained in the set.
+        """Remove element 'elem' from the 'set'.
+        Raises KeyError if 'elem' is not contained in the set.
         """
         if elem not in self:
             raise KeyError(elem)
         _discard(self, elem)
 
     cpdef void clear(self):
-        """Remove all elements from the `set`."""
+        """Remove all elements from the 'set'."""
         cdef Entry end = self.end
         end.next.prev = end.next = None
 
@@ -429,7 +444,7 @@ cdef class OrderedSet:
             self.discard(value)
         return self
 
-    cpdef OrderedSet orderedintersection(self, other, bint is_loop = False):
+    cpdef OrderedSet ordered_intersection(self, other, bint is_loop = False):
         """Find the max length intersection with ordered detection."""
         if not isinstance(other, Iterable):
             raise NotImplemented
@@ -438,7 +453,6 @@ cdef class OrderedSet:
         cdef list other_list = list(other)
         if is_loop:
             self_list *= 2
-            other_list *= 2
 
         cdef int matched = -1
         cdef int matched_old = -1
@@ -448,9 +462,14 @@ cdef class OrderedSet:
             try:
                 matched = other_list.index(self_elem)
             except ValueError:
+                # Not found.
+                matched_old = -1
                 continue
 
-            if subset and (matched_old + 1) != matched:
+            if subset and matched not in (
+                {matched_old + 1, matched_old - len(other_list) + 1}
+                if is_loop else {matched_old + 1}
+            ):
                 if len(subset) > len(subset_old):
                     subset_old = subset
                     subset = []
@@ -476,11 +495,11 @@ cdef class OrderedSet:
         """Method of '>=' operator."""
         return other <= self
 
-    cpdef bint isorderedsubset(self, other, bint is_loop = False):
+    cpdef bint is_ordered_subset(self, other, bint is_loop = False):
         """Method of '<=' operator with ordered detection."""
         return _isorderedsubset(self, other, is_loop)
 
-    cpdef bint isorderedsuperset(self, other, bint is_loop = False):
+    cpdef bint is_ordered_superset(self, other, bint is_loop = False):
         """Method of '>=' operator with ordered detection."""
         return _isorderedsubset(other, self, is_loop)
 
@@ -530,7 +549,7 @@ cdef class OrderedSet:
     # list methods
     ##
     cpdef int index(self, elem):
-        """Return the index of `elem`. Rases :class:`ValueError` if not in the OrderedSet."""
+        """Return the index of 'elem'. Rases :class:'ValueError' if not in the OrderedSet."""
         if elem not in self:
             raise ValueError(f"{elem} is not in {type(self).__name__}")
         cdef Entry curr = self.end.next
@@ -540,16 +559,15 @@ cdef class OrderedSet:
             index += 1
         return index
 
-    cdef OrderedSet _getslice(self, slice item):
-        cdef ssize_t start, stop, step, slicelength, place, i
-        cdef Entry curr
-        cdef OrderedSet result
+    cdef list _get_slice_entry(self, slice item):
+        cdef ssize_t start, stop, step, slicelength
         PySlice_GetIndicesEx(item, len(self), &start, &stop, &step, &slicelength)
 
-        result = type(self)()
-        place = start
-        curr = self.end
+        cdef list result = []
+        cdef ssize_t place = start
+        cdef Entry curr = self.end
 
+        cdef ssize_t i
         if slicelength <= 0:
             pass
         elif step > 0:
@@ -559,7 +577,7 @@ cdef class OrderedSet:
                 while i <= place:
                     curr = curr.next
                     i += 1
-                _add(result, curr.key)
+                result.append(curr)
                 place += step
                 slicelength -= 1
         else:
@@ -569,12 +587,12 @@ cdef class OrderedSet:
                 while i > place:
                     curr = curr.prev
                     i -= 1
-                _add(result, curr.key)
+                result.append(curr)
                 place += step
                 slicelength -= 1
         return result
 
-    cdef object _getindex(self, ssize_t index):
+    cdef Entry _get_index_entry(self, ssize_t index):
         cdef ssize_t _len = len(self)
         if index >= _len or (index < 0 and abs(index) > _len):
             raise IndexError("list index out of range")
@@ -591,15 +609,49 @@ cdef class OrderedSet:
             while index:
                 curr = curr.prev
                 index -= 1
+        return curr
+
+    def __getitem__(self, index):
+        """Implement of 'self[index]' operator."""
+        cdef Entry curr
+        if isinstance(index, slice):
+            return OrderedSet([curr.key for curr in self._get_slice_entry(index)])
+        if not PyIndex_Check(index):
+            raise TypeError(f"{type(self).__name__} indices must be integers, not {type(index)}")
+
+        curr = self._get_index_entry(index)
         return curr.key
 
-    def __getitem__(self, item):
-        """Implement of '[]' operator."""
-        if isinstance(item, slice):
-            return self._getslice(item)
-        if not PyIndex_Check(item):
-            raise TypeError(f"{type(self).__name__} indices must be integers, not {type(item)}")
-        return self._getindex(item)
+    def __setitem__(self, index, value):
+        """Implement of 'self[index] = value' operator."""
+        cdef int i
+        cdef Entry curr
+        cdef list value_list
+        if isinstance(index, slice):
+            if not isinstance(value, Iterable):
+                raise TypeError("must assign iterable to extended slice")
+            value_list = list(value)
+            for i, curr in enumerate(self._get_slice_entry(index)):
+                curr.key = value_list[i]
+            return
+
+        if not PyIndex_Check(index):
+            raise TypeError(f"{type(self).__name__} indices must be integers, not {type(index)}")
+        curr = self._get_index_entry(index)
+        curr.key = value
+
+    def __delitem__(self, index):
+        """Implement of 'del self[index]' operator."""
+        cdef Entry curr
+        if isinstance(index, slice):
+            for curr in self._get_slice_entry(index):
+                self.discard(curr.key)
+            return
+
+        if not PyIndex_Check(index):
+            raise TypeError(f"{type(self).__name__} indices must be integers, not {type(index)}")
+        curr = self._get_index_entry(index)
+        self.discard(curr.key)
 
     cpdef void reverse(self):
         """Reverse all elements."""
@@ -607,60 +659,23 @@ cdef class OrderedSet:
         self.clear()
         self.update(my_iter)
 
-    cdef void replace(self, subset, replacement, bint is_loop = False):
-        """Replace 'subset' to 'replacement' for once."""
-        if not isinstance(subset, Iterable):
-            raise TypeError(f"{subset} must be a iterable object")
-        if not isinstance(replacement, Iterable):
-            raise TypeError(f"{replacement} must be a iterable object")
-
-        cdef int subset_len = len(subset)
-        if not subset_len <= len(self):
-            # 'subset' is obviously not a subset.
-            return
-
-        cdef list self_list = list(self)
-        cdef list subset_list = list(subset)
-        if is_loop:
-            self_list *= 2
-
-        cdef int i
-        cdef list head, tail
-        cdef int start = 0
-        cdef int matched = 0
-        for i, self_elem in enumerate(self_list):
-            if self_elem == subset_list[matched]:
-                if matched == 0:
-                    start = i
-                matched += 1
-                if matched == subset_len:
-                    head = self_list[:start]
-                    tail = self_list[i:]
-                    self.clear()
-                    self.update(head)
-                    self.update(replacement)
-                    self.update(tail)
-                    return
-            else:
-                matched = 0
-
     ##
     # sequence methods
     ##
     def __len__(self) -> int:
-        """Implement of 'len()' operator."""
+        """Implement of 'len(self)' operator."""
         return len(self.map)
 
     def __contains__(self, elem) -> bool:
-        """Implement of 'in' operator."""
+        """Implement of 'elem in self' operator."""
         return elem in self.map
 
     def __iter__(self) -> OrderedSetIterator:
-        """Implement of 'iter()' operator. (reference method)"""
+        """Implement of 'iter(self)' operator. (reference method)"""
         return OrderedSetIterator.__new__(OrderedSetIterator, self)
 
     def __reversed__(self) -> OrderedSetReverseIterator:
-        """Implement of 'reversed()' operator."""
+        """Implement of 'reversed(self)' operator."""
         return OrderedSetReverseIterator.__new__(OrderedSetReverseIterator, self)
 
     def __reduce__(self):
