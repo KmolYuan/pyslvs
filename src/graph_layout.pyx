@@ -28,8 +28,6 @@ cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
     cdef dict pos = dict(zip(o_loop, o_pos))
     outer_loop_layout_inner(g, o_loop, pos)
 
-    # TODO: node_mode
-
     # Last check for debug.
     if set(g.nodes) != set(pos):
         raise ValueError(
@@ -38,6 +36,9 @@ cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
             f"inner layout: {set(pos) - o_loop}\n"
             f"node {set(g.nodes) - set(pos)} are not included"
         )
+
+    # TODO: node_mode
+
     return pos
 
 
@@ -115,7 +116,9 @@ cdef OrderedSet outer_loop(Graph g):
     if not cycles:
         raise ValueError("Invalid graph")
 
-    cdef int i, start, end, insert_start, insert_end
+    cdef bint need_to_rev
+    cdef int i, start, end
+    cdef int insert_start, insert_end, replace_start, replace_end
     cdef OrderedSet c1, c2, inter
     cdef list inter_over, inter_tmp
     while len(cycles) > 1:
@@ -146,11 +149,12 @@ cdef OrderedSet outer_loop(Graph g):
 
             start = -1
             end = -1
+            need_to_rev = len(inter_over) % 2 == 1
             for i, inter in enumerate(inter_over):
                 if not inter.is_ordered_subset(c1, is_loop=True):
                     # Intersection and cycle 1 has wrong direction.
                     inter.reverse()
-                if inter.is_ordered_subset(c2, is_loop=True):
+                if inter.is_ordered_subset(c2, is_loop=True) == need_to_rev:
                     # Cycle 1 and cycle 2 should has different direction.
                     c2.reverse()
 
@@ -170,10 +174,12 @@ cdef OrderedSet outer_loop(Graph g):
             # Insert new edges.
             insert_start = c1.index(start)
             insert_end = c1.index(end)
-            if len(c2) > (insert_end - insert_start):
+            replace_start = c2.index(start)
+            replace_end = c2.index(end)
+            if (replace_end - replace_start) > (insert_end - insert_start):
                 # Cycle 2 should longer then intersection.
                 del c1[insert_start:insert_end]
-                c1.insert(insert_start, c2)
+                c1.insert(insert_start, c2[replace_start:replace_end])
             print(c1)
 
             # The cycle 2 has been merged into cycle 1.
