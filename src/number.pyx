@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3
 
-"""Number synthesis.
+"""Number _synthesis.
 
 author: Yuan Chang
 copyright: Copyright (C) 2016-2018
@@ -20,7 +20,7 @@ from numpy cimport (
 )
 
 
-cdef inline list product(int pool_size, int repeat, object stop_func):
+cdef inline list _product(int pool_size, int repeat, object stop_func):
     """Product function as same as iteration tools."""
     cdef int i, y
     cdef list x, tmp_list
@@ -36,7 +36,7 @@ cdef inline list product(int pool_size, int repeat, object stop_func):
     return result
 
 
-cdef inline int m_max(int nl, int nj) nogil:
+cdef inline int _m_max(int nl, int nj) nogil:
     """Find max number of joint on each link.
     
     + nl <= nj and nj <= (2 * nl - 3)
@@ -52,7 +52,7 @@ cdef inline int m_max(int nl, int nj) nogil:
     return -1
 
 
-cdef inline int sum_factors(list factors):
+cdef inline int _sum_factors(list factors):
     """F0*N2 + F1*N3 + F2*N4 + ... + Fn*N(n+2)"""
     cdef int factor = 0
     cdef int i
@@ -62,25 +62,25 @@ cdef inline int sum_factors(list factors):
 
 
 cpdef list number_synthesis(int nl, int nj, object stop_func = None):
-    """Number synthesis try-error function."""
+    """Number _synthesis try-error function."""
     cdef list result = []
-    cdef int m_max_v = m_max(nl, nj)
+    cdef int m_max_v = _m_max(nl, nj)
     if m_max_v == -1:
         raise Exception("incorrect mechanism.")
 
     cdef int i, p
     cdef list symbols
-    for symbols in product(nl + 1, m_max_v - 2, stop_func):
+    for symbols in _product(nl + 1, m_max_v - 2, stop_func):
         nl_m_max = nl - sum(symbols)
         if nl_m_max < 0:
             continue
         symbols.append(nl_m_max)
-        if sum_factors(symbols) == (2 * nj):
+        if _sum_factors(symbols) == (2 * nj):
             result.append(tuple(symbols))
     return result
 
 
-cdef inline int j_m(int16_t[:] link_num):
+cdef inline int _j_m(int16_t[:] link_num):
     """Return value of Jm."""
     cdef int num
     cdef int i = 3
@@ -91,7 +91,7 @@ cdef inline int j_m(int16_t[:] link_num):
     return <int>c
 
 
-cdef inline int j_m_p(int n_m) nogil:
+cdef inline int _j_m_p(int n_m) nogil:
     """Return value of J'm. This is improved function.
     
     + Origin equation:
@@ -121,8 +121,8 @@ cpdef list contracted_link(list link_num_list, object stop_func = None):
     link_num = np_array(link_num_list, ndmin=1, dtype=int16)
 
     # Contracted link.
-    cdef int j_m_v = j_m(link_num)
-    cdef int n_c_min = max(1, j_m_v - j_m_p(sum(link_num[1:])))
+    cdef int j_m_v = _j_m(link_num)
+    cdef int n_c_min = max(1, j_m_v - _j_m_p(sum(link_num[1:])))
     cdef int n_c_max = min(link_num[0], j_m_v)
 
     # NL2 - Nc + 2
@@ -133,7 +133,7 @@ cpdef list contracted_link(list link_num_list, object stop_func = None):
     cdef float last_factor
     cdef list m
     cdef list cj_list = []
-    for m in product(link_num[0] + 1, i_max - 1, stop_func):
+    for m in _product(link_num[0] + 1, i_max - 1, stop_func):
         count = 0
         index = 1
         for factor in m:

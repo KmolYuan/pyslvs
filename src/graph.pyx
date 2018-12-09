@@ -22,13 +22,6 @@ from typing import (
 )
 
 
-cdef bint is_adjacent(Graph g, int u, int v):
-    """Find the distance between u and v."""
-    if v in g.adj[u]:
-        return True
-    return False
-
-
 cpdef list link_assortments(Graph g):
     """Return link assortments of the graph."""
     if not g.edges:
@@ -59,7 +52,7 @@ cpdef list contracted_link_assortments(Graph g):
     cdef int d
     cdef tuple mcl
     cdef set counted = set()
-    for mcl in multi_contracted_links(g, False):
+    for mcl in _multi_contracted_links(g, False):
         d = len(mcl) - 1
         counted.update(mcl)
         assortments[d] += 1
@@ -76,7 +69,7 @@ cpdef list contracted_link_assortments(Graph g):
     return assortments
 
 
-cdef list multi_contracted_links(Graph g, bint only_one):
+cdef list _multi_contracted_links(Graph g, bint only_one):
     """Return a list of multiple contracted links."""
     cdef int n1, n2, index, neighbor
     cdef list c_links
@@ -227,7 +220,7 @@ cdef class Graph:
         cdef Graph g = self.copy()
         cdef set mcl = set()
         while True:
-            mcl.update(multi_contracted_links(g, True))
+            mcl.update(_multi_contracted_links(g, True))
             if not mcl:
                 break
 
@@ -268,6 +261,13 @@ cdef class Graph:
     cpdef Graph copy(self):
         """Copy the graph."""
         return Graph.__new__(Graph, self.edges)
+
+
+cdef bint _is_adjacent(Graph g, int u, int v):
+    """Find the distance between u and v."""
+    if v in g.adj[u]:
+        return True
+    return False
 
 
 @cython.final
@@ -427,8 +427,8 @@ cdef class GraphMatcher:
         # R_neighbor at the next recursion level. But it is good to prune the
         # search tree now.
         if (
-            is_adjacent(self.g1, g1_node, g1_node)
-            != is_adjacent(self.g2, g2_node, g2_node)
+            _is_adjacent(self.g1, g1_node, g1_node)
+            != _is_adjacent(self.g2, g2_node, g2_node)
         ):
             return False
         # R_neighbor
@@ -441,8 +441,8 @@ cdef class GraphMatcher:
                 if self.core_1[neighbor] not in self.g2.adj[g2_node]:
                     return False
                 elif (
-                    is_adjacent(self.g1, neighbor, g1_node)
-                    != is_adjacent(self.g2, self.core_1[neighbor], g2_node)
+                        _is_adjacent(self.g1, neighbor, g1_node)
+                        != _is_adjacent(self.g2, self.core_1[neighbor], g2_node)
                 ):
                     return False
         for neighbor in self.g2.adj[g2_node]:
@@ -450,8 +450,8 @@ cdef class GraphMatcher:
                 if self.core_2[neighbor] not in self.g1.adj[g1_node]:
                     return False
                 elif (
-                    is_adjacent(self.g1, self.core_2[neighbor], g1_node)
-                    != is_adjacent(self.g2, neighbor, g2_node)
+                        _is_adjacent(self.g1, self.core_2[neighbor], g1_node)
+                        != _is_adjacent(self.g2, neighbor, g2_node)
                 ):
                     return False
 

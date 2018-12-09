@@ -40,12 +40,12 @@ from sketch_solve cimport (
 from pmks cimport VPoint
 
 
-cdef inline double radians(double degree):
+cdef inline double _radians(double degree):
     """Deg to rad."""
     return degree / 180 * M_PI
 
 
-cdef inline tuple sort_pair(tuple pair):
+cdef inline tuple _sort_pair(tuple pair):
     """A sorted pair."""
     cdef int a, b
     a, b = pair
@@ -75,7 +75,7 @@ cpdef list vpoint_solving(
     cdef object k
     for k in data_dict:
         if type(k) == tuple:
-            data_dict[sort_pair(k)] = data_dict.pop(k)
+            data_dict[_sort_pair(k)] = data_dict.pop(k)
     cdef dict vlinks = {}
 
     # Pre-count number of parameters.
@@ -334,7 +334,7 @@ cpdef list vpoint_solving(
                 # Known coordinates.
                 continue
             for d in (a, b):
-                pair = sort_pair((c, d))
+                pair = _sort_pair((c, d))
                 if pair in data_dict:
                     distances[i] = data_dict[pair]
                 else:
@@ -369,7 +369,7 @@ cpdef list vpoint_solving(
         slider_slot = slider_lines + c
         if vpoint.grounded():
             # Slot is grounded.
-            cons_angles[d] = radians(vpoint.angle)
+            cons_angles[d] = _radians(vpoint.angle)
             cons[i] = LineInternalAngleConstraint(slider_slot, cons_angles + d)
             i += 1
             cons[i] = PointOnLineConstraint(p1, slider_slot)
@@ -403,7 +403,7 @@ cpdef list vpoint_solving(
                     # f1 is a R joint or it is not connected with slot link.
                     p2 = points + f1
                 slider_lines[c] = [slider_bases + b, p2]
-                cons_angles[d] = radians(vpoint.slope_angle(vpoints[f1]) - vpoint.angle)
+                cons_angles[d] = _radians(vpoint.slope_angle(vpoints[f1]) - vpoint.angle)
                 cons[i] = InternalAngleConstraint(
                     slider_slot,
                     slider_lines + c,
@@ -442,7 +442,7 @@ cpdef list vpoint_solving(
                     # f1 is a R joint or it is not connected with slot link.
                     p2 = points + f1
                 slider_lines[c] = [p1, p2]
-                cons_angles[d] = radians(vpoint.slope_angle(vpoints[f1]) - vpoint.angle)
+                cons_angles[d] = _radians(vpoint.slope_angle(vpoints[f1]) - vpoint.angle)
                 cons[i] = InternalAngleConstraint(
                     slider_slot,
                     slider_lines + c,
@@ -459,7 +459,7 @@ cpdef list vpoint_solving(
         if b == d:
             continue
         lines[c] = [points + b, points + d]
-        angles[c] = radians(angle)
+        angles[c] = _radians(angle)
         cons[i] = LineInternalAngleConstraint(lines + c, angles + c)
         i += 1
         c += 1

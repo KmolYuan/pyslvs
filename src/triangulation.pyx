@@ -15,7 +15,7 @@ from tinycadlib cimport radians
 from pmks cimport VPoint
 
 
-cdef inline bint is_all_lock(dict status):
+cdef inline bint _is_all_lock(dict status):
     """Test is all status done."""
     cdef int node
     cdef bint n_status
@@ -25,7 +25,7 @@ cdef inline bint is_all_lock(dict status):
     return True
 
 
-cdef inline bint clockwise(tuple c1, tuple c2, tuple c3):
+cdef inline bint _clockwise(tuple c1, tuple c2, tuple c3):
     """Check orientation of three points."""
     cdef double val = (
         (c2[1] - c1[1]) * (c3[0] - c2[0])
@@ -82,7 +82,7 @@ def _get_base_friend(
         yield friend
 
 
-cdef inline int get_input_base(int node, object inputs):
+cdef inline int _get_input_base(int node, object inputs):
     """Get the base node for input pairs."""
     cdef int base, node_
     for base, node_ in inputs:
@@ -197,7 +197,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
     cdef bint reverse
     # Friend iterator.
     cdef object fi
-    while not is_all_lock(status):
+    while not _is_all_lock(status):
 
         if node not in status:
             node = 0
@@ -222,7 +222,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
             """
 
             if node in input_targets:
-                base = get_input_base(node, inputs)
+                base = _get_input_base(node, inputs)
                 if status[base]:
                     exprs.append((
                         'PLAP',
@@ -244,7 +244,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
                 except StopIteration:
                     skip_times += 1
                 else:
-                    if not clockwise(pos[friend_a], pos[node], pos[friend_b]):
+                    if not _clockwise(pos[friend_a], pos[node], pos[friend_b]):
                         friend_a, friend_b = friend_b, friend_a
                     exprs.append((
                         'PLLP',
@@ -319,7 +319,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
                 # Slot is not grounded.
                 if not vpoints[node].grounded():
                     friend_d = next(fi)
-                    if not clockwise(pos[friend_b], (tmp_x, tmp_y), pos[friend_d]):
+                    if not _clockwise(pos[friend_b], (tmp_x, tmp_y), pos[friend_d]):
                         friend_b, friend_d = friend_d, friend_b
                     exprs.append((
                         'PLLP',
@@ -345,7 +345,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
                 + A 'friend' from other link.
                 + Solving.
                 """
-                if not clockwise(pos[friend_b], (tmp_x, tmp_y), pos[friend_c]):
+                if not _clockwise(pos[friend_b], (tmp_x, tmp_y), pos[friend_c]):
                     friend_b, friend_c = friend_c, friend_b
                 exprs.append((
                     'PLLP',

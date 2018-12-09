@@ -10,11 +10,11 @@ Modules:
     + tinycadlib
         + Sketch Solve solver
     + triangulation
-+ Number synthesis:
++ Number _synthesis:
     + number
 + Structure Synthesis:
     + atlas
-+ Dimensional synthesis:
++ Dimensional _synthesis:
     + planarlinkage
     + rga
     + firefly

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3
 
-"""Structure synthesis.
+"""Structure _synthesis.
 
 The algorithms references:
 + On the Number Synthesis of Kinematic Chains
@@ -30,8 +30,8 @@ ctypedef unsigned int uint
 ctypedef c_map[int, int] map_int
 
 
-cdef int16_t[:] labels(int16_t[:] numbers, int index, int offset, bint negative):
-    """Generate labels from numbers."""
+cdef int16_t[:] _labels(int16_t[:] numbers, int index, int offset, bint negative):
+    """Generate _labels from numbers."""
     cdef int i, num
     cdef list labels = []
     for num in numbers[offset:]:
@@ -44,7 +44,7 @@ cdef int16_t[:] labels(int16_t[:] numbers, int index, int offset, bint negative)
     return np_array(labels, dtype=int16)
 
 
-cdef inline bint over_count(list pick_list, map_int &limit, map_int &count):
+cdef inline bint _over_count(list pick_list, map_int &limit, map_int &count):
     """Return True if it is a feasible pick list."""
     cdef int n
     cdef tuple candidate
@@ -63,7 +63,7 @@ cdef inline bint over_count(list pick_list, map_int &limit, map_int &count):
     return False
 
 
-cdef inline list picked_branch(int node, map_int &limit, map_int &count):
+cdef inline list _picked_branch(int node, map_int &limit, map_int &count):
     """Return feasible node for combination."""
     cdef int pick_count = limit[node] - count[node]
     if pick_count < 1:
@@ -119,7 +119,7 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
             hash_list.append(hash_code)
 
         # Check if contracted link is over selected.
-        if not failed and over_count(pick_list, limit, count):
+        if not failed and _over_count(pick_list, limit, count):
             failed = True
 
         # Check hash codes.
@@ -153,7 +153,7 @@ cdef inline list picked_branch(int node, map_int &limit, map_int &count):
             indices[n2] = indices[n2 - 1] + 1
 
 
-cdef inline int feasible_link(map_int &limit, map_int &count):
+cdef inline int _feasible_link(map_int &limit, map_int &count):
     """Return next feasible multiple link, return -1 if no any matched."""
     cdef int n, c
     for n, c in limit:
@@ -162,7 +162,7 @@ cdef inline int feasible_link(map_int &limit, map_int &count):
     return -1
 
 
-cdef inline bint all_connected(map_int &limit, map_int &count):
+cdef inline bint _all_connected(map_int &limit, map_int &count):
     """Return True if all multiple links and contracted links is connected."""
     cdef int n, c
     for n, c in limit:
@@ -177,7 +177,7 @@ cdef inline bint all_connected(map_int &limit, map_int &count):
     return True
 
 
-cdef inline tuple contracted_chain(int node, int num, set edges):
+cdef inline tuple _contracted_chain(int node, int num, set edges):
     """Get the max key and return chain."""
     cdef int m, n
     cdef int max_n = 0
@@ -196,7 +196,7 @@ cdef inline tuple contracted_chain(int node, int num, set edges):
     return chain, last_node
 
 
-cdef inline set dyad_patch(set edges, map_int &limit):
+cdef inline set _dyad_patch(set edges, map_int &limit):
     """Return a patched edges for contracted links."""
     cdef int n, c, last_node, u, v
     cdef set new_chain
@@ -205,7 +205,7 @@ cdef inline set dyad_patch(set edges, map_int &limit):
         # Only for contracted links.
         if not c < 0 or c == -1:
             continue
-        new_chain, last_node = contracted_chain(n, abs(c), new_edges)
+        new_chain, last_node = _contracted_chain(n, abs(c), new_edges)
         for u, v in edges:
             # Find once.
             if n == u or n == v:
@@ -219,7 +219,7 @@ cdef inline set dyad_patch(set edges, map_int &limit):
     return new_edges
 
 
-cdef void synthesis(
+cdef void _synthesis(
     int node,
     list result,
     set edges_origin,
@@ -228,7 +228,7 @@ cdef void synthesis(
     uint no_degenerate,
     object stop_func
 ):
-    """Recursive synthesis function."""
+    """Recursive _synthesis function."""
     # Copied edge list.
     cdef set edges
     cdef map_int tmp
@@ -238,7 +238,7 @@ cdef void synthesis(
     cdef Graph g
     cdef tuple combine
     cdef tuple dyad
-    cdef list branches = picked_branch(node, limit, count_origin)
+    cdef list branches = _picked_branch(node, limit, count_origin)
     for combine in branches:
         # Check if stop.
         if stop_func and stop_func():
@@ -263,10 +263,10 @@ cdef void synthesis(
             for d in dyad:
                 count[0][d] += 1
         # Recursive or end.
-        next_node = feasible_link(limit, count[0])
+        next_node = _feasible_link(limit, count[0])
         if next_node == -1:
             # Is all links connected.
-            if not all_connected(limit, count[0]):
+            if not _all_connected(limit, count[0]):
                 continue
             # Preliminary test.
             g = Graph.__new__(Graph, edges)
@@ -281,22 +281,22 @@ cdef void synthesis(
                 continue
 
             # Result graph.
-            g = Graph.__new__(Graph, dyad_patch(edges, limit))
+            g = Graph.__new__(Graph, _dyad_patch(edges, limit))
             # Graph filter depending on degenerate option.
             if no_degenerate == 0 and not g.is_degenerate():
                 continue
             elif no_degenerate == 1 and g.is_degenerate():
                 continue
             # Is graph repeated.
-            if is_isomorphic(g, result):
+            if _is_isomorphic(g, result):
                 continue
             # Collecting to result.
             result.append(g)
         else:
-            synthesis(next_node, result, edges, limit, count[0], no_degenerate, stop_func)
+            _synthesis(next_node, result, edges, limit, count[0], no_degenerate, stop_func)
 
 
-cdef void splice(
+cdef void _splice(
     list result,
     int16_t[:] m_link,
     int16_t[:] c_link,
@@ -323,10 +323,10 @@ cdef void splice(
 
     # Synthesis of multiple links.
     cdef set edges = set()
-    synthesis(0, result, edges, limit, count, no_degenerate, stop_func)
+    _synthesis(0, result, edges, limit, count, no_degenerate, stop_func)
 
 
-cdef bint is_isomorphic(Graph g, list result):
+cdef bint _is_isomorphic(Graph g, list result):
     """Return True if graph is isomorphic with result list."""
     cdef Graph h
     for h in result:
@@ -335,7 +335,7 @@ cdef bint is_isomorphic(Graph g, list result):
     return False
 
 
-cdef inline list loop_chain(int num):
+cdef inline list _loop_chain(int num):
     """Loop chain."""
     cdef int i
     cdef int b = 0
@@ -375,7 +375,7 @@ cpdef tuple topo(
     cdef double t0 = time()
 
     # Multiple links.
-    cdef int16_t[:] m_link = labels(link_num, 3, 1, False)
+    cdef int16_t[:] m_link = _labels(link_num, 3, 1, False)
 
     # Synthesis of contracted link and multiple link combination.
     cdef int16_t[:] c_j = np_array(c_j_list, ndmin=1, dtype=int16)
@@ -384,9 +384,9 @@ cpdef tuple topo(
     cdef list result = []
     if len(m_link) == 0:
         # Single loop (Special case).
-        result.append(Graph.__new__(Graph, loop_chain(link_num[0])))
+        result.append(Graph.__new__(Graph, _loop_chain(link_num[0])))
     else:
-        splice(result, m_link, labels(c_j, 1, 0, True), no_degenerate, stop_func)
+        _splice(result, m_link, _labels(c_j, 1, 0, True), no_degenerate, stop_func)
 
     print(f"Count: {len(result)}")
     # Return graph list and time.

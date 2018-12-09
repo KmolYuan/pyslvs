@@ -14,7 +14,7 @@ def number_synthesis(
     nj: int,
     stop_func: Optional[Callable[[], bool]] = None
 ) -> List[Tuple[int, ...]]:
-    """Number synthesis try-error function."""
+    """Number _synthesis try-error function."""
     ...
 
 

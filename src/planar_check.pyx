@@ -23,23 +23,23 @@ cpdef inline bint is_planar(Graph g):
     
     Only this function well be shown as public.
     """
-    cdef LRPlanarity planarity_state = LRPlanarity.__new__(LRPlanarity, g)
+    cdef _LRPlanarity planarity_state = _LRPlanarity.__new__(_LRPlanarity, g)
     return planarity_state.lr_planarity() is not None
 
 
-cdef inline ConflictPair top_of_stack(list l):
+cdef inline _ConflictPair _top_of_stack(list l):
     """Returns the conflict pair element on top of the stack."""
     if not l:
         return None
     return l[-1]
 
 
-cdef class LRPlanarity:
+cdef class _LRPlanarity:
 
     """A class to maintain the state during planarity check."""
 
     cdef Graph g, DG
-    cdef PlanarEmbedding embedding
+    cdef _PlanarEmbedding embedding
     cdef list S
     cdef dict lowpt, lowpt2, nesting_depth, adjs
     cdef dict ordered_adjs, stack_bottom, lowpt_edge, left_ref, right_ref
@@ -82,9 +82,9 @@ cdef class LRPlanarity:
         self.left_ref = {}
         self.right_ref = {}
 
-        self.embedding = PlanarEmbedding.__new__(PlanarEmbedding, [])
+        self.embedding = _PlanarEmbedding.__new__(_PlanarEmbedding, [])
 
-    cdef PlanarEmbedding lr_planarity(self):
+    cdef _PlanarEmbedding lr_planarity(self):
         """Execute the LR planarity test."""
         if len(self.g.nodes) > 2 and len(self.g.edges) > 3 * len(self.g.nodes) - 6:
             # graph is not planar
@@ -180,7 +180,7 @@ cdef class LRPlanarity:
                 ei = (v, w)
 
                 if not skip_init[ei]:
-                    self.stack_bottom[ei] = top_of_stack(self.S)
+                    self.stack_bottom[ei] = _top_of_stack(self.S)
 
                     if ei == self.parent_edge[w]:  # tree edge
                         dfs_stack.push_back(v)  # revisit v after finishing w
@@ -190,7 +190,7 @@ cdef class LRPlanarity:
                         break  # handle next node in dfs_stack (i.e. w)
                     else:  # back edge
                         self.lowpt_edge[ei] = ei
-                        self.S.append(ConflictPair.__new__(ConflictPair, right=Interval(ei, ei)))
+                        self.S.append(_ConflictPair.__new__(_ConflictPair, right=_Interval(ei, ei)))
 
                 # integrate new return edges
                 if self.lowpt[ei] < self.height[v]:
@@ -298,10 +298,10 @@ cdef class LRPlanarity:
                 ind[v] += 1
 
     cdef bint add_constraints(self, tuple ei, tuple e):
-        cdef ConflictPair P = ConflictPair.__new__(ConflictPair)
+        cdef _ConflictPair P = _ConflictPair.__new__(_ConflictPair)
 
         # merge return edges of e_i into P.right
-        cdef ConflictPair Q
+        cdef _ConflictPair Q
         while True:
             Q = self.S.pop()
             if not Q.left.empty():
@@ -317,13 +317,13 @@ cdef class LRPlanarity:
                 P.right.low = Q.right.low
             else:  # align
                 self.ref[Q.right.low] = self.lowpt_edge[e]
-            if top_of_stack(self.S) == self.stack_bottom[ei]:
+            if _top_of_stack(self.S) == self.stack_bottom[ei]:
                 break
 
         # merge conflicting return edges of e_1,...,e_i-1 into P.L
         while (
-            top_of_stack(self.S).left.conflicting(ei, self) or
-            top_of_stack(self.S).right.conflicting(ei, self)
+                _top_of_stack(self.S).left.conflicting(ei, self) or
+                _top_of_stack(self.S).right.conflicting(ei, self)
         ):
             Q = self.S.pop()
             if Q.right.conflicting(ei, self):
@@ -351,8 +351,8 @@ cdef class LRPlanarity:
 
         # trim back edges ending at parent u
         # drop entire conflict pairs
-        cdef ConflictPair p
-        while self.S and top_of_stack(self.S).lowest(self) == self.height[u]:
+        cdef _ConflictPair p
+        while self.S and _top_of_stack(self.S).lowest(self) == self.height[u]:
             p = self.S.pop()
             if p.left.low is not None:
                 self.side[p.left.low] = -1
@@ -380,7 +380,7 @@ cdef class LRPlanarity:
         # side of e is side of a highest return edge
         cdef tuple hl, hr
         if self.lowpt[e] < self.height[u]:  # e has return edge
-            p = top_of_stack(self.S)
+            p = _top_of_stack(self.S)
             hl = p.left.high
             hr = p.right.high
 
@@ -410,7 +410,7 @@ cdef class LRPlanarity:
         return self.side[e]
 
 
-cdef class ConflictPair:
+cdef class _ConflictPair:
 
     """Represents a different constraint between two intervals.
 
@@ -418,9 +418,9 @@ cdef class ConflictPair:
     the one in the right interval.
     """
 
-    cdef Interval left, right
+    cdef _Interval left, right
 
-    def __cinit__(self, left=Interval.__new__(Interval), right=Interval.__new__(Interval)):
+    def __cinit__(self, left=_Interval.__new__(_Interval), right=_Interval.__new__(_Interval)):
         self.left = left
         self.right = right
 
@@ -428,7 +428,7 @@ cdef class ConflictPair:
         """Swap left and right intervals"""
         self.left, self.right = self.right, self.left
 
-    cdef int lowest(self, LRPlanarity planarity_state):
+    cdef int lowest(self, _LRPlanarity planarity_state):
         """Return the lowest low point of a conflict pair"""
         if self.left.empty():
             return planarity_state.lowpt[self.right.low]
@@ -440,7 +440,7 @@ cdef class ConflictPair:
         )
 
 
-cdef class Interval:
+cdef class _Interval:
 
     """Represents a set of return edges.
 
@@ -459,16 +459,16 @@ cdef class Interval:
         """Check if the interval is empty"""
         return self.low is self.high is None
 
-    cdef Interval copy(self):
+    cdef _Interval copy(self):
         """Return a copy of this interval"""
-        return Interval.__new__(Interval, self.low, self.high)
+        return _Interval.__new__(_Interval, self.low, self.high)
 
-    cdef bint conflicting(self, tuple b, LRPlanarity state):
+    cdef bint conflicting(self, tuple b, _LRPlanarity state):
         """Return True if interval I conflicts with edge b"""
         return not self.empty() and state.lowpt[self.high] > state.lowpt[b]
 
 
-cdef class PlanarEmbedding(Graph):
+cdef class _PlanarEmbedding(Graph):
 
     """Represents a planar graph with its planar embedding."""
 

@@ -22,11 +22,11 @@ from graph cimport Graph
 
 cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
     """Layout position decided by outer loop."""
-    cdef OrderedSet o_loop = outer_loop(g)
+    cdef OrderedSet o_loop = _outer_loop(g)
     o_loop.roll(min(o_loop), 0)
-    cdef list o_pos = regular_polygon_pos(len(o_loop), scale)
+    cdef list o_pos = _regular_polygon_pos(len(o_loop), scale)
     cdef dict pos = dict(zip(o_loop, o_pos))
-    outer_loop_layout_inner(g, o_loop, pos)
+    _outer_loop_layout_inner(g, o_loop, pos)
 
     # Last check for debug.
     if set(g.nodes) != set(pos):
@@ -42,7 +42,7 @@ cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
     return pos
 
 
-cdef inline void outer_loop_layout_inner(Graph g, OrderedSet o_loop, dict pos):
+cdef inline void _outer_loop_layout_inner(Graph g, OrderedSet o_loop, dict pos):
     """Layout for inner nodes of graph block."""
     cdef OrderedSet nodes = set(g.nodes) - o_loop
     if not nodes:
@@ -78,16 +78,16 @@ cdef inline void outer_loop_layout_inner(Graph g, OrderedSet o_loop, dict pos):
             start = inter.pop()
             inter = used_nodes & g.adj[line[-1]]
             end = inter.pop()
-        pos.update(zip(line, linear_layout(pos[start], pos[end], len(line))))
+        pos.update(zip(line, _linear_layout(pos[start], pos[end], len(line))))
         used_nodes.update(line)
         line.clear()
 
         nodes -= line
 
 
-cdef list regular_polygon_pos(int edge_count, double scale):
+cdef list _regular_polygon_pos(int edge_count, double scale):
     """Return position of a regular polygon with radius 100.
-    Start from bottom with clockwise.
+    Start from bottom with _clockwise.
     """
     scale *= 5
     cdef int i
@@ -100,7 +100,7 @@ cdef list regular_polygon_pos(int edge_count, double scale):
     return pos
 
 
-cdef list linear_layout(tuple c0, tuple c1, int count):
+cdef list _linear_layout(tuple c0, tuple c1, int count):
     """Layout position decided by equal division between two points."""
     if count < 1:
         raise ValueError(f"Invalid point number {count}")
@@ -112,9 +112,9 @@ cdef list linear_layout(tuple c0, tuple c1, int count):
     return [(c0[0] + i * sx, c0[1] + i * sy) for i in range(1, count)]
 
 
-cdef OrderedSet outer_loop(Graph g):
+cdef OrderedSet _outer_loop(Graph g):
     """Return nodes of outer loop."""
-    cdef list cycles = cycle_basis(g)
+    cdef list cycles = _cycle_basis(g)
     if not cycles:
         raise ValueError(f"invalid graph has no any cycle: {g.edges}")
 
@@ -185,17 +185,23 @@ cdef OrderedSet outer_loop(Graph g):
             cycles.append(c1)
             break
         else:
-            # No contacted.
-            raise ValueError(f"invalid graph: {g.edges}\nwith cycle(s): {cycles}")
+            # Cycles has no contacted.
+            raise ValueError(
+                f"invalid graph: {g.edges}\n"
+                f"last one: {c1}\n"
+                f"with cycle(s): {cycles}"
+            )
 
     return cycles.pop()
 
 
-cdef inline list cycle_basis(Graph g):
-    """ Returns a list of cycles which form a basis for cycles of G."""
+cdef inline list _cycle_basis(Graph g):
+    """ Returns a list of cycles which form a basis for cycles of G.
+    Reference from NetworkX.
+    """
     cdef set g_nodes = set(g.nodes)
     cdef list cycles = []
-    cdef int root = min(g.nodes)
+    cdef int root = -1
 
     cdef int z, nbr, p
     cdef list stack
@@ -239,16 +245,16 @@ cdef inline list cycle_basis(Graph g):
     return cycles
 
 
-cdef class Entry:
+cdef class _Entry:
     cdef object key
-    cdef Entry prev
-    cdef Entry next
+    cdef _Entry prev
+    cdef _Entry next
 
 
 cdef inline void _add(OrderedSet oset, object key):
     if PyDict_Contains(oset.map, key):
         return
-    cdef Entry next_entry = Entry()
+    cdef _Entry next_entry = _Entry()
     next_entry.key = key
     next_entry.prev = oset.end.prev
     next_entry.next = oset.end
@@ -259,7 +265,7 @@ cdef inline void _add(OrderedSet oset, object key):
 cdef void _discard(OrderedSet oset, object key):
     if not PyDict_Contains(oset.map, key):
         return
-    cdef Entry entry = oset.map.pop(key)
+    cdef _Entry entry = oset.map.pop(key)
     entry.prev.next = entry.next
     entry.next.prev = entry.prev
     oset.os_used -= 1
@@ -303,12 +309,12 @@ cdef inline bint _not_subset(OrderedSet o_set, list members):
     return True
 
 
-cdef class OrderedSetIterator:
+cdef class _OrderedSetIterator:
 
     """Ordered set iterator."""
 
     cdef OrderedSet oset
-    cdef Entry curr
+    cdef _Entry curr
     cdef ssize_t si_used
 
     def __cinit__(self, OrderedSet oset):
@@ -320,7 +326,7 @@ cdef class OrderedSetIterator:
         return self
 
     def __next__(self):
-        cdef Entry item
+        cdef _Entry item
 
         if self.si_used != self.oset.os_used:
             # make this state sticky
@@ -334,12 +340,12 @@ cdef class OrderedSetIterator:
         return item.key
 
 
-cdef class OrderedSetReverseIterator:
+cdef class _OrderedSetReverseIterator:
 
     """Ordered set iterator with reversed order."""
 
     cdef OrderedSet oset
-    cdef Entry curr
+    cdef _Entry curr
     cdef ssize_t si_used
 
     def __cinit__(self, OrderedSet oset):
@@ -356,7 +362,7 @@ cdef class OrderedSetReverseIterator:
             self.si_used = -1
             raise RuntimeError(f'{type(self.oset).__name__} changed size during iteration')
 
-        cdef Entry item = self.curr.prev
+        cdef _Entry item = self.curr.prev
         if item is self.oset.end:
             raise StopIteration()
         self.curr = item
@@ -369,25 +375,25 @@ cdef class OrderedSet:
     """Ordered set container."""
 
     cdef dict map
-    cdef Entry end
+    cdef _Entry end
     cdef ssize_t os_used
 
     def __cinit__(self):
         self.map = {}
         self.os_used = 0
-        self.end = end = Entry()
+        self.end = end = _Entry()
         end.prev = end.next = end
 
     def __init__(self, object iterable=None):
         if iterable is None:
             return
 
-        cdef Entry next_e
+        cdef _Entry next_e
         cdef dict map_d = self.map
-        cdef Entry end = self.end
+        cdef _Entry end = self.end
         for elem in iterable:
             if not PyDict_Contains(map_d, elem):
-                next_e = Entry()
+                next_e = _Entry()
                 next_e.key, next_e.prev, next_e.next = elem, end.prev, end
                 end.prev.next = end.prev = map_d[elem] = next_e
                 self.os_used += 1
@@ -443,13 +449,13 @@ cdef class OrderedSet:
 
     cpdef void clear(self):
         """Remove all elements from the 'set'."""
-        cdef Entry end = self.end
+        cdef _Entry end = self.end
         end.next.prev = end.next = None
 
         # reinitialize
         self.map.clear()
         self.os_used = 0
-        self.end = end = Entry()
+        self.end = end = _Entry()
         end.prev = end.next = end
 
     cpdef OrderedSet copy(self):
@@ -611,7 +617,7 @@ cdef class OrderedSet:
         """Return the index of 'elem'. Rases :class:'ValueError' if not in the OrderedSet."""
         if elem not in self:
             raise ValueError(f"{elem} is not in {type(self).__name__}")
-        cdef Entry curr = self.end.next
+        cdef _Entry curr = self.end.next
         cdef ssize_t index = 0
         while curr.key != elem:
             curr = curr.next
@@ -624,7 +630,7 @@ cdef class OrderedSet:
 
         cdef list result = []
         cdef ssize_t place = start
-        cdef Entry curr = self.end
+        cdef _Entry curr = self.end
 
         cdef ssize_t i
         if slicelength <= 0:
@@ -651,12 +657,12 @@ cdef class OrderedSet:
                 slicelength -= 1
         return result
 
-    cdef Entry _get_index_entry(self, ssize_t index):
+    cdef _Entry _get_index_entry(self, ssize_t index):
         cdef ssize_t _len = len(self)
         if index >= _len or (index < 0 and abs(index) > _len):
             raise IndexError("list index out of range")
 
-        cdef Entry curr
+        cdef _Entry curr
         if index >= 0:
             curr = self.end.next
             while index:
@@ -672,7 +678,7 @@ cdef class OrderedSet:
 
     def __getitem__(self, index):
         """Implement of 'self[index]' operator."""
-        cdef Entry curr
+        cdef _Entry curr
         if isinstance(index, slice):
             return OrderedSet([curr.key for curr in self._get_slice_entry(index)])
         if not PyIndex_Check(index):
@@ -684,7 +690,7 @@ cdef class OrderedSet:
     def __setitem__(self, index, value):
         """Implement of 'self[index] = value' operator."""
         cdef int i
-        cdef Entry curr
+        cdef _Entry curr
         cdef list value_list
         if isinstance(index, slice):
             if not isinstance(value, Iterable):
@@ -701,7 +707,7 @@ cdef class OrderedSet:
 
     def __delitem__(self, index):
         """Implement of 'del self[index]' operator."""
-        cdef Entry curr
+        cdef _Entry curr
         if isinstance(index, slice):
             for curr in self._get_slice_entry(index):
                 self.discard(curr.key)
@@ -714,7 +720,7 @@ cdef class OrderedSet:
 
     cpdef void reverse(self):
         """Reverse all elements."""
-        cdef list my_iter = list(OrderedSetReverseIterator(self))
+        cdef list my_iter = list(_OrderedSetReverseIterator(self))
         self.clear()
         self.update(my_iter)
 
@@ -729,13 +735,13 @@ cdef class OrderedSet:
         """Implement of 'elem in self' operator."""
         return elem in self.map
 
-    def __iter__(self) -> OrderedSetIterator:
+    def __iter__(self) -> _OrderedSetIterator:
         """Implement of 'iter(self)' operator. (reference method)"""
-        return OrderedSetIterator.__new__(OrderedSetIterator, self)
+        return _OrderedSetIterator.__new__(_OrderedSetIterator, self)
 
-    def __reversed__(self) -> OrderedSetReverseIterator:
+    def __reversed__(self) -> _OrderedSetReverseIterator:
         """Implement of 'reversed(self)' operator."""
-        return OrderedSetReverseIterator.__new__(OrderedSetReverseIterator, self)
+        return _OrderedSetReverseIterator.__new__(_OrderedSetReverseIterator, self)
 
     def __reduce__(self):
         items = list(self)
