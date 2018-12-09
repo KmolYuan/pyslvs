@@ -48,37 +48,39 @@ cdef inline void outer_loop_layout_inner(Graph g, OrderedSet o_loop, dict pos):
     if not nodes:
         return
 
-    cdef OrderedSet line = OrderedSet.__new__(OrderedSet)
     cdef OrderedSet used_nodes = o_loop.copy()
 
     cdef int n, start, end
-    cdef OrderedSet neighbors, new_neighbors, intersection
+    cdef OrderedSet new_neighbors, line, inter
     while nodes:
         n = nodes.pop(0)
-        neighbors = OrderedSet(g.adj[n])
-        intersection = neighbors & (used_nodes | line)
-        if not intersection:
+        if not (used_nodes & g.adj[n]):
             # Not contacted yet.
             nodes.add(n)
             continue
 
+        line = OrderedSet.__new__(OrderedSet)
         line.add(n)
-        new_neighbors = neighbors - intersection
-        if new_neighbors:
+        new_neighbors = nodes & g.adj[n]
+        while new_neighbors:
             # New nodes to add.
-            line.add(new_neighbors.pop())
+            n = new_neighbors.pop()
+            line.add(n)
+            new_neighbors = nodes & g.adj[n]
+
+        # Line is ended.
+        if line[0] == line[-1]:
+            inter = used_nodes & g.adj[line[0]]
+            start = inter.pop()
+            end = inter.pop()
         else:
-            # Line is ended.
-            if line[0] == line[-1]:
-                neighbors = used_nodes & g.adj[line[0]]
-                start = neighbors.pop()
-                end = neighbors.pop()
-            else:
-                start = (used_nodes & g.adj[line[0]]).pop()
-                end = (used_nodes & g.adj[line[-1]]).pop()
-            pos.update(zip(line, linear_layout(pos[start], pos[end], len(line))))
-            used_nodes.update(line)
-            line.clear()
+            inter = used_nodes & g.adj[line[0]]
+            start = inter.pop()
+            inter = used_nodes & g.adj[line[-1]]
+            end = inter.pop()
+        pos.update(zip(line, linear_layout(pos[start], pos[end], len(line))))
+        used_nodes.update(line)
+        line.clear()
 
         nodes -= line
 
@@ -114,7 +116,7 @@ cdef OrderedSet outer_loop(Graph g):
     """Return nodes of outer loop."""
     cdef list cycles = cycle_basis(g)
     if not cycles:
-        raise ValueError("Invalid graph")
+        raise ValueError(f"invalid graph has no any cycle: {g.edges}")
 
     cdef bint need_to_rev
     cdef int i, start, end
@@ -131,7 +133,6 @@ cdef OrderedSet outer_loop(Graph g):
 
             # Ignore subsets.
             if c1 >= c2:
-                print(c1, c2)
                 cycles.remove(c2)
                 cycles.append(c1)
                 break
@@ -145,7 +146,6 @@ cdef OrderedSet outer_loop(Graph g):
                 inter_over = inter_tmp
             # Release memory.
             inter_tmp = None
-            print(c1, inter_over, c2)
 
             start = -1
             end = -1
@@ -169,7 +169,6 @@ cdef OrderedSet outer_loop(Graph g):
             # Roll to interface.
             c1.roll(end, -1)
             c2.roll(start, 0)
-            print(c1, inter_over, c2)
 
             # Insert new edges.
             insert_start = c1.index(start)
@@ -180,7 +179,6 @@ cdef OrderedSet outer_loop(Graph g):
                 # Cycle 2 should longer then intersection.
                 del c1[insert_start:insert_end]
                 c1.insert(insert_start, c2[replace_start:replace_end])
-            print(c1)
 
             # The cycle 2 has been merged into cycle 1.
             cycles.remove(c2)
@@ -188,7 +186,7 @@ cdef OrderedSet outer_loop(Graph g):
             break
         else:
             # No contacted.
-            raise ValueError("Invalid graph")
+            raise ValueError(f"invalid graph: {g.edges}\nwith cycle(s): {cycles}")
 
     return cycles.pop()
 
@@ -513,7 +511,7 @@ cdef class OrderedSet:
         cdef int matched_self_old = -2
         cdef int matched_other = -2
         cdef int matched_other_old = -2
-        cdef OrderedSet subset = OrderedSet()
+        cdef OrderedSet subset = OrderedSet.__new__(OrderedSet)
         for matched_self, self_elem in enumerate(self_list):
             try:
                 matched_other = other_list.index(self_elem)
@@ -530,7 +528,7 @@ cdef class OrderedSet:
                 if _not_subset(subset, subsets):
                     subsets.append(subset)
                 # Start new record.
-                subset = OrderedSet()
+                subset = OrderedSet.__new__(OrderedSet)
             subset.add(self_elem)
             matched_other_old = matched_other
             matched_self_old = matched_self
