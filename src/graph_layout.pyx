@@ -112,47 +112,71 @@ cdef list linear_layout(tuple c0, tuple c1, int count):
 cdef OrderedSet outer_loop(Graph g):
     """Return nodes of outer loop."""
     cdef list cycles = cycle_basis(g)
+    if not cycles:
+        raise ValueError("Invalid graph")
 
-    cdef int insert_index, inter_real
+    cdef int i, start, end, insert_start, insert_end
     cdef OrderedSet c1, c2, inter
+    cdef list inter_over, inter_tmp
     while len(cycles) > 1:
         c1 = cycles.pop()
 
         for c2 in cycles:
-            inter = c1.ordered_intersection(c2, is_loop=True)
-            if not len(inter) >= 2:
-                # Find by reversed cycle 2.
-                c2.reverse()
-                inter = c1.ordered_intersection(c2, is_loop=True)
-                if not len(inter) >= 2:
-                    continue
+            # Find the intersection.
+            if not len(c1 & c2) >= 2:
+                continue
 
-            if not inter.is_ordered_subset(c1, is_loop=True):
-                # Intersection and cycle 1 has wrong direction.
-                inter.reverse()
-            if inter.is_ordered_subset(c2, is_loop=True):
-                # Cycle 1 and cycle 2 should has different direction.
-                c2.reverse()
+            # Ignore subsets.
+            if c1 >= c2:
+                print(c1, c2)
+                cycles.remove(c2)
+                cycles.append(c1)
+                break
+
+            inter_over = c1.ordered_intersections(c2, is_loop=True)
+            # Find the intersection with reversed cycle.
+            c2.reverse()
+            inter_tmp = c1.ordered_intersections(c2, is_loop=True)
+            if len(inter_tmp) < len(inter_over):
+                # Choose the longest continuous intersection.
+                inter_over = inter_tmp
+            # Release memory.
+            inter_tmp = None
+            print(c1, inter_over, c2)
+
+            start = -1
+            end = -1
+            for i, inter in enumerate(inter_over):
+                if not inter.is_ordered_subset(c1, is_loop=True):
+                    # Intersection and cycle 1 has wrong direction.
+                    inter.reverse()
+                if inter.is_ordered_subset(c2, is_loop=True):
+                    # Cycle 1 and cycle 2 should has different direction.
+                    c2.reverse()
+
+                # Prune cycle 2 by intersection.
+                c2 -= inter[1:-1]
+
+                # Interface nodes.
+                if i == 0:
+                    start = inter[0]
+                end = inter[-1]
 
             # Roll to interface.
-            c1.roll(inter[-1], -1)
-            c2.roll(inter[0], 0)
-            inter_real = len(c1 & c2)
-
-            # Remove intersection.
-            c2 -= inter[1:-1]
-
-            # Remove connected nodes.
-            insert_index = c1.index(inter[0])
-            del c1[insert_index:c1.index(inter[-1])]
+            c1.roll(end, -1)
+            c2.roll(start, 0)
+            print(c1, inter_over, c2)
 
             # Insert new edges.
-            if len(c2) > len(inter) == inter_real:
+            insert_start = c1.index(start)
+            insert_end = c1.index(end)
+            if len(c2) > (insert_end - insert_start):
                 # Cycle 2 should longer then intersection.
-                # And the ordered intersection should same as unordered one.
-                c1.insert(insert_index, c2)
-            else:
-                c1.insert(insert_index, inter)
+                del c1[insert_start:insert_end]
+                c1.insert(insert_start, c2)
+            print(c1)
+
+            # The cycle 2 has been merged into cycle 1.
             cycles.remove(c2)
             cycles.append(c1)
             break
@@ -259,6 +283,20 @@ cdef inline bint _isorderedsubset(seq1, seq2, bint is_loop):
             matched = 0
 
     return matched == seq1_len
+
+
+cdef inline bint _not_subset(OrderedSet o_set, list members):
+    """Return True if 'o_set' is not any subset of members."""
+    cdef OrderedSet member
+    for member in members:
+        if member < o_set:
+            # Is superset
+            members.remove(member)
+            return True
+        if member >= o_set:
+            return False
+    # No subset.
+    return True
 
 
 cdef class OrderedSetIterator:
@@ -451,7 +489,7 @@ cdef class OrderedSet:
             self.discard(value)
         return self
 
-    cpdef OrderedSet ordered_intersection(self, other, bint is_loop = False):
+    cpdef list ordered_intersections(self, other, bint is_loop = False):
         """Find the max length intersection with ordered detection."""
         if not isinstance(other, Iterable):
             raise TypeError("object must be iterable")
@@ -461,30 +499,39 @@ cdef class OrderedSet:
         if is_loop:
             self_list *= 2
 
-        cdef int matched = -1
-        cdef int matched_old = -2
-        cdef list subset = []
-        cdef list subset_old = []
-        for self_elem in self_list:
+        # Result list.
+        cdef list subsets = []
+
+        cdef int matched_self
+        cdef set match_set
+        cdef int matched_self_old = -2
+        cdef int matched_other = -2
+        cdef int matched_other_old = -2
+        cdef OrderedSet subset = OrderedSet()
+        for matched_self, self_elem in enumerate(self_list):
             try:
-                matched = other_list.index(self_elem)
+                matched_other = other_list.index(self_elem)
             except ValueError:
                 # Not found.
                 continue
 
-            if subset and matched not in (
-                {matched_old + 1, matched_old - len(other_list) + 1}
-                if is_loop else {matched_old + 1}
-            ):
-                if len(subset) > len(subset_old):
-                    # If current set is longer then before.
-                    subset_old = subset
-                # Start new record.
-                subset = []
-            subset.append(self_elem)
-            matched_old = matched
+            match_set = {matched_other_old + 1}
+            if is_loop:
+                match_set.add(matched_other_old + 1 - len(other_list))
 
-        return OrderedSet(subset if len(subset) > len(subset_old) else subset_old)
+            if subset and not (matched_self == matched_self_old + 1 or matched_other in match_set):
+                # Add to results.
+                if _not_subset(subset, subsets):
+                    subsets.append(subset)
+                # Start new record.
+                subset = OrderedSet()
+            subset.add(self_elem)
+            matched_other_old = matched_other
+            matched_self_old = matched_self
+
+        if _not_subset(subset, subsets):
+            subsets.append(subset)
+        return subsets
 
     cpdef bint isdisjoint(self, other):
         """Return True if the set has no elements in common with other.
@@ -708,7 +755,7 @@ cdef class OrderedSet:
 
     def __le__(self, other) -> bool:
         """Implement of '<=' operator."""
-        if isinstance(other, Set):
+        if isinstance(other, (Set, OrderedSet)):
             return len(self) <= len(other) and set(self) <= set(other)
         elif isinstance(other, list):
             return len(self) <= len(other) and list(self) <= list(other)
@@ -716,7 +763,7 @@ cdef class OrderedSet:
 
     def __lt__(self, other) -> bool:
         """Implement of '<' operator."""
-        if isinstance(other, Set):
+        if isinstance(other, (Set, OrderedSet)):
             return len(self) < len(other) and set(self) < set(other)
         elif isinstance(other, list):
             return len(self) < len(other) and list(self) < list(other)
@@ -724,14 +771,16 @@ cdef class OrderedSet:
 
     def __ge__(self, other) -> bool:
         """Implement of '>=' operator."""
-        ret = self < other
-        if ret is NotImplemented:
-            return ret
-        return not ret
+        if isinstance(other, (Set, OrderedSet)):
+            return len(self) >= len(other) and set(self) >= set(other)
+        elif isinstance(other, list):
+            return len(self) >= len(other) and list(self) >= list(other)
+        return NotImplemented
 
     def __gt__(self, other) -> bool:
         """Implement of '>' operator."""
-        ret = self <= other
-        if ret is NotImplemented:
-            return ret
-        return not ret
+        if isinstance(other, (Set, OrderedSet)):
+            return len(self) > len(other) and set(self) > set(other)
+        elif isinstance(other, list):
+            return len(self) > len(other) and list(self) > list(other)
+        return NotImplemented
