@@ -44,6 +44,7 @@ cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
 
 cdef inline void _outer_loop_layout_inner(Graph g, OrderedSet o_loop, dict pos):
     """Layout for inner nodes of graph block."""
+    # TODO: Make direction from start and end nodes.
     cdef OrderedSet nodes = set(g.nodes) - o_loop
     if not nodes:
         return
@@ -66,7 +67,7 @@ cdef inline void _outer_loop_layout_inner(Graph g, OrderedSet o_loop, dict pos):
             # New nodes to add.
             n = new_neighbors.pop()
             line.add(n)
-            new_neighbors = nodes & g.adj[n]
+            new_neighbors = (nodes - line) & g.adj[n]
 
         # Line is ended.
         if line[0] == line[-1]:
@@ -119,9 +120,9 @@ cdef OrderedSet _outer_loop(Graph g):
         raise ValueError(f"invalid graph has no any cycle: {g.edges}")
 
     cdef bint need_to_rev
-    cdef int i, start, end
+    cdef int n1, n2, i, start, end
     cdef int insert_start, insert_end, replace_start, replace_end
-    cdef OrderedSet c1, c2, inter
+    cdef OrderedSet c1, c2, inter, inter_o
     cdef list inter_over, inter_tmp
     while len(cycles) > 1:
         c1 = cycles.pop()
@@ -186,11 +187,45 @@ cdef OrderedSet _outer_loop(Graph g):
             break
         else:
             # Cycles has no contacted.
-            raise ValueError(
-                f"invalid graph: {g.edges}\n"
-                f"last one: {c1}\n"
-                f"with cycle(s): {cycles}"
-            )
+            # Find connection from edges.
+            for c2 in cycles:
+                inter = OrderedSet.__new__(OrderedSet)
+                inter_o = OrderedSet.__new__(OrderedSet)
+                for n1, n2 in g.edges:
+                    if (n1 in c1 and n2 in c2) or (n1 in c2 and n2 in c1):
+                        inter.add(n1)
+                        inter_o.add(n2)
+
+                if not inter:
+                    continue
+
+                # Roll to interface.
+                if not inter.is_ordered_subset(c1, is_loop=True):
+                    inter = c1 & inter
+                if not inter_o.is_ordered_subset(c2, is_loop=True):
+                    inter_o = c2 & inter_o
+                c1.roll(inter[-1], -1)
+                c2.roll(inter_o[0], 0)
+                insert_start = c1.index(inter[0])
+                insert_end = c1.index(inter[-1])
+                replace_start = c2.index(inter_o[0])
+                replace_end = c2.index(inter_o[-1])
+
+                # Merge them.
+                if (replace_end - replace_start) > (insert_end - insert_start):
+                    del c1[insert_start:insert_end]
+                    c1.insert(insert_start, c2[replace_start:replace_end])
+
+                # The cycle 2 has been merged into cycle 1.
+                cycles.remove(c2)
+                cycles.append(c1)
+                break
+            else:
+                raise ValueError(
+                    f"invalid graph: {g.edges}\n"
+                    f"last one: {c1}\n"
+                    f"with cycle(s): {cycles}"
+                )
 
     return cycles.pop()
 

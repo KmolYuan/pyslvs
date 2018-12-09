@@ -39,23 +39,24 @@ from triangulation import vpoints_configure
 from _parser import parse_vpoints
 from examples import example_list
 
-
 planar_object = Planar({
     'Driver': {'P0': (-70, -70, 50)},
     'Follower': {'P1': (70, -70, 50)},
-    'Target': {'P4': [
-        (60.3, 118.12),
-        (31.02, 115.62),
-        (3.52, 110.62),
-        (-25.77, 104.91),
-        (-81.49, 69.19),
-        (-96.47, 54.906),
-        (-109.34, 35.98),
-        (-121.84, 13.83),
-        (-127.56, -20.09),
-        (-128.63, -49.74),
-        (-117.56, -65.45),
-    ]},
+    'Target': {
+        'P4': [
+            (60.3, 118.12),
+            (31.02, 115.62),
+            (3.52, 110.62),
+            (-25.77, 104.91),
+            (-81.49, 69.19),
+            (-96.47, 54.906),
+            (-109.34, 35.98),
+            (-121.84, 13.83),
+            (-127.56, -20.09),
+            (-128.63, -49.74),
+            (-117.56, -65.45),
+        ]
+    },
     'Expression':
         "PLAP[P0,L0,a0](P2);"
         "PLLP[P2,L1,L2,P1](P3);"
@@ -67,7 +68,6 @@ planar_object = Planar({
 
 
 class CoreTest(TestCase):
-
     """Testing Cython libs."""
 
     def test_plap(self):
@@ -92,7 +92,7 @@ class CoreTest(TestCase):
 
     def test_plpp(self):
         """Test for PLPP function."""
-        x, y = PLPP(Coordinate(0, 0), sqrt(5), Coordinate(0, -3), Coordinate(3/2, 0))
+        x, y = PLPP(Coordinate(0, 0), sqrt(5), Coordinate(0, -3), Coordinate(3 / 2, 0))
         self.assertTrue(isclose(x, 2))
         self.assertTrue(isclose(y, 1))
 
@@ -117,11 +117,10 @@ class CoreTest(TestCase):
         self.assertEqual([4, 4], link_assortments(g1))
         self.assertEqual([4, 0, 0, 0], contracted_link_assortments(g1))
 
-        g1 = Graph([(4, 7), (1, 6), (2, 5), (0, 3), (0, 1), (1, 5), (3, 6), (0, 4), (0, 2), (1, 7)])
+        g1 = Graph([(0, 1), (2, 7), (1, 3), (4, 9), (4, 5), (0, 2), (8, 9),
+                    (0, 6), (3, 6), (1, 7), (2, 4), (5, 8), (3, 5)])
         pos = outer_loop_layout(g1, True)
         self.assertEqual(set(g1.nodes), set(pos))
-        # from networkx import Graph as nx_Graph, cycle_basis
-        # print(cycle_basis(nx_Graph(g1.edges)))
 
     def test_atlas(self):
         """Test 'atlas' libraries."""
@@ -158,17 +157,17 @@ class CoreTest(TestCase):
         mapping = {n: f'P{n}' for n in range(len(vpoints))}
         data_dict, dof = data_collecting(exprs, mapping, vpoints)
         for link, link_length in (
-            ('L0', 15.002083188677497),
-            ('L1', 41.50187586121861),
-            ('L2', 49.9949057404852),
-            ('L3', 40.09650982317538),
-            ('L4', 55.80253220060896),
-            ('L5', 61.90525179659639),
-            ('L6', 39.302800154696364),
-            ('L7', 36.69767567571548),
-            ('L8', 39.395233214184685),
-            ('L9', 48.995886562037015),
-            ('L10', 65.69940106271898),
+                ('L0', 15.002083188677497),
+                ('L1', 41.50187586121861),
+                ('L2', 49.9949057404852),
+                ('L3', 40.09650982317538),
+                ('L4', 55.80253220060896),
+                ('L5', 61.90525179659639),
+                ('L6', 39.302800154696364),
+                ('L7', 36.69767567571548),
+                ('L8', 39.395233214184685),
+                ('L9', 48.995886562037015),
+                ('L10', 65.69940106271898),
         ):
             self.assertTrue(isclose(data_dict[link], link_length))
         self.assertEqual(1, dof)
