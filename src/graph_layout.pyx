@@ -17,7 +17,7 @@ cimport cython
 from cpython cimport PyDict_Contains, PyIndex_Check
 from cpython.slice cimport PySlice_GetIndicesEx
 from libc.math cimport M_PI, sin, cos
-from graph cimport Graph
+from graph cimport Graph, c_map_int
 
 
 cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
@@ -137,17 +137,18 @@ cdef OrderedSet _outer_loop(Graph g):
     if not cycles:
         raise ValueError(f"invalid graph has no any cycle: {g.edges}")
 
+    cdef c_map_int g_degrees = g.degrees()
     cdef OrderedSet c1, c2
     while len(cycles) > 1:
         c1 = cycles.pop()
         for c2 in cycles:
-            if _merge_with_inter(c1, c2, cycles):
+            if _merge_inter(c1, c2, cycles, g_degrees):
                 break
         else:
             # Cycles has no contacted.
             # Find connection from edges.
             for c2 in cycles:
-                if _merge_no_inter(c1, c2, cycles, g.edges):
+                if _merge_no_inter(c1, c2, cycles, g.edges, g_degrees):
                     break
             else:
                 raise ValueError(
@@ -158,7 +159,7 @@ cdef OrderedSet _outer_loop(Graph g):
     return cycles.pop()
 
 
-cdef inline bint _merge_with_inter(OrderedSet c1, OrderedSet c2, list cycles):
+cdef inline bint _merge_inter(OrderedSet c1, OrderedSet c2, list cycles, c_map_int &g_degrees):
     """Merge function for intersection strategy."""
     # Find the intersection.
     if not len(c1 & c2) >= 2:
@@ -178,7 +179,6 @@ cdef inline bint _merge_with_inter(OrderedSet c1, OrderedSet c2, list cycles):
         # Choose the longest continuous intersection.
         inter_over = inter_tmp
     inter_tmp = None
-    print(c1, inter_over, c2)
 
     cdef int start = -1
     cdef int end = -1
@@ -205,16 +205,18 @@ cdef inline bint _merge_with_inter(OrderedSet c1, OrderedSet c2, list cycles):
     # Roll to interface.
     c1.roll(end, -1)
     c2.roll(start, 0)
+    print(c1, inter_over, start, end, c2)
 
-    # Insert new edges.
-    cdef int insert_start = c1.index(start)
-    cdef int insert_end = c1.index(end)
-    cdef int replace_start = c2.index(start)
-    cdef int replace_end = c2.index(end)
-    if (replace_end - replace_start) > (insert_end - insert_start):
-        # Cycle 2 should longer then intersection.
-        del c1[insert_start:insert_end]
-        c1.insert(insert_start, c2[replace_start:replace_end])
+    # Insert points.
+    _compare_insert(
+        c1,
+        c2,
+        c1.index(start),
+        c1.index(end),
+        c2.index(start),
+        c2.index(end),
+        g_degrees
+    )
 
     # The cycle 2 has been merged into cycle 1.
     cycles.remove(c2)
@@ -222,7 +224,7 @@ cdef inline bint _merge_with_inter(OrderedSet c1, OrderedSet c2, list cycles):
     return True
 
 
-cdef inline bint _merge_no_inter(OrderedSet c1, OrderedSet c2, list cycles, tuple edges):
+cdef inline bint _merge_no_inter(OrderedSet c1, OrderedSet c2, list cycles, tuple edges, c_map_int &g_degrees):
     """Merge function for the strategy without intersection."""
     cdef OrderedSet inter = OrderedSet.__new__(OrderedSet)
     cdef dict inter_map = {}
@@ -244,8 +246,6 @@ cdef inline bint _merge_no_inter(OrderedSet c1, OrderedSet c2, list cycles, tupl
         inter = c1 & inter
     cdef int start = inter[0]
     cdef int end = inter[-1]
-    cdef int insert_start = c1.index(start)
-    cdef int insert_end = c1.index(end)
     cdef int replace_start = c2.index(inter_map[start])
     cdef int replace_end = c2.index(inter_map[end])
     if replace_start > replace_end:
@@ -254,16 +254,53 @@ cdef inline bint _merge_no_inter(OrderedSet c1, OrderedSet c2, list cycles, tupl
     # Roll to interface.
     c1.roll(end, -1)
     c2.roll(inter_map[start], 0)
+    print(c1, start, end, inter_map[start], inter_map[end], c2)
 
     # Merge them.
-    if (replace_end - replace_start) > (insert_end - insert_start):
-        del c1[insert_start:insert_end]
-        c1.insert(insert_start, c2[replace_start:replace_end])
+    _compare_insert(
+        c1,
+        c2,
+        c1.index(start),
+        c1.index(end),
+        replace_start,
+        replace_end,
+        g_degrees
+    )
 
     # The cycle 2 has been merged into cycle 1.
     cycles.remove(c2)
     cycles.append(c1)
     return True
+
+
+cdef inline void _compare_insert(
+    OrderedSet c1,
+    OrderedSet c2,
+    int insert_start,
+    int insert_end,
+    int replace_start,
+    int replace_end,
+    c_map_int &g_degrees
+):
+    """Compare and insert cycle 2 to cycle 1."""
+    cdef int c1_degrees = 0
+    cdef int c2_degrees = 0
+    cdef OrderedSet c1_slice = c1[insert_start:insert_end]
+    cdef OrderedSet c2_slice = c2[replace_start:replace_end]
+
+    cdef int i
+    for i in c1_slice:
+        c1_degrees += g_degrees[i]
+    for i in c2_slice:
+        c2_degrees += g_degrees[i]
+
+    print(c1_degrees, c2_degrees)
+    if not c2_degrees > c1_degrees:
+        return
+
+    # Cycle 2 should longer then intersection.
+    del c1[insert_start:insert_end]
+    c1.insert(insert_start, c2_slice)
 
 
 cdef inline list _cycle_basis(Graph g):
