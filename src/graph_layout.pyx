@@ -122,8 +122,9 @@ cdef OrderedSet _outer_loop(Graph g):
     cdef bint need_to_rev
     cdef int n1, n2, i, start, end
     cdef int insert_start, insert_end, replace_start, replace_end
-    cdef OrderedSet c1, c2, inter, inter_o
+    cdef OrderedSet c1, c2, inter
     cdef list inter_over, inter_tmp
+    cdef dict inter_map
     while len(cycles) > 1:
         c1 = cycles.pop()
 
@@ -145,7 +146,6 @@ cdef OrderedSet _outer_loop(Graph g):
             if len(inter_tmp) < len(inter_over):
                 # Choose the longest continuous intersection.
                 inter_over = inter_tmp
-            # Release memory.
             inter_tmp = None
 
             start = -1
@@ -190,26 +190,30 @@ cdef OrderedSet _outer_loop(Graph g):
             # Find connection from edges.
             for c2 in cycles:
                 inter = OrderedSet.__new__(OrderedSet)
-                inter_o = OrderedSet.__new__(OrderedSet)
+                inter_map = {}
                 for n1, n2 in g.edges:
                     if (n1 in c1 and n2 in c2) or (n1 in c2 and n2 in c1):
                         inter.add(n1)
-                        inter_o.add(n2)
+                        inter_map[n1] = n2
 
                 if not inter:
                     continue
 
-                # Roll to interface.
+                # Resort intersection.
                 if not inter.is_ordered_subset(c1, is_loop=True):
                     inter = c1 & inter
-                if not inter_o.is_ordered_subset(c2, is_loop=True):
-                    inter_o = c2 & inter_o
-                c1.roll(inter[-1], -1)
-                c2.roll(inter_o[0], 0)
-                insert_start = c1.index(inter[0])
-                insert_end = c1.index(inter[-1])
-                replace_start = c2.index(inter_o[0])
-                replace_end = c2.index(inter_o[-1])
+                start = inter[0]
+                end = inter[-1]
+                insert_start = c1.index(start)
+                insert_end = c1.index(end)
+                replace_start = c2.index(inter_map[start])
+                replace_end = c2.index(inter_map[start])
+                if replace_start > replace_end:
+                    c2.reverse()
+
+                # Roll to interface.
+                c1.roll(end, -1)
+                c2.roll(inter_map[start], 0)
 
                 # Merge them.
                 if (replace_end - replace_start) > (insert_end - insert_start):
@@ -217,6 +221,7 @@ cdef OrderedSet _outer_loop(Graph g):
                     c1.insert(insert_start, c2[replace_start:replace_end])
 
                 # The cycle 2 has been merged into cycle 1.
+                inter_map = None
                 cycles.remove(c2)
                 cycles.append(c1)
                 break
@@ -434,8 +439,11 @@ cdef class OrderedSet:
                 self.os_used += 1
 
     @classmethod
-    def _from_iterable(cls, it):
-        return cls(it)
+    def _from_iterable(cls, it) -> OrderedSet:
+        if isinstance(it, OrderedSet):
+            return it
+        else:
+            return cls(it)
 
     ##
     # set methods
@@ -608,7 +616,8 @@ cdef class OrderedSet:
         if not isinstance(other, Iterable):
             return NotImplemented
 
-        return (self - other) | (other - self)
+        cdef OrderedSet o_other = OrderedSet._from_iterable(other)
+        return (self - o_other) | (o_other - self)
 
     def __ixor__(self, other):
         """Implement of '^=' operator."""
