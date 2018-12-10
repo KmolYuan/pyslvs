@@ -210,9 +210,12 @@ cdef OrderedSet _outer_loop(Graph g):
                 inter = OrderedSet.__new__(OrderedSet)
                 inter_map = {}
                 for n1, n2 in g.edges:
-                    if (n1 in c1 and n2 in c2) or (n1 in c2 and n2 in c1):
+                    if (n1 in c1) and (n2 in c2):
                         inter.add(n1)
                         inter_map[n1] = n2
+                    elif (n2 in c1) and (n1 in c2):
+                        inter.add(n2)
+                        inter_map[n2] = n1
 
                 if not inter:
                     continue
@@ -225,7 +228,7 @@ cdef OrderedSet _outer_loop(Graph g):
                 insert_start = c1.index(start)
                 insert_end = c1.index(end)
                 replace_start = c2.index(inter_map[start])
-                replace_end = c2.index(inter_map[start])
+                replace_end = c2.index(inter_map[end])
                 if replace_start > replace_end:
                     c2.reverse()
 
