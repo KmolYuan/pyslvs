@@ -137,123 +137,133 @@ cdef OrderedSet _outer_loop(Graph g):
     if not cycles:
         raise ValueError(f"invalid graph has no any cycle: {g.edges}")
 
-    cdef bint need_to_rev
-    cdef int n1, n2, i, start, end
-    cdef int insert_start, insert_end, replace_start, replace_end
-    cdef OrderedSet c1, c2, inter
-    cdef list inter_over, inter_tmp
-    cdef dict inter_map
+    cdef OrderedSet c1, c2
     while len(cycles) > 1:
         c1 = cycles.pop()
-
         for c2 in cycles:
-            # Find the intersection.
-            if not len(c1 & c2) >= 2:
-                continue
-
-            # Ignore subsets.
-            if c1 >= c2:
-                cycles.remove(c2)
-                cycles.append(c1)
+            if _merge_with_inter(c1, c2, cycles):
                 break
-
-            inter_over = c1.ordered_intersections(c2, is_loop=True)
-            # Find the intersection with reversed cycle.
-            c2.reverse()
-            inter_tmp = c1.ordered_intersections(c2, is_loop=True)
-            if len(inter_tmp) < len(inter_over):
-                # Choose the longest continuous intersection.
-                inter_over = inter_tmp
-            inter_tmp = None
-
-            start = -1
-            end = -1
-            need_to_rev = len(inter_over) % 2 == 1
-            for i, inter in enumerate(inter_over):
-                if not inter.is_ordered_subset(c1, is_loop=True):
-                    # Intersection and cycle 1 has wrong direction.
-                    inter.reverse()
-                if inter.is_ordered_subset(c2, is_loop=True) == need_to_rev:
-                    # Cycle 1 and cycle 2 should has different direction.
-                    c2.reverse()
-
-                # Prune cycle 2 by intersection.
-                c2 -= inter[1:-1]
-
-                # Interface nodes.
-                if i == 0:
-                    start = inter[0]
-                end = inter[-1]
-
-            # Roll to interface.
-            c1.roll(end, -1)
-            c2.roll(start, 0)
-
-            # Insert new edges.
-            insert_start = c1.index(start)
-            insert_end = c1.index(end)
-            replace_start = c2.index(start)
-            replace_end = c2.index(end)
-            if (replace_end - replace_start) > (insert_end - insert_start):
-                # Cycle 2 should longer then intersection.
-                del c1[insert_start:insert_end]
-                c1.insert(insert_start, c2[replace_start:replace_end])
-
-            # The cycle 2 has been merged into cycle 1.
-            cycles.remove(c2)
-            cycles.append(c1)
-            break
         else:
             # Cycles has no contacted.
             # Find connection from edges.
             for c2 in cycles:
-                inter = OrderedSet.__new__(OrderedSet)
-                inter_map = {}
-                for n1, n2 in g.edges:
-                    if (n1 in c1) and (n2 in c2):
-                        inter.add(n1)
-                        inter_map[n1] = n2
-                    elif (n2 in c1) and (n1 in c2):
-                        inter.add(n2)
-                        inter_map[n2] = n1
-
-                if not inter:
-                    continue
-
-                # Resort intersection.
-                if not inter.is_ordered_subset(c1, is_loop=True):
-                    inter = c1 & inter
-                start = inter[0]
-                end = inter[-1]
-                insert_start = c1.index(start)
-                insert_end = c1.index(end)
-                replace_start = c2.index(inter_map[start])
-                replace_end = c2.index(inter_map[end])
-                if replace_start > replace_end:
-                    c2.reverse()
-
-                # Roll to interface.
-                c1.roll(end, -1)
-                c2.roll(inter_map[start], 0)
-
-                # Merge them.
-                if (replace_end - replace_start) > (insert_end - insert_start):
-                    del c1[insert_start:insert_end]
-                    c1.insert(insert_start, c2[replace_start:replace_end])
-
-                # The cycle 2 has been merged into cycle 1.
-                inter_map = None
-                cycles.remove(c2)
-                cycles.append(c1)
-                break
+                if _merge_no_inter(c1, c2, cycles, g.edges):
+                    break
             else:
                 raise ValueError(
                     f"invalid graph: {g.edges}\n"
                     f"last one: {c1}\n"
                     f"with cycle(s): {cycles}"
                 )
-
     return cycles.pop()
+
+
+cdef inline bint _merge_with_inter(OrderedSet c1, OrderedSet c2, list cycles):
+    """Merge function for intersection strategy."""
+    # Find the intersection.
+    if not len(c1 & c2) >= 2:
+        return False
+
+    # Ignore subsets.
+    if c1 >= c2:
+        cycles.remove(c2)
+        cycles.append(c1)
+        return True
+
+    cdef list inter_over = c1.ordered_intersections(c2, is_loop=True)
+    # Find the intersection with reversed cycle.
+    c2.reverse()
+    cdef list inter_tmp = c1.ordered_intersections(c2, is_loop=True)
+    if len(inter_tmp) < len(inter_over):
+        # Choose the longest continuous intersection.
+        inter_over = inter_tmp
+    inter_tmp = None
+    print(c1, inter_over, c2)
+
+    cdef int start = -1
+    cdef int end = -1
+    cdef bint need_to_rev = len(inter_over) % 2 == 1
+
+    cdef int i
+    cdef OrderedSet inter
+    for i, inter in enumerate(inter_over):
+        if not inter.is_ordered_subset(c1, is_loop=True):
+            # Intersection and cycle 1 has wrong direction.
+            inter.reverse()
+        if inter.is_ordered_subset(c2, is_loop=True) == need_to_rev:
+            # Cycle 1 and cycle 2 should has different direction.
+            c2.reverse()
+
+        # Prune cycle 2 by intersection.
+        c2 -= inter[1:-1]
+
+        # Interface nodes.
+        if i == 0:
+            start = inter[0]
+        end = inter[-1]
+
+    # Roll to interface.
+    c1.roll(end, -1)
+    c2.roll(start, 0)
+
+    # Insert new edges.
+    cdef int insert_start = c1.index(start)
+    cdef int insert_end = c1.index(end)
+    cdef int replace_start = c2.index(start)
+    cdef int replace_end = c2.index(end)
+    if (replace_end - replace_start) > (insert_end - insert_start):
+        # Cycle 2 should longer then intersection.
+        del c1[insert_start:insert_end]
+        c1.insert(insert_start, c2[replace_start:replace_end])
+
+    # The cycle 2 has been merged into cycle 1.
+    cycles.remove(c2)
+    cycles.append(c1)
+    return True
+
+
+cdef inline bint _merge_no_inter(OrderedSet c1, OrderedSet c2, list cycles, tuple edges):
+    """Merge function for the strategy without intersection."""
+    cdef OrderedSet inter = OrderedSet.__new__(OrderedSet)
+    cdef dict inter_map = {}
+
+    cdef int n1, n2
+    for n1, n2 in edges:
+        if (n1 in c1) and (n2 in c2):
+            inter.add(n1)
+            inter_map[n1] = n2
+        elif (n2 in c1) and (n1 in c2):
+            inter.add(n2)
+            inter_map[n2] = n1
+
+    if not inter:
+        return False
+
+    # Resort intersection.
+    if not inter.is_ordered_subset(c1, is_loop=True):
+        inter = c1 & inter
+    cdef int start = inter[0]
+    cdef int end = inter[-1]
+    cdef int insert_start = c1.index(start)
+    cdef int insert_end = c1.index(end)
+    cdef int replace_start = c2.index(inter_map[start])
+    cdef int replace_end = c2.index(inter_map[end])
+    if replace_start > replace_end:
+        c2.reverse()
+
+    # Roll to interface.
+    c1.roll(end, -1)
+    c2.roll(inter_map[start], 0)
+
+    # Merge them.
+    if (replace_end - replace_start) > (insert_end - insert_start):
+        del c1[insert_start:insert_end]
+        c1.insert(insert_start, c2[replace_start:replace_end])
+
+    # The cycle 2 has been merged into cycle 1.
+    cycles.remove(c2)
+    cycles.append(c1)
+    return True
 
 
 cdef inline list _cycle_basis(Graph g):
