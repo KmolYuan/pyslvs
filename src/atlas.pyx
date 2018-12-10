@@ -31,7 +31,7 @@ ctypedef c_map[int, int] map_int
 
 
 cdef int16_t[:] _labels(int16_t[:] numbers, int index, int offset, bint negative):
-    """Generate _labels from numbers."""
+    """Generate labels from numbers."""
     cdef int i, num
     cdef list labels = []
     for num in numbers[offset:]:

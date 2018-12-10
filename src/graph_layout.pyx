@@ -37,7 +37,16 @@ cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
             f"node {set(g.nodes) - set(pos)} are not included"
         )
 
-    # TODO: node_mode
+    # Node mode.
+    cdef int i, n1, n2
+    cdef list edges_view
+    cdef dict n_pos
+    if not node_mode:
+        n_pos = {}
+        edges_view = sorted([((n2, n1) if n2 < n1 else (n1, n2)) for (n1, n2) in g.edges])
+        for i, (n1, n2) in enumerate(edges_view):
+            n_pos[i] = _middle_point(pos[n1], pos[n2])
+        pos = n_pos
 
     return pos
 
@@ -99,6 +108,15 @@ cdef list _regular_polygon_pos(int edge_count, double scale):
         pos.append((scale * cos(angle), scale * sin(angle)))
         angle -= angle_step
     return pos
+
+
+cdef inline tuple _middle_point(tuple c1, tuple c2):
+    """Return middle point of two coordinates."""
+    cdef double x1 = c1[0]
+    cdef double x2 = c2[0]
+    cdef double y1 = c1[1]
+    cdef double y2 = c2[1]
+    return ((x1 + x2) / 2), ((y1 + y2) / 2)
 
 
 cdef list _linear_layout(tuple c0, tuple c1, int count):
