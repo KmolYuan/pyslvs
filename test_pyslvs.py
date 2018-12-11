@@ -117,9 +117,9 @@ class CoreTest(TestCase):
         self.assertEqual([4, 4], link_assortments(g1))
         self.assertEqual([4, 0, 0, 0], contracted_link_assortments(g1))
 
-        g1 = Graph([(0, 1), (0, 2), (0, 3), (1, 4), (1, 6), (3, 5),
-                    (3, 8), (5, 6), (5, 2), (4, 7), (4, 11), (7, 6),
-                    (6, 9), (9, 11), (8, 10), (10, 2)])
+        g1 = Graph([(0, 1), (2, 7), (3, 5), (2, 6), (5, 9), (4, 10), (8, 10),
+                    (9, 11), (0, 5), (1, 6), (2, 3), (0, 4), (3, 4), (4, 11),
+                    (5, 8), (1, 7)])
         pos = external_loop_layout(g1, True)
         self.assertEqual(set(g1.nodes), set(pos))
 

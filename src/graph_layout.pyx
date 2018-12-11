@@ -26,8 +26,8 @@ cpdef dict external_loop_layout(Graph g, bint node_mode, double scale = 1.):
     o_loop.roll(min(o_loop), 0)
     print(g.edges)
     print(o_loop)
-    cdef list o_pos = _regular_polygon_pos(len(o_loop), scale)
-    cdef dict pos = dict(zip(o_loop, o_pos))
+
+    cdef dict pos = _regular_polygon_layout(o_loop, scale)
     _external_loop_layout_inner(g, o_loop, pos)
 
     # Last check for debug.
@@ -90,24 +90,25 @@ cdef inline void _external_loop_layout_inner(Graph g, OrderedSet o_loop, dict po
             start = inter.pop()
             inter = used_nodes & g.adj[line[-1]]
             end = inter.pop()
-        pos.update(zip(line, _linear_layout(pos[start], pos[end], len(line))))
+        pos.update(_linear_layout(pos[start], pos[end], line))
         used_nodes.update(line)
         line.clear()
 
         nodes -= line
 
 
-cdef list _regular_polygon_pos(int edge_count, double scale):
+cdef dict _regular_polygon_layout(OrderedSet vertices, double scale):
     """Return position of a regular polygon with radius 100.
     Start from bottom with _clockwise.
     """
+    cdef int edge_count = len(vertices)
     scale *= 5
     cdef int i
     cdef double angle = M_PI * 3 / 2
     cdef double angle_step = 2 * M_PI / edge_count
-    cdef list pos = []
+    cdef dict pos = {}
     for i in range(edge_count):
-        pos.append((scale * cos(angle), scale * sin(angle)))
+        pos[vertices[i]] = (scale * cos(angle), scale * sin(angle))
         angle -= angle_step
     return pos
 
@@ -121,16 +122,21 @@ cdef inline tuple _middle_point(tuple c1, tuple c2):
     return ((x1 + x2) / 2), ((y1 + y2) / 2)
 
 
-cdef list _linear_layout(tuple c0, tuple c1, int count):
+cdef dict _linear_layout(tuple c0, tuple c1, OrderedSet vertices):
     """Layout position decided by equal division between two points."""
+    cdef int count = len(vertices)
     if count < 1:
         raise ValueError(f"Invalid point number {count}")
 
     count += 1
     cdef double sx = (c1[0] - c0[0]) / count
     cdef double sy = (c1[1] - c0[1]) / count
+
     cdef int i
-    return [(c0[0] + i * sx, c0[1] + i * sy) for i in range(1, count)]
+    cdef dict layout = {}
+    for i in range(1, count):
+        layout[vertices[i - 1]] = (c0[0] + i * sx, c0[1] + i * sy)
+    return layout
 
 
 cdef OrderedSet _external_loop(Graph g):
@@ -543,7 +549,7 @@ cdef class OrderedSet:
         Raises 'KeyError' if the 'OrderedSet' is empty.
         """
         if not self:
-            raise KeyError(f'{self.__class__.__name__} is empty')
+            raise KeyError(f'{self} is empty')
         key = self[index]
         _discard(self, key)
         return key
