@@ -4,7 +4,7 @@ from typing import Tuple, Dict
 from graph import Graph
 
 
-def outer_loop_layout(
+def external_loop_layout(
     graph: Graph,
     node_mode: bool,
     scale: float = 1.

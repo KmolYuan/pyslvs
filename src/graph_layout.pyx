@@ -22,22 +22,7 @@ from graph cimport Graph, c_map_int
 
 cpdef dict external_loop_layout(Graph g, bint node_mode, double scale = 1.):
     """Layout position decided by external loop."""
-    cdef OrderedSet o_loop = _external_loop(g)
-    o_loop.roll(min(o_loop), 0)
-    print(g.edges)
-    print(o_loop)
-
-    cdef dict pos = _regular_polygon_layout(o_loop, scale)
-    _external_loop_layout_inner(g, o_loop, pos)
-
-    # Last check for debug.
-    if set(g.nodes) != set(pos):
-        raise ValueError(
-            f"the algorithm is error with {g.edges}\n"
-            f"external loop: {o_loop}\n"
-            f"inner layout: {set(pos) - o_loop}\n"
-            f"node {set(g.nodes) - set(pos)} are not included"
-        )
+    cdef dict pos = _line_polygon_layout(g, scale)
 
     # Node mode.
     cdef int i, n1, n2
@@ -53,17 +38,53 @@ cpdef dict external_loop_layout(Graph g, bint node_mode, double scale = 1.):
     return pos
 
 
-cdef inline void _external_loop_layout_inner(Graph g, OrderedSet o_loop, dict pos):
-    """Layout for inner nodes of graph block."""
+cdef inline dict _line_polygon_layout(Graph g, double scale):
+    """Generate position of external loop and inner lines."""
     # TODO: Make direction from start and end nodes.
-    cdef OrderedSet nodes = set(g.nodes) - o_loop
-    if not nodes:
-        return
+    cdef OrderedSet o_loop = _external_loop(g)
+    cdef list lines = _inner_lines(g, o_loop)
+    o_loop.roll(min(o_loop), 0)
 
+    cdef dict pos = _regular_polygon_layout(o_loop, scale)
     cdef OrderedSet used_nodes = o_loop.copy()
 
-    cdef int n, start, end
-    cdef OrderedSet new_neighbors, line, inter
+    cdef int start, end
+    cdef OrderedSet line, inter
+    for line in lines:
+        if len(line) == 1:
+            inter = used_nodes & g.adj[line[0]]
+            start = inter.pop()
+            end = inter.pop()
+        else:
+            inter = used_nodes & g.adj[line[0]]
+            start = inter.pop()
+            inter = used_nodes & g.adj[line[-1]]
+            end = inter.pop()
+        pos.update(_linear_layout(pos[start], pos[end], line))
+        used_nodes.update(line)
+
+    # Last check for debug.
+    if set(g.nodes) != set(pos):
+        raise ValueError(
+            f"the algorithm is error with {g.edges}\n"
+            f"external loop: {o_loop}\n"
+            f"inner layout: {set(pos) - o_loop}\n"
+            f"node {set(g.nodes) - set(pos)} are not included"
+        )
+
+    return pos
+
+
+cdef inline list _inner_lines(Graph g, OrderedSet o_loop):
+    """Layout for inner nodes of graph block."""
+    cdef OrderedSet nodes = set(g.nodes) - o_loop
+    if not nodes:
+        return []
+
+    cdef int n
+    cdef OrderedSet new_neighbors, line
+    cdef list lines = []
+    cdef OrderedSet used_nodes = o_loop.copy()
     while nodes:
         n = nodes.pop(0)
         if not (used_nodes & g.adj[n]):
@@ -78,33 +99,24 @@ cdef inline void _external_loop_layout_inner(Graph g, OrderedSet o_loop, dict po
             # New nodes to add.
             n = new_neighbors.pop()
             line.add(n)
-            new_neighbors = (nodes - line) & g.adj[n]
+            nodes.remove(n)
+            new_neighbors = nodes & g.adj[n]
 
         # Line is ended.
-        if line[0] == line[-1]:
-            inter = used_nodes & g.adj[line[0]]
-            start = inter.pop()
-            end = inter.pop()
-        else:
-            inter = used_nodes & g.adj[line[0]]
-            start = inter.pop()
-            inter = used_nodes & g.adj[line[-1]]
-            end = inter.pop()
-        pos.update(_linear_layout(pos[start], pos[end], line))
         used_nodes.update(line)
-        line.clear()
+        lines.append(line)
 
-        nodes -= line
+    return lines
 
 
-cdef dict _regular_polygon_layout(OrderedSet vertices, double scale):
-    """Return position of a regular polygon with radius 100.
-    Start from bottom with _clockwise.
+cdef inline dict _regular_polygon_layout(OrderedSet vertices, double scale):
+    """Return position of a regular polygon with radius 5.
+    Start from bottom with clockwise.
     """
     cdef int edge_count = len(vertices)
     scale *= 5
     cdef int i
-    cdef double angle = M_PI * 3 / 2
+    cdef double angle = M_PI * 1.5
     cdef double angle_step = 2 * M_PI / edge_count
     cdef dict pos = {}
     for i in range(edge_count):
@@ -122,7 +134,7 @@ cdef inline tuple _middle_point(tuple c1, tuple c2):
     return ((x1 + x2) / 2), ((y1 + y2) / 2)
 
 
-cdef dict _linear_layout(tuple c0, tuple c1, OrderedSet vertices):
+cdef inline dict _linear_layout(tuple c0, tuple c1, OrderedSet vertices):
     """Layout position decided by equal division between two points."""
     cdef int count = len(vertices)
     if count < 1:
@@ -139,7 +151,7 @@ cdef dict _linear_layout(tuple c0, tuple c1, OrderedSet vertices):
     return layout
 
 
-cdef OrderedSet _external_loop(Graph g):
+cdef inline OrderedSet _external_loop(Graph g):
     """Return nodes of external loop."""
     cdef list cycles = _cycle_basis(g)
     if not cycles:
@@ -150,13 +162,13 @@ cdef OrderedSet _external_loop(Graph g):
     while len(cycles) > 1:
         c1 = cycles.pop()
         for c2 in cycles:
-            if _merge_inter(c1, c2, cycles, g_degrees):
+            if _merge_inter(c1, c2, cycles, g):
                 break
         else:
             # Cycles has no contacted.
             # Find connection from edges.
             for c2 in cycles:
-                if _merge_no_inter(c1, c2, cycles, g.edges, g_degrees):
+                if _merge_no_inter(c1, c2, cycles, g):
                     break
             else:
                 raise ValueError(
@@ -167,7 +179,12 @@ cdef OrderedSet _external_loop(Graph g):
     return cycles.pop()
 
 
-cdef inline bint _merge_inter(OrderedSet c1, OrderedSet c2, list cycles, c_map_int &g_degrees):
+cdef inline bint _merge_inter(
+    OrderedSet c1,
+    OrderedSet c2,
+    list cycles,
+    Graph g
+):
     """Merge function for intersection strategy."""
     # Find the intersection.
     if not len(c1 & c2) >= 2:
@@ -221,7 +238,7 @@ cdef inline bint _merge_inter(OrderedSet c1, OrderedSet c2, list cycles, c_map_i
         c1.index(end),
         c2.index(start),
         c2.index(end),
-        g_degrees
+        g
     )
 
     # The cycle 2 has been merged into cycle 1.
@@ -230,13 +247,18 @@ cdef inline bint _merge_inter(OrderedSet c1, OrderedSet c2, list cycles, c_map_i
     return True
 
 
-cdef inline bint _merge_no_inter(OrderedSet c1, OrderedSet c2, list cycles, tuple edges, c_map_int &g_degrees):
+cdef inline bint _merge_no_inter(
+    OrderedSet c1,
+    OrderedSet c2,
+    list cycles,
+    Graph g
+):
     """Merge function for the strategy without intersection."""
     cdef OrderedSet inter = OrderedSet.__new__(OrderedSet)
-    cdef dict inter_map = {}
+    cdef c_map_int inter_map
 
     cdef int n1, n2
-    for n1, n2 in edges:
+    for n1, n2 in g.edges:
         if (n1 in c1) and (n2 in c2):
             inter.add(n1)
             inter_map[n1] = n2
@@ -269,7 +291,7 @@ cdef inline bint _merge_no_inter(OrderedSet c1, OrderedSet c2, list cycles, tupl
         c1.index(end),
         replace_start,
         replace_end,
-        g_degrees
+        g
     )
 
     # The cycle 2 has been merged into cycle 1.
@@ -285,7 +307,7 @@ cdef inline void _compare_insert(
     int insert_end,
     int replace_start,
     int replace_end,
-    c_map_int &g_degrees
+    Graph g
 ):
     """Compare and insert cycle 2 to cycle 1."""
     cdef int c1_degrees = 0
@@ -294,12 +316,13 @@ cdef inline void _compare_insert(
     cdef OrderedSet c2_slice = c2[replace_start:replace_end]
 
     cdef int i
+    cdef set other_nodes = set(c1_slice | c2_slice)
     for i in c1_slice:
-        c1_degrees += g_degrees[i]
+        c1_degrees += len(set(g.adj[i]) - other_nodes)
     for i in c2_slice:
-        c2_degrees += g_degrees[i]
+        c2_degrees += len(set(g.adj[i]) - other_nodes)
 
-    if not c2_degrees > c1_degrees:
+    if not (c2_degrees > c1_degrees):
         return
 
     # Cycle 2 should longer then intersection.
@@ -447,7 +470,7 @@ cdef class _OrderedSetIterator:
 
         item = self.curr.next
         if item == self.oset.end:
-            raise StopIteration()
+            raise StopIteration
         self.curr = item
         return item.key
 
@@ -476,7 +499,7 @@ cdef class _OrderedSetReverseIterator:
 
         cdef _Entry item = self.curr.prev
         if item is self.oset.end:
-            raise StopIteration()
+            raise StopIteration
         self.curr = item
         return item.key
 
@@ -575,7 +598,7 @@ cdef class OrderedSet:
 
     cpdef OrderedSet copy(self):
         """Copy the instance."""
-        return self._from_iterable(self)
+        return OrderedSet(self)
 
     def __sub__(self, other) -> OrderedSet:
         """Implement of '-' operator."""
@@ -852,11 +875,11 @@ cdef class OrderedSet:
         return elem in self.map
 
     def __iter__(self) -> _OrderedSetIterator:
-        """Implement of 'iter(self)' operator. (reference method)"""
+        """Return iterator without copy."""
         return _OrderedSetIterator.__new__(_OrderedSetIterator, self)
 
     def __reversed__(self) -> _OrderedSetReverseIterator:
-        """Implement of 'reversed(self)' operator."""
+        """Return reversed iterator without copy."""
         return _OrderedSetReverseIterator.__new__(_OrderedSetReverseIterator, self)
 
     def __reduce__(self):
