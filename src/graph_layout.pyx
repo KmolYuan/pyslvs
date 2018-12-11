@@ -184,7 +184,6 @@ cdef inline bint _merge_inter(OrderedSet c1, OrderedSet c2, list cycles, c_map_i
 
     cdef int start = -1
     cdef int end = -1
-    cdef bint need_to_rev = len(inter_over) % 2 == 1
 
     cdef int i
     cdef OrderedSet inter
@@ -192,7 +191,7 @@ cdef inline bint _merge_inter(OrderedSet c1, OrderedSet c2, list cycles, c_map_i
         if not inter.is_ordered_subset(c1, is_loop=True):
             # Intersection and cycle 1 has wrong direction.
             inter.reverse()
-        if inter.is_ordered_subset(c2, is_loop=True) == need_to_rev:
+        if inter.is_ordered_subset(c2, is_loop=True) and i == 0:
             # Cycle 1 and cycle 2 should has different direction.
             c2.reverse()
 
