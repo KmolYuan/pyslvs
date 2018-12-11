@@ -34,7 +34,7 @@ from graph import (
     contracted_link_assortments,
 )
 from planar_check import is_planar
-from graph_layout import outer_loop_layout
+from graph_layout import external_loop_layout
 from triangulation import vpoints_configure
 from _parser import parse_vpoints
 from examples import example_list
@@ -120,7 +120,7 @@ class CoreTest(TestCase):
         g1 = Graph([(0, 1), (0, 2), (0, 3), (1, 4), (1, 6), (3, 5),
                     (3, 8), (5, 6), (5, 2), (4, 7), (4, 11), (7, 6),
                     (6, 9), (9, 11), (8, 10), (10, 2)])
-        pos = outer_loop_layout(g1, True)
+        pos = external_loop_layout(g1, True)
         self.assertEqual(set(g1.nodes), set(pos))
 
     def test_atlas(self):

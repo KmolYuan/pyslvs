@@ -20,19 +20,21 @@ from libc.math cimport M_PI, sin, cos
 from graph cimport Graph, c_map_int
 
 
-cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
-    """Layout position decided by outer loop."""
-    cdef OrderedSet o_loop = _outer_loop(g)
+cpdef dict external_loop_layout(Graph g, bint node_mode, double scale = 1.):
+    """Layout position decided by external loop."""
+    cdef OrderedSet o_loop = _external_loop(g)
     o_loop.roll(min(o_loop), 0)
+    print(g.edges)
+    print(o_loop)
     cdef list o_pos = _regular_polygon_pos(len(o_loop), scale)
     cdef dict pos = dict(zip(o_loop, o_pos))
-    _outer_loop_layout_inner(g, o_loop, pos)
+    _external_loop_layout_inner(g, o_loop, pos)
 
     # Last check for debug.
     if set(g.nodes) != set(pos):
         raise ValueError(
             f"the algorithm is error with {g.edges}\n"
-            f"outer loop: {o_loop}\n"
+            f"external loop: {o_loop}\n"
             f"inner layout: {set(pos) - o_loop}\n"
             f"node {set(g.nodes) - set(pos)} are not included"
         )
@@ -51,7 +53,7 @@ cpdef dict outer_loop_layout(Graph g, bint node_mode, double scale = 1.):
     return pos
 
 
-cdef inline void _outer_loop_layout_inner(Graph g, OrderedSet o_loop, dict pos):
+cdef inline void _external_loop_layout_inner(Graph g, OrderedSet o_loop, dict pos):
     """Layout for inner nodes of graph block."""
     # TODO: Make direction from start and end nodes.
     cdef OrderedSet nodes = set(g.nodes) - o_loop
@@ -131,8 +133,8 @@ cdef list _linear_layout(tuple c0, tuple c1, int count):
     return [(c0[0] + i * sx, c0[1] + i * sy) for i in range(1, count)]
 
 
-cdef OrderedSet _outer_loop(Graph g):
-    """Return nodes of outer loop."""
+cdef OrderedSet _external_loop(Graph g):
+    """Return nodes of external loop."""
     cdef list cycles = _cycle_basis(g)
     if not cycles:
         raise ValueError(f"invalid graph has no any cycle: {g.edges}")
@@ -205,7 +207,6 @@ cdef inline bint _merge_inter(OrderedSet c1, OrderedSet c2, list cycles, c_map_i
     # Roll to interface.
     c1.roll(end, -1)
     c2.roll(start, 0)
-    print(c1, inter_over, start, end, c2)
 
     # Insert points.
     _compare_insert(
@@ -254,7 +255,6 @@ cdef inline bint _merge_no_inter(OrderedSet c1, OrderedSet c2, list cycles, tupl
     # Roll to interface.
     c1.roll(end, -1)
     c2.roll(inter_map[start], 0)
-    print(c1, start, end, inter_map[start], inter_map[end], c2)
 
     # Merge them.
     _compare_insert(
@@ -294,7 +294,6 @@ cdef inline void _compare_insert(
     for i in c2_slice:
         c2_degrees += g_degrees[i]
 
-    print(c1_degrees, c2_degrees)
     if not c2_degrees > c1_degrees:
         return
 
@@ -304,7 +303,7 @@ cdef inline void _compare_insert(
 
 
 cdef inline list _cycle_basis(Graph g):
-    """ Returns a list of cycles which form a basis for cycles of G.
+    """Returns a list of cycles which form a basis for cycles of G.
     Reference from NetworkX.
     """
     cdef set g_nodes = set(g.nodes)

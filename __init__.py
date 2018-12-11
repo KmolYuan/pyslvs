@@ -56,7 +56,7 @@ from .graph import (
     contracted_link_assortments,
 )
 from .planar_check import is_planar
-from .graph_layout import outer_loop_layout
+from .graph_layout import external_loop_layout
 from .atlas import topo
 from .triangulation import vpoints_configure
 from ._parser import (
@@ -89,7 +89,7 @@ __all__ = [
     'number_synthesis',
     'contracted_link',
     'is_planar',
-    'outer_loop_layout',
+    'external_loop_layout',
     'topo',
     'Graph',
     'link_assortments',
