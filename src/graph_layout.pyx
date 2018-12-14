@@ -49,17 +49,8 @@ cdef inline dict _line_polygon_layout(Graph g, double scale):
     cdef OrderedSet used_nodes = o_loop.copy()
 
     cdef int start, end
-    cdef OrderedSet line, inter
-    for line in lines:
-        if len(line) == 1:
-            inter = used_nodes & g.adj[line[0]]
-            start = inter.pop()
-            end = inter.pop()
-        else:
-            inter = used_nodes & g.adj[line[0]]
-            start = inter.pop()
-            inter = used_nodes & g.adj[line[-1]]
-            end = inter.pop()
+    cdef OrderedSet line
+    for line, start, end in lines:
         pos.update(_linear_layout(pos[start], pos[end], line))
         used_nodes.update(line)
 
@@ -73,40 +64,6 @@ cdef inline dict _line_polygon_layout(Graph g, double scale):
         )
 
     return pos
-
-
-cdef inline list _inner_lines(Graph g, OrderedSet o_loop):
-    """Layout for inner nodes of graph block."""
-    cdef OrderedSet nodes = set(g.nodes) - o_loop
-    if not nodes:
-        return []
-
-    cdef int n
-    cdef OrderedSet new_neighbors, line
-    cdef list lines = []
-    cdef OrderedSet used_nodes = o_loop.copy()
-    while nodes:
-        n = nodes.pop(0)
-        if not (used_nodes & g.adj[n]):
-            # Not contacted yet.
-            nodes.add(n)
-            continue
-
-        line = OrderedSet.__new__(OrderedSet)
-        line.add(n)
-        new_neighbors = nodes & g.adj[n]
-        while new_neighbors:
-            # New nodes to add.
-            n = new_neighbors.pop()
-            line.add(n)
-            nodes.remove(n)
-            new_neighbors = nodes & g.adj[n]
-
-        # Line is ended.
-        used_nodes.update(line)
-        lines.append(line)
-
-    return lines
 
 
 cdef inline dict _regular_polygon_layout(OrderedSet vertices, double scale):
@@ -149,6 +106,85 @@ cdef inline dict _linear_layout(tuple c0, tuple c1, OrderedSet vertices):
     for i in range(1, count):
         layout[vertices[i - 1]] = (c0[0] + i * sx, c0[1] + i * sy)
     return layout
+
+
+cdef inline list _inner_lines(Graph g, OrderedSet o_loop):
+    """Layout for inner nodes of graph block."""
+    cdef OrderedSet nodes = set(g.nodes) - o_loop
+    if not nodes:
+        return []
+
+    cdef list lines = []
+    cdef OrderedSet used_nodes = o_loop.copy()
+
+    cdef int n
+    cdef OrderedSet new_neighbors, line, inter
+    while nodes:
+        n = nodes.pop(0)
+        if not (used_nodes & g.adj[n]):
+            # Not contacted yet.
+            nodes.add(n)
+            continue
+
+        line = OrderedSet.__new__(OrderedSet)
+        line.add(n)
+        new_neighbors = nodes & g.adj[n]
+        while new_neighbors:
+            # New nodes to add.
+            n = new_neighbors.pop()
+            line.add(n)
+            nodes.remove(n)
+            new_neighbors = nodes & g.adj[n]
+
+        # Find the intersections of the line.
+        if len(line) == 1:
+            inter = used_nodes & g.adj[line[0]]
+            start = inter.pop()
+            end = inter.pop()
+        else:
+            inter = used_nodes & g.adj[line[0]]
+            start = inter.pop()
+            inter = used_nodes & g.adj[line[-1]]
+            end = inter.pop()
+
+        if _split_loop(o_loop, line, start, end):
+            pass
+
+        # Line is ended.
+        used_nodes.update(line)
+        lines.append((line, start, end))
+
+    return lines
+
+
+cdef inline bint _split_loop(OrderedSet loop, OrderedSet line, int n1, int n2):
+    """Split the loop by two elements."""
+    if n1 == n2:
+        raise ValueError(f"n1 == n2 ({n1})")
+
+    cdef list loop_list = list(loop) * 2
+
+    cdef int i, n
+    cdef list s = []
+    for i, n in enumerate(loop_list):
+        if len(s) >= 3:
+            break
+        if n in {n1, n2}:
+            s.append(i)
+
+    if not s:
+        raise ValueError(f"split {loop} failed from: {n1}, {n2}")
+
+    if len(line) > len(loop_list[s[0] + 1:s[1]]):
+        # TODO:
+        pass
+    elif len(line) > len(loop_list[s[1] + 1:s[2]]):
+        # TODO:
+        pass
+    else:
+        return False
+
+    return True
 
 
 cdef inline OrderedSet _external_loop(Graph g):
