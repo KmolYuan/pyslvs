@@ -229,7 +229,7 @@ cdef class Planar(Verification):
                 x, y = PXY(params[0], params[1], params[2])
         return Coordinate(x, y)
 
-    cdef double run(self, ndarray[double, ndim=1] v) except *:
+    cdef double fitness(self, ndarray[double, ndim=1] v):
         """Chromosome format: (decided by upper and lower)
         
         v: [Ax, Ay, Dx, Dy, ..., L0, L1, ..., A00, A01, ..., A10, A11, ...]
@@ -300,7 +300,3 @@ cdef class Planar(Verification):
                 tmp_list.append(v[self.var_count + i * len(self.driver_list) + j])
             final_dict[f'a{j}'] = tuple(tmp_list)
         return final_dict
-
-    def __call__(self, v: ndarray) -> double:
-        """Python callable object."""
-        return self.run(v)

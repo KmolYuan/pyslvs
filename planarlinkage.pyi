@@ -36,7 +36,3 @@ class Planar(Verification):
     def result(self, v: ndarray) -> Dict[str, Union[Tuple[float, float], float]]:
         """Return the last answer."""
         ...
-
-    def __call__(self, v: ndarray) -> float:
-        """Python callable object."""
-        ...

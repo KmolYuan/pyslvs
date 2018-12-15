@@ -11,15 +11,6 @@ class Verification:
     The 'verify' module should be loaded when using sub-class.
     """
 
-    def __call__(self, v: np.ndarray) -> float:
-        """Calculate the fitness.
-
-        Usage:
-        f = MyVerification()
-        fitness = f(chromosome.v)
-        """
-        ...
-
     def result(self, v: np.ndarray) -> Any:
         """Show the result."""
         ...
