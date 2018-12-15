@@ -42,7 +42,11 @@ cdef inline dict _line_polygon_layout(Graph g, double scale):
     """Generate position of external loop and inner lines."""
     # TODO: Make direction from start and end nodes.
     cdef OrderedSet o_loop = _external_loop(g)
-    cdef list lines = _inner_lines(g, o_loop)
+    cdef list lines = None
+    while lines is None:
+        # Patch function of external cycle.
+        lines = _inner_lines(g, o_loop)
+
     o_loop.roll(min(o_loop), 0)
 
     cdef dict pos = _regular_polygon_layout(o_loop, scale)
@@ -108,7 +112,7 @@ cdef inline dict _linear_layout(tuple c0, tuple c1, OrderedSet vertices):
     return layout
 
 
-cdef inline list _inner_lines(Graph g, OrderedSet o_loop):
+cdef list _inner_lines(Graph g, OrderedSet o_loop):
     """Layout for inner nodes of graph block."""
     cdef OrderedSet nodes = set(g.nodes) - o_loop
     if not nodes:
@@ -118,7 +122,7 @@ cdef inline list _inner_lines(Graph g, OrderedSet o_loop):
     cdef OrderedSet used_nodes = o_loop.copy()
 
     cdef int n
-    cdef OrderedSet new_neighbors, line, inter
+    cdef OrderedSet line, inter
     while nodes:
         n = nodes.pop(0)
         if not (used_nodes & g.adj[n]):
@@ -128,16 +132,19 @@ cdef inline list _inner_lines(Graph g, OrderedSet o_loop):
 
         line = OrderedSet.__new__(OrderedSet)
         line.add(n)
-        new_neighbors = nodes & g.adj[n]
-        while new_neighbors:
+        inter = set(g.adj[n]) - used_nodes
+        while inter:
             # New nodes to add.
-            n = new_neighbors.pop()
+            n = inter.pop()
             line.add(n)
             nodes.remove(n)
-            new_neighbors = nodes & g.adj[n]
+            inter = nodes & g.adj[n]
+            if used_nodes & g.adj[n]:
+                # If connected with any used node.
+                break
 
         # Find the intersections of the line.
-        if len(line) == 1:
+        if line[0] == line[-1]:
             inter = used_nodes & g.adj[line[0]]
             start = inter.pop()
             end = inter.pop()
@@ -148,7 +155,8 @@ cdef inline list _inner_lines(Graph g, OrderedSet o_loop):
             end = inter.pop()
 
         if _split_loop(o_loop, line, start, end):
-            pass
+            # 'o_loop' has been changed.
+            return None
 
         # Line is ended.
         used_nodes.update(line)
@@ -157,33 +165,59 @@ cdef inline list _inner_lines(Graph g, OrderedSet o_loop):
     return lines
 
 
-cdef inline bint _split_loop(OrderedSet loop, OrderedSet line, int n1, int n2):
-    """Split the loop by two elements."""
+cdef inline bint _split_loop(OrderedSet o_loop, OrderedSet line, int n1, int n2):
+    """Return False if the line is a chord.
+    Or it is an arc of external cycle.
+    """
     if n1 == n2:
-        raise ValueError(f"n1 == n2 ({n1})")
-
-    cdef list loop_list = list(loop) * 2
-
-    cdef int i, n
-    cdef list s = []
-    for i, n in enumerate(loop_list):
-        if len(s) >= 3:
-            break
-        if n in {n1, n2}:
-            s.append(i)
-
-    if not s:
-        raise ValueError(f"split {loop} failed from: {n1}, {n2}")
-
-    if len(line) > len(loop_list[s[0] + 1:s[1]]):
-        # TODO:
-        pass
-    elif len(line) > len(loop_list[s[1] + 1:s[2]]):
-        # TODO:
-        pass
-    else:
         return False
 
+    cdef list loop_list = list(o_loop) * 2
+
+    cdef int i, n
+    cdef int s0 = -1
+    cdef int s1 = -1
+    cdef int s2 = -1
+    for i, n in enumerate(loop_list):
+        if n not in {n1, n2}:
+            continue
+        if s0 == -1:
+            s0 = i
+        elif s1 == -1:
+            s1 = i
+        else:
+            s2 = i
+            break
+    else:
+        # Split failed.
+        return False
+
+    # Remove the last repeated part.
+    loop_list = loop_list[:s2 + 1]
+
+    cdef int anchor
+    if len(line) > s1 - (s0 + 1):
+        anchor = s0 + 1
+        del loop_list[anchor:s1]
+        if loop_list[s0] == n2:
+            # reverse!
+            loop_list[anchor:anchor] = reversed(line)
+        else:
+            loop_list[anchor:anchor] = line
+    elif len(line) > s2 - (s1 + 1):
+        anchor = s1 + 1
+        del loop_list[anchor:s2]
+        if loop_list[s1] == n2:
+            # reverse!
+            loop_list[anchor:anchor] = reversed(line)
+        else:
+            loop_list[anchor:anchor] = line
+    else:
+        # Is normal chord.
+        return False
+
+    o_loop.clear()
+    o_loop.update(loop_list)
     return True
 
 
@@ -363,7 +397,7 @@ cdef inline void _compare_insert(
 
     # Cycle 2 should longer then intersection.
     del c1[insert_start:insert_end]
-    c1.insert(insert_start, c2_slice)
+    c1.insert_from(insert_start, c2_slice)
 
 
 cdef inline list _cycle_basis(Graph g):
@@ -585,6 +619,12 @@ cdef class OrderedSet:
 
     cpdef void insert(self, int index, elem):
         """Insert 'elem' to 'index'."""
+        self.insert_from(index, (elem,))
+
+    cpdef void insert_from(self, int index, elem):
+        """Insert iterable 'elem' to 'index'."""
+        if not isinstance(elem, Iterable):
+            raise ValueError("extend iterable only")
         cdef OrderedSet tail = self[index:]
         del self[index:]
         self.update(elem)
