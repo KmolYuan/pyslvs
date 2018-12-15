@@ -217,7 +217,8 @@ cdef inline bint _split_loop(OrderedSet o_loop, OrderedSet line, int n1, int n2)
         return False
 
     o_loop.clear()
-    o_loop.update(loop_list)
+    # Remove the first repeated part.
+    o_loop.update(loop_list[s0:])
     return True
 
 
