@@ -25,6 +25,7 @@ from pmks cimport VPoint
 from bfgs cimport vpoint_solving
 
 
+@cython.cdivision
 cdef inline double radians(double degree) nogil:
     """Deg to rad."""
     return degree / 180 * M_PI
@@ -72,6 +73,7 @@ cpdef tuple PLAP(
         return (A.x + L0 * cos(a1 + a0)), (A.y + L0 * sin(a1 + a0))
 
 
+@cython.cdivision
 cpdef tuple PLLP(
     Coordinate A,
     double L0,
@@ -106,6 +108,7 @@ cpdef tuple PLLP(
         return (xm - h * dy / d), (ym + h * dx / d)
 
 
+@cython.cdivision
 cpdef tuple PLPP(
     Coordinate A,
     double L0,

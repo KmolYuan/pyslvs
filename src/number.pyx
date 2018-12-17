@@ -14,6 +14,7 @@ from numpy import (
     array as np_array,
     zeros as np_zeros,
 )
+cimport cython
 from numpy cimport (
     ndarray,
     int16_t,
@@ -36,6 +37,7 @@ cdef inline list _product(int pool_size, int repeat, object stop_func):
     return result
 
 
+@cython.cdivision
 cdef inline int _m_max(int nl, int nj) nogil:
     """Find max number of joint on each link.
     
@@ -47,7 +49,7 @@ cdef inline int _m_max(int nl, int nj) nogil:
         return nj - nl + 2
     if nl == nj == 0:
         return -1
-    if (2 * nl - 3) <= nj <= (nl * (nl - 1) / 2):
+    if 2 * nl - 3 <= nj <= <double>(nl * (nl - 1)) / 2:
         return nl - 1
     return -1
 
@@ -86,7 +88,8 @@ cdef inline int _j_m(int16_t[:] link_num):
     cdef int i = 3
     cdef float c = 0
     for num in link_num[1:]:
-        c += i / 2 * num
+        with cython.cdivision:
+            c += <double>i / 2 * num
         i += 1
     return <int>c
 
@@ -141,7 +144,8 @@ cpdef list contracted_link(list link_num_list, object stop_func = None):
             index += 1
 
         # Check if the last factor is a natural number.
-        last_factor = (link_num[0] - count) / index
+        with cython.cdivision:
+            last_factor = <double>(link_num[0] - count) / index
         factor = <int>last_factor
         if last_factor < 0 or last_factor != factor:
             continue

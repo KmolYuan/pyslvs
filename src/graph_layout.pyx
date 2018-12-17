@@ -16,7 +16,7 @@ from typing import Set, Iterable
 cimport cython
 from cpython cimport PyDict_Contains, PyIndex_Check
 from cpython.slice cimport PySlice_GetIndicesEx
-from libc.math cimport M_PI, sin, cos
+from libc.math cimport hypot, M_PI, sin, cos, atan2
 from graph cimport Graph, c_map_int
 
 
@@ -40,7 +40,6 @@ cpdef dict external_loop_layout(Graph g, bint node_mode, double scale = 1.):
 
 cdef inline dict _line_polygon_layout(Graph g, double scale):
     """Generate position of external loop and inner lines."""
-    # TODO: Make direction from start and end nodes.
     cdef OrderedSet o_loop = _external_loop(g)
     cdef list lines = None
     while lines is None:
@@ -55,7 +54,14 @@ cdef inline dict _line_polygon_layout(Graph g, double scale):
     cdef int start, end
     cdef OrderedSet line
     for line, start, end in lines:
-        pos.update(_linear_layout(pos[start], pos[end], line))
+        _linear_layout(
+            pos[start][0],
+            pos[start][1],
+            pos[end][0],
+            pos[end][1],
+            line,
+            pos
+        )
         used_nodes.update(line)
 
     # Last check for debug.
@@ -70,6 +76,7 @@ cdef inline dict _line_polygon_layout(Graph g, double scale):
     return pos
 
 
+@cython.cdivision
 cdef inline dict _regular_polygon_layout(OrderedSet vertices, double scale):
     """Return position of a regular polygon with radius 5.
     Start from bottom with clockwise.
@@ -78,7 +85,7 @@ cdef inline dict _regular_polygon_layout(OrderedSet vertices, double scale):
     scale *= 5
     cdef int i
     cdef double angle = M_PI * 1.5
-    cdef double angle_step = 2 * M_PI / edge_count
+    cdef double angle_step = M_PI * 2 / edge_count
     cdef dict pos = {}
     for i in range(edge_count):
         pos[vertices[i]] = (scale * cos(angle), scale * sin(angle))
@@ -86,6 +93,87 @@ cdef inline dict _regular_polygon_layout(OrderedSet vertices, double scale):
     return pos
 
 
+@cython.cdivision
+cdef inline void _linear_layout(
+    double x1,
+    double y1,
+    double x2,
+    double y2,
+    OrderedSet vertices,
+    dict pos
+):
+    """Layout position decided by equal division between two points."""
+    cdef int count = len(vertices)
+    if count < 1:
+        raise ValueError(f"Invalid point number {count}")
+
+    count += 1
+    cdef double sx = (x2 - x1) / count
+    cdef double sy = (y2 - y1) / count
+
+    cdef int i
+    for i in range(1, count):
+        pos[vertices[i - 1]] = (x1 + i * sx, y1 + i * sy)
+
+
+cdef inline void _bezier_layout(
+    double p,
+    double x1,
+    double y1,
+    double x2,
+    double y2,
+    OrderedSet vertices,
+    dict pos
+):
+    """Layout position decided by four points bezier curve."""
+    cdef int count = len(vertices)
+    if count < 1:
+        raise ValueError(f"Invalid point number {count}")
+
+    count += 1
+
+    # TODO: Make direction from start and end nodes.
+    cdef double r = hypot(x2 - x1, x2 - x1) * 0.25
+    cdef double direction = (p - 0.5) * M_PI + atan2(y2 - y1, x2 - x1)
+    cdef double cx1 = x1 + r * cos(direction)
+    cdef double cy1 = y1 + r * sin(direction)
+    cdef double cx2 = x2 + r * cos(-direction)
+    cdef double cy2 = y2 + r * sin(-direction)
+
+    cdef int i
+    cdef double u
+    for i in range(1, count):
+        with cython.cdivision:
+            u = <double>i / count
+        pos[vertices[i - 1]] = _bezier_curve(u, x1, y1, cx1, cy1, cx2, cy2, x2, y2)
+
+
+cdef inline double _bezier_curve(
+    double u,
+    double x1,
+    double y1,
+    double x2,
+    double y2,
+    double x3,
+    double y3,
+    double x4,
+    double y4
+):
+    """A coordinate on bezier curve."""
+    cdef double mx = _uv(u, x2, x3)
+    cdef double my = _uv(u, y2, y3)
+    return (
+        _uv(u, _uv(u, _uv(u, x1, x2), mx), _uv(u, mx, _uv(u, x3, x4))),
+        _uv(u, _uv(u, _uv(u, y1, y2), my), _uv(u, my, _uv(u, y3, y4)))
+    )
+
+
+cdef double _uv(double u, double v1, double v2) nogil:
+    """Return v1 + u * (v2 - v1)"""
+    return v1 + u * (v2 - v1)
+
+
+@cython.cdivision
 cdef inline tuple _middle_point(tuple c1, tuple c2):
     """Return middle point of two coordinates."""
     cdef double x1 = c1[0]
@@ -93,23 +181,6 @@ cdef inline tuple _middle_point(tuple c1, tuple c2):
     cdef double y1 = c1[1]
     cdef double y2 = c2[1]
     return ((x1 + x2) / 2), ((y1 + y2) / 2)
-
-
-cdef inline dict _linear_layout(tuple c0, tuple c1, OrderedSet vertices):
-    """Layout position decided by equal division between two points."""
-    cdef int count = len(vertices)
-    if count < 1:
-        raise ValueError(f"Invalid point number {count}")
-
-    count += 1
-    cdef double sx = (c1[0] - c0[0]) / count
-    cdef double sy = (c1[1] - c0[1]) / count
-
-    cdef int i
-    cdef dict layout = {}
-    for i in range(1, count):
-        layout[vertices[i - 1]] = (c0[0] + i * sx, c0[1] + i * sy)
-    return layout
 
 
 cdef list _inner_lines(Graph g, OrderedSet o_loop):
@@ -213,7 +284,7 @@ cdef inline bint _split_loop(OrderedSet o_loop, OrderedSet line, int n1, int n2)
         else:
             loop_list[anchor:anchor] = line
     else:
-        # Is normal chord.
+        # Is a normal chord.
         return False
 
     o_loop.clear()

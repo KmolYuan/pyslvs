@@ -17,6 +17,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
+cimport cython
 from libc.stdlib cimport malloc, free
 from libc.math cimport (
     M_PI,
@@ -40,6 +41,7 @@ from sketch_solve cimport (
 from pmks cimport VPoint
 
 
+@cython.cdivision
 cdef inline double _radians(double degree):
     """Deg to rad."""
     return degree / 180 * M_PI
