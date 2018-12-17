@@ -17,7 +17,7 @@ cimport cython
 from cpython cimport PyDict_Contains, PyIndex_Check
 from cpython.slice cimport PySlice_GetIndicesEx
 from libc.math cimport hypot, M_PI, sin, cos, atan2
-from graph cimport Graph, c_map_int
+from graph cimport Graph, c_map
 
 
 cpdef dict external_loop_layout(Graph g, bint node_mode, double scale = 1.):
@@ -26,13 +26,16 @@ cpdef dict external_loop_layout(Graph g, bint node_mode, double scale = 1.):
 
     # Node mode.
     cdef int i, n1, n2
+    cdef double x1, y1, x2, y2
     cdef list edges_view
     cdef dict n_pos
     if not node_mode:
         n_pos = {}
         edges_view = sorted([((n2, n1) if n2 < n1 else (n1, n2)) for (n1, n2) in g.edges])
         for i, (n1, n2) in enumerate(edges_view):
-            n_pos[i] = _middle_point(pos[n1], pos[n2])
+            x1, y1 = pos[n1]
+            x2, y2 = pos[n2]
+            n_pos[i] = _middle_point(x1, y1, x2, y2)
         pos = n_pos
 
     return pos
@@ -48,20 +51,30 @@ cdef inline dict _line_polygon_layout(Graph g, double scale):
 
     o_loop.roll(min(o_loop), 0)
 
-    cdef dict pos = _regular_polygon_layout(o_loop, scale)
+    cdef dict pos = {}
+    _regular_polygon_layout(o_loop, scale, pos)
     cdef OrderedSet used_nodes = o_loop.copy()
 
     cdef int start, end
     cdef OrderedSet line
+    cdef c_map[int, c_map[int, int]] line_limit, line_counter
     for line, start, end in lines:
-        _linear_layout(
-            pos[start][0],
-            pos[start][1],
-            pos[end][0],
-            pos[end][1],
-            line,
-            pos
-        )
+        line_limit[start][end] += 1
+
+    cdef int limit
+    cdef double p, x1, y1, x2, y2
+    for line, start, end in lines:
+        x1, y1 = pos[start]
+        x2, y2 = pos[end]
+        # Conditions of linear or bezier curve.
+        limit = line_limit[start][end]
+        if limit == 1:
+            _linear_layout(x1, y1, x2, y2, line, pos)
+        else:
+            line_counter[start][end] += 1
+            with cython.cdivision:
+                p = <double>line_counter[start][end] / (limit + 1)
+            _bezier_layout(p, x1, y1, x2, y2, line, pos)
         used_nodes.update(line)
 
     # Last check for debug.
@@ -77,7 +90,7 @@ cdef inline dict _line_polygon_layout(Graph g, double scale):
 
 
 @cython.cdivision
-cdef inline dict _regular_polygon_layout(OrderedSet vertices, double scale):
+cdef inline void _regular_polygon_layout(OrderedSet vertices, double scale, dict pos):
     """Return position of a regular polygon with radius 5.
     Start from bottom with clockwise.
     """
@@ -86,11 +99,9 @@ cdef inline dict _regular_polygon_layout(OrderedSet vertices, double scale):
     cdef int i
     cdef double angle = M_PI * 1.5
     cdef double angle_step = M_PI * 2 / edge_count
-    cdef dict pos = {}
     for i in range(edge_count):
         pos[vertices[i]] = (scale * cos(angle), scale * sin(angle))
         angle -= angle_step
-    return pos
 
 
 @cython.cdivision
@@ -132,9 +143,11 @@ cdef inline void _bezier_layout(
 
     count += 1
 
-    # TODO: Make direction from start and end nodes.
-    cdef double r = hypot(x2 - x1, x2 - x1) * 0.25
-    cdef double direction = (p - 0.5) * M_PI + atan2(y2 - y1, x2 - x1)
+    # Make direction from start and end nodes.
+    cdef double sx = x2 - x1
+    cdef double sy = y2 - y1
+    cdef double r = hypot(sx, sy) * 0.45
+    cdef double direction = (p + 0.5) * M_PI + atan2(sy, sx)
     cdef double cx1 = x1 + r * cos(direction)
     cdef double cy1 = y1 + r * sin(direction)
     cdef double cx2 = x2 + r * cos(-direction)
@@ -148,7 +161,7 @@ cdef inline void _bezier_layout(
         pos[vertices[i - 1]] = _bezier_curve(u, x1, y1, cx1, cy1, cx2, cy2, x2, y2)
 
 
-cdef inline double _bezier_curve(
+cdef inline tuple _bezier_curve(
     double u,
     double x1,
     double y1,
@@ -168,18 +181,14 @@ cdef inline double _bezier_curve(
     )
 
 
-cdef double _uv(double u, double v1, double v2) nogil:
+cdef inline double _uv(double u, double v1, double v2) nogil:
     """Return v1 + u * (v2 - v1)"""
     return v1 + u * (v2 - v1)
 
 
 @cython.cdivision
-cdef inline tuple _middle_point(tuple c1, tuple c2):
+cdef inline tuple _middle_point(double x1, double y1, double x2, double y2):
     """Return middle point of two coordinates."""
-    cdef double x1 = c1[0]
-    cdef double x2 = c2[0]
-    cdef double y1 = c1[1]
-    cdef double y2 = c2[1]
     return ((x1 + x2) / 2), ((y1 + y2) / 2)
 
 
@@ -228,6 +237,11 @@ cdef list _inner_lines(Graph g, OrderedSet o_loop):
         if _split_loop(o_loop, line, start, end):
             # 'o_loop' has been changed.
             return None
+
+        # Unified format of start node and end node.
+        if end < start:
+            end, start = start, end
+            line.reverse()
 
         # Line is ended.
         used_nodes.update(line)
@@ -299,7 +313,7 @@ cdef inline OrderedSet _external_loop(Graph g):
     if not cycles:
         raise ValueError(f"invalid graph has no any cycle: {g.edges}")
 
-    cdef c_map_int g_degrees = g.degrees()
+    cdef c_map[int, int] g_degrees = g.degrees()
     cdef OrderedSet c1, c2
     while len(cycles) > 1:
         c1 = cycles.pop()
@@ -397,7 +411,7 @@ cdef inline bint _merge_no_inter(
 ):
     """Merge function for the strategy without intersection."""
     cdef OrderedSet inter = OrderedSet.__new__(OrderedSet)
-    cdef c_map_int inter_map
+    cdef c_map[int, int] inter_map
 
     cdef int n1, n2
     for n1, n2 in g.edges:
