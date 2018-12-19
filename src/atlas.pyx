@@ -219,6 +219,43 @@ cdef inline set _dyad_patch(set edges, map_int &limit):
     return new_edges
 
 
+cdef inline void _test_graph(
+    set edges,
+    map_int &limit,
+    map_int *count,
+    list result,
+    uint no_degenerate
+):
+    """Test the graph."""
+    # Is all links connected.
+    if not _all_connected(limit, count[0]):
+        return
+    # Preliminary test.
+    cdef Graph g = Graph.__new__(Graph, edges)
+    # Is graph all connected.
+    if not g.is_connected():
+        return
+    # Is graph has cut link.
+    if g.has_cut_link():
+        return
+    # Is planar graph.
+    if not is_planar(g):
+        return
+
+    # Result graph.
+    g = Graph.__new__(Graph, _dyad_patch(edges, limit))
+    # Graph filter depending on degenerate option.
+    if no_degenerate == 0 and not g.is_degenerate():
+        return
+    elif no_degenerate == 1 and g.is_degenerate():
+        return
+    # Is graph repeated.
+    if _is_isomorphic(g, result):
+        return
+    # Collecting to result.
+    result.append(g)
+
+
 cdef void _synthesis(
     int node,
     list result,
@@ -235,7 +272,6 @@ cdef void _synthesis(
     cdef map_int *count
     # Combinations.
     cdef int b, d, next_node
-    cdef Graph g
     cdef tuple combine
     cdef tuple dyad
     cdef list branches = _picked_branch(node, limit, count_origin)
@@ -265,33 +301,7 @@ cdef void _synthesis(
         # Recursive or end.
         next_node = _feasible_link(limit, count[0])
         if next_node == -1:
-            # Is all links connected.
-            if not _all_connected(limit, count[0]):
-                continue
-            # Preliminary test.
-            g = Graph.__new__(Graph, edges)
-            # Is graph all connected.
-            if not g.is_connected():
-                continue
-            # Is graph has cut link.
-            if g.has_cut_link():
-                continue
-            # Is planar graph.
-            if not is_planar(g):
-                continue
-
-            # Result graph.
-            g = Graph.__new__(Graph, _dyad_patch(edges, limit))
-            # Graph filter depending on degenerate option.
-            if no_degenerate == 0 and not g.is_degenerate():
-                continue
-            elif no_degenerate == 1 and g.is_degenerate():
-                continue
-            # Is graph repeated.
-            if _is_isomorphic(g, result):
-                continue
-            # Collecting to result.
-            result.append(g)
+            _test_graph(edges, limit, count, result, no_degenerate)
         else:
             _synthesis(next_node, result, edges, limit, count[0], no_degenerate, stop_func)
 
