@@ -256,6 +256,29 @@ cdef inline void _test_graph(
     result.append(g)
 
 
+cdef void _insert_combine(
+    int node,
+    tuple combine,
+    set edges,
+    map_int *count,
+):
+    """Insert combinations."""
+    # Collecting to edges.
+    cdef int b, d
+    cdef tuple dyad
+    for dyad in combine:
+        b = node
+        for d in dyad:
+            if b < d:
+                edges.add((b , d))
+            else:
+                edges.add((d , b))
+            b = d
+        count[0][node] += 1
+        for d in dyad:
+            count[0][d] += 1
+
+
 cdef void _synthesis(
     int node,
     list result,
@@ -271,33 +294,25 @@ cdef void _synthesis(
     cdef map_int tmp
     cdef map_int *count
     # Combinations.
-    cdef int b, d, next_node
+    cdef int next_node
     cdef tuple combine
-    cdef tuple dyad
     cdef list branches = _picked_branch(node, limit, count_origin)
+    cdef bint one_case = len(branches) > 1
     for combine in branches:
         # Check if stop.
         if stop_func and stop_func():
             return
-        if len(branches) > 1:
+
+        if one_case:
             edges = edges_origin.copy()
             tmp = count_origin
             count = &tmp
         else:
             edges = edges_origin
             count = &count_origin
-        # Collecting to edges.
-        for dyad in combine:
-            b = node
-            for d in dyad:
-                if b < d:
-                    edges.add((b , d))
-                else:
-                    edges.add((d , b))
-                b = d
-            count[0][node] += 1
-            for d in dyad:
-                count[0][d] += 1
+
+        _insert_combine(node, combine, edges, count)
+
         # Recursive or end.
         next_node = _feasible_link(limit, count[0])
         if next_node == -1:
