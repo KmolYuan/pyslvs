@@ -256,7 +256,7 @@ cdef inline void _test_graph(
     result.append(g)
 
 
-cdef void _insert_combine(
+cdef inline void _insert_combine(
     int node,
     tuple combine,
     set edges,

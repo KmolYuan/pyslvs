@@ -66,7 +66,7 @@ int solve(
     // The current search direction
     double *s = new double[xLength];
     double **N = new double *[xLength];
-    for(int i = 0; i < xLength; i++)
+    for (int i = 0; i < xLength; i++)
         // The estimate of the Hessian inverse
         N[i] = new double[xLength];
     for (int i = 0; i < xLength; i++)
@@ -127,7 +127,7 @@ int solve(
             alpha3 = alpha2;
             f3 = f2;
             alpha2 = alpha2 / 2;
-            for(int i = 0; i < xLength; i++)
+            for (int i = 0; i < xLength; i++)
                 // calculate the new x
                 *param_ptr[i] = xold[i] + alpha2 * s[i];
             f2 = calc(cons, consLength);
@@ -222,7 +222,7 @@ int solve(
         // calculate all (1xn).(nxn)
         for (int i = 0; i < xLength; i++) {
             gammatDotN[i] = 0;
-            for(int j = 0; j < xLength; j++)
+            for (int j = 0; j < xLength; j++)
                 // This is gammatDotN transpose
                 gammatDotN[i] += gamma[j] * N[i][j];
         }
@@ -261,7 +261,7 @@ int solve(
         // Calculates
         for (int i = 0; i < xLength; i++) {
             s[i] = 0;
-            for(int j = 0; j < xLength; j++)
+            for (int j = 0; j < xLength; j++)
                 s[i] += -N[i][j] * gradnew[j];
         }
 
@@ -300,7 +300,7 @@ int solve(
         // Now reduce or lengthen alpha2 and alpha3 until the minimum is
         // Bracketed by the triplet f1>f2<f3
         while (f2 > f1 || f2 > f3)
-            if(f2 > f1) {
+            if (f2 > f1) {
                 // If f2 is greater than f1 then we shorten alpha2 and alpha3 closer to f1
                 // Effectively both are shortened by a factor of two.
                 alpha3 = alpha2;
@@ -317,7 +317,7 @@ int solve(
                 alpha2 = alpha3;
                 f2 = f3;
                 alpha3 *= 2;
-                for(int i = 0; i < xLength; i++)
+                for (int i = 0; i < xLength; i++)
                     // calculate the new x
                     *param_ptr[i] = xold[i] + alpha3 * s[i];
                 f3 = calc(cons, consLength);

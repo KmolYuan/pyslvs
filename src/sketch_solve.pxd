@@ -36,11 +36,11 @@ cdef extern from "solve.h" nogil:
         Point *center
         double *rad
 
-    enum ConstraintTypes "Constraint::Types":
+    enum ConstraintType:
         pass
 
     struct Constraint:
-        ConstraintTypes type
+        ConstraintType type
         Point *point1
         Point *point2
         Line *line1

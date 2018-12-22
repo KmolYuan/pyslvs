@@ -13,12 +13,12 @@ using namespace std;
 
 // Show coordinates.
 template<size_t N> inline void printpoints(Point (&points)[N]) {
-    for(int i = 0; i < (int)N; i++)
+    for (int i = 0; i < (int)N; i++)
         cout << "Point " << i << ": (" << *points[i].x << ", " << *points[i].y << ")" << endl;
 }
 
 
-int main(void) {
+int main() {
     // Input a parameter list.
     double parameters[] = {
         0, 0,
@@ -29,7 +29,7 @@ int main(void) {
     const int param_count = sizeof(parameters) / sizeof(*parameters);
     // Make a list of pointers of parameters.
     double **pparameters = new double *[param_count];
-    for(int i = 0; i < param_count; i++)
+    for (int i = 0; i < param_count; i++)
         pparameters[i] = &parameters[i];
     // Input a constant parameter list.
     double constants[] = {30, 10, 24};
@@ -69,7 +69,7 @@ int main(void) {
 
     double gradF[point_count] = {0};
     derivatives(pparameters, gradF, point_count, cons, cons_count);
-    for(int i = 0; i < point_count; i++)
+    for (int i = 0; i < point_count; i++)
         cout << "GradF[" << i << "]: " << gradF[i] << endl;
 
     return 0;

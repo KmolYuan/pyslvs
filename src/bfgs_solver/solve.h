@@ -47,64 +47,55 @@ struct Circle {
     double *rad;
 };
 
+enum ConstraintTypes {
+    // Geometric Constraint types
+    PointOnPoint,
+    PointToLine,
+    PointOnLine,
+    Horizontal,
+    Vertical,
+    InternalAngle,
+    RadiusValue,
+    TangentToArc,
+    TangentToCircle,
+    ArcRules,
+    P2PDistance,
+    P2PDistanceVert,
+    P2PDistanceHorz,
+    P2LDistance,
+    P2LDistanceVert,
+    P2LDistanceHorz,
+    LineLength,
+    EqualLegnth,
+    ArcRadius,
+    EqualRadiusArcs,
+    EqualRadiusCircles,
+    EqualRadiusCircArc,
+    ConcentricArcs,
+    ConcentricCircles,
+    ConcentricCircArc,
+    CircleRadius,
+    ExternalAngle,
+    Parallel,
+    Perpendicular,
+    Colinear,
+    PointOnCircle,
+    PointOnArc,
+    PointOnLineMidpoint,
+    PointOnArcMidpoint,
+    PointOnCircleQuad,
+    SymmetricPoints,
+    SymmetricLines,
+    SymmetricCircles,
+    SymmetricArcs,
+    LineInternalAngle,
+    LineExternalAngle,
+    // TODO: Velocity Constraint types
+    // TODO: Acceleration Constraint types
+};
+
 struct Constraint {
-
-    enum Types {
-        // Geometric Constraint types
-        PointOnPoint,
-        PointToLine,
-        PointOnLine,
-        Horizontal,
-        Vertical,
-        InternalAngle,
-        RadiusValue,
-        TangentToArc,
-        TangentToCircle,
-        ArcRules,
-        P2PDistance,
-        P2PDistanceVert,
-        P2PDistanceHorz,
-        P2LDistance,
-        P2LDistanceVert,
-        P2LDistanceHorz,
-        LineLength,
-        EqualLegnth,
-        ArcRadius,
-        EqualRadiusArcs,
-        EqualRadiusCircles,
-        EqualRadiusCircArc,
-        ConcentricArcs,
-        ConcentricCircles,
-        ConcentricCircArc,
-        CircleRadius,
-        ExternalAngle,
-        Parallel,
-        Perpendicular,
-        Colinear,
-        PointOnCircle,
-        PointOnArc,
-        PointOnLineMidpoint,
-        PointOnArcMidpoint,
-        PointOnCircleQuad,
-        SymmetricPoints,
-        SymmetricLines,
-        SymmetricCircles,
-        SymmetricArcs,
-        LineInternalAngle,
-        LineExternalAngle,
-        // Velocity Constraint types
-        CircularVelocity,
-        JointJointVelocity,
-        JointSliderVelocity,
-        SliderSliderVelocity,
-        // Acceleration Constraint types
-        CircularAcceleration,
-        JointJointAcceleration,
-        JointSliderAcceleration,
-        SliderSliderAcceleration,
-    };
-
-    Types type;
+    ConstraintTypes type;
     Point *point1, *point2;
     Line *line1, *line2, *SymLine;
     Circle *circle1, *circle2;
