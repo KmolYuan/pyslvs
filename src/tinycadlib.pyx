@@ -17,10 +17,9 @@ from libc.math cimport (
     cos,
     atan2,
     hypot,
+    isnan,
+    NAN,
 )
-# Not a number
-cdef double nan = float('nan')
-from numpy import isnan
 from pmks cimport VPoint
 from bfgs cimport vpoint_solving
 
@@ -88,15 +87,15 @@ cpdef tuple PLLP(
 
     # No solutions, the circles are separate.
     if d > L0 + L1:
-        return nan, nan
+        return NAN, NAN
 
     # No solutions because one circle is contained within the other.
     if d < abs(L0 - L1):
-        return nan, nan
+        return NAN, NAN
 
     # Circles are coincident and there are an infinite number of solutions.
     if d == 0 and L0 == L1:
-        return nan, nan
+        return NAN, NAN
     cdef double a = (L0 * L0 - L1 * L1 + d * d) / (2 * d)
     cdef double h = sqrt(L0 * L0 - a * a)
     cdef double xm = A.x + a * dx / d
@@ -127,7 +126,7 @@ cpdef tuple PLPP(
     cdef double d = A.distance(I)
     if d > L0:
         # No intersection.
-        return nan, nan
+        return NAN, NAN
     elif d == L0:
         # One intersection point.
         return I.x, I.y
@@ -202,8 +201,8 @@ cpdef void expr_parser(object exprs, dict data_dict):
         params_count = len(params)
 
         # We should unpack as C++'s way.
-        x = float('nan')
-        y = x
+        x = NAN
+        y = NAN
         if fun == 'PLAP':
             if params_count == 3:
                 x, y = PLAP(params[0], params[1], params[2])

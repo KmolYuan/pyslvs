@@ -12,9 +12,10 @@ email: pyslvs@gmail.com
 cimport cython
 from numpy import (
     array as np_array,
-    object as np_object,
     float32 as np_float32,
 )
+# Not a number and a large fitness. Infinity cannot be used for a chart.
+from libc.math cimport NAN, HUGE_VAL
 from numpy cimport ndarray
 from verify cimport Verification
 from tinycadlib cimport (
@@ -29,8 +30,45 @@ from tinycadlib cimport (
     str_before,
 )
 
-# A large fitness. Infinity can not used in chart.
-cdef double FAILURE = 9487945
+
+cdef Coordinate _from_formula(tuple expr, dict data_dict):
+    """Formulas using PLAP and PLLP."""
+    cdef str fun = expr[0]
+    cdef str p
+    cdef list params = []
+    for p in expr[2]:
+        if p == 'T':
+            params.append(True)
+        elif p == 'F':
+            params.append(False)
+        else:
+            params.append(data_dict[p])
+    cdef int params_count = len(params)
+
+    # We should unpack as C++'s way.
+    cdef double x = NAN
+    cdef double y = NAN
+    if fun == 'PLAP':
+        if params_count == 3:
+            x, y = PLAP(params[0], params[1], params[2])
+        elif params_count == 4:
+            x, y = PLAP(params[0], params[1], params[2], params[3])
+        elif params_count == 5:
+            x, y = PLAP(params[0], params[1], params[2], params[3], params[4])
+    elif fun == 'PLLP':
+        if params_count == 4:
+            x, y = PLLP(params[0], params[1], params[2], params[3])
+        elif params_count == 5:
+            x, y = PLLP(params[0], params[1], params[2], params[3], params[4])
+    elif fun == 'PLPP':
+        if params_count == 4:
+            x, y = PLPP(params[0], params[1], params[2], params[3])
+        elif params_count == 5:
+            x, y = PLPP(params[0], params[1], params[2], params[3], params[4])
+    elif fun == 'PXY':
+        if params_count == 3:
+            x, y = PXY(params[0], params[1], params[2])
+    return Coordinate(x, y)
 
 
 @cython.final
@@ -62,8 +100,8 @@ cdef class Planar(Verification):
         # [Coordinate(x0, y0), Coordinate(x1, y1), Coordinate(x2, y2), ...]
         cdef int i = 0
         cdef int target_count = len(mech_params['Target'])
-        self.target_names = ndarray(target_count, dtype=np_object)
-        self.target = ndarray(target_count, dtype=np_object)
+        self.target_names = ndarray(target_count, dtype=object)
+        self.target = ndarray(target_count, dtype=object)
         cdef double x, y
         cdef str name
         cdef list target
@@ -91,7 +129,7 @@ cdef class Planar(Verification):
         self.link_list = []
         self.driver_list = []
         self.follower_list = []
-        self.exprs = ndarray(len(exprs), dtype=np_object)
+        self.exprs = ndarray(len(exprs), dtype=object)
         cdef str expr, params, p
         for i, expr in enumerate(exprs):
             params = str_between(expr, '[', ']')
@@ -184,50 +222,11 @@ cdef class Planar(Verification):
 
     cdef inline ndarray get_path_array(self):
         """Create and return path array."""
-        cdef ndarray path = ndarray(len(self.target_names), dtype=np_object)
+        cdef ndarray path = ndarray(len(self.target_names), dtype=object)
         cdef int i
         for i in range(len(self.target_names)):
             path[i] = []
         return path
-
-    cdef Coordinate from_formula(self, tuple expr, dict data_dict):
-        """Formulas using PLAP and PLLP."""
-        cdef str fun = expr[0]
-        cdef str p
-        cdef list params = []
-        for p in expr[2]:
-            if p == 'T':
-                params.append(True)
-            elif p == 'F':
-                params.append(False)
-            else:
-                params.append(data_dict[p])
-        cdef int params_count = len(params)
-
-        # We should unpack as C++'s way.
-        cdef double x = float('nan')
-        cdef double y = x
-        if fun == 'PLAP':
-            if params_count == 3:
-                x, y = PLAP(params[0], params[1], params[2])
-            elif params_count == 4:
-                x, y = PLAP(params[0], params[1], params[2], params[3])
-            elif params_count == 5:
-                x, y = PLAP(params[0], params[1], params[2], params[3], params[4])
-        elif fun == 'PLLP':
-            if params_count == 4:
-                x, y = PLLP(params[0], params[1], params[2], params[3])
-            elif params_count == 5:
-                x, y = PLLP(params[0], params[1], params[2], params[3], params[4])
-        elif fun == 'PLPP':
-            if params_count == 4:
-                x, y = PLPP(params[0], params[1], params[2], params[3])
-            elif params_count == 5:
-                x, y = PLPP(params[0], params[1], params[2], params[3], params[4])
-        elif fun == 'PXY':
-            if params_count == 3:
-                x, y = PXY(params[0], params[1], params[2])
-        return Coordinate(x, y)
 
     cdef double fitness(self, ndarray[double, ndim=1] v):
         """Chromosome format: (decided by upper and lower)
@@ -254,9 +253,9 @@ cdef class Planar(Verification):
                 test_dict[f'a{j}'] = radians(v[self.var_count + i * len(self.driver_list) + j])
             for e in self.exprs:
                 # target
-                target_coord = self.from_formula(e, test_dict)
+                target_coord = _from_formula(e, test_dict)
                 if target_coord.is_nan():
-                    return FAILURE
+                    return HUGE_VAL
                 else:
                     test_dict[e[1]] = target_coord
             for i, name in enumerate(self.target_names):
@@ -270,7 +269,7 @@ cdef class Planar(Verification):
                 test_dict[constraint[2]],
                 test_dict[constraint[3]]
             ):
-                return FAILURE
+                return HUGE_VAL
         # swap
         cdef list errors
         cdef Coordinate c
@@ -289,7 +288,7 @@ cdef class Planar(Verification):
             final_dict[f'a{j}'] = radians(v[self.var_count + j])
         for e in self.exprs:
             # target
-            final_dict[e[1]] = self.from_formula(e, final_dict)
+            final_dict[e[1]] = _from_formula(e, final_dict)
         for k, value in final_dict.items():
             if type(value) == Coordinate:
                 final_dict[k] = (value.x, value.y)
