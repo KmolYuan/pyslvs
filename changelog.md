@@ -6,6 +6,7 @@ Version 18.12
 
 + Outer loop layout for atlas.
 + Add "no global interpreter lock" decorator for pure C functions.
++ Added "edges_view" and "graph2vpoints" functions.
 
 Version 18.11
 ===

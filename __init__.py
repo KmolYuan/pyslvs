@@ -44,7 +44,7 @@ from .tinycadlib import (
     expr_solving,
     data_collecting,
 )
-from . import verify
+from .verify import Verification
 from .planarlinkage import Planar
 from .rga import Genetic
 from .firefly import Firefly
@@ -64,6 +64,8 @@ from ._parser import (
     color_rgb,
     parse_params,
     parse_vpoints,
+    edges_view,
+    graph2vpoints,
     HAS_PYGMENTS,
 )
 from .examples import example_list
@@ -100,9 +102,9 @@ __all__ = [
     'color_rgb',
     'parse_params',
     'parse_vpoints',
+    'edges_view',
+    'graph2vpoints',
     'PMKSLexer',
     'example_list',
-
-    # Modules
-    'verify',
+    'Verification',
 ]

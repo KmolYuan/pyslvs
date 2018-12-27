@@ -14,15 +14,18 @@ __email__ = "pyslvs@gmail.com"
 from typing import (
     Tuple,
     List,
+    Dict,
+    Iterator,
     Union,
 )
 from lark import Lark, Transformer
 from lark.lexer import Token
-
 try:
     from .pmks import VPoint
+    from .graph import Graph
 except ImportError:
     from pmks import VPoint
+    from graph import Graph
 
 # Color dictionary.
 _color_list = {
@@ -213,6 +216,44 @@ def parse_params(expr: str) -> List[List[Union[str, float]]]:
 def parse_vpoints(expr: str) -> List[VPoint]:
     """Parse as VPoints."""
     return _PMKSVPoints().transform(_pmks_grammar.parse(expr))
+
+
+def edges_view(graph: Graph) -> Iterator[Tuple[int, Tuple[int, int]]]:
+    """This generator can keep the numbering be consistent."""
+    yield from enumerate(sorted(tuple(sorted(e)) for e in graph.edges))
+
+
+def graph2vpoints(
+    graph: Graph,
+    pos: Dict[int, Tuple[float, float]],
+    cus: Dict[str, int],
+    same: Dict[int, int]
+) -> List[VPoint]:
+    """Change NetworkX graph into VPoints."""
+    same_r = {}
+    for k, v in same.items():
+        if v in same_r:
+            same_r[v].append(k)
+        else:
+            same_r[v] = [k]
+    tmp_list = []
+    ev = dict(edges_view(graph))
+    for i, e in ev.items():
+        if i in same:
+            # Do not connect to anyone!
+            continue
+        e = set(e)
+        if i in same_r:
+            for j in same_r[i]:
+                e.update(set(ev[j]))
+        link = ", ".join((str(l) if l else 'ground') for l in e)
+        x, y = pos[i]
+        tmp_list.append(VPoint.r_joint(link, x, y))
+    for name in sorted(cus):
+        link = str(cus[name]) if cus[name] else 'ground'
+        x, y = pos[int(name.replace('P', ''))]
+        tmp_list.append(VPoint.r_joint(link, x, y))
+    return tmp_list
 
 
 try:
