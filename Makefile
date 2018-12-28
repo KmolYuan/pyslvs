@@ -5,6 +5,10 @@
 # license: AGPL
 # email: pyslvs@gmail.com
 
+ifeq ($(OS),Windows_NT)
+    SHELL = cmd
+endif
+
 all: build
 
 # Submodule files
