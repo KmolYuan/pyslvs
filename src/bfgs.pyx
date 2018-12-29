@@ -41,50 +41,23 @@ from sketch_solve cimport (
 from pmks cimport VJoint, VPoint
 
 
-@cython.cdivision
-cdef inline double _radians(double degree):
-    """Deg to rad."""
-    return degree / 180 * M_PI
-
-
-cdef inline tuple _sorted_pair(int a, int b):
-    """A sorted pair."""
-    return (a, b) if a < b else (b, a)
-
-
-cpdef list vpoint_solving(
+cdef inline bint _measure_parameter(
     object vpoints,
-    object inputs = None,
-    object data_dict = None
+    dict data_dict,
+    map[int, int] &sliders,
+    double **parameters,
+    double ***parameters_ptr,
+    double **constants,
+    int *params_count,
+    Point **points,
+    Point **slider_bases,
+    Point **slider_slots
 ):
-    """Solving function from vpoint list.
-
-    + vpoints: Sequence[VPoint]
-    + inputs: [(b0, d0, a0), (b1, d1, a1), ...]
-
-    Known coordinates import from data_dict.
-    + data_dict: {0: (10.0, 20.0), ..., (0, 2): 30.0, ...}
-    """
-    # Blank sequences.
-    if inputs is None:
-        inputs = []
-    if data_dict is None:
-        data_dict = {}
-
-    # Sort pairs in data_dict.
-    cdef object k
-    for k in data_dict:
-        if type(k) == tuple:
-            data_dict[_sorted_pair(k[0], k[1])] = data_dict.pop(k)
-    cdef dict vlinks = {}
-
+    """Calculate the size of pointers of parameter and point type."""
     # Pre-count number of parameters.
-    cdef int params_count = 0
     cdef int constants_count = 0
     cdef int slider_p_count = 0
     cdef int slider_rp_count = 0
-    # sliders = {p_num: base_num}
-    cdef map[int, int] sliders
 
     cdef int i
     cdef VPoint vpoint
@@ -102,12 +75,12 @@ cpdef list vpoint_solving(
                 if vpoint.pin_grounded():
                     constants_count += 2
                 else:
-                    params_count += 2
+                    params_count[0] += 2
         if vpoint.type in {VJoint.P, VJoint.RP}:
             if i in data_dict:
                 # Known coordinates are not slider.
                 continue
-            params_count += 4
+            params_count[0] += 4
             sliders[i] = slider_p_count + slider_rp_count
             if vpoint.type == VJoint.P:
                 slider_p_count += 1
@@ -115,26 +88,92 @@ cpdef list vpoint_solving(
                 slider_rp_count += 1
 
     # Avoid no parameters.
-    if not params_count:
-        return []
+    if not params_count[0]:
+        return False
 
-    cdef double *parameters = <double *>malloc(params_count * sizeof(double))
-    cdef double **pparameters = <double **>malloc(params_count * sizeof(double *))
-    cdef double *constants = <double *>malloc(constants_count * sizeof(double))
-    cdef Point *points = <Point *>malloc(len(vpoints) * sizeof(Point))
+    parameters[0] = <double *>malloc(params_count[0] * sizeof(double))
+    parameters_ptr[0] = <double **>malloc(params_count[0] * sizeof(double *))
+    constants[0] = <double *>malloc(constants_count * sizeof(double))
+    points[0] = <Point *>malloc(len(vpoints) * sizeof(Point))
     # Slider data
     cdef int slider_count = slider_p_count + slider_rp_count
-    cdef Point *slider_bases = NULL
-    cdef Point *slider_slots = NULL
     if not sliders.empty():
         # Base point and slot point to determine a slot line.
-        slider_bases = <Point *>malloc(slider_count * sizeof(Point))
-        slider_slots = <Point *>malloc(slider_count * sizeof(Point))
+        slider_bases[0] = <Point *>malloc(slider_count * sizeof(Point))
+        slider_slots[0] = <Point *>malloc(slider_count * sizeof(Point))
+
+    return True
+
+
+@cython.cdivision
+cdef inline double _radians(double degree):
+    """Degrees to radians."""
+    return degree / 180 * M_PI
+
+
+cdef inline tuple _sorted_pair(int a, int b):
+    """A sorted pair."""
+    return (a, b) if a < b else (b, a)
+
+
+cpdef list vpoint_solving(
+    object vpoints,
+    object inputs = None,
+    dict data_dict = None
+):
+    """Solving function from vpoint list.
+
+    + vpoints: Sequence[VPoint]
+    + inputs: [(b0, d0, a0), (b1, d1, a1), ...]
+
+    Known coordinates import from data_dict.
+    + data_dict: {0: (10.0, 20.0), ..., (0, 2): 30.0, ...}
+    """
+    # Blank sequences.
+    if inputs is None:
+        inputs = []
+    if data_dict is None:
+        data_dict = {}
+
+    # Sort the pairs in data_dict.
+    cdef object k
+    for k in data_dict:
+        if type(k) == tuple:
+            data_dict[_sorted_pair(k[0], k[1])] = data_dict.pop(k)
+
+    # sliders = {p_num: base_num}
+    cdef map[int, int] sliders
+    cdef double *parameters = NULL
+    cdef double **parameters_ptr = NULL
+    cdef double *constants = NULL
+    cdef int params_count = 0
+    cdef Point *points = NULL
+    cdef Point *slider_bases = NULL
+    cdef Point *slider_slots = NULL
+
+    if not _measure_parameter(
+        vpoints,
+        data_dict,
+        sliders,
+        &parameters,
+        &parameters_ptr,
+        &constants,
+        &params_count,
+        &points,
+        &slider_bases,
+        &slider_slots
+    ):
+        return []
+
+    cdef dict vlinks = {}
 
     # Create parameters and link data.
-    slider_count = 0
+    cdef int slider_count = 0
     cdef int a = 0
     cdef int b = 0
+
+    cdef int i
+    cdef VPoint vpoint
     cdef str vlink
     cdef double offset
     for i, vpoint in enumerate(vpoints):
@@ -164,9 +203,9 @@ cpdef list vpoint_solving(
                 # Slot point (slot) is movable.
                 parameters[a] = vpoint.c[0][0] + cos(vpoint.angle)
                 parameters[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
-                pparameters[a] = parameters + a
-                pparameters[a + 1] = parameters + a + 1
-                slider_slots[slider_count] = [pparameters[a], pparameters[a + 1]]
+                parameters_ptr[a] = parameters + a
+                parameters_ptr[a + 1] = parameters + a + 1
+                slider_slots[slider_count] = [parameters_ptr[a], parameters_ptr[a + 1]]
                 a += 2
                 slider_count += 1
                 # Pin is movable.
@@ -175,9 +214,9 @@ cpdef list vpoint_solving(
                     offset = 0.1 if vpoint.offset() > 0 else -0.1
                     parameters[a] += offset
                     parameters[a + 1] += offset
-                pparameters[a] = parameters + a
-                pparameters[a + 1] = parameters + a + 1
-                points[i] = [pparameters[a], pparameters[a + 1]]
+                parameters_ptr[a] = parameters + a
+                parameters_ptr[a + 1] = parameters + a + 1
+                points[i] = [parameters_ptr[a], parameters_ptr[a + 1]]
                 a += 2
             else:
                 # Point is fixed.
@@ -193,16 +232,16 @@ cpdef list vpoint_solving(
             if vpoint.type in {VJoint.P, VJoint.RP}:
                 # Base point (slot) is movable.
                 parameters[a], parameters[a + 1] = vpoint.c[0]
-                pparameters[a] = parameters + a
-                pparameters[a + 1] = parameters + a + 1
-                slider_bases[slider_count] = [pparameters[a], pparameters[a + 1]]
+                parameters_ptr[a] = parameters + a
+                parameters_ptr[a + 1] = parameters + a + 1
+                slider_bases[slider_count] = [parameters_ptr[a], parameters_ptr[a + 1]]
                 a += 2
                 # Slot point (slot) is movable.
                 parameters[a] = vpoint.c[0][0] + cos(vpoint.angle)
                 parameters[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
-                pparameters[a] = parameters + a
-                pparameters[a + 1] = parameters + a + 1
-                slider_slots[slider_count] = [pparameters[a], pparameters[a + 1]]
+                parameters_ptr[a] = parameters + a
+                parameters_ptr[a + 1] = parameters + a + 1
+                slider_slots[slider_count] = [parameters_ptr[a], parameters_ptr[a + 1]]
                 a += 2
                 slider_count += 1
                 if vpoint.pin_grounded():
@@ -216,16 +255,16 @@ cpdef list vpoint_solving(
                         offset = 0.1 if vpoint.offset() > 0 else -0.1
                         parameters[a] += offset
                         parameters[a + 1] += offset
-                    pparameters[a] = parameters + a
-                    pparameters[a + 1] = parameters + a + 1
-                    points[i] = [pparameters[a], pparameters[a + 1]]
+                    parameters_ptr[a] = parameters + a
+                    parameters_ptr[a + 1] = parameters + a + 1
+                    points[i] = [parameters_ptr[a], parameters_ptr[a + 1]]
                     a += 2
             else:
                 # Point is movable.
                 parameters[a], parameters[a + 1] = vpoint.c[0]
-                pparameters[a] = parameters + a
-                pparameters[a + 1] = parameters + a + 1
-                points[i] = [pparameters[a], pparameters[a + 1]]
+                parameters_ptr[a] = parameters + a
+                parameters_ptr[a + 1] = parameters + a + 1
+                points[i] = [parameters_ptr[a], parameters_ptr[a + 1]]
                 a += 2
 
     # Pre-count number of distance constraints.
@@ -471,7 +510,7 @@ cpdef list vpoint_solving(
         c += 1
 
     # Solve
-    if solve(pparameters, params_count, cons, cons_count, Rough) != Succsess:
+    if solve(parameters_ptr, params_count, cons, cons_count, Rough) != Succsess:
         raise RuntimeError("No valid Solutions were found from this start point")
 
     """solved_points: List[
@@ -492,7 +531,7 @@ cpdef list vpoint_solving(
             ))
 
     free(parameters)
-    free(pparameters)
+    free(parameters_ptr)
     free(constants)
     free(points)
     free(slider_bases)

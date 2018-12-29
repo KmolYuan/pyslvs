@@ -10,4 +10,4 @@ email: pyslvs@gmail.com
 """
 
 
-cpdef list vpoint_solving(object vpoints, object inputs = *, object data_dict = *)
+cpdef list vpoint_solving(object vpoints, object inputs = *, dict data_dict = *)
