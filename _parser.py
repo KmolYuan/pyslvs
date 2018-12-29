@@ -22,10 +22,10 @@ from typing import (
 from lark import Lark, Transformer
 from lark.lexer import Token
 try:
-    from .pmks import VPoint
+    from .pmks import VJoint, VPoint
     from .graph import Graph
 except ImportError:
-    from pmks import VPoint
+    from pmks import VJoint, VPoint
     from graph import Graph
 
 # Color dictionary.
@@ -191,9 +191,15 @@ class _PMKSVPoints(_PMKSParams):
 
     """Using same grammar return as VPoints."""
 
-    def type(self, n: List[Token]) -> int:
+    def type(self, n: List[Token]) -> VJoint:
         """Return as int type."""
-        return ('R', 'P', 'RP').index(str(n[0]))
+        type_str = str(n[0])
+        if type_str == 'R':
+            return VJoint.R
+        elif type_str == 'P':
+            return VJoint.P
+        elif type_str == 'RP':
+            return VJoint.RP
 
     def joint(self, args: List[Token]) -> VPoint:
         """Same as parent."""

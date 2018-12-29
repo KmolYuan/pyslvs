@@ -156,7 +156,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
                         link_ for link_ in vpoint_.links
                         if (link_ not in vpoint.links)
                     ]),
-                    2,
+                    VJoint.RP,
                     vpoint.angle,
                     vpoint_.colorSTR,
                     vpoint_.x,

@@ -67,23 +67,12 @@ cdef class VPoint:
     @staticmethod
     def r_joint(links: str, x: double, y: double) -> VPoint:
         """Create by coordinate."""
-        return VPoint(links, 0, 0., '', x, y)
+        return VPoint.__new__(VPoint, links, VJoint.R, 0., '', x, y)
 
     @staticmethod
-    def slider_joint(links: str, type_int: int, angle: double, x: double, y: double) -> VPoint:
+    def slider_joint(links: str, type_int: VJoint, angle: double, x: double, y: double) -> VPoint:
         """Create by coordinate."""
-        return VPoint(links, type_int, angle, '', x, y)
-
-    def __reduce__(self):
-        """Reduce method."""
-        return (VPoint, (
-            ", ".join(self.links),
-            self.type,
-            self.angle,
-            self.colorSTR,
-            self.x,
-            self.y
-        ))
+        return VPoint.__new__(VPoint, links, type_int, angle, '', x, y)
 
     def __copy__(self) -> VPoint:
         """Copy method."""
@@ -98,7 +87,7 @@ cdef class VPoint:
         vpoint.move(self.c[0], self.c[1])
         return vpoint
 
-    def copy(self) -> VPoint:
+    cpdef VPoint copy(self):
         """Copy method of Python."""
         return self.__copy__()
 
@@ -283,7 +272,7 @@ cdef class VPoint:
 
     def __repr__(self) -> str:
         """Use to generate script."""
-        return f"VPoint({self.links}, {self.type}, {self.angle}, {list(self.c)})"
+        return f"VPoint({self.links}, {int(self.type)}, {self.angle}, {list(self.c)})"
 
 
 @cython.final

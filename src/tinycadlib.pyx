@@ -345,7 +345,7 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
                         link_ for link_ in vpoint_.links
                         if (link_ not in vpoint.links)
                     ]),
-                    2,
+                    VJoint.RP,
                     vpoint.angle,
                     vpoint_.colorSTR,
                     vpoint_.cx,

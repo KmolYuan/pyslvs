@@ -15,7 +15,9 @@ from numpy cimport ndarray
 cpdef enum VJoint:
     # Joint types.
     # Actually "class VJoint(IntEnum)" in Python but "enum" in C++.
-    R, P, RP
+    R  # Rotate pair
+    P  # Prismatic pair
+    RP  # Rotate and prismatic pair
 
 
 cdef class VPoint:
@@ -33,13 +35,16 @@ cdef class VPoint:
     cdef double __offset
     cdef bint __has_offset
 
+    # Copy method
+    cpdef VPoint copy(self)
+
     # Set values
     cpdef void move(self, tuple c1, tuple c2 = *) except *
     cpdef void rotate(self, double)
     cpdef void set_offset(self, double)
     cpdef void disable_offset(self)
 
-    # Get or calculate values.
+    # Get or calculate values
     cpdef double distance(self, VPoint p)
     cpdef bint has_offset(self)
     cpdef double offset(self)
