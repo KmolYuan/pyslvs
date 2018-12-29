@@ -243,10 +243,12 @@ cdef inline void _measure_distance_cons(
     for vlink in vlinks:
         if len(vlinks[vlink]) < 2:
             continue
+
         a = vlinks[vlink][0]
         b = vlinks[vlink][1]
         if (a not in data_dict) or (b not in data_dict):
             cons_count[0] += 1
+
         for c in vlinks[vlink][2:]:
             if c in data_dict:
                 # Known coordinates.
@@ -266,15 +268,14 @@ cdef inline void _measure_slider_cons(
     Line **slider_lines
 ):
     """Pre-count number of slider constraints."""
-    cdef int a, b
-    cdef int f1
+    cdef int a, b, f1
     cdef str vlink
-    cdef int c = 0
-    cdef int d = 0
+    cdef int line_count = 0
+    cdef int angle_count = 0
     cdef int slider_offset_count = 0
     for a, b in sliders:
-        c += 1
-        d += 1
+        line_count += 1
+        angle_count += 1
         if vpoints[a].grounded():
             cons_count[0] += 2
             if vpoints[a].has_offset():
@@ -288,20 +289,21 @@ cdef inline void _measure_slider_cons(
                     if len(vlinks[vlink]) < 2:
                         # If no any friend.
                         continue
-                c += 1
+                line_count += 1
                 cons_count[0] += 2
                 if vpoints[a].has_offset():
                     cons_count[0] += 1
                     if vpoints[a].offset():
                         slider_offset_count += 1
+
         if vpoints[a].type == VJoint.P:
             cons_count[0] += 1
-            c += 1
-            d += 1
+            line_count += 1
+            angle_count += 1
 
     if not sliders.empty():
-        slider_lines[0] = <Line *>malloc(c * sizeof(Line))
-        cons_angles[0] = <double *>malloc(d * sizeof(double))
+        slider_lines[0] = <Line *>malloc(line_count * sizeof(Line))
+        cons_angles[0] = <double *>malloc(angle_count * sizeof(double))
     if slider_offset_count:
         slider_offset[0] = <double *>malloc(slider_offset_count * sizeof(double))
 
@@ -325,6 +327,215 @@ cdef inline void _measure_angle_cons(
         angles[0] = <double *>malloc(input_count * sizeof(double))
         lines[0] = <Line *>malloc(input_count * sizeof(Line))
         cons_count[0] += input_count
+
+
+cdef inline void _distance_cons(
+    object vpoints,
+    dict data_dict,
+    dict vlinks,
+    map[int, int] &sliders,
+    int *con_index,
+    double *distances,
+    Point *points,
+    Point *slider_bases,
+    Constraint *cons
+):
+    """Create distance constraints of each link."""
+    cdef int a, b, c, d
+    cdef str vlink
+    cdef Point *p1
+    cdef Point *p2
+    cdef tuple pair
+    for vlink in vlinks:
+        if len(vlinks[vlink]) < 2:
+            continue
+
+        a = vlinks[vlink][0]
+        b = vlinks[vlink][1]
+        if (a not in data_dict) or (b not in data_dict):
+            distances[con_index[0]] = vpoints[a].distance(vpoints[b])
+            if a in data_dict:
+                p1 = points + a
+            elif vpoints[a].is_slot_link(vlink):
+                p1 = slider_bases + sliders[a]
+            else:
+                p1 = points + a
+            if b in data_dict:
+                p2 = points + b
+            elif vpoints[b].is_slot_link(vlink):
+                p2 = slider_bases + sliders[b]
+            else:
+                p2 = points + b
+            cons[con_index[0]] = P2PDistanceConstraint(p1, p2, distances + con_index[0])
+            con_index[0] += 1
+
+        for c in vlinks[vlink][2:]:
+            if c in data_dict:
+                # Known coordinates.
+                continue
+            for d in (a, b):
+                pair = _sorted_pair(c, d)
+                if pair in data_dict:
+                    distances[con_index[0]] = data_dict[pair]
+                else:
+                    distances[con_index[0]] = vpoints[c].distance(vpoints[d])
+                if vpoints[c].is_slot_link(vlink):
+                    p1 = slider_bases + sliders[c]
+                else:
+                    p1 = points + c
+                if d in data_dict:
+                    p2 = points + d
+                elif vpoints[d].is_slot_link(vlink):
+                    p2 = slider_bases + sliders[d]
+                else:
+                    p2 = points + d
+                cons[con_index[0]] = P2PDistanceConstraint(p1, p2, distances + con_index[0])
+                con_index[0] += 1
+
+
+cdef inline void _slider_cons(
+    object vpoints,
+    dict vlinks,
+    map[int, int] &sliders,
+    int *con_index,
+    double *cons_angles,
+    double *slider_offset,
+    Point *points,
+    Point *slider_bases,
+    Point *slider_slots,
+    Line *slider_lines,
+    Constraint *cons
+):
+    """Add slider constraints."""
+    # i: Constraint number.
+    # c: Slider line number.
+    # d: Angle digit number.
+    cdef int c = 0
+    cdef int d = 0
+    cdef int slider_offset_count = 0
+
+    cdef int a, b, f1
+    cdef str vlink
+    cdef Point *p1
+    cdef Point *p2
+    cdef Line *slider_slot
+    cdef VPoint vpoint
+    for a, b in sliders:
+        # Base point.
+        vpoint = vpoints[a]
+        p1 = points + a
+        # Base slot.
+        slider_lines[c] = [slider_bases + b, slider_slots + b]
+        slider_slot = slider_lines + c
+        if vpoint.grounded():
+            # Slot is grounded.
+            cons_angles[d] = _radians(vpoint.angle)
+            cons[con_index[0]] = LineInternalAngleConstraint(slider_slot, cons_angles + d)
+            con_index[0] += 1
+            cons[con_index[0]] = PointOnLineConstraint(p1, slider_slot)
+            if vpoint.has_offset():
+                con_index[0] += 1
+                if vpoint.offset():
+                    slider_offset[slider_offset_count] = vpoint.offset()
+                    cons[con_index[0]] = P2PDistanceConstraint(
+                        slider_bases + b,
+                        p1,
+                        slider_offset + slider_offset_count
+                    )
+                    slider_offset_count += 1
+                else:
+                    cons[con_index[0]] = PointOnPointConstraint(slider_bases + b, p1)
+        else:
+            # Slider between links.
+            for vlink in vpoint.links[:1]:
+                # A base link friend.
+                f1 = vlinks[vlink][0]
+                if f1 == a:
+                    if len(vlinks[vlink]) < 2:
+                        # If no any friend.
+                        continue
+                    f1 = vlinks[vlink][1]
+                c += 1
+                if vpoints[f1].is_slot_link(vlink):
+                    # f1 is a slider, and it is be connected with slot link.
+                    p2 = slider_bases + sliders[f1]
+                else:
+                    # f1 is a R joint or it is not connected with slot link.
+                    p2 = points + f1
+                slider_lines[c] = [slider_bases + b, p2]
+                cons_angles[d] = _radians(vpoint.slope_angle(vpoints[f1]) - vpoint.angle)
+                cons[con_index[0]] = InternalAngleConstraint(
+                    slider_slot,
+                    slider_lines + c,
+                    cons_angles + d
+                )
+                con_index[0] += 1
+                cons[con_index[0]] = PointOnLineConstraint(p1, slider_slot)
+
+                if not vpoint.has_offset():
+                    continue
+
+                con_index[0] += 1
+                if vpoint.offset():
+                    slider_offset[slider_offset_count] = vpoint.offset()
+                    cons[con_index[0]] = P2PDistanceConstraint(
+                        slider_bases + b,
+                        p1,
+                        slider_offset + slider_offset_count
+                    )
+                    slider_offset_count += 1
+                else:
+                    cons[con_index[0]] = PointOnPointConstraint(slider_bases + b, p1)
+        d += 1
+        c += 1
+        con_index[0] += 1
+        if vpoint.type != VJoint.P:
+            continue
+
+        for vlink in vpoint.links[1:]:
+            # A base link friend.
+            f1 = vlinks[vlink][0]
+            if f1 == a:
+                if len(vlinks[vlink]) < 2:
+                    # If no any friend.
+                    continue
+                f1 = vlinks[vlink][1]
+            if vpoints[f1].is_slot_link(vlink):
+                # f1 is a slider, and it is be connected with slot link.
+                p2 = slider_bases + sliders[f1]
+            else:
+                # f1 is a R joint or it is not connected with slot link.
+                p2 = points + f1
+            slider_lines[c] = [p1, p2]
+            cons_angles[d] = _radians(vpoint.slope_angle(vpoints[f1]) - vpoint.angle)
+            cons[con_index[0]] = InternalAngleConstraint(
+                slider_slot,
+                slider_lines + c,
+                cons_angles + d
+            )
+            d += 1
+            c += 1
+            con_index[0] += 1
+
+
+cdef inline void _angle_cons(
+    object inputs,
+    int *con_index,
+    double *angles,
+    Point *points,
+    Line *lines,
+    Constraint *cons
+):
+    """Add angle constraints for input angles."""
+    cdef int i, b, d
+    cdef double angle
+    for i, (b, d, angle) in enumerate(inputs):
+        if b == d:
+            continue
+        lines[i] = [points + b, points + d]
+        angles[i] = _radians(angle)
+        cons[con_index[0]] = LineInternalAngleConstraint(lines + i, angles + i)
+        con_index[0] += 1
 
 
 @cython.cdivision
@@ -431,176 +642,35 @@ cpdef list vpoint_solving(
     # Pre-count number of constraints.
     cdef Constraint *cons = <Constraint *>malloc(cons_count * sizeof(Constraint))
 
-    # Create distance constraints of each link.
-    cdef int i = 0
-    cdef int a, b, c, d
-    cdef str vlink
-    cdef Point *p1
-    cdef Point *p2
-    cdef tuple pair
-    for vlink in vlinks:
-        if len(vlinks[vlink]) < 2:
-            continue
-        a = vlinks[vlink][0]
-        b = vlinks[vlink][1]
-        if (a not in data_dict) or (b not in data_dict):
-            distances[i] = vpoints[a].distance(vpoints[b])
-            if a in data_dict:
-                p1 = points + a
-            elif vpoints[a].is_slot_link(vlink):
-                p1 = slider_bases + sliders[a]
-            else:
-                p1 = points + a
-            if b in data_dict:
-                p2 = points + b
-            elif vpoints[b].is_slot_link(vlink):
-                p2 = slider_bases + sliders[b]
-            else:
-                p2 = points + b
-            cons[i] = P2PDistanceConstraint(p1, p2, distances + i)
-            i += 1
-        for c in vlinks[vlink][2:]:
-            if c in data_dict:
-                # Known coordinates.
-                continue
-            for d in (a, b):
-                pair = _sorted_pair(c, d)
-                if pair in data_dict:
-                    distances[i] = data_dict[pair]
-                else:
-                    distances[i] = vpoints[c].distance(vpoints[d])
-                if vpoints[c].is_slot_link(vlink):
-                    p1 = slider_bases + sliders[c]
-                else:
-                    p1 = points + c
-                if d in data_dict:
-                    p2 = points + d
-                elif vpoints[d].is_slot_link(vlink):
-                    p2 = slider_bases + sliders[d]
-                else:
-                    p2 = points + d
-                cons[i] = P2PDistanceConstraint(p1, p2, distances + i)
-                i += 1
+    cdef int con_index = 0
 
-    # Add slider constraints.
-    # i: Constraint number.
-    # c: Slider line number.
-    # d: Angle digit number.
-    c = 0
-    d = 0
-    cdef int f1
-    cdef int slider_offset_count = 0
-    cdef Line *slider_slot
-    cdef VPoint vpoint
-    for a, b in sliders:
-        # Base point.
-        vpoint = vpoints[a]
-        p1 = points + a
-        # Base slot.
-        slider_lines[c] = [slider_bases + b, slider_slots + b]
-        slider_slot = slider_lines + c
-        if vpoint.grounded():
-            # Slot is grounded.
-            cons_angles[d] = _radians(vpoint.angle)
-            cons[i] = LineInternalAngleConstraint(slider_slot, cons_angles + d)
-            i += 1
-            cons[i] = PointOnLineConstraint(p1, slider_slot)
-            if vpoint.has_offset():
-                i += 1
-                if vpoint.offset():
-                    slider_offset[slider_offset_count] = vpoint.offset()
-                    cons[i] = P2PDistanceConstraint(
-                        slider_bases + b,
-                        p1,
-                        slider_offset + slider_offset_count
-                    )
-                    slider_offset_count += 1
-                else:
-                    cons[i] = PointOnPointConstraint(slider_bases + b, p1)
-        else:
-            # Slider between links.
-            for vlink in vpoint.links[:1]:
-                # A base link friend.
-                f1 = vlinks[vlink][0]
-                if f1 == a:
-                    if len(vlinks[vlink]) < 2:
-                        # If no any friend.
-                        continue
-                    f1 = vlinks[vlink][1]
-                c += 1
-                if vpoints[f1].is_slot_link(vlink):
-                    # f1 is a slider, and it is be connected with slot link.
-                    p2 = slider_bases + sliders[f1]
-                else:
-                    # f1 is a R joint or it is not connected with slot link.
-                    p2 = points + f1
-                slider_lines[c] = [slider_bases + b, p2]
-                cons_angles[d] = _radians(vpoint.slope_angle(vpoints[f1]) - vpoint.angle)
-                cons[i] = InternalAngleConstraint(
-                    slider_slot,
-                    slider_lines + c,
-                    cons_angles + d
-                )
-                i += 1
-                cons[i] = PointOnLineConstraint(p1, slider_slot)
+    _distance_cons(
+        vpoints,
+        data_dict,
+        vlinks,
+        sliders,
+        &con_index,
+        distances,
+        points,
+        slider_bases,
+        cons
+    )
 
-                if not vpoint.has_offset():
-                    continue
+    _slider_cons(
+        vpoints,
+        vlinks,
+        sliders,
+        &con_index,
+        cons_angles,
+        slider_offset,
+        points,
+        slider_bases,
+        slider_slots,
+        slider_lines,
+        cons
+    )
 
-                i += 1
-                if vpoint.offset():
-                    slider_offset[slider_offset_count] = vpoint.offset()
-                    cons[i] = P2PDistanceConstraint(
-                        slider_bases + b,
-                        p1,
-                        slider_offset + slider_offset_count
-                    )
-                    slider_offset_count += 1
-                else:
-                    cons[i] = PointOnPointConstraint(slider_bases + b, p1)
-        d += 1
-        c += 1
-        i += 1
-        if vpoint.type != VJoint.P:
-            continue
-
-        for vlink in vpoint.links[1:]:
-            # A base link friend.
-            f1 = vlinks[vlink][0]
-            if f1 == a:
-                if len(vlinks[vlink]) < 2:
-                    # If no any friend.
-                    continue
-                f1 = vlinks[vlink][1]
-            if vpoints[f1].is_slot_link(vlink):
-                # f1 is a slider, and it is be connected with slot link.
-                p2 = slider_bases + sliders[f1]
-            else:
-                # f1 is a R joint or it is not connected with slot link.
-                p2 = points + f1
-            slider_lines[c] = [p1, p2]
-            cons_angles[d] = _radians(vpoint.slope_angle(vpoints[f1]) - vpoint.angle)
-            cons[i] = InternalAngleConstraint(
-                slider_slot,
-                slider_lines + c,
-                cons_angles + d
-            )
-            d += 1
-            c += 1
-            i += 1
-
-    # Add angle constraints for input angles.
-    # c: Input data count.
-    c = 0
-    cdef double angle
-    for b, d, angle in inputs:
-        if b == d:
-            continue
-        lines[c] = [points + b, points + d]
-        angles[c] = _radians(angle)
-        cons[i] = LineInternalAngleConstraint(lines + c, angles + c)
-        i += 1
-        c += 1
+    _angle_cons(inputs, &con_index, angles, points, lines, cons)
 
     # Solve
     if solve(parameters_ptr, params_count, cons, cons_count, Rough) != Succsess:
@@ -614,6 +684,7 @@ cpdef list vpoint_solving(
     ]
     """
     cdef list solved_points = []
+    cdef int i
     for i in range(len(vpoints)):
         if vpoints[i].type == VJoint.R:
             solved_points.append((points[i].x[0], points[i].y[0]))
