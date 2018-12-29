@@ -17,6 +17,7 @@ from typing import (
     Dict,
     Iterator,
     Union,
+    Optional,
 )
 from lark import Lark, Transformer
 from lark.lexer import Token
@@ -226,10 +227,21 @@ def edges_view(graph: Graph) -> Iterator[Tuple[int, Tuple[int, int]]]:
 def graph2vpoints(
     graph: Graph,
     pos: Dict[int, Tuple[float, float]],
-    cus: Dict[str, int],
-    same: Dict[int, int]
+    cus: Optional[Dict[str, int]] = None,
+    same: Optional[Dict[int, int]] = None
 ) -> List[VPoint]:
-    """Change NetworkX graph into VPoints."""
+    """Change NetworkX graph into VPoints.
+
+    cus: custom nodes (not joint)
+        {node_name: link_number}
+    same: multiple joints
+        {n1: n2, n3: n2} => (n1 as n2) and (n3 as n2)
+    """
+    if cus is None:
+        cus: Dict[str, int] = {}
+    if same is None:
+        same: Dict[int, int] = {}
+
     same_r = {}
     for k, v in same.items():
         if v in same_r:
