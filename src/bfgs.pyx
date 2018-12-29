@@ -41,6 +41,14 @@ from sketch_solve cimport (
 from pmks cimport VJoint, VPoint
 
 
+cdef inline void _sorted_data_dict(dict data_dict):
+    """Sort the pairs in data_dict."""
+    cdef object k
+    for k in data_dict:
+        if type(k) == tuple:
+            data_dict[_sorted_pair(k[0], k[1])] = data_dict.pop(k)
+
+
 cdef inline bint _measure_parameter(
     object vpoints,
     dict data_dict,
@@ -105,6 +113,220 @@ cdef inline bint _measure_parameter(
     return True
 
 
+cdef inline void _parameters_link_data(
+    object vpoints,
+    dict data_dict,
+    dict vlinks,
+    double *parameters,
+    double **parameters_ptr,
+    double *constants,
+    Point *points,
+    Point *slider_bases,
+    Point *slider_slots
+):
+    """Create parameters and link data."""
+    cdef int slider_count = 0
+    cdef int a = 0
+    cdef int b = 0
+
+    cdef int i
+    cdef VPoint vpoint
+    cdef str vlink
+    cdef double offset
+    for i, vpoint in enumerate(vpoints):
+        if vpoint.no_link():
+            constants[b], constants[b + 1] = vpoint.c[0]
+            points[i] = [constants + b, constants + b + 1]
+            b += 2
+            continue
+
+        for vlink in vpoint.links:
+            if vlink == 'ground':
+                continue
+            if vlink in vlinks:
+                vlinks[vlink].append(i)
+            else:
+                vlinks[vlink] = [i]
+
+        if vpoint.grounded():
+            if i in data_dict:
+                # Known coordinates.
+                constants[b], constants[b + 1] = data_dict[i]
+                points[i] = [constants + b, constants + b + 1]
+                b += 2
+                continue
+
+            constants[b], constants[b + 1] = vpoint.c[0]
+            if vpoint.type in {VJoint.P, VJoint.RP}:
+                # Base point (slot) is fixed.
+                slider_bases[slider_count] = [constants + b, constants + b + 1]
+                # Slot point (slot) is movable.
+                parameters[a] = vpoint.c[0][0] + cos(vpoint.angle)
+                parameters[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
+                parameters_ptr[a] = parameters + a
+                parameters_ptr[a + 1] = parameters + a + 1
+                slider_slots[slider_count] = [parameters_ptr[a], parameters_ptr[a + 1]]
+                a += 2
+                slider_count += 1
+                # Pin is movable.
+                parameters[a], parameters[a + 1] = vpoint.c[1]
+                if vpoint.has_offset() and (vpoint.true_offset() <= 0.1):
+                    offset = 0.1 if vpoint.offset() > 0 else -0.1
+                    parameters[a] += offset
+                    parameters[a + 1] += offset
+                parameters_ptr[a] = parameters + a
+                parameters_ptr[a + 1] = parameters + a + 1
+                points[i] = [parameters_ptr[a], parameters_ptr[a + 1]]
+                a += 2
+            else:
+                # Point is fixed.
+                points[i] = [constants + b, constants + b + 1]
+            b += 2
+            continue
+
+        if i in data_dict:
+            # Known coordinates.
+            constants[b], constants[b + 1] = data_dict[i]
+            points[i] = [constants + b, constants + b + 1]
+            b += 2
+            continue
+
+        if vpoint.type in {VJoint.P, VJoint.RP}:
+            # Base point (slot) is movable.
+            parameters[a], parameters[a + 1] = vpoint.c[0]
+            parameters_ptr[a] = parameters + a
+            parameters_ptr[a + 1] = parameters + a + 1
+            slider_bases[slider_count] = [parameters_ptr[a], parameters_ptr[a + 1]]
+            a += 2
+            # Slot point (slot) is movable.
+            parameters[a] = vpoint.c[0][0] + cos(vpoint.angle)
+            parameters[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
+            parameters_ptr[a] = parameters + a
+            parameters_ptr[a + 1] = parameters + a + 1
+            slider_slots[slider_count] = [parameters_ptr[a], parameters_ptr[a + 1]]
+            a += 2
+            slider_count += 1
+            if vpoint.pin_grounded():
+                # Pin is fixed.
+                constants[b], constants[b + 1] = vpoint.c[1]
+                points[i] = [constants + b, constants + b + 1]
+            else:
+                # Pin is movable.
+                parameters[a], parameters[a + 1] = vpoint.c[1]
+                if vpoint.has_offset() and (vpoint.true_offset() <= 0.1):
+                    offset = 0.1 if vpoint.offset() > 0 else -0.1
+                    parameters[a] += offset
+                    parameters[a + 1] += offset
+                parameters_ptr[a] = parameters + a
+                parameters_ptr[a + 1] = parameters + a + 1
+                points[i] = [parameters_ptr[a], parameters_ptr[a + 1]]
+                a += 2
+            continue
+
+        # Point is movable.
+        parameters[a], parameters[a + 1] = vpoint.c[0]
+        parameters_ptr[a] = parameters + a
+        parameters_ptr[a + 1] = parameters + a + 1
+        points[i] = [parameters_ptr[a], parameters_ptr[a + 1]]
+        a += 2
+
+
+cdef inline void _measure_distance_cons(
+    dict data_dict,
+    dict vlinks,
+    int *cons_count,
+    double **distances,
+):
+    """Pre-count number of distance constraints."""
+    cdef int a, b, c, d
+    cdef str vlink
+    for vlink in vlinks:
+        if len(vlinks[vlink]) < 2:
+            continue
+        a = vlinks[vlink][0]
+        b = vlinks[vlink][1]
+        if (a not in data_dict) or (b not in data_dict):
+            cons_count[0] += 1
+        for c in vlinks[vlink][2:]:
+            if c in data_dict:
+                # Known coordinates.
+                continue
+            cons_count[0] += 2
+
+    distances[0] = <double *>malloc(cons_count[0] * sizeof(double))
+
+
+cdef inline void _measure_slider_cons(
+    object vpoints,
+    dict vlinks,
+    map[int, int] &sliders,
+    int *cons_count,
+    double **cons_angles,
+    double **slider_offset,
+    Line **slider_lines
+):
+    """Pre-count number of slider constraints."""
+    cdef int a, b
+    cdef int f1
+    cdef str vlink
+    cdef int c = 0
+    cdef int d = 0
+    cdef int slider_offset_count = 0
+    for a, b in sliders:
+        c += 1
+        d += 1
+        if vpoints[a].grounded():
+            cons_count[0] += 2
+            if vpoints[a].has_offset():
+                cons_count[0] += 1
+                if vpoints[a].offset():
+                    slider_offset_count += 1
+        else:
+            for vlink in vpoints[a].links[:1]:
+                f1 = vlinks[vlink][0]
+                if f1 == a:
+                    if len(vlinks[vlink]) < 2:
+                        # If no any friend.
+                        continue
+                c += 1
+                cons_count[0] += 2
+                if vpoints[a].has_offset():
+                    cons_count[0] += 1
+                    if vpoints[a].offset():
+                        slider_offset_count += 1
+        if vpoints[a].type == VJoint.P:
+            cons_count[0] += 1
+            c += 1
+            d += 1
+
+    if not sliders.empty():
+        slider_lines[0] = <Line *>malloc(c * sizeof(Line))
+        cons_angles[0] = <double *>malloc(d * sizeof(double))
+    if slider_offset_count:
+        slider_offset[0] = <double *>malloc(slider_offset_count * sizeof(double))
+
+
+cdef inline void _measure_angle_cons(
+    object inputs,
+    int *cons_count,
+    double **angles,
+    Line **lines
+):
+    """Pre-count number of angle constraints."""
+    cdef int input_count = 0
+    cdef int b, d
+    cdef double angle
+    for b, d, angle in inputs:
+        if b == d:
+            continue
+        input_count += 1
+
+    if input_count:
+        angles[0] = <double *>malloc(input_count * sizeof(double))
+        lines[0] = <Line *>malloc(input_count * sizeof(Line))
+        cons_count[0] += input_count
+
+
 @cython.cdivision
 cdef inline double _radians(double degree):
     """Degrees to radians."""
@@ -135,11 +357,7 @@ cpdef list vpoint_solving(
     if data_dict is None:
         data_dict = {}
 
-    # Sort the pairs in data_dict.
-    cdef object k
-    for k in data_dict:
-        if type(k) == tuple:
-            data_dict[_sorted_pair(k[0], k[1])] = data_dict.pop(k)
+    _sorted_data_dict(data_dict)
 
     # sliders = {p_num: base_num}
     cdef map[int, int] sliders
@@ -167,184 +385,56 @@ cpdef list vpoint_solving(
 
     cdef dict vlinks = {}
 
-    # Create parameters and link data.
-    cdef int slider_count = 0
-    cdef int a = 0
-    cdef int b = 0
+    _parameters_link_data(
+        vpoints,
+        data_dict,
+        vlinks,
+        parameters,
+        parameters_ptr,
+        constants,
+        points,
+        slider_bases,
+        slider_slots
+    )
 
-    cdef int i
-    cdef VPoint vpoint
-    cdef str vlink
-    cdef double offset
-    for i, vpoint in enumerate(vpoints):
-        if vpoint.no_link():
-            constants[b], constants[b + 1] = vpoint.c[0]
-            points[i] = [constants + b, constants + b + 1]
-            b += 2
-            continue
-        for vlink in vpoint.links:
-            if vlink == 'ground':
-                continue
-            if vlink in vlinks:
-                vlinks[vlink].append(i)
-            else:
-                vlinks[vlink] = [i]
-        if vpoint.grounded():
-            if i in data_dict:
-                # Known coordinates.
-                constants[b], constants[b + 1] = data_dict[i]
-                points[i] = [constants + b, constants + b + 1]
-                b += 2
-                continue
-            constants[b], constants[b + 1] = vpoint.c[0]
-            if vpoint.type in {VJoint.P, VJoint.RP}:
-                # Base point (slot) is fixed.
-                slider_bases[slider_count] = [constants + b, constants + b + 1]
-                # Slot point (slot) is movable.
-                parameters[a] = vpoint.c[0][0] + cos(vpoint.angle)
-                parameters[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
-                parameters_ptr[a] = parameters + a
-                parameters_ptr[a + 1] = parameters + a + 1
-                slider_slots[slider_count] = [parameters_ptr[a], parameters_ptr[a + 1]]
-                a += 2
-                slider_count += 1
-                # Pin is movable.
-                parameters[a], parameters[a + 1] = vpoint.c[1]
-                if vpoint.has_offset() and (vpoint.true_offset() <= 0.1):
-                    offset = 0.1 if vpoint.offset() > 0 else -0.1
-                    parameters[a] += offset
-                    parameters[a + 1] += offset
-                parameters_ptr[a] = parameters + a
-                parameters_ptr[a + 1] = parameters + a + 1
-                points[i] = [parameters_ptr[a], parameters_ptr[a + 1]]
-                a += 2
-            else:
-                # Point is fixed.
-                points[i] = [constants + b, constants + b + 1]
-            b += 2
-        else:
-            if i in data_dict:
-                # Known coordinates.
-                constants[b], constants[b + 1] = data_dict[i]
-                points[i] = [constants + b, constants + b + 1]
-                b += 2
-                continue
-            if vpoint.type in {VJoint.P, VJoint.RP}:
-                # Base point (slot) is movable.
-                parameters[a], parameters[a + 1] = vpoint.c[0]
-                parameters_ptr[a] = parameters + a
-                parameters_ptr[a + 1] = parameters + a + 1
-                slider_bases[slider_count] = [parameters_ptr[a], parameters_ptr[a + 1]]
-                a += 2
-                # Slot point (slot) is movable.
-                parameters[a] = vpoint.c[0][0] + cos(vpoint.angle)
-                parameters[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
-                parameters_ptr[a] = parameters + a
-                parameters_ptr[a + 1] = parameters + a + 1
-                slider_slots[slider_count] = [parameters_ptr[a], parameters_ptr[a + 1]]
-                a += 2
-                slider_count += 1
-                if vpoint.pin_grounded():
-                    # Pin is fixed.
-                    constants[b], constants[b + 1] = vpoint.c[1]
-                    points[i] = [constants + b, constants + b + 1]
-                else:
-                    # Pin is movable.
-                    parameters[a], parameters[a + 1] = vpoint.c[1]
-                    if vpoint.has_offset() and (vpoint.true_offset() <= 0.1):
-                        offset = 0.1 if vpoint.offset() > 0 else -0.1
-                        parameters[a] += offset
-                        parameters[a + 1] += offset
-                    parameters_ptr[a] = parameters + a
-                    parameters_ptr[a + 1] = parameters + a + 1
-                    points[i] = [parameters_ptr[a], parameters_ptr[a + 1]]
-                    a += 2
-            else:
-                # Point is movable.
-                parameters[a], parameters[a + 1] = vpoint.c[0]
-                parameters_ptr[a] = parameters + a
-                parameters_ptr[a + 1] = parameters + a + 1
-                points[i] = [parameters_ptr[a], parameters_ptr[a + 1]]
-                a += 2
-
-    # Pre-count number of distance constraints.
     cdef int cons_count = 0
-    cdef int c, d
-    for vlink in vlinks:
-        if len(vlinks[vlink]) < 2:
-            continue
-        a = vlinks[vlink][0]
-        b = vlinks[vlink][1]
-        if (a not in data_dict) or (b not in data_dict):
-            cons_count += 1
-        for c in vlinks[vlink][2:]:
-            if c in data_dict:
-                # Known coordinates.
-                continue
-            cons_count += 2
-    cdef double *distances = <double *>malloc(cons_count * sizeof(double))
+    cdef double *distances = NULL
+    _measure_distance_cons(
+        data_dict,
+        vlinks,
+        &cons_count,
+        &distances
+    )
 
-    # Pre-count number of slider constraints.
-    c = 0
-    d = 0
-    cdef int f1
-    cdef int slider_offset_count = 0
-    for a, b in sliders:
-        c += 1
-        d += 1
-        if vpoints[a].grounded():
-            cons_count += 2
-            if vpoints[a].has_offset():
-                cons_count += 1
-                if vpoints[a].offset():
-                    slider_offset_count += 1
-        else:
-            for vlink in vpoints[a].links[:1]:
-                f1 = vlinks[vlink][0]
-                if f1 == a:
-                    if len(vlinks[vlink]) < 2:
-                        # If no any friend.
-                        continue
-                c += 1
-                cons_count += 2
-                if vpoints[a].has_offset():
-                    cons_count += 1
-                    if vpoints[a].offset():
-                        slider_offset_count += 1
-        if vpoints[a].type == VJoint.P:
-            cons_count += 1
-            c += 1
-            d += 1
-
-    cdef Line *slider_lines = NULL
     cdef double *cons_angles = NULL
     cdef double *slider_offset = NULL
-    if not sliders.empty():
-        slider_lines = <Line *>malloc(c * sizeof(Line))
-        cons_angles = <double *>malloc(d * sizeof(double))
-    if slider_offset_count:
-        slider_offset = <double *>malloc(slider_offset_count * sizeof(double))
-
-    # Pre-count number of angle constraints.
-    cdef int input_count = 0
-    cdef double angle
-    for b, d, angle in inputs:
-        if b == d:
-            continue
-        input_count += 1
+    cdef Line *slider_lines = NULL
+    _measure_slider_cons(
+        vpoints,
+        vlinks,
+        sliders,
+        &cons_count,
+        &cons_angles,
+        &slider_offset,
+        &slider_lines
+    )
 
     cdef double *angles = NULL
     cdef Line *lines = NULL
-    if input_count:
-        angles = <double *>malloc(input_count * sizeof(double))
-        lines = <Line *>malloc(input_count * sizeof(Line))
-        cons_count += input_count
+    _measure_angle_cons(
+        inputs,
+        &cons_count,
+        &angles,
+        &lines
+    )
 
     # Pre-count number of constraints.
     cdef Constraint *cons = <Constraint *>malloc(cons_count * sizeof(Constraint))
 
     # Create distance constraints of each link.
-    i = 0
+    cdef int i = 0
+    cdef int a, b, c, d
+    cdef str vlink
     cdef Point *p1
     cdef Point *p2
     cdef tuple pair
@@ -398,8 +488,10 @@ cpdef list vpoint_solving(
     # d: Angle digit number.
     c = 0
     d = 0
-    slider_offset_count = 0
+    cdef int f1
+    cdef int slider_offset_count = 0
     cdef Line *slider_slot
+    cdef VPoint vpoint
     for a, b in sliders:
         # Base point.
         vpoint = vpoints[a]
@@ -500,6 +592,7 @@ cpdef list vpoint_solving(
     # Add angle constraints for input angles.
     # c: Input data count.
     c = 0
+    cdef double angle
     for b, d, angle in inputs:
         if b == d:
             continue
