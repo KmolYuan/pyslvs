@@ -110,7 +110,7 @@ cdef class Graph:
 
     """NetworkX-like graph class."""
 
-    def __cinit__(self, edges: Sequence[Tuple[int, int]]):
+    def __cinit__(self, object edges):
         """edges: [(l1, l2), ...]"""
         self.edges = tuple(edges)
 
@@ -290,7 +290,7 @@ cdef class GraphMatcher:
     cdef dict core_1, core_2, inout_1, inout_2, mapping
     cdef GMState state
 
-    def __cinit__(self, g1: Graph, g2: Graph):
+    def __cinit__(self, Graph g1, Graph g2):
         self.g1 = g1
         self.g2 = g2
         self.g1_nodes = set(g1.nodes)
@@ -494,9 +494,9 @@ cdef class GMState:
 
     def __cinit__(
         self,
-        gm: GraphMatcher,
-        g1_node: int = -1,
-        g2_node: int = -1
+        GraphMatcher gm,
+        int g1_node = -1,
+        int g2_node = -1
     ):
         """Initializes GMState object.
 

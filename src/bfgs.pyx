@@ -47,7 +47,7 @@ cdef inline double _radians(double degree):
     return degree / 180 * M_PI
 
 
-cdef inline tuple _sort_pair(int a, int b):
+cdef inline tuple _sorted_pair(int a, int b):
     """A sorted pair."""
     return (a, b) if a < b else (b, a)
 
@@ -75,7 +75,7 @@ cpdef list vpoint_solving(
     cdef object k
     for k in data_dict:
         if type(k) == tuple:
-            data_dict[_sort_pair(k[0], k[1])] = data_dict.pop(k)
+            data_dict[_sorted_pair(k[0], k[1])] = data_dict.pop(k)
     cdef dict vlinks = {}
 
     # Pre-count number of parameters.
@@ -335,7 +335,7 @@ cpdef list vpoint_solving(
                 # Known coordinates.
                 continue
             for d in (a, b):
-                pair = _sort_pair(c, d)
+                pair = _sorted_pair(c, d)
                 if pair in data_dict:
                     distances[i] = data_dict[pair]
                 else:

@@ -149,7 +149,7 @@ class VLink:
     color: Optional[int]
     points: Tuple[int, ...]
 
-    def __cinit__(
+    def __init__(
         self,
         name: str,
         color_str: str,

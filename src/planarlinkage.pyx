@@ -80,7 +80,7 @@ cdef class Planar(Verification):
     cdef list link_list, driver_list, follower_list
     cdef ndarray constraints, target_names, exprs, target, upper, lower
 
-    def __cinit__(self, mech_params: dict):
+    def __cinit__(self, dict mech_params):
         """mech_params = {
             'Driver': {'pt': (x, y, r)},
             'Follower': {'pt': (x, y, r)},

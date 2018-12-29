@@ -9,6 +9,7 @@ Version 18.12
 + Added "edges_view" and "graph2vpoints" functions.
 + Update SHELL variable of Makefile on Windows platform.
 + Optimization of joint type of "VPoint" class with "VJoint" enumeration class.
++ Using C style type definitions of all class constructors.
 
 Version 18.11
 ===

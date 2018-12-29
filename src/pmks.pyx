@@ -26,13 +26,13 @@ cdef class VPoint:
 
     def __cinit__(
         self,
-        links: str,
-        type_int: int,
-        angle: double,
-        color_str: str,
-        x: double,
-        y: double,
-        color_func: object = None
+        str links,
+        VJoint j_type,
+        double angle,
+        str color_str,
+        double x,
+        double y,
+        object color_func = None
     ):
         cdef list tmp_list = []
         cdef str name
@@ -42,8 +42,8 @@ cdef class VPoint:
                 continue
             tmp_list.append(name)
         self.links = tuple(tmp_list)
-        self.type = type_int
-        self.typeSTR = ('R', 'P', 'RP')[type_int]
+        self.type = j_type
+        self.typeSTR = ('R', 'P', 'RP')[j_type]
         self.angle = angle
         self.colorSTR = color_str
         if color_func:
@@ -297,16 +297,16 @@ cdef class VLink:
 
     def __cinit__(
         self,
-        name: str,
-        color_str: str,
-        points: tuple,
-        color_func: object = None
+        str name,
+        str color_str,
+        object points,
+        object color_func = None
     ):
         self.name = name
         self.colorSTR = color_str
         if color_func:
             self.color = color_func(color_str)
-        self.points = points
+        self.points = tuple(points)
 
     def __contains__(self, point: int) -> bint:
         """Check if point number is in the link."""
