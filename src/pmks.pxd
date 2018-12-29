@@ -12,6 +12,12 @@ email: pyslvs@gmail.com
 from numpy cimport ndarray
 
 
+cpdef enum VJoint:
+    # Joint types.
+    # Actually "class VJoint(IntEnum)" in Python but "enum" in C++.
+    R, P, RP
+
+
 cdef class VPoint:
 
     # VPoint(links, type_int, angle, color_str, x, y, color_func=None)
@@ -19,7 +25,7 @@ cdef class VPoint:
     # Members
     cdef readonly tuple links
     cdef readonly ndarray c
-    cdef readonly int type
+    cdef readonly VJoint type
     cdef readonly object color
     cdef readonly str colorSTR
     cdef readonly str typeSTR

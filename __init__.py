@@ -31,7 +31,7 @@ __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 __version__ = (18, 12, 0, 'dev')
 
-from .pmks import VPoint, VLink
+from .pmks import VJoint, VPoint, VLink
 from .bfgs import vpoint_solving as bfgs_vpoint_solving
 from .tinycadlib import (
     Coordinate,
@@ -84,6 +84,7 @@ __all__ = [
     'expr_parser',
     'expr_solving',
     'data_collecting',
+    'VJoint',
     'VPoint',
     'VLink',
     'bfgs_vpoint_solving',

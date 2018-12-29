@@ -7,15 +7,18 @@ from typing import (
     Any,
 )
 from numpy import ndarray
+from enum import IntEnum
+
+
+class VJoint(IntEnum):
+    R: int
+    P: int
+    RP: int
 
 
 class VPoint:
 
     """Symbol of joints."""
-
-    R: int
-    P: int
-    RP: int
 
     links: Tuple[str, ...]
     c: ndarray

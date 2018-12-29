@@ -7,6 +7,8 @@ Version 18.12
 + Outer loop layout for atlas.
 + Add "no global interpreter lock" decorator for pure C functions.
 + Added "edges_view" and "graph2vpoints" functions.
++ Update SHELL variable of Makefile on Windows platform.
++ Optimization of joint type of "VPoint" class with "VJoint" enumeration class.
 
 Version 18.11
 ===

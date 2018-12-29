@@ -12,7 +12,7 @@ email: pyslvs@gmail.com
 from typing import Sequence, Iterator
 from libc.math cimport sin, cos
 from tinycadlib cimport radians
-from pmks cimport VPoint
+from pmks cimport VJoint, VPoint
 
 
 cdef inline bint _is_all_lock(dict status):
@@ -124,7 +124,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
         if vpoint.links:
             for link in vpoint.links:
                 # Connect on the ground and it is not a slider.
-                if ('ground' == link) and (vpoint.type == VPoint.R):
+                if 'ground' == link and vpoint.type == VJoint.R:
                     status[node] = True
                 # Add as vlink.
                 if link not in vlinks:
@@ -142,13 +142,13 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
     cdef set links
     for base in range(len(vpoints)):
         vpoint = vpoints[base]
-        if (vpoint.type != VPoint.P) or (not vpoint.grounded()):
+        if (vpoint.type != VJoint.P) or (not vpoint.grounded()):
             continue
         for link in vpoint.links[1:]:
             links = set()
             for node in vlinks[link]:
                 vpoint_ = vpoints[node]
-                if (node == base) or (vpoint_.type != VPoint.R):
+                if (node == base) or (vpoint_.type != VJoint.R):
                     continue
                 links.update(vpoint_.links)
                 vpoints[node] = VPoint(
@@ -166,7 +166,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
     # Add positions parameters.
     cdef list pos = []
     for vpoint in vpoints:
-        pos.append(vpoint.c[0 if vpoint.type == VPoint.R else 1])
+        pos.append(vpoint.c[0 if vpoint.type == VJoint.R else 1])
 
     cdef list exprs = []
     cdef int link_symbol = 0

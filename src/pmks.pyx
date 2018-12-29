@@ -24,11 +24,6 @@ cdef class VPoint:
 
     """Symbol of joints."""
 
-    # Joint types (class attributes).
-    R = 0
-    P = 1
-    RP = 2
-
     def __cinit__(
         self,
         links: str,
@@ -56,7 +51,7 @@ cdef class VPoint:
         self.x = x
         self.y = y
         self.c = ndarray(2, dtype=np_object)
-        if self.type in {VPoint.P, VPoint.RP}:
+        if self.type in {VJoint.P, VJoint.RP}:
             """Slider current coordinates.
             
             + [0]: Current node on slot.
@@ -136,7 +131,7 @@ cdef class VPoint:
     @property
     def cx(self):
         """X value of first current coordinate."""
-        if self.type == VPoint.R:
+        if self.type == VJoint.R:
             return self.c[0][0]
         else:
             return self.c[1][0]
@@ -144,7 +139,7 @@ cdef class VPoint:
     @property
     def cy(self):
         """Y value of first current coordinate."""
-        if self.type == VPoint.R:
+        if self.type == VJoint.R:
             return self.c[0][1]
         else:
             return self.c[1][1]
@@ -154,7 +149,7 @@ cdef class VPoint:
         cdef double x, y
         x, y = c1
         self.c[0] = (x, y)
-        if self.type in {VPoint.P, VPoint.RP}:
+        if self.type in {VJoint.P, VJoint.RP}:
             if c2:
                 x, y = c2
             self.c[1] = (x, y)
@@ -182,7 +177,7 @@ cdef class VPoint:
         cdef double p_y = 0
 
         if on_links:
-            if (self.type == VPoint.R) or (self.links[0] == on_links[0]):
+            if (self.type == VJoint.R) or (self.links[0] == on_links[0]):
                 # self is R joint or at base link.
                 m_x = self.c[0][0]
                 m_y = self.c[0][1]
@@ -190,7 +185,7 @@ cdef class VPoint:
                 # At pin joint.
                 m_x = self.c[1][0]
                 m_y = self.c[1][1]
-            if (p.type == VPoint.R) or (p.links[0] == on_links[0]):
+            if (p.type == VJoint.R) or (p.links[0] == on_links[0]):
                 # p is R joint or at base link.
                 p_x = p.c[0][0]
                 p_y = p.c[0][1]
@@ -239,9 +234,9 @@ cdef class VPoint:
 
     cpdef bint grounded(self):
         """Return True if the joint is connect with the ground."""
-        if self.type == VPoint.R:
+        if self.type == VJoint.R:
             return 'ground' in self.links
-        elif self.type in {VPoint.P, VPoint.RP}:
+        elif self.type in {VJoint.P, VJoint.RP}:
             if self.links:
                 return self.is_slot_link('ground')
             else:
@@ -261,7 +256,7 @@ cdef class VPoint:
 
     cpdef bint is_slot_link(self, str link_name):
         """Return True if the link name is first link."""
-        if self.type == VPoint.R:
+        if self.type == VJoint.R:
             return False
         if self.links:
             return link_name == self.links[0]
@@ -281,7 +276,7 @@ cdef class VPoint:
 
         x, y = VPoint(10, 20)
         """
-        if self.type == VPoint.R:
+        if self.type == VJoint.R:
             return self.c[0][i]
         else:
             return self.c[1][i]
