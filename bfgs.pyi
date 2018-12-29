@@ -12,7 +12,7 @@ from .pmks import VPoint
 
 def vpoint_solving(
     vpoints: Sequence[VPoint],
-    inputs: Optional[Sequence[Tuple[int, int, float]]] = None,
+    inputs: Optional[Dict[Tuple[int, int], float]] = None,
     data_dict: Optional[Dict[Union[int, Tuple[int, int]], float]] = None
 ) -> List[Tuple[float, float]]:
     """Solving function from vpoint list."""

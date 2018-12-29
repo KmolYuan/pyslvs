@@ -512,7 +512,7 @@ cpdef list expr_solving(
     cdef list solved_bfgs = []
     if has_not_solved:
         try:
-            solved_bfgs = vpoint_solving(vpoints, [], p_data_dict)
+            solved_bfgs = vpoint_solving(vpoints, {}, p_data_dict)
         except RuntimeError as e:
             raise RuntimeError("result contains failure: Sketch Solve") from e
 

@@ -181,7 +181,7 @@ class CoreTest(TestCase):
         """Test Sketch Solve kernel."""
         expr, _ = example_list["Jansen's linkage (Single)"]
         vpoints = parse_vpoints(expr)
-        result = vpoint_solving(vpoints, [(0, 1, 0.)])
+        result = vpoint_solving(vpoints, {(0, 1): 0.})
         x, y = result[-1]
         self.assertTrue(isclose(round(x, 2), -43.17))
         self.assertTrue(isclose(round(y, 2), -91.75))

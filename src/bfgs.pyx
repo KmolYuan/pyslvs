@@ -309,7 +309,7 @@ cdef inline void _measure_slider_cons(
 
 
 cdef inline void _measure_angle_cons(
-    object inputs,
+    dict inputs,
     int *cons_count,
     double **angles,
     Line **lines
@@ -318,7 +318,7 @@ cdef inline void _measure_angle_cons(
     cdef int input_count = 0
     cdef int b, d
     cdef double angle
-    for b, d, angle in inputs:
+    for (b, d), angle in inputs.items():
         if b == d:
             continue
         input_count += 1
@@ -519,7 +519,7 @@ cdef inline void _slider_cons(
 
 
 cdef inline void _angle_cons(
-    object inputs,
+    dict inputs,
     int *con_index,
     double *angles,
     Point *points,
@@ -529,7 +529,7 @@ cdef inline void _angle_cons(
     """Add angle constraints for input angles."""
     cdef int i, b, d
     cdef double angle
-    for i, (b, d, angle) in enumerate(inputs):
+    for i, ((b, d), angle) in enumerate(inputs.items()):
         if b == d:
             continue
         lines[i] = [points + b, points + d]
@@ -551,7 +551,7 @@ cdef inline tuple _sorted_pair(int a, int b):
 
 cpdef list vpoint_solving(
     object vpoints,
-    object inputs = None,
+    dict inputs = None,
     dict data_dict = None
 ):
     """Solving function from vpoint list.
@@ -564,7 +564,7 @@ cpdef list vpoint_solving(
     """
     # Blank sequences.
     if inputs is None:
-        inputs = []
+        inputs = {}
     if data_dict is None:
         data_dict = {}
 
