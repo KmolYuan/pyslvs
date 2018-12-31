@@ -15,23 +15,23 @@ for source in listdir("./src"):
     if source.split('.')[-1] == 'pyx':
         sources.append(source)
 
-extra_compile_args = [
-    # Compiler optimize.
+macros = [
+    ('_hypot', 'hypot'),
+]
+
+compile_args = [
     '-O3',
-    # Disable NumPy warning only on Linux.
     '-Wno-cpp',
-    # Avoid C++ math library.
-    '-D_hypot=hypot',
 ]
 
 if system() == 'Windows':
     # Avoid compile error with CYTHON_USE_PYLONG_INTERNALS.
     # https://github.com/cython/cython/issues/2670#issuecomment-432212671
-    extra_compile_args.append('-DMS_WIN64')
+    macros.append(('MS_WIN64', None))
     # Disable format warning.
-    extra_compile_args.append('-Wno-format')
+    compile_args.append('-Wno-format')
     # Disable NumPy warning.
-    extra_compile_args.append('-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION')
+    macros.append(('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION'))
 
 ext_modules = [Extension(
     "bfgs",
@@ -44,7 +44,8 @@ ext_modules = [Extension(
     ],
     language="c++",
     include_dirs=['src/bfgs_solver/', np_include],
-    extra_compile_args=extra_compile_args,
+    define_macros=macros,
+    extra_compile_args=compile_args,
 )]
 
 for source in sources:
@@ -57,7 +58,8 @@ for source in sources:
         sources=['src/' + source],
         language="c++",
         include_dirs=[np_include],
-        extra_compile_args=extra_compile_args,
+        define_macros=macros,
+        extra_compile_args=compile_args,
     ))
 
 setup(ext_modules=ext_modules, cmdclass={'build_ext': build_ext})
