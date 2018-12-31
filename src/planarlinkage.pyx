@@ -21,10 +21,10 @@ from verify cimport Verification
 from tinycadlib cimport (
     Coordinate,
     radians,
-    PLAP,
-    PLLP,
-    PLPP,
-    PXY,
+    plap,
+    pllp,
+    plpp,
+    pxy,
     legal_crank,
     str_between,
     str_before,
@@ -50,24 +50,24 @@ cdef Coordinate _from_formula(tuple expr, dict data_dict):
     cdef double y = NAN
     if fun == 'PLAP':
         if params_count == 3:
-            x, y = PLAP(params[0], params[1], params[2])
+            x, y = plap(params[0], params[1], params[2])
         elif params_count == 4:
-            x, y = PLAP(params[0], params[1], params[2], params[3])
+            x, y = plap(params[0], params[1], params[2], params[3])
         elif params_count == 5:
-            x, y = PLAP(params[0], params[1], params[2], params[3], params[4])
+            x, y = plap(params[0], params[1], params[2], params[3], params[4])
     elif fun == 'PLLP':
         if params_count == 4:
-            x, y = PLLP(params[0], params[1], params[2], params[3])
+            x, y = pllp(params[0], params[1], params[2], params[3])
         elif params_count == 5:
-            x, y = PLLP(params[0], params[1], params[2], params[3], params[4])
+            x, y = pllp(params[0], params[1], params[2], params[3], params[4])
     elif fun == 'PLPP':
         if params_count == 4:
-            x, y = PLPP(params[0], params[1], params[2], params[3])
+            x, y = plpp(params[0], params[1], params[2], params[3])
         elif params_count == 5:
-            x, y = PLPP(params[0], params[1], params[2], params[3], params[4])
+            x, y = plpp(params[0], params[1], params[2], params[3], params[4])
     elif fun == 'PXY':
         if params_count == 3:
-            x, y = PXY(params[0], params[1], params[2])
+            x, y = pxy(params[0], params[1], params[2])
     return Coordinate(x, y)
 
 

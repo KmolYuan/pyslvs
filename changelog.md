@@ -1,6 +1,11 @@
 Change Log
 ===
 
+Version 19.01
+===
+
++ Change the function name of triangle formulas.
+
 Version 18.12
 ===
 

@@ -57,49 +57,49 @@ cdef class Coordinate:
         return f"Coordinate({self.x:.02f}, {self.y:.02f})"
 
 
-cpdef tuple PLAP(
-    Coordinate A,
-    double L0,
+cpdef tuple plap(
+    Coordinate c1,
+    double d0,
     double a0,
-    Coordinate B = None,
+    Coordinate c2 = None,
     bint inverse = False
 ):
     """Point on circle by angle."""
-    cdef double a1 = atan2(B.y - A.y, B.x - A.x) if B else 0
+    cdef double a1 = atan2(c2.y - c1.y, c2.x - c1.x) if c2 is not None else 0
     if inverse:
-        return (A.x + L0 * cos(a1 - a0)), (A.y + L0 * sin(a1 - a0))
+        return (c1.x + d0 * cos(a1 - a0)), (c1.y + d0 * sin(a1 - a0))
     else:
-        return (A.x + L0 * cos(a1 + a0)), (A.y + L0 * sin(a1 + a0))
+        return (c1.x + d0 * cos(a1 + a0)), (c1.y + d0 * sin(a1 + a0))
 
 
 @cython.cdivision
-cpdef tuple PLLP(
-    Coordinate A,
-    double L0,
-    double L1,
-    Coordinate B,
+cpdef tuple pllp(
+    Coordinate c1,
+    double d0,
+    double d1,
+    Coordinate c2,
     bint inverse = False
 ):
     """Two intersection points of two circles."""
-    cdef double dx = B.x - A.x
-    cdef double dy = B.y - A.y
-    cdef double d = A.distance(B)
+    cdef double dx = c2.x - c1.x
+    cdef double dy = c2.y - c1.y
+    cdef double d = c1.distance(c2)
 
     # No solutions, the circles are separate.
-    if d > L0 + L1:
+    if d > d0 + d1:
         return NAN, NAN
 
     # No solutions because one circle is contained within the other.
-    if d < abs(L0 - L1):
+    if d < abs(d0 - d1):
         return NAN, NAN
 
     # Circles are coincident and there are an infinite number of solutions.
-    if d == 0 and L0 == L1:
+    if d == 0 and d0 == d1:
         return NAN, NAN
-    cdef double a = (L0 * L0 - L1 * L1 + d * d) / (2 * d)
-    cdef double h = sqrt(L0 * L0 - a * a)
-    cdef double xm = A.x + a * dx / d
-    cdef double ym = A.y + a * dy / d
+    cdef double a = (d0 * d0 - d1 * d1 + d * d) / (2 * d)
+    cdef double h = sqrt(d0 * d0 - a * a)
+    cdef double xm = c1.x + a * dx / d
+    cdef double ym = c1.y + a * dy / d
 
     if inverse:
         return (xm + h * dy / d), (ym - h * dx / d)
@@ -108,53 +108,53 @@ cpdef tuple PLLP(
 
 
 @cython.cdivision
-cpdef tuple PLPP(
-    Coordinate A,
-    double L0,
-    Coordinate B,
-    Coordinate C,
+cpdef tuple plpp(
+    Coordinate c1,
+    double d0,
+    Coordinate c2,
+    Coordinate c3,
     bint inverse = False
 ):
     """Two intersection points of a line and a circle."""
-    cdef double line_mag = B.distance(C)
-    cdef double dx = C.x - B.x
-    cdef double dy = C.y - B.y
-    cdef double u = ((A.x - B.x) * dx + (A.y - B.y) * dy) / (line_mag * line_mag)
-    cdef Coordinate I = Coordinate(B.x + u * dx, B.y + u * dy)
+    cdef double line_mag = c2.distance(c3)
+    cdef double dx = c3.x - c2.x
+    cdef double dy = c3.y - c2.y
+    cdef double u = ((c1.x - c2.x) * dx + (c1.y - c2.y) * dy) / (line_mag * line_mag)
+    cdef Coordinate inter = Coordinate(c2.x + u * dx, c2.y + u * dy)
 
     # Test distance between point A and intersection.
-    cdef double d = A.distance(I)
-    if d > L0:
+    cdef double d = c1.distance(inter)
+    if d > d0:
         # No intersection.
         return NAN, NAN
-    elif d == L0:
+    elif d == d0:
         # One intersection point.
-        return I.x, I.y
+        return inter.x, inter.y
 
     # Two intersection points.
-    d = sqrt(L0 * L0 - d * d) / line_mag
+    d = sqrt(d0 * d0 - d * d) / line_mag
     if inverse:
-        return (I.x - dx * d), (I.y - dy * d)
+        return (inter.x - dx * d), (inter.y - dy * d)
     else:
-        return (I.x + dx * d), (I.y + dy * d)
+        return (inter.x + dx * d), (inter.y + dy * d)
 
 
-cpdef tuple PXY(Coordinate A, double x, double y):
+cpdef tuple pxy(Coordinate c1, double x, double y):
     """Using relative cartesian coordinate to get solution."""
-    return (A.x + x), (A.y + y)
+    return (c1.x + x), (c1.y + y)
 
 
-cdef inline bint legal_crank(Coordinate A, Coordinate B, Coordinate C, Coordinate D):
+cdef inline bint legal_crank(Coordinate c1, Coordinate c2, Coordinate c3, Coordinate c4):
     """
     verify the fourbar is satisfied the Gruebler's Equation, s + g <= p + q
         C - D
         |   |
         A   B
     """
-    cdef double driver = A.distance(C)
-    cdef double follower = B.distance(D)
-    cdef double ground = A.distance(B)
-    cdef double connector = C.distance(D)
+    cdef double driver = c1.distance(c3)
+    cdef double follower = c2.distance(c4)
+    cdef double ground = c1.distance(c2)
+    cdef double connector = c3.distance(c4)
     return (
         (driver + connector <= ground + follower) or
         (driver + ground <= connector + follower)
@@ -178,7 +178,7 @@ cpdef void expr_parser(object exprs, dict data_dict):
     + data_dict: {'a0':0., 'L1':10., 'A':(30., 40.), ...}
     """
     cdef object expr
-    cdef str fun, p
+    cdef str func, p
     cdef list params
     cdef int params_count
     cdef double x, y
@@ -186,7 +186,7 @@ cpdef void expr_parser(object exprs, dict data_dict):
         # If the mechanism has no any solution.
         if not expr:
             return
-        fun = expr[0]
+        func = expr[0]
         params = []
         for p in expr[1:-1]:
             if p == 'T':
@@ -203,33 +203,33 @@ cpdef void expr_parser(object exprs, dict data_dict):
         # We should unpack as C++'s way.
         x = NAN
         y = NAN
-        if fun == 'PLAP':
+        if func == 'PLAP':
             if params_count == 3:
-                x, y = PLAP(params[0], params[1], params[2])
+                x, y = plap(params[0], params[1], params[2])
             elif params_count == 4:
-                x, y = PLAP(params[0], params[1], params[2], params[3])
+                x, y = plap(params[0], params[1], params[2], params[3])
             elif params_count == 5:
-                x, y = PLAP(params[0], params[1], params[2], params[3], params[4])
-        elif fun == 'PLLP':
+                x, y = plap(params[0], params[1], params[2], params[3], params[4])
+        elif func == 'PLLP':
             if params_count == 4:
-                x, y = PLLP(params[0], params[1], params[2], params[3])
+                x, y = pllp(params[0], params[1], params[2], params[3])
             elif params_count == 5:
-                x, y = PLLP(params[0], params[1], params[2], params[3], params[4])
-        elif fun == 'PLPP':
+                x, y = pllp(params[0], params[1], params[2], params[3], params[4])
+        elif func == 'PLPP':
             if params_count == 4:
-                x, y = PLPP(params[0], params[1], params[2], params[3])
+                x, y = plpp(params[0], params[1], params[2], params[3])
             elif params_count == 5:
-                x, y = PLPP(params[0], params[1], params[2], params[3], params[4])
-        elif fun == 'PXY':
+                x, y = plpp(params[0], params[1], params[2], params[3], params[4])
+        elif func == 'PXY':
             if params_count == 3:
-                x, y = PXY(params[0], params[1], params[2])
+                x, y = pxy(params[0], params[1], params[2])
         data_dict[expr[-1]] = (x, y)
 
 
 cpdef str expr_join(object exprs):
     """Use to append a list of symbols into a string."""
     return ';'.join([
-        f"{expr[0]}[{','.join(expr[1:-1]), expr[-1])}]({expr[-1]})" for expr in exprs
+        f"{expr[0]}[{','.join(expr[1:-1])}, {expr[-1]}]({expr[-1]})" for expr in exprs
     ])
 
 

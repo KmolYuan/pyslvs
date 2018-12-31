@@ -35,10 +35,10 @@ from .pmks import VJoint, VPoint, VLink
 from .bfgs import vpoint_solving
 from .tinycadlib import (
     Coordinate,
-    PLAP,
-    PLLP,
-    PLPP,
-    PXY,
+    plap,
+    pllp,
+    plpp,
+    pxy,
     vpoint_dof,
     expr_parser,
     expr_solving,
@@ -73,14 +73,15 @@ if HAS_PYGMENTS:
     from ._parser import PMKSLexer
 
 __all__ = [
+    '__version__',
     'Genetic',
     'Firefly',
     'Differential',
     'Coordinate',
-    'PLAP',
-    'PLLP',
-    'PLPP',
-    'PXY',
+    'plap',
+    'pllp',
+    'plpp',
+    'pxy',
     'expr_parser',
     'expr_solving',
     'data_collecting',

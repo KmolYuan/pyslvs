@@ -18,11 +18,11 @@ cdef class Coordinate:
 
 
 cdef double radians(double degree) nogil
-cpdef tuple PLAP(Coordinate A, double L0, double a0, Coordinate B = *, bint inverse = *)
-cpdef tuple PLLP(Coordinate A, double L0, double L1, Coordinate B, bint inverse = *)
-cpdef tuple PLPP(Coordinate A, double L0, Coordinate B, Coordinate C, bint inverse = *)
-cpdef tuple PXY(Coordinate A, double x, double y)
+cpdef tuple plap(Coordinate c1, double d0, double a0, Coordinate c2 = *, bint inverse = *)
+cpdef tuple pllp(Coordinate c1, double d0, double d1, Coordinate c2, bint inverse = *)
+cpdef tuple plpp(Coordinate c1, double d0, Coordinate c2, Coordinate c3, bint inverse = *)
+cpdef tuple pxy(Coordinate c1, double x, double y)
 
-cdef bint legal_crank(Coordinate A, Coordinate B, Coordinate C, Coordinate D)
+cdef bint legal_crank(Coordinate c1, Coordinate c2, Coordinate c3, Coordinate c4)
 cdef str str_between(str s, str front, str back)
 cdef str str_before(str s, str front)

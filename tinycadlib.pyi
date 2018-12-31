@@ -34,37 +34,37 @@ class Coordinate:
     def __repr__(self) -> str:
         ...
 
-def PLAP(
-    A: Coordinate,
-    L0: float,
+def plap(
+    c1: Coordinate,
+    d0: float,
     a0: float,
-    B: Optional[Coordinate],
+    c2: Optional[Coordinate] = None,
     inverse: bool = False
 ) -> TuplePoint:
     """Point on circle by angle."""
     ...
 
-def PLLP(
-    A: Coordinate,
-    L0: float,
-    L1: float,
-    B: Coordinate,
+def pllp(
+    c1: Coordinate,
+    d0: float,
+    d1: float,
+    c2: Coordinate,
     inverse: bool = False
 ) -> TuplePoint:
     """Two intersection points of two circles."""
     ...
 
-def PLPP(
-    A: Coordinate,
-    L0: float,
-    B: Coordinate,
-    C: Coordinate,
+def plpp(
+    c1: Coordinate,
+    d0: float,
+    c2: Coordinate,
+    c3: Coordinate,
     inverse: bool = False
 ) -> TuplePoint:
     """Two intersection points of a line and a circle."""
     ...
 
-def PXY(A: Coordinate, x: float, y: float) -> TuplePoint:
+def pxy(c1: Coordinate, x: float, y: float) -> TuplePoint:
     """Using relative cartesian coordinate to get solution."""
     ...
 

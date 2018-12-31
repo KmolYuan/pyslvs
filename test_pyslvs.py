@@ -15,10 +15,10 @@ from math import sqrt, radians, isclose
 from bfgs import vpoint_solving
 from tinycadlib import (
     Coordinate,
-    PLAP,
-    PLLP,
-    PLPP,
-    PXY,
+    plap,
+    pllp,
+    plpp,
+    pxy,
     expr_solving,
     data_collecting,
 )
@@ -58,9 +58,9 @@ planar_object = Planar({
         ]
     },
     'Expression':
-        "PLAP[P0,L0,a0](P2);"
-        "PLLP[P2,L1,L2,P1](P3);"
-        "PLLP[P2,L3,L4,P3](P4)",
+        "plap[P0,L0,a0](P2);"
+        "pllp[P2,L1,L2,P1](P3);"
+        "pllp[P2,L3,L4,P3](P4)",
     'constraints': [('P0', 'P1', 'P2', 'P3')],
     'upper': [100., 100., 100., 100., 100., 360.],
     'lower': [5., 5., 5., 5., 5., 0.],
@@ -71,33 +71,33 @@ class CoreTest(TestCase):
     """Testing Cython libs."""
 
     def test_plap(self):
-        """Test for PLAP function."""
-        x, y = PLAP(Coordinate(0, 0), 50 * sqrt(2), radians(45), Coordinate(50, 0))
+        """Test for plap function."""
+        x, y = plap(Coordinate(0, 0), 50 * sqrt(2), radians(45), Coordinate(50, 0))
         self.assertTrue(isclose(x, 50))
         self.assertTrue(isclose(y, 50))
 
     def test_pllp(self):
-        """Test for PLLP function."""
+        """Test for pllp function."""
         c1 = Coordinate(-30, 0)
         c2 = Coordinate(30, 0)
-        x, y = PLLP(c1, 50, 50, c2)
+        x, y = pllp(c1, 50, 50, c2)
         self.assertTrue(isclose(x, 0))
         self.assertTrue(isclose(y, 40))
-        x, y = PLLP(c1, 30, 30, c2)
+        x, y = pllp(c1, 30, 30, c2)
         self.assertTrue(isclose(x, 0))
         self.assertTrue(isclose(y, 0))
-        x, y = PLLP(c1, 90, 30, c2)
+        x, y = pllp(c1, 90, 30, c2)
         self.assertTrue(isclose(x, 60))
         self.assertTrue(isclose(y, 0))
 
     def test_plpp(self):
-        """Test for PLPP function."""
-        x, y = PLPP(Coordinate(0, 0), sqrt(5), Coordinate(0, -3), Coordinate(3 / 2, 0))
+        """Test for plpp function."""
+        x, y = plpp(Coordinate(0, 0), sqrt(5), Coordinate(0, -3), Coordinate(3 / 2, 0))
         self.assertTrue(isclose(x, 2))
         self.assertTrue(isclose(y, 1))
 
     def test_pxy(self):
-        x, y = PXY(Coordinate(80, 90), 40, -20)
+        x, y = pxy(Coordinate(80, 90), 40, -20)
         self.assertTrue(isclose(x, 120))
         self.assertTrue(isclose(y, 70))
 
