@@ -12,7 +12,7 @@ Note of Pointer:
     So please copy or declare to C's Integer.
 
 author: Yuan Chang
-copyright: Copyright (C) 2016-2018
+copyright: Copyright (C) 2016-2019
 license: AGPL
 email: pyslvs@gmail.com
 """

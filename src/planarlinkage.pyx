@@ -4,7 +4,7 @@
 """The callable classes of the validation in algorithm.
 
 author: Yuan Chang
-copyright: Copyright (C) 2016-2018
+copyright: Copyright (C) 2016-2019
 license: AGPL
 email: pyslvs@gmail.com
 """
