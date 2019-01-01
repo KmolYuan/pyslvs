@@ -11,9 +11,10 @@ np_include = numpy.get_include()
 
 
 sources = []
-for source in listdir("./src"):
-    if source.split('.')[-1] == 'pyx':
-        sources.append(source)
+for place in ["src/", "Adesign/src/"]:
+    for source in listdir(place):
+        if source.split('.')[-1] == 'pyx':
+            sources.append(place + source)
 
 macros = [
     ('_hypot', 'hypot'),
@@ -49,13 +50,13 @@ ext_modules = [Extension(
 )]
 
 for source in sources:
-    if source == "bfgs.pyx":
+    if source == "src/bfgs.pyx":
         continue
     ext_modules.append(Extension(
         # Base name
-        source.split('.')[0],
+        source.split('/')[-1].split('.')[0],
         # path + file name
-        sources=['src/' + source],
+        sources=[source],
         language="c++",
         include_dirs=[np_include],
         define_macros=macros,
