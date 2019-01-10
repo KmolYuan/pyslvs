@@ -144,23 +144,6 @@ cpdef tuple pxy(Coordinate c1, double x, double y):
     return (c1.x + x), (c1.y + y)
 
 
-cdef inline bint legal_crank(Coordinate c1, Coordinate c2, Coordinate c3, Coordinate c4):
-    """
-    verify the fourbar is satisfied the Gruebler's Equation, s + g <= p + q
-        C - D
-        |   |
-        A   B
-    """
-    cdef double driver = c1.distance(c3)
-    cdef double follower = c2.distance(c4)
-    cdef double ground = c1.distance(c2)
-    cdef double connector = c3.distance(c4)
-    return (
-        (driver + connector <= ground + follower) or
-        (driver + ground <= connector + follower)
-    )
-
-
 cdef inline str str_between(str s, str front, str back):
     """Get the string that is inside of parenthesis."""
     return s[s.find(front) + 1:s.find(back)]

@@ -25,7 +25,6 @@ from tinycadlib cimport (
     pllp,
     plpp,
     pxy,
-    legal_crank,
     str_between,
     str_before,
 )
@@ -78,14 +77,13 @@ cdef class Planar(Verification):
 
     cdef int target_count, var_count
     cdef list link_list, driver_list, follower_list
-    cdef ndarray constraints, target_names, exprs, target, upper, lower
+    cdef ndarray target_names, exprs, target, upper, lower
 
     def __cinit__(self, dict mech_params):
         """mech_params = {
             'Driver': {'pt': (x, y, r)},
             'Follower': {'pt': (x, y, r)},
             'Target': {'pt': [(x0, y0), (x1, y1), ...]},
-            'constraints': [('pt', 'pt', 'pt', 'pt')],
             'Expression': str,
             'upper': ndarray[double, ndim=1],
             'lower': ndarray[double, ndim=1],
@@ -109,9 +107,6 @@ cdef class Planar(Verification):
             self.target_names[i] = name
             self.target[i] = tuple(Coordinate(x, y) for x, y in target)
             i += 1
-
-        # Constraint
-        self.constraints = np_array(mech_params['constraints'])
 
         # Expression
         # ['A', 'B', 'C', 'D', 'E', 'L0', 'L1', 'L2', 'L3', 'L4', 'a0']
@@ -239,6 +234,7 @@ cdef class Planar(Verification):
         # all variable
         cdef dict test_dict = self.get_data_dict(v)
         cdef ndarray path = self.get_path_array()
+
         # calculate the target point, and sum all error.
         # My fitness
         cdef double fitness = 0
@@ -260,22 +256,14 @@ cdef class Planar(Verification):
                     test_dict[e[1]] = target_coord
             for i, name in enumerate(self.target_names):
                 path[i].append(test_dict[name])
-        # constraint
-        cdef ndarray constraint
-        for constraint in self.constraints:
-            if not legal_crank(
-                test_dict[constraint[0]],
-                test_dict[constraint[1]],
-                test_dict[constraint[2]],
-                test_dict[constraint[3]]
-            ):
-                return HUGE_VAL
+
         # swap
         cdef list errors
         cdef Coordinate c
         for k in range(len(self.target_names)):
             for i in range(self.target_count):
                 fitness += path[k][i].distance(self.target[k][i])
+
         return fitness
 
     cpdef object result(self, ndarray[double, ndim=1] v):

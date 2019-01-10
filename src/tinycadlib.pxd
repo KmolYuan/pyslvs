@@ -23,6 +23,5 @@ cpdef tuple pllp(Coordinate c1, double d0, double d1, Coordinate c2, bint invers
 cpdef tuple plpp(Coordinate c1, double d0, Coordinate c2, Coordinate c3, bint inverse = *)
 cpdef tuple pxy(Coordinate c1, double x, double y)
 
-cdef bint legal_crank(Coordinate c1, Coordinate c2, Coordinate c3, Coordinate c4)
 cdef str str_between(str s, str front, str back)
 cdef str str_before(str s, str front)
