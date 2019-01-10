@@ -4,10 +4,12 @@ from typing import (
     Tuple,
     Callable,
     Optional,
-    Any,
 )
 from numpy import ndarray
 from enum import IntEnum
+
+# Color type must be a RGB data.
+_Color = Tuple[int, int, int]
 
 
 class VJoint(IntEnum):
@@ -23,7 +25,7 @@ class VPoint:
     links: Tuple[str, ...]
     c: ndarray
     type: int
-    color: Optional[int]
+    color: _Color
     colorSTR: str
     typeSTR: str
     x: float
@@ -38,7 +40,7 @@ class VPoint:
         color_str: str,
         x: float,
         y: float,
-        color_func: Optional[Callable[[str], Any]] = None
+        color_func: Optional[Callable[[str], _Color]] = None
     ):
         ...
 

@@ -5,6 +5,7 @@ Version 19.01
 ===
 
 + Change the function name of triangle formulas.
++ Remove the external color format of the VPoint color attribute.
 
 Version 18.12
 ===

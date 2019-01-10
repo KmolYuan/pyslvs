@@ -37,30 +37,36 @@ cdef class VPoint:
         cdef list tmp_list = []
         cdef str name
         links = links.replace(" ", '')
+
         for name in links.split(','):
             if not name:
                 continue
             tmp_list.append(name)
+
         self.links = tuple(tmp_list)
         self.type = j_type
         self.typeSTR = ('R', 'P', 'RP')[j_type]
         self.angle = angle
+
         self.colorSTR = color_str
         if color_func:
             self.color = color_func(color_str)
+        else:
+            self.color = None
+
         self.x = x
         self.y = y
         self.c = ndarray(2, dtype=np_object)
+
         if self.type in {VJoint.P, VJoint.RP}:
-            """Slider current coordinates.
-            
-            + [0]: Current node on slot.
-            + [1]: Pin.
-            """
+            # Slider current coordinates.
+            # [0]: Current node on slot.
+            # [1]: Pin.
             self.c[0] = (self.x, self.y)
             self.c[1] = (self.x, self.y)
         else:
             self.c[0] = (self.x, self.y)
+
         self.__has_offset = False
         self.__offset = 0
 

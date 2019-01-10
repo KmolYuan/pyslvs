@@ -28,7 +28,7 @@ cdef class VPoint:
     cdef readonly tuple links
     cdef readonly ndarray c
     cdef readonly VJoint type
-    cdef readonly object color
+    cdef readonly tuple color
     cdef readonly str colorSTR
     cdef readonly str typeSTR
     cdef readonly double x, y, angle
