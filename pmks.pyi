@@ -25,7 +25,7 @@ class VPoint:
     links: Tuple[str, ...]
     c: ndarray
     type: int
-    color: _Color
+    color: Optional[_Color]
     colorSTR: str
     typeSTR: str
     x: float
@@ -40,7 +40,7 @@ class VPoint:
         color_str: str,
         x: float,
         y: float,
-        color_func: Optional[Callable[[str], _Color]] = None
+        color_func: Optional[Callable[..., _Color]] = None
     ):
         ...
 
@@ -148,7 +148,7 @@ class VLink:
 
     name: str
     colorSTR: str
-    color: Optional[int]
+    color: Optional[_Color]
     points: Tuple[int, ...]
 
     def __init__(
@@ -156,7 +156,7 @@ class VLink:
         name: str,
         color_str: str,
         points: tuple,
-        color_func: object = None
+        color_func: Optional[Callable[..., _Color]] = None
     ):
         ...
 

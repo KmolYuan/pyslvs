@@ -49,10 +49,10 @@ cdef class VPoint:
         self.angle = angle
 
         self.colorSTR = color_str
-        if color_func:
-            self.color = color_func(color_str)
-        else:
+        if color_func is None:
             self.color = None
+        else:
+            self.color = color_func(color_str)
 
         self.x = x
         self.y = y
@@ -287,7 +287,7 @@ cdef class VLink:
     """Symbol of links."""
 
     cdef readonly str name, colorSTR
-    cdef readonly object color
+    cdef readonly tuple color
     cdef readonly tuple points
 
     def __cinit__(
@@ -299,7 +299,9 @@ cdef class VLink:
     ):
         self.name = name
         self.colorSTR = color_str
-        if color_func:
+        if color_func is None:
+            self.color = None
+        else:
             self.color = color_func(color_str)
         self.points = tuple(points)
 
