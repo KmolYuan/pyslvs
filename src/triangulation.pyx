@@ -112,6 +112,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
         return []
 
     cdef list vpoints = list(vpoints_)
+    cdef int vpoints_count = len(vpoints)
 
     # First, we create a "VLinks" that can help us to
     # find a relationship just like adjacency matrix.
@@ -124,7 +125,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
         if vpoint.links:
             for link in vpoint.links:
                 # Connect on the ground and it is not a slider.
-                if 'ground' == link and vpoint.type == VJoint.R:
+                if link == 'ground' and vpoint.type == VJoint.R:
                     status[node] = True
                 # Add as vlink.
                 if link not in vlinks:
@@ -140,15 +141,15 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
     cdef str link_
     cdef VPoint vpoint_
     cdef set links
-    for base in range(len(vpoints)):
+    for base in range(vpoints_count):
         vpoint = vpoints[base]
-        if (vpoint.type != VJoint.P) or (not vpoint.grounded()):
+        if vpoint.type != VJoint.P or not vpoint.grounded():
             continue
         for link in vpoint.links[1:]:
             links = set()
             for node in vlinks[link]:
                 vpoint_ = vpoints[node]
-                if (node == base) or (vpoint_.type != VJoint.R):
+                if node == base or vpoint_.type != VJoint.R:
                     continue
                 links.update(vpoint_.links)
                 vpoints[node] = VPoint(
@@ -192,7 +193,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
     cdef int skip_times = 0
     cdef int around = len(status)
 
-    cdef int type_num, friend_a, friend_b, friend_c, friend_d
+    cdef int friend_a, friend_b, friend_c, friend_d
     cdef double tmp_x, tmp_y, angle
     cdef bint reverse
     # Friend iterator.
@@ -212,9 +213,9 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
             skip_times += 1
             continue
 
-        type_num = vpoints[node].type
+        vpoint = vpoints[node]
 
-        if type_num == 0:
+        if vpoint.type == VJoint.R:
             """R joint.
             
             + Is input node?
@@ -258,7 +259,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
                     link_symbol += 2
                     skip_times = 0
 
-        elif type_num == 1:
+        elif vpoint.type == VJoint.P:
             """Need to solve P joint itself here. (only grounded)"""
             fi = _get_not_base_friend(node, vpoints, vlinks, status)
             try:
@@ -297,7 +298,7 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
                         link_symbol += 2
                 skip_times = 0
 
-        elif type_num == 2:
+        elif vpoint.type == VJoint.RP:
             """RP joint."""
             fi = _get_base_friend(node, vpoints, vlinks, status)
             # Copy as 'friend_c'.

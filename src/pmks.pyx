@@ -16,7 +16,6 @@ from libc.math cimport (
     hypot,
 )
 from cpython.object cimport Py_EQ, Py_NE
-from numpy import object as np_object
 
 
 @cython.final
@@ -56,7 +55,7 @@ cdef class VPoint:
 
         self.x = x
         self.y = y
-        self.c = ndarray(2, dtype=np_object)
+        self.c = ndarray(2, dtype=object)
 
         if self.type in {VJoint.P, VJoint.RP}:
             # Slider current coordinates.

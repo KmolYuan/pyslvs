@@ -7,6 +7,7 @@ from distutils.core import setup, Extension
 from platform import system
 from Cython.Distutils import build_ext
 import numpy
+
 np_include = numpy.get_include()
 
 

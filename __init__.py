@@ -31,6 +31,7 @@ __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 __version__ = (19, 1, 0, 'dev')
 
+import numpy.core._dtype_ctypes
 from .pmks import VJoint, VPoint, VLink
 from .bfgs import vpoint_solving
 from .tinycadlib import (
