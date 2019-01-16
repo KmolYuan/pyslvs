@@ -12,7 +12,6 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from typing import Tuple
 from collections import defaultdict
 from libcpp.list cimport list as c_list
 from libcpp.map cimport map as c_map

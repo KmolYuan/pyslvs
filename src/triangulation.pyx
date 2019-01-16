@@ -12,7 +12,7 @@ email: pyslvs@gmail.com
 from typing import Sequence, Iterator
 from libc.math cimport sin, cos
 from tinycadlib cimport radians
-from pmks cimport VJoint, VPoint
+from expression cimport VJoint, VPoint
 
 
 cdef inline bint _is_all_lock(dict status):

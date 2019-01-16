@@ -32,7 +32,7 @@ __email__ = "pyslvs@gmail.com"
 __version__ = (19, 1, 0, 'dev')
 
 import numpy.core._dtype_ctypes
-from .pmks import VJoint, VPoint, VLink
+from .expression import VJoint, VPoint, VLink
 from .bfgs import vpoint_solving
 from .tinycadlib import (
     Coordinate,
@@ -46,7 +46,7 @@ from .tinycadlib import (
     data_collecting,
 )
 from .verify import Verification
-from .planarlinkage import Planar
+from .planar_linkage import Planar
 from .rga import Genetic
 from .firefly import Firefly
 from .de import Differential

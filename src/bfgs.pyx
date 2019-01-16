@@ -38,7 +38,7 @@ from sketch_solve cimport (
     LineInternalAngleConstraint,
     solve,
 )
-from pmks cimport VJoint, VPoint
+from expression cimport VJoint, VPoint
 
 
 cdef inline void _sorted_data_dict(dict data_dict):

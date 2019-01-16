@@ -15,7 +15,6 @@ email: pyslvs@gmail.com
 cimport cython
 import sys
 from typing import (
-    Sequence,
     Tuple,
     Dict,
     Iterator,

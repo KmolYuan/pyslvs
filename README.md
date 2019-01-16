@@ -37,25 +37,25 @@ In Pyslvs, expression is mainly to [PMKS](http://designengrlab.github.io/PMKS/),
 
     Analysis expression from strings, turn into symbols object. There also including highlighting function with [Pygments](http://pygments.org/).
 
-+ **pmks** library:
++ **expression** library:
 
     Including PMKS expression object classes.
 
 + **bfgs** library:
 
-    **preload**: *pmks*
+    **preload**: *expression*
 
-    Python wrapper of [Sketchsolve](https://code.google.com/archive/p/sketchsolve/). A simple and fast constraint solver with BFGS algorithm.
+    Python wrapper of [Sketch Solve](https://code.google.com/archive/p/sketchsolve/). A simple and fast constraint solver with BFGS algorithm.
 
 + **tinycadlib** library:
 
-    **preload**: *pmks*, *bfgs*
+    **preload**: *expression*, *bfgs*
 
     Particular solution takes more faster then constraint solving.
 
 + **triangulation** library:
 
-    **preload**: *pmks*, *tinycadlib*
+    **preload**: *expression*, *tinycadlib*
 
     Autometic configuration algorithm for particular solution function in "tinycadlib".
 
@@ -89,9 +89,9 @@ In Pyslvs, expression is mainly to [PMKS](http://designengrlab.github.io/PMKS/),
 
     Provide base fitness function class for algorithm.
 
-+ **planarlinkage** library:
++ **planar_linkage** library:
 
-    **preload**: *pmks*, *bfgs*, *tinycadlib*, *verify*
+    **preload**: *expression*, *bfgs*, *tinycadlib*, *verify*
 
     Dimensional synthesis verification function objects.
 

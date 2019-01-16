@@ -9,15 +9,15 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from numpy import (
-    int16,
-    array as np_array,
-    zeros as np_zeros,
-)
 cimport cython
 from numpy cimport (
     ndarray,
     int16_t,
+)
+from numpy import (
+    int16,
+    array as np_array,
+    zeros as np_zeros,
 )
 
 

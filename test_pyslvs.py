@@ -22,7 +22,7 @@ from tinycadlib import (
     expr_solving,
     data_collecting,
 )
-from planarlinkage import Planar
+from planar_linkage import Planar
 from rga import Genetic
 from firefly import Firefly
 from de import Differential
@@ -39,7 +39,8 @@ from triangulation import vpoints_configure
 from _parser import parse_vpoints
 from examples import example_list
 
-planar_object = Planar({
+
+_planar_object = Planar({
     'Driver': {'P0': (-70, -70, 50)},
     'Follower': {'P1': (70, -70, 50)},
     'Target': {
@@ -196,7 +197,7 @@ class CoreTest(TestCase):
 
     def test_algorithm_rga(self):
         """Real-coded genetic algorithm."""
-        _, t_f = Genetic(planar_object, {
+        _, t_f = Genetic(_planar_object, {
             'maxTime': 1,
             'report': 10,
             # Genetic
@@ -210,7 +211,7 @@ class CoreTest(TestCase):
 
     def test_algorithm_firefly(self):
         """Firefly algorithm."""
-        _, t_f = Firefly(planar_object, {
+        _, t_f = Firefly(_planar_object, {
             'maxTime': 1,
             'report': 10,
             # Firefly
@@ -224,7 +225,7 @@ class CoreTest(TestCase):
 
     def test_algorithm_de(self):
         """Differential evolution."""
-        _, t_f = Differential(planar_object, {
+        _, t_f = Differential(_planar_object, {
             'maxTime': 1,
             'report': 10,
             # DE

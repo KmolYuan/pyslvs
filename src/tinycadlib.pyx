@@ -20,7 +20,7 @@ from libc.math cimport (
     isnan,
     NAN,
 )
-from pmks cimport VJoint, VPoint
+from expression cimport VJoint, VPoint
 from bfgs cimport vpoint_solving
 
 

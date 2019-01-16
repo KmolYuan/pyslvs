@@ -22,10 +22,10 @@ from typing import (
 from lark import Lark, Transformer
 from lark.lexer import Token
 try:
-    from .pmks import VJoint, VPoint
+    from .expression import VJoint, VPoint
     from .graph import Graph
 except ImportError:
-    from pmks import VJoint, VPoint
+    from expression import VJoint, VPoint
     from graph import Graph
 
 # Color dictionary.
