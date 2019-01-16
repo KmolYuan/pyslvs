@@ -123,7 +123,7 @@ cdef class VPoint:
             )
 
     @property
-    def cx(self):
+    def cx(self) -> float:
         """X value of first current coordinate."""
         if self.type == VJoint.R:
             return self.c[0][0]
@@ -131,7 +131,7 @@ cdef class VPoint:
             return self.c[1][0]
 
     @property
-    def cy(self):
+    def cy(self) -> float:
         """Y value of first current coordinate."""
         if self.type == VJoint.R:
             return self.c[0][1]
@@ -260,10 +260,16 @@ cdef class VPoint:
     @property
     def expr(self) -> str:
         """Expression."""
-        cdef str l
-        cdef str type_text = f"{self.typeSTR}, A[{self.angle}]" if self.typeSTR != 'R' else 'R'
-        cdef str links_text = ", ".join(l for l in self.links)
-        return f"J[{type_text}, color[{self.colorSTR}], P[{self.x}, {self.y}], L[{links_text}]]"
+        if self.type != VJoint.R:
+            type_text = f"{self.typeSTR}, A[{self.angle}]"
+        else:
+            type_text = 'R'
+        if self.colorSTR:
+            color = f", color[{self.colorSTR}]"
+        else:
+            color = ""
+        links_text = ", ".join(name for name in self.links)
+        return f"J[{type_text}{color}, P[{self.x:.04f}, {self.y:.04f}], L[{links_text}]]"
 
     def __getitem__(self, i: int) -> float:
         """Get coordinate like this:

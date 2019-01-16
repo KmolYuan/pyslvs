@@ -78,57 +78,53 @@ def color_rgb(name: str) -> Tuple[int, int, int]:
         return color_text[:3]
 
 
-_colors = "|".join(f'"{color}"' for color in reversed(color_names))
+_COLORS = "|".join(f'"{color}"' for color in reversed(color_names))
 
-_pmks_grammar = Lark(
-    # Number
-    """
+_GRAMMAR = Lark(r"""
+    // Number
     DIGIT: "0".."9"
     INT: DIGIT+
-    SIGNED_INT: ["+"|"-"] INT
+    SIGNED_INT: ["+" | "-"] INT
     DECIMAL: INT "." INT? | "." INT
-    _EXP: ("e"|"E") SIGNED_INT
+    _EXP: ("e" | "E") SIGNED_INT
     FLOAT: INT _EXP | DECIMAL _EXP?
     NUMBER: FLOAT | INT
-    """
-    # Letters
-    """
+    SIGNED_NUMBER: ["+" | "-"] NUMBER
+
+    // Letters
     LCASE_LETTER: "a".."z"
     UCASE_LETTER: "A".."Z"
     LETTER: UCASE_LETTER | LCASE_LETTER
-    CNAME: ("_"|LETTER) ("_"|LETTER|DIGIT)*
-    """
-    # White space and new line.
-    """
-    WS: /[ \\t\\f\\r\\n]/+
-    CR : /\\r/
-    LF : /\\n/
+    CNAME: ("_" | LETTER) ("_" | LETTER | DIGIT)*
+
+    // White space and new line
+    WS: /[ \t\f\r\n]/+
+    CR: /\r/
+    LF: /\n/
     NEWLINE: (CR? LF)+
-    """
-    # Main document.
-    """
-    type: JOINTTYPE+
-    name: CNAME
-    num : NUMBER  -> number
-        | "-" num -> neg
-    
-    joint    : "J[" type ("," angle)? ("," color)? "," point "," link "]"
-    link     : "L[" name ("," name)* "]"
-    point    : "P[" num  "," num "]"
-    angle    : "A[" num "]"
-    colorv   : INT
-    color    : "color[" (("(" colorv "," colorv "," colorv ")") | COLOR+) "]"
-    mechanism: "M[" [joint ("," joint)* (",")?] "]"
-    
-    JOINTTYPE: "RP" | "R" | "P"
-    COLOR    : """ + _colors + """
-    
     %ignore WS
     %ignore NEWLINE
-    COMMENT: "#" /[^\\n]/*
+
+    // Comment
+    COMMENT: "#" /[^\n]/*
     %ignore COMMENT
-    """, start='mechanism'
-)
+
+    // Custom data type
+    JOINTTYPE: "RP" | "R" | "P"
+    COLOR: """ + _COLORS + """
+    type: JOINTTYPE
+    name: CNAME
+    number: SIGNED_NUMBER
+    color_value: INT
+
+    // Main grammar
+    joint: "J[" type ["," angle] ["," color] "," point "," link "]"
+    link: "L[" name ("," name)* "]"
+    point: "P[" number  "," number "]"
+    angle: "A[" number "]"
+    color: "color[" (("(" color_value ("," color_value) ~ 2 ")") | COLOR) "]"
+    mechanism: "M[" [joint ("," joint)* ","?] "]"
+""", start='mechanism')
 
 
 class _PMKSParams(Transformer):
@@ -145,13 +141,10 @@ class _PMKSParams(Transformer):
     name = type
 
     def color(self, n: List[Token]) -> str:
-        return str(n[0]) if (len(n) == 1) else str(tuple(n))
+        return str(n[0]) if len(n) == 1 else str(tuple(n))
 
-    def colorv(self, n: List[Token]) -> int:
+    def color_value(self, n: List[Token]) -> int:
         return int(n[0])
-
-    def neg(self, n: List[Token]) -> Token:
-        return -n[0]
 
     def number(self, n: List[Token]) -> float:
         return float(n[0])
@@ -217,12 +210,12 @@ class _PMKSVPoints(_PMKSParams):
 
 def parse_params(expr: str) -> List[List[Union[str, float]]]:
     """Using to parse the expression and return arguments."""
-    return _PMKSParams().transform(_pmks_grammar.parse(expr))
+    return _PMKSParams().transform(_GRAMMAR.parse(expr))
 
 
 def parse_vpoints(expr: str) -> List[VPoint]:
     """Parse as VPoints."""
-    return _PMKSVPoints().transform(_pmks_grammar.parse(expr))
+    return _PMKSVPoints().transform(_GRAMMAR.parse(expr))
 
 
 def edges_view(graph: Graph) -> Iterator[Tuple[int, Tuple[int, int]]]:
