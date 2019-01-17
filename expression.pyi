@@ -61,12 +61,12 @@ class VPoint:
     @property
     def cx(self) -> float:
         """X value of first current coordinate."""
-        return 0
+        return ...
 
     @property
     def cy(self) -> float:
         """Y value of first current coordinate."""
-        return 0
+        return ...
 
     def move(self, c1: Tuple[float, float], c2: Optional[Tuple[float, float]] = None):
         """Change coordinates of this point."""
@@ -133,7 +133,7 @@ class VPoint:
     @property
     def expr(self) -> str:
         """Expression."""
-        return ""
+        return ...
 
     def __getitem__(self, i: int) -> float:
         ...

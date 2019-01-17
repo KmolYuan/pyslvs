@@ -61,21 +61,23 @@ def color_rgb(name: str) -> Tuple[int, int, int]:
 
     + Invalid color
     + Color key
-    + RGB string.
+    + RGB string "(r, g, b)".
     """
-    if not name:
-        return 0, 0, 0
-    elif name in _color_list:
+    if name in _color_list:
         return _color_list[name]
     else:
-        # Input RGB as a "(255, 255, 255)" string.
-        color_text = tuple(int(i) for i in (
-            name.replace('(', '')
-            .replace(')', '')
-            .replace(" ", '')
-            .split(',', maxsplit=3)
-        ))
-        return color_text[:3]
+        try:
+            # Input RGB as a "(255, 255, 255)" string.
+            color_text = tuple(int(i) for i in (
+                name.replace('(', '')
+                .replace(')', '')
+                .replace(" ", '')
+                .split(',', maxsplit=3)
+            ))
+        except ValueError:
+            return 0, 0, 0
+        else:
+            return color_text[:3]
 
 
 _COLORS = "|".join(f'"{color}"' for color in reversed(color_names))

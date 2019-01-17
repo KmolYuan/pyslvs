@@ -269,7 +269,9 @@ cdef class VPoint:
         else:
             color = ""
         links_text = ", ".join(name for name in self.links)
-        return f"J[{type_text}{color}, P[{self.x:.04f}, {self.y:.04f}], L[{links_text}]]"
+        x_text = f"{self.x:.4f}".rstrip('0').rstrip('.')
+        y_text = f"{self.y:.4f}".rstrip('0').rstrip('.')
+        return f"J[{type_text}{color}, P[{x_text}, {y_text}], L[{links_text}]]"
 
     def __getitem__(self, i: int) -> float:
         """Get coordinate like this:
