@@ -19,7 +19,7 @@ from typing import (
     Union,
     Optional,
 )
-from lark import Lark, Transformer
+from lark import Lark, Transformer, LexError
 from lark.lexer import Token
 try:
     from .expression import VJoint, VPoint
@@ -68,7 +68,7 @@ def color_rgb(name: str) -> Tuple[int, int, int]:
     else:
         try:
             # Input RGB as a "(255, 255, 255)" string.
-            color_text = tuple(int(i) for i in (
+            color_text: Tuple[int, int, int] = tuple(int(i) for i in (
                 name.replace('(', '')
                 .replace(')', '')
                 .replace(" ", '')
@@ -77,7 +77,7 @@ def color_rgb(name: str) -> Tuple[int, int, int]:
         except ValueError:
             return 0, 0, 0
         else:
-            return color_text[:3]
+            return color_text
 
 
 _COLORS = "|".join(f'"{color}"' for color in reversed(color_names))
@@ -131,62 +131,79 @@ _GRAMMAR = Lark(r"""
 
 class _PMKSParams(Transformer):
 
-    """Usage: tree = parser.parse(expr)
+    """Usage:
 
+    tree = parser.parse(expr)
     args = transformer().transform(tree)
     args: Dict[str, value]
     """
 
-    def type(self, n: List[Token]) -> str:
+    @staticmethod
+    def type(n: List[Token]) -> str:
         return str(n[0])
 
     name = type
 
-    def color(self, n: List[Token]) -> str:
+    @staticmethod
+    def color(n: List[Token]) -> str:
         return str(n[0]) if len(n) == 1 else str(tuple(n))
 
-    def color_value(self, n: List[Token]) -> int:
+    @staticmethod
+    def color_value(n: List[Token]) -> int:
         return int(n[0])
 
-    def number(self, n: List[Token]) -> float:
+    @staticmethod
+    def number(n: List[Token]) -> float:
         return float(n[0])
 
-    def point(self, c: List[Token]) -> Tuple[Token]:
+    @staticmethod
+    def point(c: List[Token]) -> Tuple[Token]:
         return tuple(c)
 
     angle = number
 
-    def link(self, a: List[Token]) -> Tuple[Token]:
+    @staticmethod
+    def link(a: List[Token]) -> Tuple[Token]:
         return tuple(a)
 
-    def joint(self, args: List[Token]) -> List[Union[str, int, float]]:
+    @staticmethod
+    def joint(args: List[Token]) -> List[Union[str, int, float]]:
         """Sort the argument list.
 
         [0]: type
         ([1]: angle)
-        ([1])[2]: color
-        ([2])[3]: point (coordinate)
-        ([3])[4]: link
+        ([2]: color)
+        [-2]: point (coordinate)
+        [-1]: link
         """
-        has_angle = args[0] != 'R'
+        type_str = args[0]
         x, y = args[-2]
-        return [
-            ','.join(args[-1]),
-            f'{args[0]}:{args[1]}' if has_angle else 'R',
-            args[2] if has_angle else args[1],
-            x,
-            y
-        ]
+        links = ','.join(args[-1])
+        if type_str == 'R':
+            if len(args) == 3:
+                return [links, 'R', 'Green', x, y]
+            elif len(args) == 4:
+                return [links, 'R', args[-3], x, y]
+        else:
+            type_angle = f'{args[0]}:{args[1]}'
+            if len(args) == 4:
+                return [links, type_angle, 'Green', x, y]
+            elif len(args) == 5:
+                return [links, type_angle, args[-3], x, y]
 
-    def mechanism(self, j: List[Token]) -> List[Token]:
-        return j
+        raise LexError(f"invalid options: {args}")
+
+    @staticmethod
+    def mechanism(joints: List[Token]) -> List[Token]:
+        return joints
 
 
 class _PMKSVPoints(_PMKSParams):
 
     """Using same grammar return as VPoints."""
 
-    def type(self, n: List[Token]) -> VJoint:
+    @staticmethod
+    def type(n: List[Token]) -> VJoint:
         """Return as int type."""
         type_str = str(n[0])
         if type_str == 'R':
@@ -196,28 +213,38 @@ class _PMKSVPoints(_PMKSParams):
         elif type_str == 'RP':
             return VJoint.RP
 
-    def joint(self, args: List[Token]) -> VPoint:
+    @staticmethod
+    def joint(args: List[Token]) -> VPoint:
         """Same as parent."""
-        has_angle = args[0] != 0
+        type_int = args[0]
         x, y = args[-2]
-        return VPoint(
-            ','.join(args[-1]),
-            args[0],
-            args[1] if has_angle else 0.,
-            args[2] if has_angle else args[1],
-            x,
-            y
-        )
+        links = ','.join(args[-1])
+        if type_int == VJoint.R:
+            if len(args) == 3:
+                return VPoint.r_joint(links, x, y)
+            elif len(args) == 4:
+                return VPoint(links, VJoint.R, 0., args[-3], x, y, color_rgb)
+        else:
+            if len(args) == 4:
+                return VPoint.slider_joint(links, type_int, args[1], x, y)
+            elif len(args) == 5:
+                return VPoint(links, type_int, args[1], args[-3], x, y, color_rgb)
+
+        raise LexError(f"invalid options: {args}")
+
+
+_params_translator = _PMKSParams()
+_vpoint_translator = _PMKSVPoints()
 
 
 def parse_params(expr: str) -> List[List[Union[str, float]]]:
     """Using to parse the expression and return arguments."""
-    return _PMKSParams().transform(_GRAMMAR.parse(expr))
+    return _params_translator.transform(_GRAMMAR.parse(expr))
 
 
 def parse_vpoints(expr: str) -> List[VPoint]:
     """Parse as VPoints."""
-    return _PMKSVPoints().transform(_GRAMMAR.parse(expr))
+    return _vpoint_translator.transform(_GRAMMAR.parse(expr))
 
 
 def edges_view(graph: Graph) -> Iterator[Tuple[int, Tuple[int, int]]]:
@@ -229,7 +256,8 @@ def graph2vpoints(
     graph: Graph,
     pos: Dict[int, Tuple[float, float]],
     cus: Optional[Dict[str, int]] = None,
-    same: Optional[Dict[int, int]] = None
+    same: Optional[Dict[int, int]] = None,
+    grounded: Optional[int] = None
 ) -> List[VPoint]:
     """Change NetworkX graph into VPoints.
 
@@ -260,9 +288,11 @@ def graph2vpoints(
             for j in same_r[i]:
                 edge.update(set(ev[j]))
         x, y = pos[i]
-        tmp_list.append(VPoint.r_joint(", ".join(f"L{link}" for link in edge), x, y))
+        tmp_list.append(VPoint.r_joint(", ".join(
+            (f"L{link}" if link != grounded else 'ground') for link in edge
+        ), x, y))
     for name in sorted(cus):
-        link = f"L{cus[name]}" if cus[name] else 'ground'
+        link = f"L{cus[name]}" if cus[name] != grounded else 'ground'
         x, y = pos[int(name.replace('P', ''))]
         tmp_list.append(VPoint.r_joint(link, x, y))
     return tmp_list
