@@ -251,19 +251,18 @@ def graph2vpoints(
             same_r[v] = [k]
     tmp_list = []
     ev = dict(edges_view(graph))
-    for i, e in ev.items():
+    for i, edge in ev.items():
         if i in same:
             # Do not connect to anyone!
             continue
-        e = set(e)
+        edge = set(edge)
         if i in same_r:
             for j in same_r[i]:
-                e.update(set(ev[j]))
-        link = ", ".join((str(l) if l else 'ground') for l in e)
+                edge.update(set(ev[j]))
         x, y = pos[i]
-        tmp_list.append(VPoint.r_joint(link, x, y))
+        tmp_list.append(VPoint.r_joint(", ".join(f"L{link}" for link in edge), x, y))
     for name in sorted(cus):
-        link = str(cus[name]) if cus[name] else 'ground'
+        link = f"L{cus[name]}" if cus[name] else 'ground'
         x, y = pos[int(name.replace('P', ''))]
         tmp_list.append(VPoint.r_joint(link, x, y))
     return tmp_list
