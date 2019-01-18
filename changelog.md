@@ -10,6 +10,7 @@ Version 19.01
 + Grammar enhancement.
 + Module "pmks" renamed to "expression".
 + Module "planarlinkage" renamed to "planar_linkage".
++ Adjust limitation option of algorithm to "max_gen", "min_fit" and "max_time".
 
 Version 18.12
 ===

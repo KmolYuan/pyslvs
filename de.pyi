@@ -29,7 +29,7 @@ class Differential:
             'pMute',
             'pWin',
             'bDelta',
-            'maxGen' or 'minFit' or 'maxTime',
+            'max_gen' or 'min_fit' or 'max_time',
             'report'
         }
         """

@@ -198,7 +198,7 @@ class CoreTest(TestCase):
     def test_algorithm_rga(self):
         """Real-coded genetic algorithm."""
         _, t_f = Genetic(_planar_object, {
-            'maxTime': 1,
+            'max_time': 1,
             'report': 10,
             # Genetic
             'nPop': 500,
@@ -212,7 +212,7 @@ class CoreTest(TestCase):
     def test_algorithm_firefly(self):
         """Firefly algorithm."""
         _, t_f = Firefly(_planar_object, {
-            'maxTime': 1,
+            'max_time': 1,
             'report': 10,
             # Firefly
             'n': 80,
@@ -226,7 +226,7 @@ class CoreTest(TestCase):
     def test_algorithm_de(self):
         """Differential evolution."""
         _, t_f = Differential(_planar_object, {
-            'maxTime': 1,
+            'max_time': 1,
             'report': 10,
             # DE
             'strategy': 1,

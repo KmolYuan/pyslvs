@@ -29,7 +29,7 @@ class Firefly:
             'betaMin',
             'beta0',
             'gamma',
-            'maxGen', 'minFit' or 'maxTime',
+            'max_gen', 'min_fit' or 'max_time',
             'report'
         }
         """
