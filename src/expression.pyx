@@ -16,6 +16,7 @@ from libc.math cimport (
     hypot,
 )
 from cpython.object cimport Py_EQ, Py_NE
+from typing import Iterable
 
 
 @cython.final
@@ -25,7 +26,7 @@ cdef class VPoint:
 
     def __cinit__(
         self,
-        str links,
+        object links,
         VJoint j_type,
         double angle,
         str color_str,
@@ -33,8 +34,7 @@ cdef class VPoint:
         double y,
         object color_func = None
     ):
-        cdef str name
-        self.links = tuple([name for name in links.replace(" ", '').split(',') if name])
+        self.links = tuple(links)
         self.type = j_type
         self.type_str = ('R', 'P', 'RP')[j_type]
         self.angle = angle
@@ -62,28 +62,28 @@ cdef class VPoint:
         self.__offset = 0
 
     @staticmethod
-    def r_joint(links: str, x: double, y: double) -> VPoint:
+    def r_joint(links: Iterable[str], x: double, y: double) -> VPoint:
         """Create by coordinate."""
         return VPoint.c_r_joint(links, x, y)
 
     @staticmethod
-    cdef VPoint c_r_joint(str links, double x, double y):
+    cdef VPoint c_r_joint(object links, double x, double y):
         return VPoint.__new__(VPoint, links, VJoint.R, 0., '', x, y)
 
     @staticmethod
-    def slider_joint(links: str, type_int: VJoint, angle: double, x: double, y: double) -> VPoint:
+    def slider_joint(links: Iterable[str], type_int: VJoint, angle: double, x: double, y: double) -> VPoint:
         """Create by coordinate."""
         return VPoint.c_slider_joint(links, type_int, angle, x, y)
 
     @staticmethod
-    cdef VPoint c_slider_joint(str links, VJoint type_int, double angle, double x, double y):
+    cdef VPoint c_slider_joint(object links, VJoint type_int, double angle, double x, double y):
         return VPoint.__new__(VPoint, links, type_int, angle, '', x, y)
 
     def __copy__(self) -> VPoint:
         """Copy method."""
         cdef VPoint vpoint = VPoint.__new__(
             VPoint,
-            ", ".join(self.links),
+            self.links,
             self.type,
             self.angle,
             self.color_str,
@@ -145,7 +145,7 @@ cdef class VPoint:
         x, y = c1
         self.c[0] = (x, y)
         if self.type in {VJoint.P, VJoint.RP}:
-            if c2:
+            if c2 is not None:
                 x, y = c2
             self.c[1] = (x, y)
 

@@ -218,7 +218,7 @@ class _PMKSVPoints(_PMKSParams):
         """Same as parent."""
         type_int = args[0]
         x, y = args[-2]
-        links = ','.join(args[-1])
+        links: Tuple[str, ...] = args[-1]
         if type_int == VJoint.R:
             if len(args) == 3:
                 return VPoint.r_joint(links, x, y)
@@ -288,13 +288,12 @@ def graph2vpoints(
             for j in same_r[i]:
                 edge.update(set(ev[j]))
         x, y = pos[i]
-        tmp_list.append(VPoint.r_joint(", ".join(
-            (f"L{link}" if link != grounded else 'ground') for link in edge
-        ), x, y))
+        links = [(f"L{link}" if link != grounded else 'ground') for link in edge]
+        tmp_list.append(VPoint.r_joint(links, x, y))
     for name in sorted(cus):
         link = f"L{cus[name]}" if cus[name] != grounded else 'ground'
         x, y = pos[int(name.replace('P', ''))]
-        tmp_list.append(VPoint.r_joint(link, x, y))
+        tmp_list.append(VPoint.r_joint((link,), x, y))
     return tmp_list
 
 

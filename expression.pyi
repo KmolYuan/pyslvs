@@ -2,6 +2,7 @@
 
 from typing import (
     Tuple,
+    Iterable,
     Callable,
     Optional,
 )
@@ -34,7 +35,7 @@ class VPoint:
 
     def __init__(
         self,
-        links: str,
+        links: Iterable[str],
         type_int: int,
         angle: float,
         color_str: str,
@@ -45,12 +46,12 @@ class VPoint:
         ...
 
     @staticmethod
-    def r_joint(links: str, x: float, y: float) -> VPoint:
+    def r_joint(links: Iterable[str], x: float, y: float) -> VPoint:
         """Create by coordinate."""
         ...
 
     @staticmethod
-    def slider_joint(links: str, type_int: int, angle: float, x: float, y: float) -> VPoint:
+    def slider_joint(links: Iterable[str], type_int: int, angle: float, x: float, y: float) -> VPoint:
         """Create by coordinate."""
         ...
 

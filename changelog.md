@@ -12,6 +12,7 @@ Version 19.01
 + Module "planarlinkage" renamed to "planar_linkage".
 + Adjust limitation option of algorithm to "max_gen", "min_fit" and "max_time".
 + Add "cdef" static method for joint creation.
++ Change "links" argument of VPoint constructor into string iterable object.
 
 Version 18.12
 ===

@@ -324,10 +324,10 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
                     continue
                 links.update(vpoint_.links)
                 vpoints[node] = VPoint.c_slider_joint(
-                    ",".join([vpoint.links[0]] + [
+                    [vpoint.links[0]] + [
                         link_ for link_ in vpoint_.links
                         if (link_ not in vpoint.links)
-                    ]),
+                    ],
                     VJoint.RP,
                     vpoint.angle,
                     vpoint_.cx,

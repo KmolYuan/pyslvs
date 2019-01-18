@@ -36,9 +36,9 @@ cdef class VPoint:
     cdef bint __has_offset
 
     @staticmethod
-    cdef VPoint c_r_joint(str links, double x, double y)
+    cdef VPoint c_r_joint(object links, double x, double y)
     @staticmethod
-    cdef VPoint c_slider_joint(str links, VJoint type_int, double angle, double x, double y)
+    cdef VPoint c_slider_joint(object links, VJoint type_int, double angle, double x, double y)
 
     # Copy method
     cpdef VPoint copy(self)
