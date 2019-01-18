@@ -33,21 +33,13 @@ cdef class VPoint:
         double y,
         object color_func = None
     ):
-        cdef list tmp_list = []
         cdef str name
-        links = links.replace(" ", '')
-
-        for name in links.split(','):
-            if not name:
-                continue
-            tmp_list.append(name)
-
-        self.links = tuple(tmp_list)
+        self.links = tuple([name for name in links.replace(" ", '').split(',') if name])
         self.type = j_type
-        self.typeSTR = ('R', 'P', 'RP')[j_type]
+        self.type_str = ('R', 'P', 'RP')[j_type]
         self.angle = angle
 
-        self.colorSTR = color_str
+        self.color_str = color_str
         if color_func is None:
             self.color = None
         else:
@@ -72,20 +64,29 @@ cdef class VPoint:
     @staticmethod
     def r_joint(links: str, x: double, y: double) -> VPoint:
         """Create by coordinate."""
+        return VPoint.c_r_joint(links, x, y)
+
+    @staticmethod
+    cdef VPoint c_r_joint(str links, double x, double y):
         return VPoint.__new__(VPoint, links, VJoint.R, 0., '', x, y)
 
     @staticmethod
     def slider_joint(links: str, type_int: VJoint, angle: double, x: double, y: double) -> VPoint:
         """Create by coordinate."""
+        return VPoint.c_slider_joint(links, type_int, angle, x, y)
+
+    @staticmethod
+    cdef VPoint c_slider_joint(str links, VJoint type_int, double angle, double x, double y):
         return VPoint.__new__(VPoint, links, type_int, angle, '', x, y)
 
     def __copy__(self) -> VPoint:
         """Copy method."""
-        cdef VPoint vpoint = VPoint(
+        cdef VPoint vpoint = VPoint.__new__(
+            VPoint,
             ", ".join(self.links),
             self.type,
             self.angle,
-            self.colorSTR,
+            self.color_str,
             self.x,
             self.y
         )
@@ -261,11 +262,11 @@ cdef class VPoint:
     def expr(self) -> str:
         """Expression."""
         if self.type != VJoint.R:
-            type_text = f"{self.typeSTR}, A[{self.angle}]"
+            type_text = f"{self.type_str}, A[{self.angle}]"
         else:
             type_text = 'R'
-        if self.colorSTR:
-            color = f", color[{self.colorSTR}]"
+        if self.color_str:
+            color = f", color[{self.color_str}]"
         else:
             color = ""
         links_text = ", ".join(name for name in self.links)
@@ -293,7 +294,7 @@ cdef class VLink:
 
     """Symbol of links."""
 
-    cdef readonly str name, colorSTR
+    cdef readonly str name, color_str
     cdef readonly tuple color
     cdef readonly tuple points
 
@@ -305,7 +306,7 @@ cdef class VLink:
         object color_func = None
     ):
         self.name = name
-        self.colorSTR = color_str
+        self.color_str = color_str
         if color_func is None:
             self.color = None
         else:

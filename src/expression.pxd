@@ -29,11 +29,16 @@ cdef class VPoint:
     cdef readonly ndarray c
     cdef readonly VJoint type
     cdef readonly tuple color
-    cdef readonly str colorSTR
-    cdef readonly str typeSTR
+    cdef readonly str color_str
+    cdef readonly str type_str
     cdef readonly double x, y, angle
     cdef double __offset
     cdef bint __has_offset
+
+    @staticmethod
+    cdef VPoint c_r_joint(str links, double x, double y)
+    @staticmethod
+    cdef VPoint c_slider_joint(str links, VJoint type_int, double angle, double x, double y)
 
     # Copy method
     cpdef VPoint copy(self)

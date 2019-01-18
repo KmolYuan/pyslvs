@@ -320,17 +320,16 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
             links.clear()
             for node in vlinks[link]:
                 vpoint_ = vpoints[node]
-                if (node == base) or (vpoint_.type in {VJoint.P, VJoint.RP}):
+                if node == base or (vpoint_.type in {VJoint.P, VJoint.RP}):
                     continue
                 links.update(vpoint_.links)
-                vpoints[node] = VPoint(
+                vpoints[node] = VPoint.c_slider_joint(
                     ",".join([vpoint.links[0]] + [
                         link_ for link_ in vpoint_.links
                         if (link_ not in vpoint.links)
                     ]),
                     VJoint.RP,
                     vpoint.angle,
-                    vpoint_.colorSTR,
                     vpoint_.cx,
                     vpoint_.cy
                 )

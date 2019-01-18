@@ -26,8 +26,8 @@ class VPoint:
     c: ndarray
     type: int
     color: Optional[_Color]
-    colorSTR: str
-    typeSTR: str
+    color_str: str
+    type_str: str
     x: float
     y: float
     angle: float
@@ -147,7 +147,7 @@ class VLink:
     """Symbol of links."""
 
     name: str
-    colorSTR: str
+    color_str: str
     color: Optional[_Color]
     points: Tuple[int, ...]
 

@@ -11,6 +11,7 @@ Version 19.01
 + Module "pmks" renamed to "expression".
 + Module "planarlinkage" renamed to "planar_linkage".
 + Adjust limitation option of algorithm to "max_gen", "min_fit" and "max_time".
++ Add "cdef" static method for joint creation.
 
 Version 18.12
 ===
