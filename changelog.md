@@ -13,6 +13,7 @@ Version 19.01
 + Adjust limitation option of algorithm to "max_gen", "min_fit" and "max_time".
 + Add "cdef" static method for joint creation.
 + Change "links" argument of VPoint constructor into string iterable object.
++ Using normal exception instead of "RuntimeError".
 
 Version 18.12
 ===
