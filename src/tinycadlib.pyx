@@ -495,8 +495,8 @@ cpdef list expr_solving(
     if has_not_solved:
         try:
             solved_bfgs = vpoint_solving(vpoints, {}, p_data_dict)
-        except RuntimeError as e:
-            raise RuntimeError("result contains failure: Sketch Solve") from e
+        except ValueError:
+            raise ValueError("result contains failure from sketch solve")
 
     """Format:
     + R joint: [[p0]: (p0_x, p0_y), [p1]: (p1_x, p1_y)]
@@ -507,7 +507,7 @@ cpdef list expr_solving(
         if mapping[i] in data_dict:
             # These points solved by Pyslvs.
             if isnan(data_dict[mapping[i]][0]):
-                raise RuntimeError(f"result contains failure: Point{i}")
+                raise ValueError(f"result contains failure: Point{i}")
             if vpoints[i].type == VJoint.R:
                 solved_points.append(data_dict[mapping[i]])
             else:
