@@ -9,9 +9,7 @@ __email__ = "pyslvs@gmail.com"
 
 import unittest
 from unittest import TestCase
-
-# For necessary testing modules.
-from math import sqrt, radians, isclose
+from math import sqrt, radians
 from bfgs import vpoint_solving
 from tinycadlib import (
     Coordinate,
@@ -73,33 +71,33 @@ class CoreTest(TestCase):
     def test_plap(self):
         """Test for plap function."""
         x, y = plap(Coordinate(0, 0), 50 * sqrt(2), radians(45), Coordinate(50, 0))
-        self.assertTrue(isclose(x, 50))
-        self.assertTrue(isclose(y, 50))
+        self.assertAlmostEqual(x, 50)
+        self.assertAlmostEqual(y, 50)
 
     def test_pllp(self):
         """Test for pllp function."""
         c1 = Coordinate(-30, 0)
         c2 = Coordinate(30, 0)
         x, y = pllp(c1, 50, 50, c2)
-        self.assertTrue(isclose(x, 0))
-        self.assertTrue(isclose(y, 40))
+        self.assertAlmostEqual(x, 0)
+        self.assertAlmostEqual(y, 40)
         x, y = pllp(c1, 30, 30, c2)
-        self.assertTrue(isclose(x, 0))
-        self.assertTrue(isclose(y, 0))
+        self.assertAlmostEqual(x, 0)
+        self.assertAlmostEqual(y, 0)
         x, y = pllp(c1, 90, 30, c2)
-        self.assertTrue(isclose(x, 60))
-        self.assertTrue(isclose(y, 0))
+        self.assertAlmostEqual(x, 60)
+        self.assertAlmostEqual(y, 0)
 
     def test_plpp(self):
         """Test for plpp function."""
         x, y = plpp(Coordinate(0, 0), sqrt(5), Coordinate(0, -3), Coordinate(3 / 2, 0))
-        self.assertTrue(isclose(x, 2))
-        self.assertTrue(isclose(y, 1))
+        self.assertAlmostEqual(x, 2)
+        self.assertAlmostEqual(y, 1)
 
     def test_pxy(self):
         x, y = pxy(Coordinate(80, 90), 40, -20)
-        self.assertTrue(isclose(x, 120))
-        self.assertTrue(isclose(y, 70))
+        self.assertAlmostEqual(x, 120)
+        self.assertAlmostEqual(y, 70)
 
     def test_graph_function(self):
         """Test 'graph' libraries."""
@@ -160,33 +158,34 @@ class CoreTest(TestCase):
         mapping = {n: f'P{n}' for n in range(len(vpoints))}
         data_dict, dof = data_collecting(exprs, mapping, vpoints)
         for link, link_length in (
-                ('L0', 15.002083188677497),
-                ('L1', 41.50187586121861),
-                ('L2', 49.9949057404852),
-                ('L3', 40.09650982317538),
-                ('L4', 55.80253220060896),
-                ('L5', 61.90525179659639),
-                ('L6', 39.302800154696364),
-                ('L7', 36.69767567571548),
-                ('L8', 39.395233214184685),
-                ('L9', 48.995886562037015),
-                ('L10', 65.69940106271898),
+            ('L0', 15.002083),
+            ('L1', 41.501876),
+            ('L2', 49.994906),
+            ('L3', 40.09651),
+            ('L4', 55.802532),
+            ('L5', 61.905252),
+            ('L6', 39.3028),
+            ('L7', 36.697676),
+            ('L8', 39.395233),
+            ('L9', 48.995887),
+            ('L10', 65.699401),
         ):
-            self.assertTrue(isclose(data_dict[link], link_length))
+            self.assertAlmostEqual(data_dict[link], link_length, 6)
         self.assertEqual(1, dof)
         result = expr_solving(exprs, mapping, vpoints, [0.])
         x, y = result[-1]
-        self.assertTrue(isclose(x, -43.17005515543241))
-        self.assertTrue(isclose(y, -91.75322590542523))
+        self.assertAlmostEqual(x, -43.170055, 6)
+        self.assertAlmostEqual(y, -91.753226, 6)
 
-    def test_bfgs(self):
+    def test_solving_bfgs(self):
         """Test Sketch Solve kernel."""
         expr, _ = example_list["Jansen's linkage (Single)"]
         vpoints = parse_vpoints(expr)
         result = vpoint_solving(vpoints, {(0, 1): 0.})
         x, y = result[-1]
-        self.assertTrue(isclose(round(x, 2), -43.17))
-        self.assertTrue(isclose(round(y, 2), -91.75))
+        print(x, y)
+        self.assertAlmostEqual(x, -43.170055, 6)
+        self.assertAlmostEqual(y, -91.753226, 6)
 
     def test_number_synthesis(self):
         """Test Number Synthesis function."""
