@@ -78,7 +78,7 @@ def expr_parser(exprs: Sequence[Tuple[str, ...]], data_dict: Dict[str, float]):
 
 def expr_solving(
     exprs: Sequence[Tuple[str, ...]],
-    mapping: Dict[int, str],
+    mapping: Dict[Union[int, Tuple[int, int]], Union[str, float]],
     vpoints: Sequence[VPoint],
     angles: Sequence[float] = None
 ) -> List[Union[TuplePoint, Tuple[TuplePoint, TuplePoint]]]:

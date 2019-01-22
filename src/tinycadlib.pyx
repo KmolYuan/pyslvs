@@ -336,7 +336,8 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
 
     # Reverse mapping, exclude specified link length.
     cdef object k, v
-    cdef dict mapping_r = {v: k for k, v in mapping.items() if (type(k) == int)}
+    cdef dict mapping_r = {v: k for k, v in mapping.items() if type(k) == int}
+    cdef dict length = {frozenset(k): v for k, v in mapping.items() if type(k) == tuple}
 
     cdef list pos = []
     for vpoint in vpoints:
@@ -363,14 +364,15 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
 
     cdef int dof = 0
     cdef dict data_dict = {}
-    cdef int target
-    cdef tuple expr
     """Add data to 'data_dict'.
     
     TODO: Change another way to specify the lengths.
     + Add 'L' (link) parameters.
     + Counting DOF and targets.
     """
+    cdef int target
+    cdef tuple expr
+    cdef frozenset pair
     for expr in exprs:
         node = mapping_r[expr[1]]
         target = mapping_r[expr[-1]]
@@ -379,8 +381,9 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
             data_dict[expr[1]] = pos[mapping_r[expr[1]]]
         if expr[0] == 'PLAP':
             # Link 1: expr[2]
-            if expr[2] in mapping:
-                data_dict[expr[2]] = mapping[expr[2]]
+            pair = frozenset({node, target})
+            if pair in length:
+                data_dict[expr[2]] = length[pair]
             else:
                 data_dict[expr[2]] = tuple_distance(pos[node], pos[target])
             # Point 2: expr[4]
@@ -390,13 +393,15 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
             dof += 1
         elif expr[0] == 'PLLP':
             # Link 1: expr[2]
-            if expr[2] in mapping:
-                data_dict[expr[2]] = mapping[expr[2]]
+            pair = frozenset({node, target})
+            if pair in length:
+                data_dict[expr[2]] = length[pair]
             else:
                 data_dict[expr[2]] = tuple_distance(pos[node], pos[target])
             # Link 2: expr[3]
-            if expr[3] in mapping:
-                data_dict[expr[3]] = mapping[expr[3]]
+            pair = frozenset({mapping_r[expr[4]], target})
+            if pair in length:
+                data_dict[expr[3]] = length[pair]
             else:
                 data_dict[expr[3]] = tuple_distance(pos[mapping_r[expr[4]]], pos[target])
             # Point 2: expr[4]
@@ -404,8 +409,9 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
                 data_dict[expr[4]] = pos[mapping_r[expr[4]]]
         elif expr[0] == 'PLPP':
             # Link 1: expr[2]
-            if expr[2] in mapping:
-                data_dict[expr[2]] = mapping[expr[2]]
+            pair = frozenset({node, target})
+            if pair in length:
+                data_dict[expr[2]] = length[pair]
             else:
                 data_dict[expr[2]] = tuple_distance(pos[node], pos[target])
             # Point 2:  expr[3]
@@ -424,7 +430,7 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
                 data_dict[expr[3]] = pos[target][1] - pos[node][1]
     # Other grounded R joints.
     for i, vpoint in enumerate(vpoints):
-        if vpoint.grounded() and (vpoint.type == VJoint.R):
+        if vpoint.grounded() and vpoint.type == VJoint.R:
             data_dict[mapping[i]] = vpoint.c[0]
     return data_dict, dof
 
