@@ -335,9 +335,17 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
                 )
 
     # Reverse mapping, exclude specified link length.
+    cdef dict mapping_r = {}
+    cdef dict length = {}
+    cdef dict data_dict = {}
+
     cdef object k, v
-    cdef dict mapping_r = {v: k for k, v in mapping.items() if type(k) == int}
-    cdef dict length = {frozenset(k): v for k, v in mapping.items() if type(k) == tuple}
+    for k, v in mapping.items():
+        if type(k) == int:
+            mapping_r[v] = k
+        elif type(k) == tuple:
+            length[frozenset(k)] = v
+            data_dict[k] = v
 
     cdef list pos = []
     for vpoint in vpoints:
@@ -363,7 +371,6 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
         mapping_r[f'S{i}'] = len(pos) - 1
 
     cdef int dof = 0
-    cdef dict data_dict = {}
     """Add data to 'data_dict'.
     
     TODO: Change another way to specify the lengths.
@@ -428,10 +435,12 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
                 data_dict[expr[3]] = mapping[expr[3]]
             else:
                 data_dict[expr[3]] = pos[target][1] - pos[node][1]
+
     # Other grounded R joints.
     for i, vpoint in enumerate(vpoints):
         if vpoint.grounded() and vpoint.type == VJoint.R:
             data_dict[mapping[i]] = vpoint.c[0]
+
     return data_dict, dof
 
 
@@ -487,6 +496,7 @@ cpdef list expr_solving(
 
     cdef dict p_data_dict = {}
     cdef bint has_not_solved = False
+
     # Add coordinate of known points.
     for i in range(len(vpoints)):
         if mapping[i] in data_dict:
@@ -494,11 +504,16 @@ cpdef list expr_solving(
         else:
             has_not_solved = True
 
-    # TODO: Add specified link lengths.
-
     # Calling Sketch Solve kernel and try to get the result.
     cdef list solved_bfgs = []
     if has_not_solved:
+
+        # Add specified link lengths.
+        for k, v in data_dict.items():
+            if type(k) == tuple:
+                p_data_dict[k] = v
+
+        # Solve
         try:
             solved_bfgs = vpoint_solving(vpoints, {}, p_data_dict)
         except ValueError:
@@ -511,7 +526,7 @@ cpdef list expr_solving(
     cdef list solved_points = []
     for i in range(len(vpoints)):
         if mapping[i] in data_dict:
-            # These points solved by Pyslvs.
+            # These points has been solved.
             if isnan(data_dict[mapping[i]][0]):
                 raise ValueError(f"result contains failure: Point{i}")
             if vpoints[i].type == VJoint.R:

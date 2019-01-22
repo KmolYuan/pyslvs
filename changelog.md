@@ -14,6 +14,7 @@ Version 19.01
 + Add "cdef" static method for joint creation.
 + Change "links" argument of VPoint constructor into string iterable object.
 + Using normal exception instead of "RuntimeError".
++ Supported specified link length option.
 
 Version 18.12
 ===

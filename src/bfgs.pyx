@@ -674,7 +674,7 @@ cpdef list vpoint_solving(
 
     # Solve
     if solve(parameters_ptr, params_count, cons, cons_count, Rough) != Succsess:
-        raise RuntimeError("No valid Solutions were found from this start point")
+        raise ValueError("no valid solutions were found from this start point")
 
     """solved_points: List[
         # R joint
