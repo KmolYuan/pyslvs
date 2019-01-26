@@ -89,7 +89,8 @@ cdef class Planar(Verification):
             'lower': ndarray[double, ndim=1],
         }
         """
-        cdef set check_set = set(map(len, mech_params['Target'].values()))
+        cdef dict target_data = mech_params.get('Target', {})
+        cdef set check_set = set(map(len, target_data.values()))
         if len(check_set) != 1:
             raise ValueError("Target path should be in the same size")
         # Counting how many action to satisfied require point.
@@ -97,20 +98,22 @@ cdef class Planar(Verification):
         # Target points
         # [Coordinate(x0, y0), Coordinate(x1, y1), Coordinate(x2, y2), ...]
         cdef int i = 0
-        cdef int target_count = len(mech_params['Target'])
+        cdef int target_count = len(target_data)
         self.target_names = ndarray(target_count, dtype=object)
         self.target = ndarray(target_count, dtype=object)
         cdef double x, y
         cdef str name
         cdef list target
-        for name, target in mech_params['Target'].items():
+        for name, target in target_data.items():
             self.target_names[i] = name
             self.target[i] = tuple(Coordinate(x, y) for x, y in target)
             i += 1
 
         # Expression
         # ['A', 'B', 'C', 'D', 'E', 'L0', 'L1', 'L2', 'L3', 'L4', 'a0']
-        cdef tuple exprs = tuple(mech_params['Expression'].split(';'))
+        cdef tuple exprs = tuple(mech_params.get('Expression', "").split(';'))
+        cdef dict driver_data = mech_params.get('Driver', {})
+        cdef dict follower_data = mech_params.get('Follower', {})
 
         """
         link_list: L0, L1, L2, L3, ...
@@ -140,9 +143,9 @@ cdef class Planar(Verification):
             for p in params.split(','):
                 if p.startswith('L') and len(p) > 1:
                     self.link_list.append(p)
-                if (p in mech_params['Driver']) and (p not in self.driver_list):
+                if (p in driver_data) and (p not in self.driver_list):
                     self.driver_list.append(p)
-                if (p in mech_params['Follower']) and (p not in self.follower_list):
+                if (p in follower_data) and (p not in self.follower_list):
                     self.follower_list.append(p)
 
         """Limitations
@@ -161,29 +164,31 @@ cdef class Planar(Verification):
         self.var_count = 2 * len(self.driver_list) + 2 * len(self.follower_list) + link_count
 
         cdef dict tmp_dict = {}
-        tmp_dict.update(mech_params['Driver'])
-        tmp_dict.update(mech_params['Follower'])
+        tmp_dict.update(driver_data)
+        tmp_dict.update(follower_data)
 
         cdef list tmp_list = []
 
         # upper
+        cdef tuple upper_data = tuple(mech_params.get('upper', ()))
         for name in self.driver_list + self.follower_list:
             for i in range(2):
                 tmp_list.append(tmp_dict[name][i] + tmp_dict[name][2]/2)
-        tmp_list.extend(mech_params['upper'][:link_count])
+        tmp_list.extend(upper_data[:link_count])
         for i in range(len(self.driver_list)):
-            tmp_list.extend([mech_params['upper'][link_count + i]] * self.target_count)
+            tmp_list.extend([upper_data[link_count + i]] * self.target_count)
         self.upper = np_array(tmp_list, dtype=np_float32)
 
         tmp_list.clear()
 
         # lower
+        cdef tuple lower_data = tuple(mech_params.get('lower', ()))
         for name in self.driver_list + self.follower_list:
             for i in range(2):
-                tmp_list.append(tmp_dict[name][i] - tmp_dict[name][2]/2)
-        tmp_list.extend(mech_params['lower'][:link_count])
+                tmp_list.append(tmp_dict[name][i] - tmp_dict[name][2] / 2)
+        tmp_list.extend(lower_data[:link_count])
         for i in range(len(self.driver_list)):
-            tmp_list.extend([mech_params['lower'][link_count + i]] * self.target_count)
+            tmp_list.extend([lower_data[link_count + i]] * self.target_count)
         self.lower = np_array(tmp_list, dtype=np_float32)
 
         # Swap sorting.
