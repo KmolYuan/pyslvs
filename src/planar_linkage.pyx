@@ -202,7 +202,7 @@ cdef class Planar(Verification):
     cdef ndarray[double, ndim=1] get_lower(self):
         return self.lower
 
-    cdef int get_nParm(self):
+    cdef int length(self):
         return len(self.upper)
 
     cdef dict get_data_dict(self, ndarray[double, ndim=1] v):
