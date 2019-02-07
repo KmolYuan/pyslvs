@@ -80,8 +80,6 @@ def color_rgb(name: str) -> Tuple[int, int, int]:
             return color_text
 
 
-_COLORS = "|".join(f'"{color}"' for color in reversed(color_names))
-
 _GRAMMAR = Lark(r"""
     // Number
     DIGIT: "0".."9"
@@ -100,7 +98,7 @@ _GRAMMAR = Lark(r"""
     CNAME: ("_" | LETTER) ("_" | LETTER | DIGIT)*
 
     // White space and new line
-    WS: /[ \t\f\r\n]/+
+    WS: /\s+/
     CR: /\r/
     LF: /\n/
     NEWLINE: (CR? LF)+
@@ -108,12 +106,12 @@ _GRAMMAR = Lark(r"""
     %ignore NEWLINE
 
     // Comment
-    COMMENT: "#" /[^\n]/*
+    COMMENT: /#[^\n]*/
     %ignore COMMENT
 
     // Custom data type
     JOINTTYPE: "RP" | "R" | "P"
-    COLOR: """ + _COLORS + """
+    COLOR: """ + "|".join(f'"{color}"' for color in color_names) + r"""
     type: JOINTTYPE
     name: CNAME
     number: SIGNED_NUMBER
@@ -122,7 +120,7 @@ _GRAMMAR = Lark(r"""
     // Main grammar
     joint: "J[" type ["," angle] ["," color] "," point "," link "]"
     link: "L[" name ("," name)* "]"
-    point: "P[" number  "," number "]"
+    point: "P[" number "," number "]"
     angle: "A[" number "]"
     color: "color[" (("(" color_value ("," color_value) ~ 2 ")") | COLOR) "]"
     mechanism: "M[" [joint ("," joint)* ","?] "]"
