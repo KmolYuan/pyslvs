@@ -1,7 +1,7 @@
 Change Log
 ===
 
-Version 19.01
+Version 19.02
 ===
 
 + Change the function name of triangle formulas.
@@ -15,6 +15,11 @@ Version 19.01
 + Change "links" argument of VPoint constructor into string iterable object.
 + Using normal exception instead of "RuntimeError".
 + Supported specified link length option.
+
+Version 19.01
+===
+
++ This version has been skipped.
 
 Version 18.12
 ===

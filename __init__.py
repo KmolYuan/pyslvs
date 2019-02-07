@@ -29,7 +29,7 @@ __author__ = "Yuan Chang"
 __copyright__ = "Copyright (C) 2016-2019"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
-__version__ = (19, 1, 0, 'dev')
+__version__ = (19, 2, 0, 'dev')
 
 from .expression import VJoint, VPoint, VLink
 from .bfgs import vpoint_solving
