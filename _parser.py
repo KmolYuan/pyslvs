@@ -94,8 +94,8 @@ _GRAMMAR = Lark(r"""
     // Letters
     LCASE_LETTER: "a".."z"
     UCASE_LETTER: "A".."Z"
-    LETTER: UCASE_LETTER | LCASE_LETTER
-    CNAME: ("_" | LETTER) ("_" | LETTER | DIGIT)*
+    LETTER: UCASE_LETTER | LCASE_LETTER | "_"
+    CNAME: LETTER (LETTER | DIGIT)*
 
     // White space and new line
     WS: /\s+/
@@ -106,8 +106,10 @@ _GRAMMAR = Lark(r"""
     %ignore NEWLINE
 
     // Comment
-    COMMENT: /#[^\n]*/
-    %ignore COMMENT
+    LINE_COMMENT: /#[^\n]*/
+    MULTILINE_COMMENT: /#\[[\s\S]*#\][^\n]*/
+    %ignore LINE_COMMENT
+    %ignore MULTILINE_COMMENT
 
     // Custom data type
     JOINTTYPE: "RP" | "R" | "P"
@@ -124,7 +126,8 @@ _GRAMMAR = Lark(r"""
     angle: "A[" number "]"
     color: "color[" (("(" color_value ("," color_value) ~ 2 ")") | COLOR) "]"
     mechanism: "M[" [joint ("," joint)* ","?] "]"
-""", start='mechanism')
+    ?start: mechanism
+""")
 
 
 class _PMKSParams(Transformer):
@@ -316,10 +319,11 @@ else:
 
         tokens = {
             'root': [
-                ('#.*$', Comment.Single),
-                ('(M)|(J)|(L)|(P)|(A)|(color)', Name.Function),
-                ('|'.join(f"({color})" for color in color_names), Name.Variable),
-                ('(RP)|(R)|(P)', Keyword.Constant),
-                (r'(\d+\.\d*|\d*\.\d+)([eE][+-]?[0-9]+)?j?', Number.Float),
+                (r'#[^\n]*', Comment.Single),
+                (r'#\[[\s\S]*#\][^\n]*', Comment.Multiple),
+                (r'M|J|L|P|A|color', Name.Function),
+                ('|'.join(f"{color}" for color in reversed(color_names)), Name.Variable),
+                (r'RP|R|P', Keyword.Constant),
+                (r'(\d+\.\d*|\.\d+)([eE][+-]?\d+)?', Number.Float),
             ]
         }
