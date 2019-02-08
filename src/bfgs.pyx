@@ -41,7 +41,7 @@ from sketch_solve cimport (
 from expression cimport VJoint, VPoint
 
 
-cdef inline void _sorted_data_dict(dict data_dict):
+cdef inline void _sort_data_dict(dict data_dict):
     """Sort the pairs in data_dict."""
     cdef object k
     for k in data_dict:
@@ -53,8 +53,8 @@ cdef inline bint _measure_parameter(
     object vpoints,
     dict data_dict,
     map[int, int] &sliders,
-    double **parameters,
-    double ***parameters_ptr,
+    double **params,
+    double ***params_ptr,
     double **constants,
     int *params_count,
     Point **points,
@@ -99,8 +99,8 @@ cdef inline bint _measure_parameter(
     if not params_count[0]:
         return False
 
-    parameters[0] = <double *>malloc(params_count[0] * sizeof(double))
-    parameters_ptr[0] = <double **>malloc(params_count[0] * sizeof(double *))
+    params[0] = <double *>malloc(params_count[0] * sizeof(double))
+    params_ptr[0] = <double **>malloc(params_count[0] * sizeof(double *))
     constants[0] = <double *>malloc(constants_count * sizeof(double))
     points[0] = <Point *>malloc(len(vpoints) * sizeof(Point))
     # Slider data
@@ -113,12 +113,12 @@ cdef inline bint _measure_parameter(
     return True
 
 
-cdef inline void _parameters_link_data(
+cdef inline void _params_link_data(
     object vpoints,
     dict data_dict,
     dict vlinks,
-    double *parameters,
-    double **parameters_ptr,
+    double *params,
+    double **params_ptr,
     double *constants,
     Point *points,
     Point *slider_bases,
@@ -161,22 +161,22 @@ cdef inline void _parameters_link_data(
                 # Base point (slot) is fixed.
                 slider_bases[slider_count] = [constants + b, constants + b + 1]
                 # Slot point (slot) is movable.
-                parameters[a] = vpoint.c[0][0] + cos(vpoint.angle)
-                parameters[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
-                parameters_ptr[a] = parameters + a
-                parameters_ptr[a + 1] = parameters + a + 1
-                slider_slots[slider_count] = [parameters_ptr[a], parameters_ptr[a + 1]]
+                params[a] = vpoint.c[0][0] + cos(vpoint.angle)
+                params[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
+                params_ptr[a] = params + a
+                params_ptr[a + 1] = params + a + 1
+                slider_slots[slider_count] = [params_ptr[a], params_ptr[a + 1]]
                 a += 2
                 slider_count += 1
                 # Pin is movable.
-                parameters[a], parameters[a + 1] = vpoint.c[1]
+                params[a], params[a + 1] = vpoint.c[1]
                 if vpoint.has_offset() and (vpoint.true_offset() <= 0.1):
                     offset = 0.1 if vpoint.offset() > 0 else -0.1
-                    parameters[a] += offset
-                    parameters[a + 1] += offset
-                parameters_ptr[a] = parameters + a
-                parameters_ptr[a + 1] = parameters + a + 1
-                points[i] = [parameters_ptr[a], parameters_ptr[a + 1]]
+                    params[a] += offset
+                    params[a + 1] += offset
+                params_ptr[a] = params + a
+                params_ptr[a + 1] = params + a + 1
+                points[i] = [params_ptr[a], params_ptr[a + 1]]
                 a += 2
             else:
                 # Point is fixed.
@@ -193,17 +193,17 @@ cdef inline void _parameters_link_data(
 
         if vpoint.type in {VJoint.P, VJoint.RP}:
             # Base point (slot) is movable.
-            parameters[a], parameters[a + 1] = vpoint.c[0]
-            parameters_ptr[a] = parameters + a
-            parameters_ptr[a + 1] = parameters + a + 1
-            slider_bases[slider_count] = [parameters_ptr[a], parameters_ptr[a + 1]]
+            params[a], params[a + 1] = vpoint.c[0]
+            params_ptr[a] = params + a
+            params_ptr[a + 1] = params + a + 1
+            slider_bases[slider_count] = [params_ptr[a], params_ptr[a + 1]]
             a += 2
             # Slot point (slot) is movable.
-            parameters[a] = vpoint.c[0][0] + cos(vpoint.angle)
-            parameters[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
-            parameters_ptr[a] = parameters + a
-            parameters_ptr[a + 1] = parameters + a + 1
-            slider_slots[slider_count] = [parameters_ptr[a], parameters_ptr[a + 1]]
+            params[a] = vpoint.c[0][0] + cos(vpoint.angle)
+            params[a + 1] = vpoint.c[0][1] + sin(vpoint.angle)
+            params_ptr[a] = params + a
+            params_ptr[a + 1] = params + a + 1
+            slider_slots[slider_count] = [params_ptr[a], params_ptr[a + 1]]
             a += 2
             slider_count += 1
             if vpoint.pin_grounded():
@@ -212,22 +212,22 @@ cdef inline void _parameters_link_data(
                 points[i] = [constants + b, constants + b + 1]
             else:
                 # Pin is movable.
-                parameters[a], parameters[a + 1] = vpoint.c[1]
+                params[a], params[a + 1] = vpoint.c[1]
                 if vpoint.has_offset() and (vpoint.true_offset() <= 0.1):
                     offset = 0.1 if vpoint.offset() > 0 else -0.1
-                    parameters[a] += offset
-                    parameters[a + 1] += offset
-                parameters_ptr[a] = parameters + a
-                parameters_ptr[a + 1] = parameters + a + 1
-                points[i] = [parameters_ptr[a], parameters_ptr[a + 1]]
+                    params[a] += offset
+                    params[a + 1] += offset
+                params_ptr[a] = params + a
+                params_ptr[a + 1] = params + a + 1
+                points[i] = [params_ptr[a], params_ptr[a + 1]]
                 a += 2
             continue
 
         # Point is movable.
-        parameters[a], parameters[a + 1] = vpoint.c[0]
-        parameters_ptr[a] = parameters + a
-        parameters_ptr[a + 1] = parameters + a + 1
-        points[i] = [parameters_ptr[a], parameters_ptr[a + 1]]
+        params[a], params[a + 1] = vpoint.c[0]
+        params_ptr[a] = params + a
+        params_ptr[a + 1] = params + a + 1
+        points[i] = [params_ptr[a], params_ptr[a + 1]]
         a += 2
 
 
@@ -568,12 +568,14 @@ cpdef list vpoint_solving(
     if data_dict is None:
         data_dict = {}
 
-    _sorted_data_dict(data_dict)
+    _sort_data_dict(data_dict)
+
+    # TODO: Create status as resolvable object.
 
     # sliders = {p_num: base_num}
     cdef map[int, int] sliders
-    cdef double *parameters = NULL
-    cdef double **parameters_ptr = NULL
+    cdef double *params = NULL
+    cdef double **params_ptr = NULL
     cdef double *constants = NULL
     cdef int params_count = 0
     cdef Point *points = NULL
@@ -584,8 +586,8 @@ cpdef list vpoint_solving(
         vpoints,
         data_dict,
         sliders,
-        &parameters,
-        &parameters_ptr,
+        &params,
+        &params_ptr,
         &constants,
         &params_count,
         &points,
@@ -596,12 +598,12 @@ cpdef list vpoint_solving(
 
     cdef dict vlinks = {}
 
-    _parameters_link_data(
+    _params_link_data(
         vpoints,
         data_dict,
         vlinks,
-        parameters,
-        parameters_ptr,
+        params,
+        params_ptr,
         constants,
         points,
         slider_bases,
@@ -673,16 +675,9 @@ cpdef list vpoint_solving(
     _angle_cons(inputs, &con_index, angles, points, lines, cons)
 
     # Solve
-    if solve(parameters_ptr, params_count, cons, cons_count, Rough) != Succsess:
-        raise ValueError("no valid solutions were found from this start point")
+    if solve(params_ptr, params_count, cons, cons_count, Rough) != Succsess:
+        raise ValueError("no valid solutions were found from initialed values")
 
-    """solved_points: List[
-        # R joint
-        [p1]: (p1_x, p1_y)
-        # P or RP joint
-        [p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))
-    ]
-    """
     cdef list solved_points = []
     cdef int i
     for i in range(len(vpoints)):
@@ -694,8 +689,8 @@ cpdef list vpoint_solving(
                 (points[i].x[0], points[i].y[0])
             ))
 
-    free(parameters)
-    free(parameters_ptr)
+    free(params)
+    free(params_ptr)
     free(constants)
     free(points)
     free(slider_bases)
