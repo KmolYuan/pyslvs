@@ -50,7 +50,7 @@ cdef inline void _sort_data_dict(dict data_dict):
 
 
 cdef inline bint _measure_parameter(
-    object vpoints,
+    list vpoints,
     dict data_dict,
     map[int, int] &sliders,
     double **params,
@@ -114,7 +114,7 @@ cdef inline bint _measure_parameter(
 
 
 cdef inline void _params_link_data(
-    object vpoints,
+    list vpoints,
     dict data_dict,
     dict vlinks,
     double *params,
@@ -259,7 +259,7 @@ cdef inline void _measure_distance_cons(
 
 
 cdef inline void _measure_slider_cons(
-    object vpoints,
+    list vpoints,
     dict vlinks,
     map[int, int] &sliders,
     int *cons_count,
@@ -330,7 +330,7 @@ cdef inline void _measure_angle_cons(
 
 
 cdef inline void _distance_cons(
-    object vpoints,
+    list vpoints,
     dict data_dict,
     dict vlinks,
     map[int, int] &sliders,
@@ -394,7 +394,7 @@ cdef inline void _distance_cons(
 
 
 cdef inline void _slider_cons(
-    object vpoints,
+    list vpoints,
     dict vlinks,
     map[int, int] &sliders,
     int *con_index,
@@ -550,7 +550,7 @@ cdef inline tuple _sorted_pair(int a, int b):
 
 
 cpdef list vpoint_solving(
-    object vpoints,
+    object vpoints_,
     dict inputs = None,
     dict data_dict = None
 ):
@@ -562,7 +562,8 @@ cpdef list vpoint_solving(
     Known coordinates import from data_dict.
     + data_dict: {0: (10.0, 20.0), ..., (0, 2): 30.0, ...}
     """
-    # Blank sequences.
+    # Sequences.
+    cdef list vpoints = list(vpoints_)
     if inputs is None:
         inputs = {}
     if data_dict is None:
