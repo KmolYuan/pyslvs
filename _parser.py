@@ -29,7 +29,7 @@ except ImportError:
     from graph import Graph
 
 # Color dictionary.
-_color_list = {
+_color_list: Dict[str, Tuple[int, int, int]] = {
     'Red': (172, 68, 68),
     'Green': (110, 190, 30),
     'Blue': (68, 120, 172),
@@ -112,9 +112,9 @@ _GRAMMAR = Lark(r"""
     %ignore MULTILINE_COMMENT
 
     // Custom data type
-    JOINTTYPE: "RP" | "R" | "P"
+    JOINT_TYPE: "RP" | "R" | "P"
     COLOR: """ + "|".join(f'"{color}"' for color in color_names) + r"""
-    type: JOINTTYPE
+    type: JOINT_TYPE
     name: CNAME
     number: SIGNED_NUMBER
     color_value: INT
