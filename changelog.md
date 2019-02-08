@@ -15,6 +15,7 @@ Version 19.02
 + Change "links" argument of VPoint constructor into string iterable object.
 + Using normal exception instead of "RuntimeError".
 + Supported specified link length option.
++ Cancel the copy step of submodule pxd file.
 
 Version 19.01
 ===

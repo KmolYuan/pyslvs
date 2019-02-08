@@ -11,25 +11,18 @@ endif
 
 all: build
 
-# Submodule files
-ADESIGN_PXD = $(notdir $(wildcard Adesign/src/*.pxd))
-
 .PHONY: build
 
 # Into package folder
-build: src/*.pyx src/*.pxd Adesign/src/*.pyx Adesign/src/*.pxd src/bfgs_solver/*.cpp
+build:
 ifeq ($(OS),Windows_NT)
-	copy Adesign\src\*.pxd src
 	-rename __init__.py .__init__.py
 	python setup.py build_ext --inplace
 	-rename .__init__.py __init__.py
-	del $(addprefix src\,$(ADESIGN_PXD))
 else
-	cp -p Adesign/src/*.pxd src
 	-mv __init__.py .__init__.py
 	python3 setup.py build_ext --inplace
 	-mv .__init__.py __init__.py
-	rm $(addprefix src/,$(ADESIGN_PXD))
 endif
 
 test: build
