@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Lark parser to parse the expression.
-
-+ PMKS
-+ Triangular iteration
-"""
+"""Lark parser to parse the expression."""
 
 __author__ = "Yuan Chang"
 __copyright__ = "Copyright (C) 2016-2019"
@@ -130,7 +126,7 @@ _GRAMMAR = Lark(r"""
 """)
 
 
-class _PMKSParams(Transformer):
+class _ParamsTrans(Transformer):
 
     """Transformer will parse into a list of VPoint data."""
 
@@ -194,7 +190,7 @@ class _PMKSParams(Transformer):
         return joints
 
 
-class _PMKSPosition(_PMKSParams):
+class _PositionTrans(_ParamsTrans):
 
     """Transformer will parse into a list of position data."""
 
@@ -204,7 +200,7 @@ class _PMKSPosition(_PMKSParams):
         return x, y
 
 
-class _PMKSVPoints(_PMKSParams):
+class _VPointsTrans(_ParamsTrans):
 
     """Using same grammar return as VPoints."""
 
@@ -239,9 +235,9 @@ class _PMKSVPoints(_PMKSParams):
         raise LexError(f"invalid options: {args}")
 
 
-_params_translator = _PMKSParams()
-_pos_translator = _PMKSPosition()
-_vpoint_translator = _PMKSVPoints()
+_params_translator = _ParamsTrans()
+_pos_translator = _PositionTrans()
+_vpoint_translator = _VPointsTrans()
 
 
 def parse_params(expr: str) -> List[List[Union[str, float]]]:
@@ -324,9 +320,9 @@ else:
 
     class PMKSLexer(RegexLexer):
 
-        """PMKS highlighter by Pygments."""
+        """Mechanism expression highlighter by Pygments."""
 
-        name = 'PMKS'
+        name = 'Mechanism Expression'
 
         tokens = {
             'root': [

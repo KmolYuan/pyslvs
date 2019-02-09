@@ -16,6 +16,7 @@ Version 19.02
 + Using normal exception instead of "RuntimeError".
 + Supported specified link length option.
 + Cancel the copy step of submodule pxd file.
++ Enhancement of mechanism grammar.
 
 Version 19.01
 ===
