@@ -69,7 +69,8 @@ from ._parser import (
     graph2vpoints,
     HAS_PYGMENTS,
 )
-from .examples import example_list
+from .example import example_list
+from .collection import collection_list
 if HAS_PYGMENTS:
     from ._parser import PMKSLexer
 
@@ -110,5 +111,6 @@ __all__ = [
     'graph2vpoints',
     'PMKSLexer',
     'example_list',
+    'collection_list',
     'Verification',
 ]

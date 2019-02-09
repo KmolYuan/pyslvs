@@ -35,7 +35,7 @@ from planar_check import is_planar
 from graph_layout import external_loop_layout
 from triangulation import vpoints_configure
 from _parser import parse_vpoints
-from examples import example_list
+from example import example_list
 
 
 _planar_object = Planar({
