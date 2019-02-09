@@ -132,12 +132,7 @@ _GRAMMAR = Lark(r"""
 
 class _PMKSParams(Transformer):
 
-    """Usage:
-
-    tree = parser.parse(expr)
-    args = transformer().transform(tree)
-    args: Dict[str, value]
-    """
+    """Transformer will parse into a list of VPoint data."""
 
     @staticmethod
     def type(n: List[Token]) -> str:
@@ -199,6 +194,16 @@ class _PMKSParams(Transformer):
         return joints
 
 
+class _PMKSPosition(_PMKSParams):
+
+    """Transformer will parse into a list of position data."""
+
+    @staticmethod
+    def joint(args: List[Token]) -> Tuple[float, float]:
+        x, y = args[-2]
+        return x, y
+
+
 class _PMKSVPoints(_PMKSParams):
 
     """Using same grammar return as VPoints."""
@@ -235,12 +240,18 @@ class _PMKSVPoints(_PMKSParams):
 
 
 _params_translator = _PMKSParams()
+_pos_translator = _PMKSPosition()
 _vpoint_translator = _PMKSVPoints()
 
 
 def parse_params(expr: str) -> List[List[Union[str, float]]]:
     """Using to parse the expression and return arguments."""
     return _params_translator.transform(_GRAMMAR.parse(expr))
+
+
+def parse_pos(expr: str) -> List[Tuple[float, float]]:
+    """Using to parse the expression and return arguments."""
+    return _pos_translator.transform(_GRAMMAR.parse(expr))
 
 
 def parse_vpoints(expr: str) -> List[VPoint]:
