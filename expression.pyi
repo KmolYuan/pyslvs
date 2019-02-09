@@ -2,6 +2,7 @@
 
 from typing import (
     Tuple,
+    Sequence,
     Iterable,
     Callable,
     Optional,
@@ -156,7 +157,7 @@ class VLink:
         self,
         name: str,
         color_str: str,
-        points: tuple,
+        points: Sequence[int],
         color_func: Optional[Callable[..., _Color]] = None
     ):
         ...
