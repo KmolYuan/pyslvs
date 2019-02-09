@@ -256,7 +256,7 @@ def edges_view(graph: Graph) -> Iterator[Tuple[int, Tuple[int, int]]]:
 def graph2vpoints(
     graph: Graph,
     pos: Dict[int, Tuple[float, float]],
-    cus: Optional[Dict[str, int]] = None,
+    cus: Optional[Dict[int, int]] = None,
     same: Optional[Dict[int, int]] = None,
     grounded: Optional[int] = None
 ) -> List[VPoint]:
@@ -268,7 +268,7 @@ def graph2vpoints(
         {n1: n2, n3: n2} => (n1 as n2) and (n3 as n2)
     """
     if cus is None:
-        cus: Dict[str, int] = {}
+        cus: Dict[int, int] = {}
     if same is None:
         same: Dict[int, int] = {}
 
@@ -293,7 +293,7 @@ def graph2vpoints(
         tmp_list.append(VPoint.r_joint(links, x, y))
     for name in sorted(cus):
         link = f"L{cus[name]}" if cus[name] != grounded else 'ground'
-        x, y = pos[int(name.replace('P', ''))]
+        x, y = pos[name]
         tmp_list.append(VPoint.r_joint((link,), x, y))
     return tmp_list
 
