@@ -311,7 +311,7 @@ cdef class VLink:
             self.color = None
         else:
             self.color = color_func(color_str)
-        self.points = tuple(points)
+        self.points = tuple(sorted(points))
 
     def __contains__(self, point: int) -> bint:
         """Check if point number is in the link."""
