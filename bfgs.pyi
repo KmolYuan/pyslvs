@@ -8,12 +8,15 @@ from typing import (
     Optional,
     Union,
 )
-from .pmks import VPoint
+from .expression import VPoint
+
+_Coord = Tuple[float, float]
+
 
 def vpoint_solving(
     vpoints: Sequence[VPoint],
     inputs: Optional[Dict[Tuple[int, int], float]] = None,
     data_dict: Optional[Dict[Union[int, Tuple[int, int]], float]] = None
-) -> List[Tuple[float, float]]:
+) -> List[Union[_Coord, Tuple[_Coord, _Coord]]]:
     """Solving function from vpoint list."""
     ...
