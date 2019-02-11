@@ -2,9 +2,9 @@
 
 from typing import (
     Tuple,
-    Sequence,
     Dict,
     Union,
+    Any,
 )
 from numpy import ndarray
 from .verify import Verification
@@ -14,13 +14,7 @@ class Planar(Verification):
 
     """This class is used to verified kinematics of the linkage mechanism."""
 
-    def __init__(self, mech_params: Dict[str, Union[
-        str,
-        Dict[str, Tuple[float, float, float]],
-        Dict[str, Sequence[Tuple[float, float]]],
-        Sequence[Tuple[str, str, str, str]],
-        ndarray,
-    ]]):
+    def __init__(self, mech_params: Dict[str, Any]):
         """mech_params = {
             'Driver': {'pt': (x, y, r)},
             'Follower': {'pt': (x, y, r)},
