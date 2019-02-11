@@ -3,7 +3,7 @@
 from typing import (
     Tuple,
     List,
-    Sequence,
+    Iterable,
 )
 
 
@@ -23,7 +23,7 @@ class Graph:
     edges: Tuple[Tuple[int, int], ...]
     nodes: Tuple[int, ...]
 
-    def __init__(self, edges: Sequence[Tuple[int, int]]): ...
+    def __init__(self, edges: Iterable[Tuple[int, int]]): ...
 
     def add_edge(self, n1: int, n2: int):
         """Add two nodes for an edge."""
