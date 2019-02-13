@@ -12,7 +12,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from typing import Set, Iterable
+from typing import Set, Iterable, Any
 cimport cython
 from cpython cimport PyDict_Contains, PyIndex_Check
 from cpython.slice cimport PySlice_GetIndicesEx
@@ -608,7 +608,7 @@ cdef class _OrderedSetIterator:
     cdef _Entry curr
     cdef ssize_t si_used
 
-    def __cinit__(self, OrderedSet oset):
+    def __cinit__(self, oset: OrderedSet):
         self.oset = oset
         self.curr = oset.end
         self.si_used = oset.os_used
@@ -639,7 +639,7 @@ cdef class _OrderedSetReverseIterator:
     cdef _Entry curr
     cdef ssize_t si_used
 
-    def __cinit__(self, OrderedSet oset):
+    def __cinit__(self, oset: OrderedSet):
         self.oset = oset
         self.curr = oset.end
         self.si_used = oset.os_used
@@ -675,7 +675,7 @@ cdef class OrderedSet:
         self.end = end = _Entry()
         end.prev = end.next = end
 
-    def __init__(self, object iterable=None):
+    def __init__(self, iterable: Iterable[Any] = None):
         if iterable is None:
             return
 
@@ -690,7 +690,7 @@ cdef class OrderedSet:
                 self.os_used += 1
 
     @classmethod
-    def _from_iterable(cls, it) -> OrderedSet:
+    def _from_iterable(cls, it: Iterable[Any]) -> OrderedSet:
         if isinstance(it, OrderedSet):
             return it
         else:
@@ -762,7 +762,7 @@ cdef class OrderedSet:
         """Copy the instance."""
         return OrderedSet(self)
 
-    def __sub__(self, other) -> OrderedSet:
+    def __sub__(self, other: Iterable[Any]) -> OrderedSet:
         """Implement of '-' operator."""
         if not isinstance(other, Set):
             if not isinstance(other, Iterable):
@@ -771,7 +771,7 @@ cdef class OrderedSet:
 
         return OrderedSet._from_iterable(value for value in self if value not in other)
 
-    def __isub__(self, other) -> OrderedSet:
+    def __isub__(self, other: Iterable[Any]) -> OrderedSet:
         """Implement of '-=' operator."""
         if other is self:
             self.clear()
@@ -784,7 +784,7 @@ cdef class OrderedSet:
         """Method of '&' operator."""
         return self & other
 
-    def __and__(self, other) -> OrderedSet:
+    def __and__(self, other: Iterable[Any]) -> OrderedSet:
         """Implement of '&' operator."""
         if not isinstance(other, Set):
             if not isinstance(other, Iterable):
@@ -793,7 +793,7 @@ cdef class OrderedSet:
 
         return OrderedSet._from_iterable(value for value in self if value in other)
 
-    def __iand__(self, it):
+    def __iand__(self, it: Iterable[Any]):
         """Implement of '&=' operator."""
         for value in (self - it):
             self.discard(value)
@@ -868,7 +868,7 @@ cdef class OrderedSet:
         """Method of '>=' operator with ordered detection."""
         return _isorderedsubset(other, self, is_loop)
 
-    def __xor__(self, other) -> OrderedSet:
+    def __xor__(self, other: Iterable[Any]) -> OrderedSet:
         """Implement of '^' operator."""
         if not isinstance(other, Iterable):
             return NotImplemented
@@ -876,7 +876,7 @@ cdef class OrderedSet:
         cdef OrderedSet o_other = OrderedSet._from_iterable(other)
         return (self - o_other) | (o_other - self)
 
-    def __ixor__(self, other):
+    def __ixor__(self, other: Iterable[Any]):
         """Implement of '^=' operator."""
         if other is self:
             self.clear()
@@ -898,14 +898,14 @@ cdef class OrderedSet:
         """Method of '|=' operator."""
         self |= other
 
-    def __or__(self, other) -> OrderedSet:
+    def __or__(self, other: Iterable[Any]) -> OrderedSet:
         """Implement of '|' operator."""
         if not isinstance(other, Iterable):
             return NotImplemented
         chain = (e for s in (self, other) for e in s)
         return OrderedSet._from_iterable(chain)
 
-    def __ior__(self, other) -> OrderedSet:
+    def __ior__(self, other: Iterable[Any]) -> OrderedSet:
         """Implement of '|=' operator."""
         for elem in other:
             _add(self, elem)
@@ -1032,7 +1032,7 @@ cdef class OrderedSet:
         """Implement of 'len(self)' operator."""
         return len(self.map)
 
-    def __contains__(self, elem) -> bool:
+    def __contains__(self, elem: Any) -> bool:
         """Implement of 'elem in self' operator."""
         return elem in self.map
 
@@ -1055,7 +1055,7 @@ cdef class OrderedSet:
             return f'{self.__class__.__name__}()'
         return f'{self.__class__.__name__}({list(self)!r})'
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Iterable[Any]) -> bool:
         """Implement of '==' operator."""
         if isinstance(other, Set):
             # Set is no ordered.
@@ -1064,7 +1064,7 @@ cdef class OrderedSet:
             return len(self) == len(other) and list(self) == list(other)
         return NotImplemented
 
-    def __le__(self, other) -> bool:
+    def __le__(self, other: Iterable[Any]) -> bool:
         """Implement of '<=' operator."""
         if isinstance(other, (Set, OrderedSet)):
             return len(self) <= len(other) and set(self) <= set(other)
@@ -1072,7 +1072,7 @@ cdef class OrderedSet:
             return len(self) <= len(other) and list(self) <= list(other)
         return NotImplemented
 
-    def __lt__(self, other) -> bool:
+    def __lt__(self, other: Iterable[Any]) -> bool:
         """Implement of '<' operator."""
         if isinstance(other, (Set, OrderedSet)):
             return len(self) < len(other) and set(self) < set(other)
@@ -1080,7 +1080,7 @@ cdef class OrderedSet:
             return len(self) < len(other) and list(self) < list(other)
         return NotImplemented
 
-    def __ge__(self, other) -> bool:
+    def __ge__(self, other: Iterable[Any]) -> bool:
         """Implement of '>=' operator."""
         if isinstance(other, (Set, OrderedSet)):
             return len(self) >= len(other) and set(self) >= set(other)
@@ -1088,7 +1088,7 @@ cdef class OrderedSet:
             return len(self) >= len(other) and list(self) >= list(other)
         return NotImplemented
 
-    def __gt__(self, other) -> bool:
+    def __gt__(self, other: Iterable[Any]) -> bool:
         """Implement of '>' operator."""
         if isinstance(other, (Set, OrderedSet)):
             return len(self) > len(other) and set(self) > set(other)

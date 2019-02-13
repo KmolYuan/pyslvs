@@ -40,7 +40,7 @@ cdef class Coordinate:
 
     """A class to store the coordinate."""
 
-    def __cinit__(self, double x, double y):
+    def __cinit__(self, x: double, y: double):
         self.x = x
         self.y = y
 
@@ -470,7 +470,7 @@ cpdef list expr_solving(
 
     # Reverse mapping, exclude specified link length.
     cdef object k, v
-    cdef dict mapping_r = {v: k for k, v in mapping.items() if (type(k) == int)}
+    cdef dict mapping_r = {v: k for k, v in mapping.items() if type(k) == int}
 
     # Check input pairs.
     cdef tuple expr

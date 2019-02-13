@@ -10,6 +10,7 @@ email: pyslvs@gmail.com
 """
 
 from typing import Sequence, Iterator
+cimport cython
 from libc.math cimport sin, cos
 from tinycadlib cimport radians
 from expression cimport VJoint, VPoint
@@ -27,15 +28,12 @@ cdef inline bint _is_all_lock(dict status):
 
 cdef inline bint _clockwise(tuple c1, tuple c2, tuple c3):
     """Check orientation of three points."""
-    cdef double val = (
-        (c2[1] - c1[1]) * (c3[0] - c2[0])
-        - (c2[0] - c1[0]) * (c3[1] - c2[1])
-    )
+    cdef double val = (c2[1] - c1[1]) * (c3[0] - c2[0]) - (c2[0] - c1[0]) * (c3[1] - c2[1])
     return val == 0 or val > 0
 
 
 def _get_reliable_friend(
-    node: int,
+    node: cython.int,
     vpoints: Sequence[VPoint],
     vlinks: dict,
     status: dict
@@ -54,7 +52,7 @@ def _get_reliable_friend(
 
 
 def _get_not_base_friend(
-    node: int,
+    node: cython.int,
     vpoints: Sequence[VPoint],
     vlinks: dict,
     status: dict
@@ -69,7 +67,7 @@ def _get_not_base_friend(
 
 
 def _get_base_friend(
-    node: int,
+    node: cython.int,
     vpoints: Sequence[VPoint],
     vlinks: dict,
     status: dict

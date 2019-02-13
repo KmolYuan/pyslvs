@@ -37,22 +37,52 @@ cdef class Planar(Verification):
 
     """This class is used to verified kinematics of the linkage mechanism."""
 
+    cdef list vpoints, inputs, exprs
+    cdef dict placement, target
     cdef ndarray upper, lower
 
-    def __cinit__(self, dict mech_params):
+    def __cinit__(self, mech_params: dict):
         """mech_params = {
             'Expression': List[VPoint],
             'input': [(b0, d0), ...],
             'Placement': {pt: (x, y, r)},
             'Target': {pt: [(x0, y0), (x1, y1), ...]},
-            'upper': ndarray[double, ndim=1],
-            'lower': ndarray[double, ndim=1],
+            'upper': List[float],
+            'lower': List[float],
         }
         """
-        # TODO: Get options.
+        cdef dict placement = mech_params.get('Placement', {})
+        if len(placement) == 0:
+            raise ValueError("no target")
+
+        self.target = mech_params.get('Target', {})
+        self.target_length = len(self.target)
+        if self.target_length == 0:
+            raise ValueError("no target")
+
+        cdef set check_set = set(map(len, self.target.values()))
+        if len(check_set) != 1:
+            raise ValueError("target paths should be in the same size")
+
+        # Get options.
         self.vpoints = list(mech_params.get('Expression', []))
         self.inputs = list(mech_params.get('input', []))
         self.exprs = vpoints_configure(self.vpoints, self.inputs)
+
+        cdef list upper = list(mech_params.get('upper', []))
+        cdef list lower = list(mech_params.get('lower', []))
+        if len(upper) != len(lower):
+            raise ValueError("upper and lower should be in the same size")
+
+        cdef list upper_input = []
+        cdef list lower_input = []
+
+        cdef int i
+        for i in range(1, len(self.inputs) + 1):
+            upper_input.extend([upper[-i]] * self.target_length)
+            lower_input.extend([lower[-i]] * self.target_length)
+        self.upper = np_array(upper[:-len(self.inputs)] + upper_input, dtype=np_float32)
+        self.lower = np_array(lower[:-len(self.inputs)] + lower_input, dtype=np_float32)
 
         # Swap sorting.
         for i in range(len(self.upper)):

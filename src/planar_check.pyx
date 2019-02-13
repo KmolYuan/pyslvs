@@ -46,7 +46,7 @@ cdef class _LRPlanarity:
     # default dict
     cdef object height, parent_edge, ref, side
 
-    def __cinit__(self, Graph g):
+    def __cinit__(self, g: Graph):
         # copy G without adding self-loops
         self.g = g.copy()
 
@@ -421,8 +421,8 @@ cdef class _ConflictPair:
 
     def __cinit__(
         self,
-        _Interval left = _Interval.__new__(_Interval),
-        _Interval right = _Interval.__new__(_Interval)
+        left: _Interval = _Interval.__new__(_Interval),
+        right: _Interval = _Interval.__new__(_Interval)
     ):
         self.left = left
         self.right = right
@@ -454,7 +454,7 @@ cdef class _Interval:
 
     cdef tuple low, high
 
-    def __cinit__(self, tuple low = None, tuple high = None):
+    def __cinit__(self, low: tuple = None, high: tuple = None):
         self.low = low
         self.high = high
 
