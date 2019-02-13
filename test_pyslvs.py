@@ -148,8 +148,6 @@ class CoreTest(TestCase):
         + Test for PMKS parser.
         + Test data collecting function.
         + Test expression solving function.
-
-        TODO: Test length requirements (expr_solving).
         """
         expr, inputs = example_list["Jansen's linkage (Single)"]
         vpoints = parse_vpoints(expr)

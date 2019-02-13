@@ -370,13 +370,8 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
         pos.append((vpoint.c[1][0] + cos(angle), vpoint.c[1][1] + sin(angle)))
         mapping_r[f'S{i}'] = len(pos) - 1
 
+    # Add data to 'data_dict' and counting DOF.
     cdef int dof = 0
-    """Add data to 'data_dict'.
-    
-    TODO: Change another way to specify the lengths.
-    + Add 'L' (link) parameters.
-    + Counting DOF and targets.
-    """
     cdef int target
     cdef tuple expr
     cdef frozenset pair
