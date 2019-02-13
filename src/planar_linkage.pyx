@@ -18,6 +18,7 @@ from numpy import (
 from libc.math cimport NAN, HUGE_VAL
 from numpy cimport ndarray
 from verify cimport Verification
+from expression cimport VPoint
 from triangulation cimport vpoints_configure
 from tinycadlib cimport (
     Coordinate,
@@ -36,13 +37,11 @@ cdef class Planar(Verification):
 
     """This class is used to verified kinematics of the linkage mechanism."""
 
-    cdef int target_count, var_count
-    cdef list link_list, driver_list, follower_list
     cdef ndarray upper, lower
 
     def __cinit__(self, dict mech_params):
         """mech_params = {
-            'Expression': str,
+            'Expression': List[VPoint],
             'input': [(b0, d0), ...],
             'Placement': {pt: (x, y, r)},
             'Target': {pt: [(x0, y0), (x1, y1), ...]},
@@ -51,6 +50,9 @@ cdef class Planar(Verification):
         }
         """
         # TODO: Get options.
+        self.vpoints = list(mech_params.get('Expression', []))
+        self.inputs = list(mech_params.get('input', []))
+        self.exprs = vpoints_configure(self.vpoints, self.inputs)
 
         # Swap sorting.
         for i in range(len(self.upper)):
