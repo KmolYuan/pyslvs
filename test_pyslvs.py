@@ -71,33 +71,33 @@ class CoreTest(TestCase):
     def test_plap(self):
         """Test for plap function."""
         x, y = plap(Coordinate(0, 0), 50 * sqrt(2), radians(45), Coordinate(50, 0))
-        self.assertAlmostEqual(x, 50)
-        self.assertAlmostEqual(y, 50)
+        self.assertAlmostEqual(50, x)
+        self.assertAlmostEqual(50, y)
 
     def test_pllp(self):
         """Test for pllp function."""
         c1 = Coordinate(-30, 0)
         c2 = Coordinate(30, 0)
         x, y = pllp(c1, 50, 50, c2)
-        self.assertAlmostEqual(x, 0)
-        self.assertAlmostEqual(y, 40)
+        self.assertAlmostEqual(0, x)
+        self.assertAlmostEqual(40, y)
         x, y = pllp(c1, 30, 30, c2)
         self.assertAlmostEqual(x, 0)
         self.assertAlmostEqual(y, 0)
         x, y = pllp(c1, 90, 30, c2)
-        self.assertAlmostEqual(x, 60)
-        self.assertAlmostEqual(y, 0)
+        self.assertAlmostEqual(60, x)
+        self.assertAlmostEqual(0, y)
 
     def test_plpp(self):
         """Test for plpp function."""
         x, y = plpp(Coordinate(0, 0), sqrt(5), Coordinate(0, -3), Coordinate(3 / 2, 0))
-        self.assertAlmostEqual(x, 2)
-        self.assertAlmostEqual(y, 1)
+        self.assertAlmostEqual(2, x)
+        self.assertAlmostEqual(1, y)
 
     def test_pxy(self):
         x, y = pxy(Coordinate(80, 90), 40, -20)
-        self.assertAlmostEqual(x, 120)
-        self.assertAlmostEqual(y, 70)
+        self.assertAlmostEqual(120, x)
+        self.assertAlmostEqual(70, y)
 
     def test_graph_function(self):
         """Test 'graph' libraries."""
@@ -115,9 +115,8 @@ class CoreTest(TestCase):
         self.assertEqual([4, 4], link_assortments(g1))
         self.assertEqual([4, 0, 0, 0], contracted_link_assortments(g1))
 
-        g1 = Graph([(0, 1), (4, 10), (1, 3), (2, 9), (5, 6), (4, 5), (5, 7),
-                    (8, 10), (1, 8), (9, 11), (3, 6), (0, 4), (3, 7), (2, 5),
-                    (0, 2), (4, 11)])
+        g1 = Graph([(0, 1), (4, 10), (1, 3), (2, 9), (5, 6), (4, 5), (5, 7), (8, 10),
+                    (1, 8), (9, 11), (3, 6), (0, 4), (3, 7), (2, 5), (0, 2), (4, 11)])
         pos = external_loop_layout(g1, True)
         self.assertEqual(set(g1.nodes), set(pos))
 
@@ -172,8 +171,8 @@ class CoreTest(TestCase):
         self.assertEqual(1, dof)
         result = expr_solving(exprs, mapping, vpoints, [0.])
         x, y = result[-1]
-        self.assertAlmostEqual(x, -43.170055, 6)
-        self.assertAlmostEqual(y, -91.753226, 6)
+        self.assertAlmostEqual(-43.170055, x, 6)
+        self.assertAlmostEqual(-91.753226, y, 6)
 
     def test_solving_bfgs(self):
         """Test Sketch Solve kernel."""
@@ -181,9 +180,8 @@ class CoreTest(TestCase):
         vpoints = parse_vpoints(expr)
         result = vpoint_solving(vpoints, {(0, 1): 0.})
         x, y = result[-1]
-        print(x, y)
-        self.assertAlmostEqual(x, -43.170055, 6)
-        self.assertAlmostEqual(y, -91.753226, 6)
+        self.assertAlmostEqual(-43.170055, x, 6)
+        self.assertAlmostEqual(-91.753226, y, 6)
 
     def test_number_synthesis(self):
         """Test Number Synthesis function."""
