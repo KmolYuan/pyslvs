@@ -284,7 +284,8 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     Input data:
     + exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1', 'P2'), ...]
     + mapping: {0: 'P0', 1: 'P2', 2: 'P3', 3: 'P4', ...}
-        + Specify link length: mapping[a, b] = 20.0
+        + Specify position: {'P0': (10., 20.)}
+        + Specify link length: {(a, b): 20.}
     + vpoints_: [VPoint0, VPoint1, VPoint2, ...]
     + pos: [(x0, y0), (x1, y1), (x2, y2), ...]
     
@@ -343,6 +344,8 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     for k, v in mapping.items():
         if type(k) == int:
             mapping_r[v] = k
+            if mapping[k] in mapping:
+                data_dict[mapping[k]] = mapping[mapping[k]]
         elif type(k) == tuple:
             length[frozenset(k)] = v
             data_dict[k] = v

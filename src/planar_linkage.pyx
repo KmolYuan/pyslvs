@@ -13,9 +13,10 @@ cimport cython
 from numpy import (
     array as np_array,
     float32 as np_float32,
+    sort as np_sort,
 )
 # Not a number and a large fitness. Infinity cannot be used for a chart.
-from libc.math cimport NAN, HUGE_VAL
+from libc.math cimport hypot, HUGE_VAL
 from numpy cimport ndarray
 from verify cimport Verification
 from expression cimport (
@@ -33,6 +34,7 @@ from tinycadlib cimport (
     pxy,
     str_between,
     str_before,
+    expr_solving,
 )
 
 
@@ -41,6 +43,7 @@ cdef class Planar(Verification):
 
     """This class is used to verified kinematics of the linkage mechanism."""
 
+    cdef int target_count, base_index
     cdef list vpoints, inputs, exprs, mapping_list
     cdef dict placement, target, mapping
     cdef ndarray upper, lower
@@ -61,12 +64,13 @@ cdef class Planar(Verification):
             raise ValueError("no grounded joint")
 
         self.target = mech_params.get('Target', {})
-        cdef int target_length = len(self.target)
-        if target_length == 0:
+        if len(self.target) == 0:
             raise ValueError("no target joint")
 
-        if len(set(map(len, self.target.values()))) != 1:
+        cdef set check_set = set(map(len, self.target.values()))
+        if len(check_set) != 1:
             raise ValueError("target paths should be in the same size")
+        self.target_count = check_set.pop()
 
         # Options
         self.vpoints = list(mech_params.get('Expression', []))
@@ -103,7 +107,7 @@ cdef class Planar(Verification):
                 continue
             a = vlink.points[0]
             b = vlink.points[1]
-            self.mapping[a, b] = 0.
+            self.mapping[a, b] = None
             self.mapping_list.append((a, b))
             for c in vlink.points[2:]:
                 for d in (a, b):
@@ -114,10 +118,11 @@ cdef class Planar(Verification):
         lower_input.extend(lower[:-len(self.inputs)])
 
         for i in range(1, len(self.inputs) + 1):
-            upper_input.extend([upper[-i]] * target_length)
-            lower_input.extend([lower[-i]] * target_length)
+            upper_input.extend([upper[-i]] * self.target_count)
+            lower_input.extend([lower[-i]] * self.target_count)
         self.upper = np_array(upper_input, dtype=np_float32)
         self.lower = np_array(lower_input, dtype=np_float32)
+        self.base_index = len(self.upper) - len(self.inputs) * self.target_count
 
         # Swap sorting.
         for i in range(len(self.upper)):
@@ -130,9 +135,6 @@ cdef class Planar(Verification):
     cdef ndarray[double, ndim=1] get_lower(self):
         return self.lower
 
-    cdef int length(self):
-        return len(self.upper)
-
     cdef double fitness(self, ndarray[double, ndim=1] v):
         """Chromosome format: (decided by upper and lower)
         
@@ -141,8 +143,48 @@ cdef class Planar(Verification):
         target_count: length of target.
         vars: mechanism variables count.
         """
-        # TODO: fitness
+        cdef int index = 0
+        cdef VPoint vpoint
+        cdef object m
+        for m in self.mapping_list:
+            if type(m) == int:
+                vpoint = self.vpoints[m]
+                vpoint.move((v[index], v[index + 1]))
+                index += 2
+            else:
+                self.mapping[m] = v[index]
+                index += 1
+
+        cdef double fitness = 0.
+        cdef ndarray[double, ndim=1] input_list = np_sort(v[self.base_index:])
+
+        cdef int node, target_index
+        cdef double x, y, tx, ty
+        cdef list path, result
+        cdef object coord
+        for target_index in range(len(self.target)):
+            try:
+                result = expr_solving(
+                    self.exprs,
+                    self.mapping,
+                    self.vpoints,
+                    input_list[target_index::self.target_count]
+                )
+            except ValueError:
+                return HUGE_VAL
+
+            for node, path in self.target.items():
+                for tx, ty in path:
+                    coord = result[node]
+                    if type(coord[0]) == tuple:
+                        x, y = coord[1]
+                    else:
+                        x, y = coord
+                    fitness += hypot(x - tx, y - ty)
+
+        return fitness
 
     cpdef object result(self, ndarray[double, ndim=1] v):
         """Return the last answer."""
         # TODO: result
+        return {}
