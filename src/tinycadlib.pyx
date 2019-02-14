@@ -284,7 +284,7 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     Input data:
     + exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1', 'P2'), ...]
     + mapping: {0: 'P0', 1: 'P2', 2: 'P3', 3: 'P4', ...}
-        + Specify link length: mapping['L0'] = 20.0
+        + Specify link length: mapping[a, b] = 20.0
     + vpoints_: [VPoint0, VPoint1, VPoint2, ...]
     + pos: [(x0, y0), (x1, y1), (x2, y2), ...]
     
@@ -449,7 +449,7 @@ cpdef list expr_solving(
     
     + exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1'), ...]
     TODO: Change another way to specify the lengths.
-    + mapping: {0: 'P0', ..., 'L0': 20.0, ...}
+    + mapping: {0: 'P0', ..., (0, 1): 20.0, ...}
     + vpoints: [VPoint]
     + angles: [[a0]: a0, [a1]: a1, ...]
     """
@@ -494,6 +494,7 @@ cpdef list expr_solving(
 
     # Add coordinate of known points.
     for i in range(len(vpoints)):
+        # {1: 'A'} vs {'A': (10., 20.)}
         if mapping[i] in data_dict:
             p_data_dict[i] = data_dict[mapping[i]]
         else:
