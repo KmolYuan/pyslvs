@@ -18,7 +18,11 @@ from numpy import (
 from libc.math cimport NAN, HUGE_VAL
 from numpy cimport ndarray
 from verify cimport Verification
-from expression cimport VPoint
+from expression cimport (
+    get_vlinks,
+    VPoint,
+    VLink,
+)
 from triangulation cimport vpoints_configure
 from tinycadlib cimport (
     Coordinate,
@@ -38,7 +42,7 @@ cdef class Planar(Verification):
     """This class is used to verified kinematics of the linkage mechanism."""
 
     cdef list vpoints, inputs, exprs
-    cdef dict placement, target
+    cdef dict placement, target, mapping
     cdef ndarray upper, lower
 
     def __cinit__(self, mech_params: dict):
@@ -64,11 +68,26 @@ cdef class Planar(Verification):
         if len(check_set) != 1:
             raise ValueError("target paths should be in the same size")
 
-        # Get options.
+        # Options
         self.vpoints = list(mech_params.get('Expression', []))
         self.inputs = list(mech_params.get('input', []))
         self.exprs = vpoints_configure(self.vpoints, self.inputs)
 
+        # Mapping
+        self.mapping = {}
+        cdef int a, b, c, d
+        cdef VLink vlink
+        for vlink in get_vlinks(self.vpoints):
+            if len(vlink.points) < 2:
+                continue
+            a = vlink.points[0]
+            b = vlink.points[1]
+            self.mapping[a, b] = 0.
+            for c in vlink.points[2:]:
+                for d in (a, b):
+                    self.mapping[c, d] = 0.
+
+        # Bound
         cdef list upper = list(mech_params.get('upper', []))
         cdef list lower = list(mech_params.get('lower', []))
         if len(upper) != len(lower):

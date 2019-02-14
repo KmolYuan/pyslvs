@@ -18,10 +18,20 @@ from typing import (
 from lark import Lark, Transformer, LexError
 from lark.lexer import Token
 try:
-    from .expression import VJoint, VPoint, VLink
+    from .expression import (
+        get_vlinks,
+        VJoint,
+        VPoint,
+        VLink,
+    )
     from .graph import Graph
 except ImportError:
-    from expression import VJoint, VPoint, VLink
+    from expression import (
+        get_vlinks,
+        VJoint,
+        VPoint,
+        VLink,
+    )
     from graph import Graph
 
 # Color dictionary.
@@ -257,20 +267,7 @@ def parse_vpoints(expr: str) -> List[VPoint]:
 
 def parse_vlinks(expr: str) -> List[VLink]:
     """Parse as VLinks."""
-    vpoints = parse_vpoints(expr)
-    links = {}
-    for i, vpoint in enumerate(vpoints):
-        for link in vpoint.links:
-            if link not in links:
-                links[link] = {i}
-            else:
-                links[link].add(i)
-
-    vlinks = []
-    for name, points in links.items():
-        vlinks.append(VLink(name, "", points))
-
-    return vlinks
+    return get_vlinks(parse_vpoints(expr))
 
 
 def edges_view(graph: Graph) -> Iterator[Tuple[int, Tuple[int, int]]]:

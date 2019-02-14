@@ -24,6 +24,29 @@ from typing import (
 )
 
 
+cpdef list get_vlinks(object vpoints):
+    """Get VLinks of a list of VPoint."""
+    cdef dict links = {}
+
+    cdef int i
+    cdef str name
+    cdef VPoint vpoint
+    for i, vpoint in enumerate(vpoints):
+        for name in vpoint.links:
+            if name not in links:
+                links[name] = {i}
+            else:
+                links[name].add(i)
+
+    cdef list vlinks = []
+
+    cdef set points
+    for name, points in links.items():
+        vlinks.append(VLink(name, "", points))
+
+    return vlinks
+
+
 @cython.final
 cdef class VPoint:
 
@@ -298,10 +321,6 @@ cdef class VPoint:
 cdef class VLink:
 
     """Symbol of links."""
-
-    cdef readonly str name, color_str
-    cdef readonly tuple color
-    cdef readonly tuple points
 
     def __cinit__(
         self,

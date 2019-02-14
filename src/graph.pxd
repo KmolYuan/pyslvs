@@ -16,7 +16,7 @@ ctypedef c_map[int, int] c_map_int
 
 cdef class Graph:
 
-    """NetworkX-like graph class."""
+    # Graph(edges)
 
     cdef readonly tuple edges
     cdef readonly tuple nodes

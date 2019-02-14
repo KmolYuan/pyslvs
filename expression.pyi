@@ -2,7 +2,7 @@
 
 from typing import (
     Tuple,
-    Sequence,
+    List,
     Iterable,
     Callable,
     Optional,
@@ -12,6 +12,11 @@ from enum import IntEnum
 
 # Color type must be a RGB data.
 _Color = Tuple[int, int, int]
+
+
+def get_vlinks(vpoints: Iterable[VPoint]) -> List[VLink]:
+    """Get VLinks of a list of VPoint."""
+    ...
 
 
 class VJoint(IntEnum):
@@ -157,7 +162,7 @@ class VLink:
         self,
         name: str,
         color_str: str,
-        points: Sequence[int],
+        points: Iterable[int],
         color_func: Optional[Callable[..., _Color]] = None
     ):
         ...
