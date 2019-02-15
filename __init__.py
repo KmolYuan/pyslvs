@@ -45,6 +45,7 @@ from .tinycadlib import (
     data_collecting,
 )
 from .verify import Verification
+from .triangulation import vpoints_configure
 from .planar_linkage import Planar
 from .rga import Genetic
 from .firefly import Firefly
@@ -58,7 +59,6 @@ from .graph import (
 from .planar_check import is_planar
 from .graph_layout import external_loop_layout
 from .atlas import topo
-from .triangulation import vpoints_configure
 from ._parser import (
     color_names,
     color_rgb,

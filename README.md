@@ -91,7 +91,7 @@ In Pyslvs, expression is mainly to [PMKS](http://designengrlab.github.io/PMKS/),
 
 + **planar_linkage** library:
 
-    **preload**: *expression*, *bfgs*, *tinycadlib*, *verify*
+    **preload**: *expression*, *triangulation*, *tinycadlib*, *verify*
 
     Dimensional synthesis verification function objects.
 
