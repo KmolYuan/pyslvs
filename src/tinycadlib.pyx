@@ -467,7 +467,7 @@ cpdef list expr_solving(
     # Check input number.
     cdef int dof = vpoint_dof(vpoints)
     if dof_input > dof:
-        raise Exception(
+        raise ValueError(
             f"wrong number of input parameters: {dof_input} / {dof}"
         )
 
@@ -480,7 +480,7 @@ cpdef list expr_solving(
     for expr in exprs:
         if expr[0] == 'PLAP':
             if vpoints[mapping_r[expr[1]]].grounded() and vpoints[mapping_r[expr[-1]]].grounded():
-                raise Exception("wrong driver definition.")
+                raise ValueError("wrong driver definition.")
 
     # Angles.
     cdef double a

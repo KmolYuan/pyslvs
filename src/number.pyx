@@ -68,7 +68,7 @@ cpdef list number_synthesis(int nl, int nj, object stop_func = None):
     cdef list result = []
     cdef int m_max_v = _m_max(nl, nj)
     if m_max_v == -1:
-        raise Exception("incorrect mechanism.")
+        raise ValueError("incorrect mechanism.")
 
     cdef int i, p
     cdef list symbols
