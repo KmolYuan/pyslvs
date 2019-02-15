@@ -27,6 +27,6 @@ class Planar(Verification):
         """
         ...
 
-    def result(self, v: ndarray) -> Dict[str, Union[Tuple[float, float], float]]:
+    def result(self, v: ndarray) -> str:
         """Return the last answer."""
         ...

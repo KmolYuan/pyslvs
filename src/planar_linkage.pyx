@@ -202,5 +202,17 @@ cdef class Planar(Verification):
         cdef double[:] input_list = np_sort(v[self.base_index:])
         self.solve(0, input_list)
 
-        # TODO: result from self.result_list
-        return {}
+        cdef list expressions = []
+
+        cdef int i
+        cdef object coord
+        for i in range(len(self.vpoints)):
+            vpoint = self.vpoints[i]
+            coord = self.result_list[i]
+            if type(coord[0]) == tuple:
+                vpoint.move(coord[0], coord[1])
+            else:
+                vpoint.move(coord)
+            expressions.append(vpoint.expr())
+
+        return "M[" + ", ".join(expressions) + "]"

@@ -286,9 +286,9 @@ cdef class VPoint:
         else:
             return False
 
-    @property
-    def expr(self) -> str:
+    cpdef str expr(self):
         """Expression."""
+        cdef str type_text, color, links_text, x_text, y_text
         if self.type != VJoint.R:
             type_text = f"{self.type_str}, A[{self.angle}]"
         else:
@@ -297,7 +297,8 @@ cdef class VPoint:
             color = f", color[{self.color_str}]"
         else:
             color = ""
-        links_text = ", ".join(name for name in self.links)
+        cdef str name
+        links_text = ", ".join([name for name in self.links])
         x_text = f"{self.x:.4f}".rstrip('0').rstrip('.')
         y_text = f"{self.y:.4f}".rstrip('0').rstrip('.')
         return f"J[{type_text}{color}, P[{x_text}, {y_text}], L[{links_text}]]"
