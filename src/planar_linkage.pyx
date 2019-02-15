@@ -55,6 +55,7 @@ cdef class Planar(Verification):
             'input': [(b0, d0), ...],
             'Placement': {pt: (x, y, r)},
             'Target': {pt: [(x0, y0), (x1, y1), ...]},
+            'same': {pt: match_to_pt},
             # Bound has no position data.
             'upper': List[float],
             'lower': List[float],
@@ -64,20 +65,26 @@ cdef class Planar(Verification):
         if len(placement) == 0:
             raise ValueError("no grounded joint")
 
-        self.target = mech_params.get('Target', {}).copy()
-        if len(self.target) == 0:
+        cdef dict target = mech_params.get('Target', {})
+        if len(target) == 0:
             raise ValueError("no target joint")
 
-        cdef set check_set = set(map(len, self.target.values()))
+        cdef set check_set = set(map(len, target.values()))
         if len(check_set) != 1:
             raise ValueError("target paths should be in the same size")
         self.target_count = check_set.pop()
 
         # Change the target paths into memory view.
-        cdef int i
+        self.target = {}
+        cdef dict same = mech_params.get('same', {})
+
+        cdef int i, j
         cdef double[:, :] path
-        for i in self.target:
-            path = np_array(self.target[i], dtype=np_float)
+        for i in target:
+            path = np_array(target[i], dtype=np_float)
+            for j in range(i):
+                if j in same:
+                    i -= 1
             self.target[i] = path
 
         # Options
@@ -221,7 +228,7 @@ cdef class Planar(Verification):
 
     cdef double fitness(self, ndarray[double, ndim=1] v):
         """Chromosome format: (decided by upper and lower)
-        
+
         v: [Ax, Ay, Dx, Dy, ..., L0, L1, ..., A00, A01, ..., A10, A11, ...]
         """
         cdef int target_index = 0
