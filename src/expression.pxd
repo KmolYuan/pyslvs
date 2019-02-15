@@ -47,6 +47,7 @@ cdef class VPoint:
 
     # Set values
     cpdef void move(self, tuple c1, tuple c2 = *) except *
+    cpdef void locate(self, double x, double y) except *
     cpdef void rotate(self, double)
     cpdef void set_offset(self, double)
     cpdef void disable_offset(self)

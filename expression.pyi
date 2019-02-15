@@ -79,6 +79,10 @@ class VPoint:
         """Change coordinates of this point."""
         ...
 
+    def locate(self, x: float, y: float):
+        """Change the origin coordinate of this point directly."""
+        ...
+
     def rotate(self, angle: float):
         """Change the angle of slider slot by degrees."""
         ...

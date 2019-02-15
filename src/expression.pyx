@@ -168,7 +168,7 @@ cdef class VPoint:
             return self.c[1][1]
 
     cpdef void move(self, tuple c1, tuple c2 = None) except *:
-        """Change coordinates of this point."""
+        """Change the coordinates of this point."""
         cdef double x, y
         x, y = c1
         self.c[0] = (x, y)
@@ -176,6 +176,12 @@ cdef class VPoint:
             if c2 is not None:
                 x, y = c2
             self.c[1] = (x, y)
+
+    cpdef void locate(self, double x, double y) except *:
+        """Change the origin coordinate of this point directly."""
+        self.x = x
+        self.y = y
+        self.move((x, y))
 
     cpdef void rotate(self, double angle):
         """Change the angle of slider slot by degrees."""
@@ -200,7 +206,7 @@ cdef class VPoint:
         cdef double p_y = 0
 
         if on_links:
-            if (self.type == VJoint.R) or (self.links[0] == on_links[0]):
+            if self.type == VJoint.R or self.links[0] == on_links[0]:
                 # self is R joint or at base link.
                 m_x = self.c[0][0]
                 m_y = self.c[0][1]
@@ -208,7 +214,7 @@ cdef class VPoint:
                 # At pin joint.
                 m_x = self.c[1][0]
                 m_y = self.c[1][1]
-            if (p.type == VJoint.R) or (p.links[0] == on_links[0]):
+            if p.type == VJoint.R or p.links[0] == on_links[0]:
                 # p is R joint or at base link.
                 p_x = p.c[0][0]
                 p_y = p.c[0][1]

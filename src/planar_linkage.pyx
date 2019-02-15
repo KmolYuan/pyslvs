@@ -237,7 +237,7 @@ cdef class Planar(Verification):
         for m in self.mapping_list:
             if type(m) == int:
                 vpoint = self.vpoints[m]
-                vpoint.move((v[target_index], v[target_index + 1]))
+                vpoint.locate(v[target_index], v[target_index + 1])
                 target_index += 2
             else:
                 self.mapping[m] = v[target_index]
@@ -262,14 +262,13 @@ cdef class Planar(Verification):
 
     cpdef object result(self, ndarray[double, ndim=1] v):
         """Return the last answer."""
-
         cdef int target_index = 0
         cdef VPoint vpoint
         cdef object m
         for m in self.mapping_list:
             if type(m) == int:
                 vpoint = self.vpoints[m]
-                vpoint.move((v[target_index], v[target_index + 1]))
+                vpoint.locate(v[target_index], v[target_index + 1])
                 target_index += 2
             else:
                 self.mapping[m] = v[target_index]
@@ -281,15 +280,15 @@ cdef class Planar(Verification):
         cdef list expressions = []
 
         cdef int i
+        cdef double x1, y1, x2, y2
         for i in range(len(self.vpoints)):
             vpoint = self.vpoints[i]
-            if vpoint.type == VJoint.R:
-                vpoint.move(tuple(self.result_list[i, 0]))
-            else:
-                vpoint.move(
-                    tuple(self.result_list[i, 0]),
-                    tuple(self.result_list[i, 1])
-                )
+            x1, y1 = self.result_list[i, 0]
+            vpoint.locate(x1, y1)
+            if vpoint.type != VJoint.R:
+                x1, y1 = self.result_list[i, 0]
+                x2, y2 = self.result_list[i, 0]
+                vpoint.move((x1, y1), (x2, y2))
             expressions.append(vpoint.expr())
 
         return "M[" + ", ".join(expressions) + "]"
