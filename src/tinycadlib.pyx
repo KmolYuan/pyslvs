@@ -280,7 +280,7 @@ cdef inline double tuple_distance(tuple c1, tuple c2):
 
 cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     """Data collecting process.
-    
+
     Input data:
     + exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1', 'P2'), ...]
     + mapping: {0: 'P0', 1: 'P2', 2: 'P3', 3: 'P4', ...}
