@@ -518,30 +518,31 @@ cpdef list expr_solving(
         except ValueError:
             raise ValueError("result contains failure from sketch solve")
 
-    """Format:
-    + R joint: [[p0]: (p0_x, p0_y), [p1]: (p1_x, p1_y)]
-    + P or RP joint: [[p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))]
-    """
+    # Format:
+    # R joint: [[p0]: (p0_x, p0_y), [p1]: (p1_x, p1_y)]
+    # P or RP joint: [[p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))]
     cdef list solved_points = []
+    cdef VPoint vpoint
     for i in range(len(vpoints)):
+        vpoint = vpoints[i]
         if mapping[i] in data_dict:
             # These points has been solved.
             if isnan(data_dict[mapping[i]][0]):
                 raise ValueError(f"result contains failure: Point{i}")
-            if vpoints[i].type == VJoint.R:
+            if vpoint.type == VJoint.R:
                 solved_points.append(data_dict[mapping[i]])
             else:
-                solved_points.append((vpoints[i].c[0], data_dict[mapping[i]]))
+                solved_points.append((vpoint.c[0], data_dict[mapping[i]]))
         elif solved_bfgs:
             # These points solved by Sketch Solve.
-            if vpoints[i].type == VJoint.R:
+            if vpoint.type == VJoint.R:
                 solved_points.append(solved_bfgs[i])
             else:
                 solved_points.append((solved_bfgs[i][0], solved_bfgs[i][1]))
         else:
             # No answer.
-            if vpoints[i].type == VJoint.R:
-                solved_points.append(vpoints[i].c[0])
+            if vpoint.type == VJoint.R:
+                solved_points.append(vpoint.c[0])
             else:
-                solved_points.append(vpoints[i].c)
+                solved_points.append(vpoint.c)
     return solved_points

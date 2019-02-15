@@ -11,21 +11,32 @@ email: pyslvs@gmail.com
 
 cimport cython
 from numpy import (
+    zeros as np_zeros,
     array as np_array,
-    float as np_float32,
+    float as np_float,
     sort as np_sort,
 )
 # Not a number and a large fitness. Infinity cannot be used for a chart.
-from libc.math cimport hypot, HUGE_VAL
+from libc.math cimport (
+    hypot,
+    HUGE_VAL,
+    isnan,
+)
 from numpy cimport ndarray
 from verify cimport Verification
 from expression cimport (
     get_vlinks,
+    VJoint,
     VPoint,
     VLink,
 )
 from triangulation cimport vpoints_configure
-from tinycadlib cimport expr_solving
+from bfgs cimport vpoint_solving
+from tinycadlib cimport (
+    radians,
+    expr_parser,
+    data_collecting,
+)
 
 
 @cython.final
@@ -34,9 +45,9 @@ cdef class Planar(Verification):
     """This class is used to verified kinematics of the linkage mechanism."""
 
     cdef int target_count, base_index
-    cdef list vpoints, inputs, exprs, mapping_list, result_list
+    cdef list vpoints, inputs, exprs, mapping_list
     cdef dict placement, target, mapping
-    cdef ndarray upper, lower
+    cdef ndarray upper, lower, result_list
 
     def __cinit__(self, mech_params: dict):
         """mech_params = {
@@ -66,7 +77,7 @@ cdef class Planar(Verification):
         cdef int i
         cdef double[:, :] path
         for i in self.target:
-            path = np_array(self.target[i], dtype=np_float32)
+            path = np_array(self.target[i], dtype=np_float)
             self.target[i] = path
 
         # Options
@@ -116,14 +127,17 @@ cdef class Planar(Verification):
         for i in range(1, len(self.inputs) + 1):
             upper_input.extend([upper[-i]] * self.target_count)
             lower_input.extend([lower[-i]] * self.target_count)
-        self.upper = np_array(upper_input, dtype=np_float32)
-        self.lower = np_array(lower_input, dtype=np_float32)
+        self.upper = np_array(upper_input, dtype=np_float)
+        self.lower = np_array(lower_input, dtype=np_float)
         self.base_index = len(self.upper) - len(self.inputs) * self.target_count
 
         # Swap sorting.
         for i in range(len(self.upper)):
             if self.upper[i] < self.lower[i]:
                 self.upper[i], self.lower[i] = self.lower[i], self.upper[i]
+        
+        # Result list
+        self.result_list = np_zeros((len(self.vpoints), 2, 2), dtype=np_float)
 
     cdef ndarray[double, ndim=1] get_upper(self):
         return self.upper
@@ -131,18 +145,78 @@ cdef class Planar(Verification):
     cdef ndarray[double, ndim=1] get_lower(self):
         return self.lower
 
-    cdef inline bint solve(self, int target_index, double[:] input_list):
+    cdef inline bint solve(self, double[:] input_list, bint no_slider):
         """Start solver function."""
-        try:
-            # TODO: Need to be optimized.
-            self.result_list = expr_solving(
-                self.exprs,
-                self.mapping,
-                self.vpoints,
-                input_list[target_index::self.target_count]
-            )
-        except ValueError:
-            return False
+        # TODO: Need to be optimized.
+        cdef dict data_dict
+        cdef int dof
+        data_dict, dof = data_collecting(self.exprs, self.mapping, self.vpoints)
+
+        # Angles.
+        cdef double a
+        cdef int i
+        for i, a in enumerate(input_list):
+            data_dict[f'a{i}'] = radians(a)
+
+        # Solve
+        expr_parser(self.exprs, data_dict)
+
+        cdef dict p_data_dict = {}
+        cdef bint has_not_solved = False
+
+        # Add coordinate of known points.
+        for i in range(len(self.vpoints)):
+            # {1: 'A'} vs {'A': (10., 20.)}
+            if self.mapping[i] in data_dict:
+                p_data_dict[i] = data_dict[self.mapping[i]]
+            else:
+                has_not_solved = True
+
+        # Calling Sketch Solve kernel and try to get the result.
+        cdef list solved_bfgs = []
+        if has_not_solved:
+
+            # Add specified link lengths.
+            for k, v in data_dict.items():
+                if type(k) == tuple:
+                    p_data_dict[k] = v
+
+            # Solve
+            try:
+                solved_bfgs = vpoint_solving(self.vpoints, {}, p_data_dict)
+            except ValueError:
+                return False
+
+        # Format:
+        # R joint: [[p0]: (p0_x, p0_y), [p1]: (p1_x, p1_y)]
+        # P or RP joint: [[p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))]
+        cdef VPoint vpoint
+        for i in range(len(self.vpoints)):
+            vpoint = self.vpoints[i]
+            if self.mapping[i] in data_dict:
+                # These points has been solved.
+                if isnan(data_dict[self.mapping[i]][0]):
+                    return False
+                if no_slider or vpoint.type == VJoint.R:
+                    self.result_list[i, 0] = data_dict[self.mapping[i]]
+                else:
+                    self.result_list[i, 0] = vpoint.c[0]
+                    self.result_list[i, 1] = data_dict[self.mapping[i]]
+            elif solved_bfgs:
+                # These points solved by Sketch Solve.
+                if no_slider or vpoint.type == VJoint.R:
+                    self.result_list[i, 0] = solved_bfgs[i]
+                else:
+                    self.result_list[i, 0] = solved_bfgs[i][0]
+                    self.result_list[i, 1] = solved_bfgs[i][1]
+            else:
+                # No answer.
+                if no_slider or vpoint.type == VJoint.R:
+                    self.result_list[i, 0] = vpoint.c[0]
+                else:
+                    self.result_list[i, 0] = vpoint.c[0]
+                    self.result_list[i, 1] = vpoint.c[1]
+
         return True
 
     cdef double fitness(self, ndarray[double, ndim=1] v):
@@ -168,18 +242,13 @@ cdef class Planar(Verification):
         cdef int node
         cdef double x, y, tx, ty
         cdef double[:, :] path
-        cdef object coord
         for target_index in range(self.target_count):
-            if not self.solve(target_index, input_list):
+            if not self.solve(input_list[target_index::self.target_count], True):
                 return HUGE_VAL
 
             for node, path in self.target.items():
                 tx, ty = path[target_index]
-                coord = self.result_list[node]
-                if type(coord[0]) == tuple:
-                    x, y = coord[1]
-                else:
-                    x, y = coord
+                x, y = self.result_list[node, 0]
                 fitness += hypot(x - tx, y - ty)
 
         return fitness
@@ -200,19 +269,20 @@ cdef class Planar(Verification):
                 target_index += 1
 
         cdef double[:] input_list = np_sort(v[self.base_index:])
-        self.solve(0, input_list)
+        self.solve(input_list[::self.target_count], False)
 
         cdef list expressions = []
 
         cdef int i
-        cdef object coord
         for i in range(len(self.vpoints)):
             vpoint = self.vpoints[i]
-            coord = self.result_list[i]
-            if type(coord[0]) == tuple:
-                vpoint.move(coord[0], coord[1])
+            if vpoint.type == VJoint.R:
+                vpoint.move(tuple(self.result_list[i, 0]))
             else:
-                vpoint.move(coord)
+                vpoint.move(
+                    tuple(self.result_list[i, 0]),
+                    tuple(self.result_list[i, 1])
+                )
             expressions.append(vpoint.expr())
 
         return "M[" + ", ".join(expressions) + "]"

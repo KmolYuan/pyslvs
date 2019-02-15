@@ -26,5 +26,6 @@ cpdef tuple pxy(Coordinate c1, double x, double y)
 cdef str str_between(str s, str front, str back)
 cdef str str_before(str s, str front)
 
+cpdef void expr_parser(object exprs, dict data_dict)
 cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_)
 cpdef list expr_solving(object exprs, dict mapping, object vpoints, object angles = *)
