@@ -10,6 +10,7 @@ __email__ = "pyslvs@gmail.com"
 import unittest
 from unittest import TestCase
 from math import sqrt, radians
+from copy import deepcopy
 from bfgs import vpoint_solving
 from tinycadlib import (
     Coordinate,
@@ -36,13 +37,18 @@ from graph_layout import external_loop_layout
 from triangulation import vpoints_configure
 from _parser import parse_vpoints
 from example import example_list
+from collection import collection_list
 
 
-_planar_object = Planar({
-    'Driver': {'P0': (-70, -70, 50)},
-    'Follower': {'P1': (70, -70, 50)},
+_four_bar = deepcopy(collection_list["Four bar linkage mechanism"])
+_four_bar['Expression'] = parse_vpoints(_four_bar['Expression'])
+_four_bar.update({
+    'Placement': {
+        0: (-70, -70, 50),
+        1: (70, -70, 50),
+    },
     'Target': {
-        'P4': [
+        4: [
             (60.3, 118.12),
             (31.02, 115.62),
             (3.52, 110.62),
@@ -56,13 +62,10 @@ _planar_object = Planar({
             (-117.56, -65.45),
         ]
     },
-    'Expression':
-        "plap[P0,L0,a0](P2);"
-        "pllp[P2,L1,L2,P1](P3);"
-        "pllp[P2,L3,L4,P3](P4)",
     'upper': [100., 100., 100., 100., 100., 360.],
     'lower': [5., 5., 5., 5., 5., 0.],
 })
+_planar_object = Planar(_four_bar)
 
 
 class CoreTest(TestCase):

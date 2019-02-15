@@ -8,7 +8,7 @@ from typing import (
     Union,
     Optional,
 )
-from .pmks import VPoint
+from .expression import VPoint
 
 TuplePoint = Tuple[float, float]
 
