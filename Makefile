@@ -17,11 +17,11 @@ all: build
 build:
 ifeq ($(OS),Windows_NT)
 	-rename __init__.py .__init__.py
-	python setup.py build_ext --inplace
+	python setup.py build_ext -j0 --inplace
 	-rename .__init__.py __init__.py
 else
 	-mv __init__.py .__init__.py
-	python3 setup.py build_ext --inplace
+	python3 setup.py build_ext -j0 --inplace
 	-mv .__init__.py __init__.py
 endif
 

@@ -17,6 +17,7 @@ Version 19.02
 + Supported specified link length option.
 + Cancel the copy step of submodule pxd file.
 + Enhancement of mechanism grammar.
++ Add "-j" option to speed up compile time.
 + Many performance improvements.
 
 Version 19.01
