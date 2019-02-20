@@ -45,7 +45,8 @@ cdef class Planar(Verification):
     """This class is used to verified kinematics of the linkage mechanism."""
 
     cdef int target_count, base_index
-    cdef list vpoints, inputs, exprs, mapping_list
+    cdef tuple exprs
+    cdef list vpoints, inputs, mapping_list
     cdef dict placement, target, mapping
     cdef ndarray upper, lower, result_list
 
@@ -90,7 +91,7 @@ cdef class Planar(Verification):
         # Options
         self.vpoints = list(mech_params.get('Expression', []))
         self.inputs = list(mech_params.get('input', []))
-        self.exprs = vpoints_configure(self.vpoints, self.inputs)
+        self.exprs = tuple(vpoints_configure(self.vpoints, self.inputs))
 
         # Bound
         cdef list upper = list(mech_params.get('upper', []))
@@ -142,7 +143,7 @@ cdef class Planar(Verification):
         for i in range(len(self.upper)):
             if self.upper[i] < self.lower[i]:
                 self.upper[i], self.lower[i] = self.lower[i], self.upper[i]
-        
+
         # Result list
         self.result_list = np_zeros((len(self.vpoints), 2, 2), dtype=np_float)
 

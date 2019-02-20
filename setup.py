@@ -14,7 +14,7 @@ np_include = numpy.get_include()
 sources = []
 for place in ["src/", "Adesign/src/"]:
     for source in listdir(place):
-        if source.split('.')[-1] == 'pyx':
+        if source.endswith('.pyx'):
             sources.append(place + source)
 
 macros = [
