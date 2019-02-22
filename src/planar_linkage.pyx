@@ -44,6 +44,7 @@ cdef class Planar(Verification):
 
     """This class is used to verified kinematics of the linkage mechanism."""
 
+    cdef bint bfgs_mode
     cdef int target_count, base_index
     cdef tuple exprs
     cdef list vpoints, inputs, mapping_list
@@ -75,8 +76,11 @@ cdef class Planar(Verification):
             raise ValueError("target paths should be in the same size")
         self.target_count = check_set.pop()
 
+        cdef list inputs = list(mech_params.get('input', []))
+
         # Change the target paths into memory view.
         self.target = {}
+        self.inputs = []
         cdef dict same = mech_params.get('same', {})
 
         cdef int i, j
@@ -88,10 +92,21 @@ cdef class Planar(Verification):
                     i -= 1
             self.target[i] = path
 
+        cdef int a
+        for i, j in inputs:
+            for a in range(i):
+                if a in same:
+                    i -= 1
+            for a in range(j):
+                if a in same:
+                    j -= 1
+            self.inputs.append((i, j))
+
         # Options
         self.vpoints = list(mech_params.get('Expression', []))
-        self.inputs = list(mech_params.get('input', []))
-        self.exprs = tuple(vpoints_configure(self.vpoints, self.inputs))
+        cdef dict status = {}
+        self.exprs = tuple(vpoints_configure(self.vpoints, self.inputs, status))
+        self.bfgs_mode = not all(status.values())
 
         # Bound
         cdef list upper = list(mech_params.get('upper', []))
@@ -115,7 +130,7 @@ cdef class Planar(Verification):
             self.mapping_list.append(i)
 
         # Length of links
-        cdef int a, b, c, d
+        cdef int b, c, d
         cdef VLink vlink
         for vlink in get_vlinks(self.vpoints):
             if len(vlink.points) < 2:
@@ -139,7 +154,7 @@ cdef class Planar(Verification):
         self.lower = np_array(lower_input, dtype=np_float)
         self.base_index = len(self.upper) - len(self.inputs) * self.target_count
 
-        # Swap sorting.
+        # Swap upper and lower bound if reversed.
         for i in range(len(self.upper)):
             if self.upper[i] < self.lower[i]:
                 self.upper[i], self.lower[i] = self.lower[i], self.upper[i]
@@ -160,7 +175,7 @@ cdef class Planar(Verification):
         cdef int dof
         data_dict, dof = data_collecting(self.exprs, self.mapping, self.vpoints)
 
-        # Angles.
+        # Angles
         cdef double a
         cdef int i
         for i, a in enumerate(input_list):
@@ -169,20 +184,17 @@ cdef class Planar(Verification):
         # Solve
         expr_parser(self.exprs, data_dict)
 
-        cdef dict p_data_dict = {}
-        cdef bint has_not_solved = False
-
-        # Add coordinate of known points.
-        for i in range(len(self.vpoints)):
-            # {1: 'A'} vs {'A': (10., 20.)}
-            if self.mapping[i] in data_dict:
-                p_data_dict[i] = data_dict[self.mapping[i]]
-            else:
-                has_not_solved = True
-
         # Calling Sketch Solve kernel and try to get the result.
-        cdef list solved_bfgs = []
-        if has_not_solved:
+        cdef dict p_data_dict
+        cdef list solved_bfgs
+        if self.bfgs_mode:
+
+            # Add coordinate of known points.
+            p_data_dict = {}
+            for i in range(len(self.vpoints)):
+                # {1: 'A'} vs {'A': (10., 20.)}
+                if self.mapping[i] in data_dict:
+                    p_data_dict[i] = data_dict[self.mapping[i]]
 
             # Add specified link lengths.
             for k, v in data_dict.items():
@@ -210,7 +222,7 @@ cdef class Planar(Verification):
                 else:
                     self.result_list[i, 0] = vpoint.c[0]
                     self.result_list[i, 1] = data_dict[self.mapping[i]]
-            elif solved_bfgs:
+            elif self.bfgs_mode:
                 # These points solved by Sketch Solve.
                 if no_slider or vpoint.type == VJoint.R:
                     self.result_list[i, 0] = solved_bfgs[i]
