@@ -19,6 +19,7 @@ Version 19.02
 + Enhancement of mechanism grammar.
 + Add "-j" option to speed up compile time.
 + Many performance improvements.
++ Remove the definition of inner scope.
 
 Version 19.01
 ===

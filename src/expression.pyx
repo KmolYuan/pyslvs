@@ -303,7 +303,6 @@ cdef class VPoint:
             color = f", color[{self.color_str}]"
         else:
             color = ""
-        cdef str name
         links_text = ", ".join([name for name in self.links])
         x_text = f"{self.x:.4f}".rstrip('0').rstrip('.')
         y_text = f"{self.y:.4f}".rstrip('0').rstrip('.')

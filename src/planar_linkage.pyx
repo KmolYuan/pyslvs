@@ -20,6 +20,7 @@ from numpy import (
 from libc.math cimport (
     hypot,
     HUGE_VAL,
+    NAN,
     isnan,
 )
 from numpy cimport ndarray
@@ -34,8 +35,11 @@ from triangulation cimport vpoints_configure
 from bfgs cimport vpoint_solving
 from tinycadlib cimport (
     radians,
-    expr_parser,
-    data_collecting,
+    Coordinate,
+    plap,
+    pllp,
+    plpp,
+    pxy,
 )
 
 
@@ -48,7 +52,7 @@ cdef class Planar(Verification):
     cdef int target_count, base_index
     cdef tuple exprs
     cdef list vpoints, inputs, mapping_list
-    cdef dict placement, target, mapping
+    cdef dict placement, target, mapping, mapping_r
     cdef ndarray upper, lower, result_list
 
     def __cinit__(self, mech_params: dict):
@@ -119,6 +123,7 @@ cdef class Planar(Verification):
 
         # Data mapping
         self.mapping = {i: f"P{i}" for i in range(len(self.vpoints))}
+        self.mapping_r = {v: k for k, v in self.mapping.items()}
         self.mapping_list = []
 
         # Position
@@ -131,18 +136,21 @@ cdef class Planar(Verification):
 
         # Length of links
         cdef int b, c, d
+        cdef frozenset pair
         cdef VLink vlink
         for vlink in get_vlinks(self.vpoints):
             if len(vlink.points) < 2:
                 continue
             a = vlink.points[0]
             b = vlink.points[1]
-            self.mapping[a, b] = None
-            self.mapping_list.append((a, b))
+            pair = frozenset({a, b})
+            self.mapping[pair] = None
+            self.mapping_list.append(pair)
             for c in vlink.points[2:]:
                 for d in (a, b):
-                    self.mapping[c, d] = None
-                    self.mapping_list.append((c, d))
+                    pair = frozenset({c, d})
+                    self.mapping[pair] = None
+                    self.mapping_list.append(pair)
 
         upper_input.extend(upper[:-len(self.inputs)])
         lower_input.extend(lower[:-len(self.inputs)])
@@ -168,21 +176,120 @@ cdef class Planar(Verification):
     cdef ndarray[double, ndim=1] get_lower(self):
         return self.lower
 
+    cdef inline double get_len(self, str expr1, str expr2):
+        """Get the link length."""
+        return self.mapping[frozenset({self.mapping_r[expr1], self.mapping_r[expr2]})]
+
     cdef inline bint solve(self, double[:] input_list, bint no_slider):
         """Start solver function."""
         # TODO: Need to be optimized.
-        cdef dict data_dict
-        cdef int dof
-        data_dict, dof = data_collecting(self.exprs, self.mapping, self.vpoints)
+        cdef dict data_dict = {}
+
+        cdef int i
+        cdef VPoint vpoint
+        for i, vpoint in enumerate(self.vpoints):
+            if no_slider or vpoint.type == VJoint.R:
+                data_dict[self.mapping[i]] = vpoint.c[0]
+            else:
+                data_dict[self.mapping[i]] = vpoint.c[1]
 
         # Angles
         cdef double a
-        cdef int i
         for i, a in enumerate(input_list):
             data_dict[f'a{i}'] = radians(a)
 
         # Solve
-        expr_parser(self.exprs, data_dict)
+        cdef int params_count
+        cdef double x, y, x1, y1, x2, y2, x3, y3
+        cdef str func
+        cdef tuple expr
+        for expr in self.exprs:
+            # If the mechanism has no any solution.
+            if not expr:
+                break
+
+            func = expr[0]
+            params_count = len(expr) - 2
+            x = NAN
+            y = NAN
+            if func == 'PLAP':
+                x1, y1 = data_dict[expr[1]]
+                data_dict[expr[2]] = self.get_len(expr[1], expr[-1])
+                if params_count == 3:
+                    x, y = plap(
+                        Coordinate(x1, y1),
+                        data_dict[expr[2]],
+                        data_dict[expr[3]]
+                    )
+                else:
+                    x2, y2 = data_dict[expr[4]]
+                    if params_count == 4:
+                        x, y = plap(
+                            Coordinate(x1, y1),
+                            data_dict[expr[2]],
+                            data_dict[expr[3]],
+                            Coordinate(x2, y2)
+                        )
+                    elif params_count == 5:
+                        x, y = plap(
+                            Coordinate(x1, y1),
+                            data_dict[expr[2]],
+                            data_dict[expr[3]],
+                            Coordinate(x2, y2),
+                            expr[5] == 'T'
+                        )
+            elif func == 'PLLP':
+                x1, y1 = data_dict[expr[1]]
+                data_dict[expr[2]] = self.get_len(expr[1], expr[-1])
+                data_dict[expr[3]] = self.get_len(expr[4], expr[-1])
+                x2, y2 = data_dict[expr[4]]
+                if params_count == 4:
+                    x, y = pllp(
+                        Coordinate(x1, y1),
+                        data_dict[expr[2]],
+                        data_dict[expr[3]],
+                        Coordinate(x2, y2)
+                    )
+                elif params_count == 5:
+                    x, y = pllp(
+                        Coordinate(x1, y1),
+                        data_dict[expr[2]],
+                        data_dict[expr[3]],
+                        Coordinate(x2, y2),
+                        expr[5] == 'T'
+                    )
+            elif func == 'PLPP':
+                x1, y1 = data_dict[expr[1]]
+                data_dict[expr[2]] = self.get_len(expr[1], expr[-1])
+                x2, y2 = data_dict[expr[3]]
+                x3, y3 = data_dict[expr[4]]
+                if params_count == 4:
+                    x, y = plpp(
+                        Coordinate(x1, y1),
+                        data_dict[expr[2]],
+                        Coordinate(x2, y2),
+                        Coordinate(x3, y3)
+                    )
+                elif params_count == 5:
+                    x, y = plpp(
+                        Coordinate(x1, y1),
+                        data_dict[expr[2]],
+                        Coordinate(x2, y2),
+                        Coordinate(x3, y3),
+                        expr[5] == 'T'
+                    )
+            elif func == 'PXY':
+                x1, y1 = data_dict[expr[1]]
+                vpoint = self.vpoints[self.mapping_r[expr[-1]]]
+                data_dict[expr[2]] = vpoint.c[0][0] - x1
+                data_dict[expr[3]] = vpoint.c[0][1] - y1
+                if params_count == 3:
+                    x, y = pxy(
+                        Coordinate(x1, y1),
+                        data_dict[expr[2]],
+                        data_dict[expr[3]]
+                    )
+            data_dict[expr[-1]] = (x, y)
 
         # Calling Sketch Solve kernel and try to get the result.
         cdef dict p_data_dict
@@ -197,8 +304,8 @@ cdef class Planar(Verification):
                     p_data_dict[i] = data_dict[self.mapping[i]]
 
             # Add specified link lengths.
-            for k, v in data_dict.items():
-                if type(k) == tuple:
+            for k, v in self.mapping.items():
+                if type(k) == frozenset:
                     p_data_dict[k] = v
 
             # Solve
@@ -210,7 +317,6 @@ cdef class Planar(Verification):
         # Format:
         # R joint: [[p0]: (p0_x, p0_y), [p1]: (p1_x, p1_y)]
         # P or RP joint: [[p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))]
-        cdef VPoint vpoint
         for i in range(len(self.vpoints)):
             vpoint = self.vpoints[i]
             if self.mapping[i] in data_dict:

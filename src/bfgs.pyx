@@ -46,7 +46,7 @@ cdef inline void _sort_data_dict(dict data_dict):
     cdef object k
     for k in data_dict:
         if type(k) == tuple:
-            data_dict[_sorted_pair(k[0], k[1])] = data_dict.pop(k)
+            data_dict[frozenset({k[0], k[1]})] = data_dict.pop(k)
 
 
 cdef inline bint _measure_parameter(
@@ -345,7 +345,7 @@ cdef inline void _distance_cons(
     cdef str vlink
     cdef Point *p1
     cdef Point *p2
-    cdef tuple pair
+    cdef frozenset pair
     for vlink in vlinks:
         if len(vlinks[vlink]) < 2:
             continue
@@ -374,7 +374,7 @@ cdef inline void _distance_cons(
                 # Known coordinates.
                 continue
             for d in (a, b):
-                pair = _sorted_pair(c, d)
+                pair = frozenset({c, d})
                 if pair in data_dict:
                     distances[con_index[0]] = data_dict[pair]
                 else:
@@ -544,11 +544,6 @@ cdef inline double _radians(double degree):
     return degree / 180 * M_PI
 
 
-cdef inline tuple _sorted_pair(int a, int b):
-    """A sorted pair."""
-    return (a, b) if a < b else (b, a)
-
-
 cpdef list vpoint_solving(
     object vpoints_,
     dict inputs = None,
@@ -570,8 +565,6 @@ cpdef list vpoint_solving(
         data_dict = {}
 
     _sort_data_dict(data_dict)
-
-    # TODO: Create status as resolvable object.
 
     # sliders = {p_num: base_num}
     cdef map[int, int] sliders

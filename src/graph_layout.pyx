@@ -979,13 +979,12 @@ cdef class OrderedSet:
 
     def __getitem__(self, index):
         """Implement of 'self[index]' operator."""
-        cdef _Entry curr
         if isinstance(index, slice):
             return OrderedSet([curr.key for curr in self._get_slice_entry(index)])
         if not PyIndex_Check(index):
             raise TypeError(f"{type(self).__name__} indices must be integers, not {type(index)}")
 
-        curr = self._get_index_entry(index)
+        cdef _Entry curr = self._get_index_entry(index)
         return curr.key
 
     def __setitem__(self, index, value):

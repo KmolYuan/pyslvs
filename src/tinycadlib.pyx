@@ -160,19 +160,17 @@ cpdef void expr_parser(object exprs, dict data_dict):
     + exprs: [("PLAP", "P0", "L0", "a0", "P1", "P2"), ..."]
     + data_dict: {'a0':0., 'L1':10., 'A':(30., 40.), ...}
     """
-    cdef tuple expr
-    cdef str func
     cdef int params_count
     cdef double x, y, x1, y1, x2, y2, x3, y3
+    cdef str func
+    cdef tuple expr
     for expr in exprs:
         # If the mechanism has no any solution.
         if not expr:
-            return
+            break
 
         func = expr[0]
         params_count = len(expr) - 2
-
-        # We should unpack as C++'s way.
         x = NAN
         y = NAN
         if func == 'PLAP':
@@ -349,7 +347,6 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     # Replace the P joints and their friends with RP joint.
     # DOF must be same after properties changed.
     cdef int base
-    cdef str link_
     cdef VPoint vpoint_
     cdef set links = set()
     for base in range(len(vpoints)):
@@ -387,7 +384,6 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
                 data_dict[mapping[k]] = mapping[mapping[k]]
         elif type(k) == tuple:
             length[frozenset(k)] = v
-            data_dict[k] = v
 
     cdef list pos = []
     for vpoint in vpoints:
@@ -420,9 +416,11 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     for expr in exprs:
         node = mapping_r[expr[1]]
         target = mapping_r[expr[-1]]
+
         # Point 1: expr[1]
         if expr[1] not in data_dict:
             data_dict[expr[1]] = pos[mapping_r[expr[1]]]
+
         if expr[0] == 'PLAP':
             # Link 1: expr[2]
             pair = frozenset({node, target})
@@ -490,7 +488,6 @@ cpdef list expr_solving(
     """Solving function.
     
     + exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1'), ...]
-    TODO: Change another way to specify the lengths.
     + mapping: {0: 'P0', ..., (0, 1): 20.0, ...}
     + vpoints: [VPoint]
     + angles: [[a0]: a0, [a1]: a1, ...]
@@ -543,11 +540,11 @@ cpdef list expr_solving(
             has_not_solved = True
 
     # Calling Sketch Solve kernel and try to get the result.
-    cdef list solved_bfgs = []
+    cdef list solved_bfgs
     if has_not_solved:
 
         # Add specified link lengths.
-        for k, v in data_dict.items():
+        for k, v in mapping.items():
             if type(k) == tuple:
                 p_data_dict[k] = v
 
@@ -572,7 +569,7 @@ cpdef list expr_solving(
                 solved_points.append(data_dict[mapping[i]])
             else:
                 solved_points.append((vpoint.c[0], data_dict[mapping[i]]))
-        elif solved_bfgs:
+        elif solved_bfgs is not None:
             # These points solved by Sketch Solve.
             if vpoint.type == VJoint.R:
                 solved_points.append(solved_bfgs[i])

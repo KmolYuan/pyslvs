@@ -136,7 +136,6 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
     # Replace the P joints and their friends with RP joint.
     # DOF must be same after properties changed.
     cdef int base
-    cdef str link_
     cdef VPoint vpoint_
     cdef set links
     for base in range(vpoints_count):

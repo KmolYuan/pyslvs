@@ -332,7 +332,6 @@ cdef class GraphMatcher:
 
     def candidate_pairs_iter(self) -> Iterator[Tuple[int, int]]:
         """Iterator over candidate pairs of nodes in g1 and g2."""
-        cdef int node
         # First we compute the inout-terminal sets.
         cdef set s1 = set(self.inout_1) - set(self.core_1)
         cdef set s2 = set(self.inout_2) - set(self.core_2)
@@ -340,6 +339,7 @@ cdef class GraphMatcher:
         cdef list t2_inout = [node for node in self.g2_nodes if (node in s2)]
         # If t1_inout and t2_inout are both nonempty.
         # P(s) = t1_inout x {min t2_inout}
+        cdef int node
         if t1_inout and t2_inout:
             for node in t1_inout:
                 yield node, min(t2_inout)
@@ -517,8 +517,9 @@ cdef class GMState:
             gm.core_2 = {}
             gm.inout_1 = {}
             gm.inout_2 = {}
+
+        cdef int node
         cdef set new_nodes
-        cdef int node, neighbor
         # Watch out! g1_node == 0 should evaluate to True.
         if g1_node != -1 and g2_node != -1:
             # Add the node pair to the isomorphism mapping.
@@ -544,7 +545,10 @@ cdef class GMState:
             # Updates for T_1^{inout}
             new_nodes = set()
             for node in gm.core_1:
-                new_nodes.update([neighbor for neighbor in gm.g1.adj[node] if neighbor not in gm.core_1])
+                new_nodes.update([
+                    neighbor for neighbor in gm.g1.adj[node]
+                    if neighbor not in gm.core_1
+                ])
             for node in new_nodes:
                 if node not in gm.inout_1:
                     gm.inout_1[node] = self.depth
@@ -552,7 +556,10 @@ cdef class GMState:
             # Updates for T_2^{inout}
             new_nodes = set()
             for node in gm.core_2:
-                new_nodes.update([neighbor for neighbor in gm.g2.adj[node] if neighbor not in gm.core_2])
+                new_nodes.update([
+                    neighbor for neighbor in gm.g2.adj[node]
+                    if neighbor not in gm.core_2
+                ])
             for node in new_nodes:
                 if node not in gm.inout_2:
                     gm.inout_2[node] = self.depth
