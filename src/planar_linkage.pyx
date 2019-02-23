@@ -193,16 +193,12 @@ cdef class Planar(Verification):
             else:
                 data_dict[self.mapping[i]] = vpoint.c[1]
 
-        # Angles
-        cdef double a
-        for i, a in enumerate(input_list):
-            data_dict[f'a{i}'] = radians(a)
-
         # Solve
         cdef int params_count
-        cdef double x, y, x1, y1, x2, y2, x3, y3
+        cdef double x, y, x1, y1, x2, y2, x3, y3, a, d1, d2
         cdef str func
         cdef tuple expr
+        i = 0
         for expr in self.exprs:
             # If the mechanism has no any solution.
             if not expr:
@@ -214,66 +210,54 @@ cdef class Planar(Verification):
             y = NAN
             if func == 'PLAP':
                 x1, y1 = data_dict[expr[1]]
-                data_dict[expr[2]] = self.get_len(expr[1], expr[-1])
+                d1 = self.get_len(expr[1], expr[-1])
+                a = radians(input_list[i])
                 if params_count == 3:
-                    x, y = plap(
-                        Coordinate(x1, y1),
-                        data_dict[expr[2]],
-                        data_dict[expr[3]]
-                    )
+                    x, y = plap(Coordinate(x1, y1), d1, a)
                 else:
                     x2, y2 = data_dict[expr[4]]
                     if params_count == 4:
-                        x, y = plap(
-                            Coordinate(x1, y1),
-                            data_dict[expr[2]],
-                            data_dict[expr[3]],
-                            Coordinate(x2, y2)
-                        )
+                        x, y = plap(Coordinate(x1, y1), d1, a, Coordinate(x2, y2))
                     elif params_count == 5:
                         x, y = plap(
                             Coordinate(x1, y1),
-                            data_dict[expr[2]],
-                            data_dict[expr[3]],
+                            d1,
+                            a,
                             Coordinate(x2, y2),
                             expr[5] == 'T'
                         )
+                i += 1
             elif func == 'PLLP':
                 x1, y1 = data_dict[expr[1]]
-                data_dict[expr[2]] = self.get_len(expr[1], expr[-1])
-                data_dict[expr[3]] = self.get_len(expr[4], expr[-1])
+                d1 = self.get_len(expr[1], expr[-1])
+                d2 = self.get_len(expr[4], expr[-1])
                 x2, y2 = data_dict[expr[4]]
                 if params_count == 4:
-                    x, y = pllp(
-                        Coordinate(x1, y1),
-                        data_dict[expr[2]],
-                        data_dict[expr[3]],
-                        Coordinate(x2, y2)
-                    )
+                    x, y = pllp(Coordinate(x1, y1), d1, d2, Coordinate(x2, y2))
                 elif params_count == 5:
                     x, y = pllp(
                         Coordinate(x1, y1),
-                        data_dict[expr[2]],
-                        data_dict[expr[3]],
+                        d1,
+                        d2,
                         Coordinate(x2, y2),
                         expr[5] == 'T'
                     )
             elif func == 'PLPP':
                 x1, y1 = data_dict[expr[1]]
-                data_dict[expr[2]] = self.get_len(expr[1], expr[-1])
+                d1 = self.get_len(expr[1], expr[-1])
                 x2, y2 = data_dict[expr[3]]
                 x3, y3 = data_dict[expr[4]]
                 if params_count == 4:
                     x, y = plpp(
                         Coordinate(x1, y1),
-                        data_dict[expr[2]],
+                        d1,
                         Coordinate(x2, y2),
                         Coordinate(x3, y3)
                     )
                 elif params_count == 5:
                     x, y = plpp(
                         Coordinate(x1, y1),
-                        data_dict[expr[2]],
+                        d1,
                         Coordinate(x2, y2),
                         Coordinate(x3, y3),
                         expr[5] == 'T'
@@ -281,14 +265,8 @@ cdef class Planar(Verification):
             elif func == 'PXY':
                 x1, y1 = data_dict[expr[1]]
                 vpoint = self.vpoints[self.mapping_r[expr[-1]]]
-                data_dict[expr[2]] = vpoint.c[0][0] - x1
-                data_dict[expr[3]] = vpoint.c[0][1] - y1
-                if params_count == 3:
-                    x, y = pxy(
-                        Coordinate(x1, y1),
-                        data_dict[expr[2]],
-                        data_dict[expr[3]]
-                    )
+                x, y = pxy(Coordinate(x1, y1), vpoint.c[0][0] - x1, vpoint.c[0][1] - y1)
+
             data_dict[expr[-1]] = (x, y)
 
         # Calling Sketch Solve kernel and try to get the result.
