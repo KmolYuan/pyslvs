@@ -156,56 +156,95 @@ cdef inline str str_before(str s, str front):
 
 cpdef void expr_parser(object exprs, dict data_dict):
     """Update data.
-    
-    + exprs: "PLAP[P0,L0,a0,P1](P2);PLLP[P2,L1,L2,P1](P3);..."
+
+    + exprs: [("PLAP", "P0", "L0", "a0", "P1", "P2"), ..."]
     + data_dict: {'a0':0., 'L1':10., 'A':(30., 40.), ...}
     """
-    cdef object expr
-    cdef str func, p
-    cdef list params
+    cdef tuple expr
+    cdef str func
     cdef int params_count
-    cdef double x, y
+    cdef double x, y, x1, y1, x2, y2, x3, y3
     for expr in exprs:
         # If the mechanism has no any solution.
         if not expr:
             return
+
         func = expr[0]
-        params = []
-        for p in expr[1:-1]:
-            if p == 'T':
-                params.append(True)
-            elif p == 'F':
-                params.append(False)
-            elif type(data_dict[p]) == tuple:
-                x, y = data_dict[p]
-                params.append(Coordinate(x, y))
-            else:
-                params.append(data_dict[p])
-        params_count = len(params)
+        params_count = len(expr) - 2
 
         # We should unpack as C++'s way.
         x = NAN
         y = NAN
         if func == 'PLAP':
+            x1, y1 = data_dict[expr[1]]
             if params_count == 3:
-                x, y = plap(params[0], params[1], params[2])
-            elif params_count == 4:
-                x, y = plap(params[0], params[1], params[2], params[3])
-            elif params_count == 5:
-                x, y = plap(params[0], params[1], params[2], params[3], params[4])
+                x, y = plap(
+                    Coordinate(x1, y1),
+                    data_dict[expr[2]],
+                    data_dict[expr[3]]
+                )
+            else:
+                x2, y2 = data_dict[expr[4]]
+                if params_count == 4:
+                    x, y = plap(
+                        Coordinate(x1, y1),
+                        data_dict[expr[2]],
+                        data_dict[expr[3]],
+                        Coordinate(x2, y2)
+                    )
+                elif params_count == 5:
+                    x, y = plap(
+                        Coordinate(x1, y1),
+                        data_dict[expr[2]],
+                        data_dict[expr[3]],
+                        Coordinate(x2, y2),
+                        expr[5] == 'T'
+                    )
         elif func == 'PLLP':
+            x1, y1 = data_dict[expr[1]]
+            x2, y2 = data_dict[expr[4]]
             if params_count == 4:
-                x, y = pllp(params[0], params[1], params[2], params[3])
+                x, y = pllp(
+                    Coordinate(x1, y1),
+                    data_dict[expr[2]],
+                    data_dict[expr[3]],
+                    Coordinate(x2, y2)
+                )
             elif params_count == 5:
-                x, y = pllp(params[0], params[1], params[2], params[3], params[4])
+                x, y = pllp(
+                    Coordinate(x1, y1),
+                    data_dict[expr[2]],
+                    data_dict[expr[3]],
+                    Coordinate(x2, y2),
+                    expr[5] == 'T'
+                )
         elif func == 'PLPP':
+            x1, y1 = data_dict[expr[1]]
+            x2, y2 = data_dict[expr[3]]
+            x3, y3 = data_dict[expr[4]]
             if params_count == 4:
-                x, y = plpp(params[0], params[1], params[2], params[3])
+                x, y = plpp(
+                    Coordinate(x1, y1),
+                    data_dict[expr[2]],
+                    Coordinate(x2, y2),
+                    Coordinate(x3, y3)
+                )
             elif params_count == 5:
-                x, y = plpp(params[0], params[1], params[2], params[3], params[4])
+                x, y = plpp(
+                    Coordinate(x1, y1),
+                    data_dict[expr[2]],
+                    Coordinate(x2, y2),
+                    Coordinate(x3, y3),
+                    expr[5] == 'T'
+                )
         elif func == 'PXY':
+            x1, y1 = data_dict[expr[1]]
             if params_count == 3:
-                x, y = pxy(params[0], params[1], params[2])
+                x, y = pxy(
+                    Coordinate(x1, y1),
+                    data_dict[expr[2]],
+                    data_dict[expr[3]]
+                )
         data_dict[expr[-1]] = (x, y)
 
 
