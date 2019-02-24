@@ -176,11 +176,14 @@ cdef class Planar(Verification):
     cdef ndarray[double, ndim=1] get_lower(self):
         return self.lower
 
+    cpdef bint is_two_kernel(self):
+        return self.bfgs_mode
+
     cdef inline double get_len(self, str expr1, str expr2):
         """Get the link length."""
         return self.mapping[frozenset({self.mapping_r[expr1], self.mapping_r[expr2]})]
 
-    cdef inline bint solve(self, double[:] input_list, bint no_slider):
+    cdef inline bint solve(self, double[:] input_list):
         """Start solver function."""
         # TODO: Need to be optimized.
         cdef dict data_dict = {}
@@ -190,7 +193,7 @@ cdef class Planar(Verification):
         for i, vpoint in enumerate(self.vpoints):
             if not vpoint.grounded():
                 continue
-            if no_slider or vpoint.type == VJoint.R:
+            if vpoint.type == VJoint.R:
                 self.result_list[i, 0] = vpoint.c[0]
                 data_dict[self.mapping[i]] = vpoint.c[0]
             else:
@@ -278,7 +281,7 @@ cdef class Planar(Verification):
                 return False
 
             data_dict[target] = (x, y)
-            if no_slider or vpoint.type == VJoint.R:
+            if vpoint.type == VJoint.R:
                 self.result_list[t, 0] = (x, y)
             else:
                 self.result_list[t, 0] = vpoint.c[0]
@@ -289,7 +292,6 @@ cdef class Planar(Verification):
 
         # Calling Sketch Solve kernel and try to get the result.
         cdef dict p_data_dict
-        cdef list solved_bfgs
         # Add coordinate of known points.
         p_data_dict = {}
         for i in range(len(self.vpoints)):
@@ -303,6 +305,7 @@ cdef class Planar(Verification):
                 p_data_dict[k] = v
 
         # Solve
+        cdef list solved_bfgs
         try:
             solved_bfgs = vpoint_solving(self.vpoints, {}, p_data_dict)
         except ValueError:
@@ -312,16 +315,16 @@ cdef class Planar(Verification):
         # R joint: [[p0]: (p0_x, p0_y), [p1]: (p1_x, p1_y)]
         # P or RP joint: [[p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))]
         for i in range(len(self.vpoints)):
+            if self.mapping[i] in data_dict:
+                continue
+
             vpoint = self.vpoints[i]
-            if self.mapping[i] not in data_dict:
-                # These points solved by Sketch Solve.
-                if no_slider or vpoint.type == VJoint.R:
-                    self.result_list[i, 0] = solved_bfgs[i]
-                else:
-                    self.result_list[i, 0] = solved_bfgs[i][0]
-                    self.result_list[i, 1] = solved_bfgs[i][1]
+            # These points solved by Sketch Solve.
+            if vpoint.type == VJoint.R:
+                self.result_list[i, 0] = solved_bfgs[i]
             else:
-                return False
+                self.result_list[i, 0] = solved_bfgs[i][0]
+                self.result_list[i, 1] = solved_bfgs[i][1]
 
         return True
 
@@ -349,7 +352,7 @@ cdef class Planar(Verification):
         cdef double x, y, tx, ty
         cdef double[:, :] path
         for target_index in range(self.target_count):
-            if not self.solve(input_list[target_index::self.target_count], True):
+            if not self.solve(input_list[target_index::self.target_count]):
                 return HUGE_VAL
 
             for node, path in self.target.items():
@@ -374,7 +377,7 @@ cdef class Planar(Verification):
                 target_index += 1
 
         cdef double[:] input_list = np_sort(v[self.base_index:])
-        self.solve(input_list[::self.target_count], False)
+        self.solve(input_list[::self.target_count])
 
         cdef list expressions = []
 

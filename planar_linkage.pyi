@@ -27,6 +27,9 @@ class Planar(Verification):
         """
         ...
 
+    def is_two_kernel(self) -> bool:
+        ...
+
     def result(self, v: ndarray) -> str:
         """Return the last answer."""
         ...
