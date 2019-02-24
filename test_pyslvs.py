@@ -63,7 +63,7 @@ _four_bar.update({
         ]
     },
     'upper': [100., 100., 100., 100., 100., 360.],
-    'lower': [5., 5., 5., 5., 5., 0.],
+    'lower': [0., 0., 0., 0., 0., 0.],
 })
 _planar_object = Planar(_four_bar)
 

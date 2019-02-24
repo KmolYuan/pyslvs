@@ -188,15 +188,20 @@ cdef class Planar(Verification):
         cdef int i
         cdef VPoint vpoint
         for i, vpoint in enumerate(self.vpoints):
+            if not vpoint.grounded():
+                continue
             if no_slider or vpoint.type == VJoint.R:
+                self.result_list[i, 0] = vpoint.c[0]
                 data_dict[self.mapping[i]] = vpoint.c[0]
             else:
+                self.result_list[i, 0] = vpoint.c[0]
+                self.result_list[i, 1] = vpoint.c[1]
                 data_dict[self.mapping[i]] = vpoint.c[1]
 
         # Solve
-        cdef int params_count
+        cdef int t, params_count
         cdef double x, y, x1, y1, x2, y2, x3, y3, a, d1, d2
-        cdef str func
+        cdef str func, target
         cdef tuple expr
         i = 0
         for expr in self.exprs:
@@ -205,12 +210,15 @@ cdef class Planar(Verification):
                 break
 
             func = expr[0]
+            target = expr[-1]
             params_count = len(expr) - 2
+            t = self.mapping_r[target]
+            vpoint = self.vpoints[t]
             x = NAN
             y = NAN
             if func == 'PLAP':
                 x1, y1 = data_dict[expr[1]]
-                d1 = self.get_len(expr[1], expr[-1])
+                d1 = self.get_len(expr[1], target)
                 a = radians(input_list[i])
                 if params_count == 3:
                     x, y = plap(Coordinate(x1, y1), d1, a)
@@ -229,8 +237,8 @@ cdef class Planar(Verification):
                 i += 1
             elif func == 'PLLP':
                 x1, y1 = data_dict[expr[1]]
-                d1 = self.get_len(expr[1], expr[-1])
-                d2 = self.get_len(expr[4], expr[-1])
+                d1 = self.get_len(expr[1], target)
+                d2 = self.get_len(expr[4], target)
                 x2, y2 = data_dict[expr[4]]
                 if params_count == 4:
                     x, y = pllp(Coordinate(x1, y1), d1, d2, Coordinate(x2, y2))
@@ -244,7 +252,7 @@ cdef class Planar(Verification):
                     )
             elif func == 'PLPP':
                 x1, y1 = data_dict[expr[1]]
-                d1 = self.get_len(expr[1], expr[-1])
+                d1 = self.get_len(expr[1], target)
                 x2, y2 = data_dict[expr[3]]
                 x3, y3 = data_dict[expr[4]]
                 if params_count == 4:
@@ -264,49 +272,48 @@ cdef class Planar(Verification):
                     )
             elif func == 'PXY':
                 x1, y1 = data_dict[expr[1]]
-                vpoint = self.vpoints[self.mapping_r[expr[-1]]]
                 x, y = pxy(Coordinate(x1, y1), vpoint.c[0][0] - x1, vpoint.c[0][1] - y1)
 
-            data_dict[expr[-1]] = (x, y)
+            if isnan(x):
+                return False
+
+            data_dict[target] = (x, y)
+            if no_slider or vpoint.type == VJoint.R:
+                self.result_list[t, 0] = (x, y)
+            else:
+                self.result_list[t, 0] = vpoint.c[0]
+                self.result_list[t, 1] = (x, y)
+
+        if not self.bfgs_mode:
+            return True
 
         # Calling Sketch Solve kernel and try to get the result.
         cdef dict p_data_dict
         cdef list solved_bfgs
-        if self.bfgs_mode:
+        # Add coordinate of known points.
+        p_data_dict = {}
+        for i in range(len(self.vpoints)):
+            # {1: 'A'} vs {'A': (10., 20.)}
+            if self.mapping[i] in data_dict:
+                p_data_dict[i] = data_dict[self.mapping[i]]
 
-            # Add coordinate of known points.
-            p_data_dict = {}
-            for i in range(len(self.vpoints)):
-                # {1: 'A'} vs {'A': (10., 20.)}
-                if self.mapping[i] in data_dict:
-                    p_data_dict[i] = data_dict[self.mapping[i]]
+        # Add specified link lengths.
+        for k, v in self.mapping.items():
+            if type(k) == frozenset:
+                p_data_dict[k] = v
 
-            # Add specified link lengths.
-            for k, v in self.mapping.items():
-                if type(k) == frozenset:
-                    p_data_dict[k] = v
-
-            # Solve
-            try:
-                solved_bfgs = vpoint_solving(self.vpoints, {}, p_data_dict)
-            except ValueError:
-                return False
+        # Solve
+        try:
+            solved_bfgs = vpoint_solving(self.vpoints, {}, p_data_dict)
+        except ValueError:
+            return False
 
         # Format:
         # R joint: [[p0]: (p0_x, p0_y), [p1]: (p1_x, p1_y)]
         # P or RP joint: [[p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))]
         for i in range(len(self.vpoints)):
             vpoint = self.vpoints[i]
-            if self.mapping[i] in data_dict:
-                # These points has been solved.
-                if isnan(data_dict[self.mapping[i]][0]):
-                    return False
-                if no_slider or vpoint.type == VJoint.R:
-                    self.result_list[i, 0] = data_dict[self.mapping[i]]
-                else:
-                    self.result_list[i, 0] = vpoint.c[0]
-                    self.result_list[i, 1] = data_dict[self.mapping[i]]
-            elif self.bfgs_mode:
+            if self.mapping[i] not in data_dict:
                 # These points solved by Sketch Solve.
                 if no_slider or vpoint.type == VJoint.R:
                     self.result_list[i, 0] = solved_bfgs[i]
@@ -314,12 +321,7 @@ cdef class Planar(Verification):
                     self.result_list[i, 0] = solved_bfgs[i][0]
                     self.result_list[i, 1] = solved_bfgs[i][1]
             else:
-                # No answer.
-                if no_slider or vpoint.type == VJoint.R:
-                    self.result_list[i, 0] = vpoint.c[0]
-                else:
-                    self.result_list[i, 0] = vpoint.c[0]
-                    self.result_list[i, 1] = vpoint.c[1]
+                return False
 
         return True
 
