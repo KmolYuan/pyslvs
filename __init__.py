@@ -64,7 +64,7 @@ from .graph import (
 from .planar_check import is_planar
 from .graph_layout import external_loop_layout
 from .atlas import topo
-from ._parser import (
+from .expression_parser import (
     color_names,
     color_rgb,
     parse_params,
@@ -78,7 +78,7 @@ from ._parser import (
 from .example import example_list
 from .collection import collection_list
 if HAS_PYGMENTS:
-    from ._parser import PMKSLexer
+    from .expression_parser import PMKSLexer
 
 __all__ = [
     '__version__',
