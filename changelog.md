@@ -20,6 +20,8 @@ Version 19.02
 + Add "-j" option to speed up compile time.
 + Many performance improvements.
 + Remove the definition of inner scope.
++ Fix the memory leak of BFGS solver.
++ Reformat BFGS cython wrapper for more readability.
 
 Version 19.01
 ===
