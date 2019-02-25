@@ -22,6 +22,7 @@ from typing import (
     Callable,
     Optional,
 )
+from numpy import array as np_array
 
 
 cpdef list get_vlinks(object vpoints):
@@ -341,7 +342,7 @@ cdef class VLink:
             self.color = None
         else:
             self.color = color_func(color_str)
-        self.points = tuple(sorted(points))
+        self.points = np_array(sorted(points), dtype=int)
 
     def __contains__(self, point: cython.int) -> bint:
         """Check if point number is in the link."""
@@ -349,4 +350,4 @@ cdef class VLink:
 
     def __repr__(self) -> str:
         """Use to generate script."""
-        return f"VLink('{self.name}', {self.points}, color_qt)"
+        return f"VLink('{self.name}', {tuple(self.points)}, color_qt)"

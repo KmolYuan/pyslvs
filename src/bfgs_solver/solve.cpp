@@ -216,7 +216,7 @@ int solve(
         }
 
         // make sure that bottom is never 0
-        if (bottom == 0)
+        if (bottom == 0.)
             bottom = 0.0000000001;
 
         // calculate all (1xn).(nxn)
@@ -365,24 +365,34 @@ int solve(
     cout << "Number of function calls: " << ftimes << endl;
 #endif
 
+    delete[] grad;
     delete[] s;
+    for (int i = 0; i < xLength; i++) {
+        delete[] N[i];
+        delete[] FirstSecond[i];
+        delete[] deltaXDotGammatDotN[i];
+        delete[] gammatDotDeltaXt[i];
+        delete[] NDotGammaDotDeltaXt[i];
+    }
     delete[] N;
+    delete[] xold;
+    delete[] deltaX;
+    delete[] gradnew;
+    delete[] gamma;
+    delete[] gammatDotN;
     delete[] FirstSecond;
     delete[] deltaXDotGammatDotN;
     delete[] gammatDotDeltaXt;
     delete[] NDotGammaDotDeltaXt;
-    delete[] origSolution;
-
-    delete[] grad;
-    delete[] xold;
-    delete[] gammatDotN;
 
     // End of function
-    if (fnew < ((isFine == 1) ? ValidSolutionFine : ValidSoltuionRough))
+    if (fnew < ((isFine == 1) ? ValidSolutionFine : ValidSoltuionRough)) {
+        delete[] origSolution;
         return Succsess;
-
+    }
     // Replace the bad numbers with the last result.
     for (int i = 0; i < xLength; i++)
         *param_ptr[i] = origSolution[i];
+    delete[] origSolution;
     return NoSolution;
 }
