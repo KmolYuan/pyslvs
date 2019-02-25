@@ -72,5 +72,7 @@ int main() {
     for (int i = 0; i < point_count; i++)
         cout << "GradF[" << i << "]: " << gradF[i] << endl;
 
+    delete [] pparameters;
+
     return 0;
 }
