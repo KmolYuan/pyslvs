@@ -76,4 +76,4 @@ cdef class VLink:
 
     cdef readonly str name, color_str
     cdef readonly tuple color
-    cdef readonly int[:] points
+    cdef readonly long[:] points
