@@ -29,7 +29,7 @@ __author__ = "Yuan Chang"
 __copyright__ = "Copyright (C) 2016-2019"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
-__version__ = (19, 2, 0, 'dev')
+__version__ = (19, 2, 0, 'release')
 
 from .expression import (
     get_vlinks,
