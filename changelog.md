@@ -1,6 +1,11 @@
 Change Log
 ===
 
+Version 19.03
+===
+
++ String `__version__` provided.
+
 Version 19.02
 ===
 
