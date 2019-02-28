@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# cython: language_level=3
+# cython: language_level=3, embedsignature=True
 
 """Planarity check function for Graph class.
 
