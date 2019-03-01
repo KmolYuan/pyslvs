@@ -102,9 +102,10 @@ cpdef list vpoint_solving(
     cdef VPoint vpoint
     for i, vpoint in enumerate(vpoints):
         if vpoint.no_link():
-            constants.push_back(vpoint.c[0][0])
+            x, y = vpoint.c[0]
+            constants.push_back(x)
             tmp_ptr = end_ptr(&constants)
-            constants.push_back(vpoint.c[0][1])
+            constants.push_back(y)
             points.push_back([tmp_ptr, end_ptr(&constants)])
             continue
 
@@ -157,13 +158,13 @@ cpdef list vpoint_solving(
             points.push_back([tmp_ptr, end_ptr(&constants)])
             continue
 
+        x, y = vpoint.c[0]
+        params.push_back(x)
+        tmp_ptr = end_ptr(&params)
+        params.push_back(y)
         if vpoint.type in {VJoint.P, VJoint.RP}:
             sliders[i] = <int>slider_bases.size()
             # Base point (slot) is movable.
-            x, y = vpoint.c[0]
-            params.push_back(x)
-            tmp_ptr = end_ptr(&params)
-            params.push_back(y)
             slider_bases.push_back([tmp_ptr, end_ptr(&params)])
             # Slot point (slot) is movable.
             params.push_back(x + cos(vpoint.angle))
@@ -194,10 +195,6 @@ cpdef list vpoint_solving(
             continue
 
         # Point is movable.
-        x, y = vpoint.c[0]
-        params.push_back(x)
-        tmp_ptr = end_ptr(&params)
-        params.push_back(y)
         points.push_back([tmp_ptr, end_ptr(&params)])
 
     cdef c_list[Constraint] cons_list
