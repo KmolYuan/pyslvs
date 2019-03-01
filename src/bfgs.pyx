@@ -285,7 +285,7 @@ cpdef list vpoint_solving(
                     cons_list.push_back(PointOnPointConstraint(p2, p1))
         else:
             # Slider between links.
-            for name in vpoint.links[:1]:
+            for name in vp1.links[:1]:
                 vlink = vlinks[name]
                 # A base link friend.
                 c = vlink.points[0]
@@ -322,7 +322,7 @@ cpdef list vpoint_solving(
         if vp1.type != VJoint.P:
             continue
 
-        for name in vpoint.links[1:]:
+        for name in vp1.links[1:]:
             vlink = vlinks[name]
             # A base link friend.
             c = vlink.points[0]
