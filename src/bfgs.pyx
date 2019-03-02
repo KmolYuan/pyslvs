@@ -209,6 +209,8 @@ cpdef list vpoint_solving(
     for vlink in vlinks.values():
         if len(vlink.points) < 2:
             continue
+        if vlink.name == 'ground':
+            continue
 
         a = vlink.points[0]
         b = vlink.points[1]

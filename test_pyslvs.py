@@ -69,7 +69,6 @@ _planar_object = Planar(_four_bar)
 
 
 class CoreTest(TestCase):
-    """Testing Cython libs."""
 
     def test_plap(self):
         """Test for plap function."""
