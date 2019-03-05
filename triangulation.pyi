@@ -10,10 +10,21 @@ from typing import (
 from .expression import VPoint
 
 
+class ExpressionStack:
+
+    """The stack of Python wrapper."""
+
+    def as_list(self) -> List[Tuple[str, ...]]:
+        ...
+
+    def __repr__(self) -> str:
+        ...
+
+
 def vpoints_configure(
     vpoints_: Sequence[VPoint],
     inputs: Sequence[Tuple[int, int]],
     status: Optional[Dict[int, bool]] = None
-) -> List[Tuple[str, ...]]:
+) -> ExpressionStack:
     """Auto configuration algorithm."""
     ...

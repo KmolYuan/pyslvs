@@ -23,6 +23,7 @@ from libc.math cimport (
     NAN,
     isnan,
 )
+from libcpp.list cimport list as c_list
 from numpy cimport ndarray
 from verify cimport Verification
 from expression cimport (
@@ -31,7 +32,16 @@ from expression cimport (
     VPoint,
     VLink,
 )
-from triangulation cimport vpoints_configure
+from triangulation cimport (
+    vpoints_configure,
+    symbol_str,
+    Expression,
+    ExpressionStack,
+    PLA,
+    PLLP,
+    PLPP,
+    PXY,
+)
 from bfgs cimport vpoint_solving
 from tinycadlib cimport (
     radians,
@@ -50,7 +60,7 @@ cdef class Planar(Verification):
 
     cdef bint bfgs_mode
     cdef int target_count, base_index
-    cdef tuple exprs
+    cdef c_list[Expression] exprs
     cdef list vpoints, inputs, mapping_list
     cdef dict placement, target, mapping, mapping_r
     cdef ndarray upper, lower, result_list
@@ -109,7 +119,8 @@ cdef class Planar(Verification):
         # Options
         self.vpoints = list(mech_params.get('Expression', []))
         cdef dict status = {}
-        self.exprs = tuple(vpoints_configure(self.vpoints, self.inputs, status))
+        cdef ExpressionStack exprs = vpoints_configure(self.vpoints, self.inputs, status)
+        self.exprs = exprs.stack
         self.bfgs_mode = not all(status.values())
 
         # Bound
@@ -204,82 +215,52 @@ cdef class Planar(Verification):
         # Solve
         cdef int t, params_count
         cdef double x, y, x1, y1, x2, y2, x3, y3, a, d1, d2
-        cdef str func, target
-        cdef tuple expr
+        cdef str target
+        cdef Expression expr
         i = 0
         for expr in self.exprs:
-            # If the mechanism has no any solution.
-            if not expr:
-                break
-
-            func = expr[0]
-            target = expr[-1]
-            params_count = len(expr) - 2
-            t = self.mapping_r[target]
-            vpoint = self.vpoints[t]
             x = NAN
             y = NAN
-            if func == 'PLAP':
-                x1, y1 = data_dict[expr[1]]
-                d1 = self.get_len(expr[1], target)
+            if expr.func == PLA:
+                target = symbol_str(expr.c2)
+                x1, y1 = data_dict[symbol_str(expr.c1)]
+                d1 = self.get_len(symbol_str(expr.c1), target)
                 a = radians(input_list[i])
-                if params_count == 3:
-                    x, y = plap(Coordinate(x1, y1), d1, a)
-                else:
-                    x2, y2 = data_dict[expr[4]]
-                    if params_count == 4:
-                        x, y = plap(Coordinate(x1, y1), d1, a, Coordinate(x2, y2))
-                    elif params_count == 5:
-                        x, y = plap(
-                            Coordinate(x1, y1),
-                            d1,
-                            a,
-                            Coordinate(x2, y2),
-                            expr[5] == 'T'
-                        )
+                x, y = plap(Coordinate(x1, y1), d1, a)
                 i += 1
-            elif func == 'PLLP':
-                x1, y1 = data_dict[expr[1]]
-                d1 = self.get_len(expr[1], target)
-                d2 = self.get_len(expr[4], target)
-                x2, y2 = data_dict[expr[4]]
-                if params_count == 4:
-                    x, y = pllp(Coordinate(x1, y1), d1, d2, Coordinate(x2, y2))
-                elif params_count == 5:
-                    x, y = pllp(
-                        Coordinate(x1, y1),
-                        d1,
-                        d2,
-                        Coordinate(x2, y2),
-                        expr[5] == 'T'
-                    )
-            elif func == 'PLPP':
-                x1, y1 = data_dict[expr[1]]
-                d1 = self.get_len(expr[1], target)
-                x2, y2 = data_dict[expr[3]]
-                x3, y3 = data_dict[expr[4]]
-                if params_count == 4:
-                    x, y = plpp(
-                        Coordinate(x1, y1),
-                        d1,
-                        Coordinate(x2, y2),
-                        Coordinate(x3, y3)
-                    )
-                elif params_count == 5:
-                    x, y = plpp(
-                        Coordinate(x1, y1),
-                        d1,
-                        Coordinate(x2, y2),
-                        Coordinate(x3, y3),
-                        expr[5] == 'T'
-                    )
-            elif func == 'PXY':
-                x1, y1 = data_dict[expr[1]]
+            elif expr.func == PLLP:
+                target = symbol_str(expr.c3)
+                x1, y1 = data_dict[symbol_str(expr.c1)]
+                d1 = self.get_len(symbol_str(expr.c1), target)
+                d2 = self.get_len(symbol_str(expr.c2), target)
+                x2, y2 = data_dict[symbol_str(expr.c2)]
+                x, y = pllp(Coordinate(x1, y1), d1, d2, Coordinate(x2, y2), expr.op)
+            elif expr.func == PLPP:
+                target = symbol_str(expr.c4)
+                x1, y1 = data_dict[symbol_str(expr.c1)]
+                d1 = self.get_len(symbol_str(expr.c1), target)
+                x2, y2 = data_dict[symbol_str(expr.c2)]
+                x3, y3 = data_dict[symbol_str(expr.c3)]
+                x, y = plpp(
+                    Coordinate(x1, y1),
+                    d1,
+                    Coordinate(x2, y2),
+                    Coordinate(x3, y3),
+                    expr.op
+                )
+            elif expr.func == PXY:
+                target = symbol_str(expr.c2)
+                vpoint = self.vpoints[self.mapping_r[target]]
+                x1, y1 = data_dict[symbol_str(expr.c1)]
                 x, y = pxy(Coordinate(x1, y1), vpoint.c[0][0] - x1, vpoint.c[0][1] - y1)
+            else:
+                return False
 
             if isnan(x):
                 return False
 
+            t = self.mapping_r[target]
+            vpoint = self.vpoints[t]
             data_dict[target] = (x, y)
             if vpoint.type == VJoint.R:
                 self.result_list[t, 0] = (x, y)

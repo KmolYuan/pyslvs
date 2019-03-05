@@ -39,6 +39,7 @@ from .expression import (
     VLink,
 )
 from .bfgs import vpoint_solving
+from .triangulation import vpoints_configure, ExpressionStack
 from .tinycadlib import (
     Coordinate,
     plap,
@@ -51,7 +52,6 @@ from .tinycadlib import (
     data_collecting,
 )
 from .verify import Verification
-from .triangulation import vpoints_configure
 from .planar_linkage import Planar
 from .rga import Genetic
 from .firefly import Firefly
@@ -110,6 +110,7 @@ __all__ = [
     'link_assortments',
     'contracted_link_assortments',
     'vpoints_configure',
+    'ExpressionStack',
     'vpoint_dof',
     'color_names',
     'color_rgb',

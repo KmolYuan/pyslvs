@@ -154,6 +154,7 @@ class CoreTest(TestCase):
         vpoints = parse_vpoints(expr)
         self.assertTrue(len(vpoints) == 8)
         exprs = vpoints_configure(vpoints, inputs)
+        print(exprs)
         mapping = {n: f'P{n}' for n in range(len(vpoints))}
         data_dict, dof = data_collecting(exprs, mapping, vpoints)
         for link, link_length in (

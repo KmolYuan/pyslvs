@@ -11,9 +11,128 @@ email: pyslvs@gmail.com
 
 from typing import Sequence, Iterator
 cimport cython
-from libc.math cimport sin, cos
-from tinycadlib cimport radians
+from libc.math cimport sin, cos, M_PI
 from expression cimport VJoint, VPoint
+
+
+cdef inline str symbol_str(symbol p):
+    """Pair to string."""
+    if p.first == P_LABEL:
+        return f"P{p.second}"
+    elif p.first == L_LABEL:
+        return f"L{p.second}"
+    elif p.first == A_LABEL:
+        return f"a{p.second}"
+    elif p.first == S_LABEL:
+        return f"S{p.second}"
+    else:
+        return ""
+
+
+cdef class ExpressionStack:
+
+    """The stack of Python wrapper."""
+
+    cdef void add_pla(self, symbol c1, symbol v1, symbol v2, symbol target):
+        cdef Expression e
+        e.func = PLA
+        e.c1 = c1
+        e.v1 = v1
+        e.v2 = v2
+        e.c2 = target
+        self.stack.push_back(e)
+
+    cdef void add_plap(self, symbol c1, symbol v1, symbol v2, symbol c2, symbol target):
+        cdef Expression e
+        e.func = PLAP
+        e.c1 = c1
+        e.v1 = v1
+        e.v2 = v2
+        e.c2 = c2
+        e.c3 = target
+        self.stack.push_back(e)
+
+    cdef void add_pllp(self, symbol c1, symbol v1, symbol v2, symbol c2, symbol target):
+        cdef Expression e
+        e.func = PLLP
+        e.c1 = c1
+        e.v1 = v1
+        e.v2 = v2
+        e.c2 = c2
+        e.c3 = target
+        self.stack.push_back(e)
+
+    cdef void add_plpp(self, symbol c1, symbol v1, symbol c2, symbol c3, symbol target, bint op):
+        cdef Expression e
+        e.func = PLPP
+        e.c1 = c1
+        e.v1 = v1
+        e.c2 = c2
+        e.c3 = c3
+        e.c4 = target
+        e.op = op
+        self.stack.push_back(e)
+
+    cdef void add_pxy(self, symbol c1, symbol v1, symbol v2, symbol target):
+        cdef Expression e
+        e.func = PXY
+        e.c1 = c1
+        e.v1 = v1
+        e.v2 = v2
+        e.c2 = target
+        self.stack.push_back(e)
+
+    cpdef list as_list(self):
+        cdef list stack = []
+        cdef Expression expr
+        for expr in self.stack:
+            if expr.func == PLA:
+                stack.append((
+                    "PLAP",
+                    symbol_str(expr.c1),
+                    symbol_str(expr.v1),
+                    symbol_str(expr.v2),
+                    symbol_str(expr.c2),
+                ))
+            elif expr.func == PLAP:
+                stack.append((
+                    "PLAP",
+                    symbol_str(expr.c1),
+                    symbol_str(expr.v1),
+                    symbol_str(expr.v2),
+                    symbol_str(expr.c2),
+                    symbol_str(expr.c3),
+                ))
+            elif expr.func == PLLP:
+                stack.append((
+                    "PLLP",
+                    symbol_str(expr.c1),
+                    symbol_str(expr.v1),
+                    symbol_str(expr.v2),
+                    symbol_str(expr.c2),
+                    symbol_str(expr.c3),
+                ))
+            elif expr.func == PLPP:
+                stack.append((
+                    "PLPP",
+                    symbol_str(expr.c1),
+                    symbol_str(expr.v1),
+                    symbol_str(expr.c2),
+                    symbol_str(expr.c3),
+                    symbol_str(expr.c4),
+                ))
+            elif expr.func == PXY:
+                stack.append((
+                    "PXY",
+                    symbol_str(expr.c1),
+                    symbol_str(expr.v1),
+                    symbol_str(expr.v2),
+                    symbol_str(expr.c2),
+                ))
+        return stack
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.as_list()})"
 
 
 cdef inline bint _is_all_lock(dict status):
@@ -89,7 +208,12 @@ cdef inline int _get_input_base(int node, object inputs):
     return -1
 
 
-cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None):
+@cython.cdivision
+cpdef ExpressionStack vpoints_configure(
+    object vpoints_,
+    object inputs,
+    dict status = None
+):
     """Auto configuration algorithm.
     
     For VPoint list.
@@ -105,9 +229,9 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
         status = {}
 
     if not vpoints_:
-        return []
+        return ExpressionStack.__new__(ExpressionStack)
     if not inputs:
-        return []
+        return ExpressionStack.__new__(ExpressionStack)
 
     cdef list vpoints = list(vpoints_)
     cdef int vpoints_count = len(vpoints)
@@ -165,20 +289,19 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
     for vpoint in vpoints:
         pos.append(vpoint.c[0 if vpoint.type == VJoint.R else 1])
 
-    cdef list exprs = []
+    cdef ExpressionStack exprs = ExpressionStack.__new__(ExpressionStack)
     cdef int link_symbol = 0
     cdef int angle_symbol = 0
 
     # Input joints (R) that was connect with ground.
     for base, node in inputs:
         if status[base]:
-            exprs.append((
-                'PLAP',
-                f'P{base}',
-                f'L{link_symbol}',
-                f'a{angle_symbol}',
-                f'P{node}',
-            ))
+            exprs.add_pla(
+                [P_LABEL, base],
+                [L_LABEL, link_symbol],
+                [A_LABEL, angle_symbol],
+                [P_LABEL, node]
+            )
             status[node] = True
             link_symbol += 1
             angle_symbol += 1
@@ -212,22 +335,18 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
         vpoint = vpoints[node]
 
         if vpoint.type == VJoint.R:
-            """R joint.
-            
-            + Is input node?
-            + Normal revolute joint.
-            """
-
+            # R joint
+            # + Is input node?
+            # + Normal revolute joint.
             if node in input_targets:
                 base = _get_input_base(node, inputs)
                 if status[base]:
-                    exprs.append((
-                        'PLAP',
-                        f'P{base}',
-                        f'L{link_symbol}',
-                        f'a{angle_symbol}',
-                        f'P{node}',
-                    ))
+                    exprs.add_pla(
+                        [P_LABEL, base],
+                        [L_LABEL, link_symbol],
+                        [A_LABEL, angle_symbol],
+                        [P_LABEL, node]
+                    )
                     status[node] = True
                     link_symbol += 1
                     angle_symbol += 1
@@ -243,20 +362,19 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
                 else:
                     if not _clockwise(pos[friend_a], pos[node], pos[friend_b]):
                         friend_a, friend_b = friend_b, friend_a
-                    exprs.append((
-                        'PLLP',
-                        f'P{friend_a}',
-                        f'L{link_symbol}',
-                        f'L{link_symbol + 1}',
-                        f'P{friend_b}',
-                        f'P{node}',
-                    ))
+                    exprs.add_pllp(
+                        [P_LABEL, friend_a],
+                        [L_LABEL, link_symbol],
+                        [L_LABEL, link_symbol + 1],
+                        [P_LABEL, friend_b],
+                        [P_LABEL, node]
+                    )
                     status[node] = True
                     link_symbol += 2
                     skip_times = 0
 
         elif vpoint.type == VJoint.P:
-            """Need to solve P joint itself here. (only grounded)"""
+            # Need to solve P joint itself here (only grounded)
             fi = _get_not_base_friend(node, vpoints, vlinks, status)
             try:
                 if vpoints[node].pin_grounded():
@@ -269,13 +387,12 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
             except StopIteration:
                 skip_times += 1
             else:
-                exprs.append((
-                    'PXY',
-                    f'P{friend_a}',
-                    f'L{link_symbol}',
-                    f'L{link_symbol + 1}',
-                    f'P{node}',
-                ))
+                exprs.add_pxy(
+                    [P_LABEL, friend_a],
+                    [L_LABEL, link_symbol],
+                    [L_LABEL, link_symbol + 1],
+                    [P_LABEL, node]
+                )
                 status[node] = True
                 link_symbol += 2
                 # Solution for all friends.
@@ -283,25 +400,24 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
                     for friend_b in vlinks[link]:
                         if status[friend_b]:
                             continue
-                        exprs.append((
-                            'PXY',
-                            f'P{node}',
-                            f'L{link_symbol}',
-                            f'L{link_symbol + 1}',
-                            f'P{friend_b}',
-                        ))
+                        exprs.add_pxy(
+                            [P_LABEL, node],
+                            [L_LABEL, link_symbol],
+                            [L_LABEL, link_symbol + 1],
+                            [P_LABEL, friend_b]
+                        )
                         status[friend_b] = True
                         link_symbol += 2
                 skip_times = 0
 
         elif vpoint.type == VJoint.RP:
-            """RP joint."""
+            # RP joint
             fi = _get_base_friend(node, vpoints, vlinks, status)
             # Copy as 'friend_c'.
             friend_c = node
             # 'S' point.
             tmp_x, tmp_y = pos[node]
-            angle = radians(vpoints[node].angle)
+            angle = vpoints[node].angle / 180 * M_PI
             tmp_x += cos(angle)
             tmp_y += sin(angle)
             try:
@@ -318,51 +434,45 @@ cpdef list vpoints_configure(object vpoints_, object inputs, dict status = None)
                     friend_d = next(fi)
                     if not _clockwise(pos[friend_b], (tmp_x, tmp_y), pos[friend_d]):
                         friend_b, friend_d = friend_d, friend_b
-                    exprs.append((
-                        'PLLP',
-                        f'P{friend_b}',
-                        f'L{link_symbol}',
-                        f'L{link_symbol + 1}',
-                        f'P{friend_d}',
-                        f'P{node}',
-                    ))
+                    exprs.add_pllp(
+                        [P_LABEL, friend_b],
+                        [L_LABEL, link_symbol],
+                        [L_LABEL, link_symbol + 1],
+                        [P_LABEL, friend_d],
+                        [P_LABEL, node]
+                    )
                     link_symbol += 2
             except StopIteration:
                 skip_times += 1
             else:
-                """PLPP triangular.
-                
-                [PLLP]
-                Set 'S' (slider) point to define second point of slider.
-                + A 'friend' from base link.
-                + Get distance from me and friend.
-                
-                [PLPP]
-                Re-define coordinate of target point by self and 'S' point.
-                + A 'friend' from other link.
-                + Solving.
-                """
+                # PLPP
+                # [PLLP]
+                # Set 'S' (slider) point to define second point of slider.
+                # + A 'friend' from base link.
+                # + Get distance from me and friend.
+                # [PLPP]
+                # Re-define coordinate of target point by self and 'S' point.
+                # + A 'friend' from other link.
+                # + Solve.
                 if not _clockwise(pos[friend_b], (tmp_x, tmp_y), pos[friend_c]):
                     friend_b, friend_c = friend_c, friend_b
-                exprs.append((
-                    'PLLP',
-                    f'P{friend_b}',
-                    f'L{link_symbol}',
-                    f'L{link_symbol + 1}',
-                    f'P{friend_c}',
-                    f'S{node}',
-                ))
+                exprs.add_pllp(
+                    [P_LABEL, friend_b],
+                    [L_LABEL, link_symbol],
+                    [L_LABEL, link_symbol + 1],
+                    [P_LABEL, friend_c],
+                    [S_LABEL, node]
+                )
                 # Two conditions.
                 reverse = (pos[friend_a][0] - pos[node][0] > 0) != (vpoints[node].angle > 90)
-                exprs.append((
-                    'PLPP',
-                    f'P{friend_a}',
-                    f'L{link_symbol + 2}',
-                    f'P{node}',
-                    f'S{node}',
-                    'T' if reverse else 'F',
-                    f'P{node}',
-                ))
+                exprs.add_plpp(
+                    [P_LABEL, friend_a],
+                    [L_LABEL, link_symbol + 2],
+                    [P_LABEL, node],
+                    [S_LABEL, node],
+                    [P_LABEL, node],
+                    reverse
+                )
                 status[node] = True
                 link_symbol += 3
                 skip_times = 0

@@ -5,6 +5,7 @@ Version 19.03
 ===
 
 + String `__version__` provided.
++ Triangulation data type changed for performance improvement.
 
 Version 19.02
 ===

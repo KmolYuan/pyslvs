@@ -8,6 +8,7 @@ from typing import (
     Union,
     Optional,
 )
+from .triangulation import ExpressionStack
 from .expression import VPoint
 
 TuplePoint = Tuple[float, float]
@@ -77,7 +78,7 @@ def expr_parser(exprs: Sequence[Tuple[str, ...]], data_dict: Dict[str, float]):
     ...
 
 def expr_solving(
-    exprs: Sequence[Tuple[str, ...]],
+    exprs: ExpressionStack,
     mapping: Dict[Union[int, Tuple[int, int]], Union[str, float]],
     vpoints: Sequence[VPoint],
     angles: Sequence[float] = None
@@ -86,7 +87,7 @@ def expr_solving(
     ...
 
 def data_collecting(
-    exprs: Sequence[Tuple[str, ...]],
+    exprs: ExpressionStack,
     mapping: Dict[int, str],
     vpoints_: Sequence[VPoint],
 ) -> Tuple[Dict[str, float], int]:

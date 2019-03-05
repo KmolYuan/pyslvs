@@ -127,6 +127,7 @@ cdef inline void _linear_layout(
         pos[vertices[i - 1]] = (x1 + i * sx, y1 + i * sy)
 
 
+@cython.cdivision
 cdef inline void _bezier_layout(
     double p,
     double x1,
@@ -156,8 +157,7 @@ cdef inline void _bezier_layout(
     cdef int i
     cdef double u
     for i in range(1, count):
-        with cython.cdivision:
-            u = <double>i / count
+        u = <double>i / count
         pos[vertices[i - 1]] = _bezier_curve(u, x1, y1, cx1, cy1, cx2, cy2, x2, y2)
 
 

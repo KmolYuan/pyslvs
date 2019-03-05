@@ -21,6 +21,16 @@ from libc.math cimport (
     NAN,
 )
 from expression cimport VJoint, VPoint
+from triangulation cimport (
+    symbol,
+    symbol_str,
+    Expression,
+    PLA,
+    PLAP,
+    PLLP,
+    PLPP,
+    PXY,
+)
 from bfgs cimport vpoint_solving
 
 
@@ -154,120 +164,71 @@ cdef inline str str_before(str s, str front):
     return s[:s.find(front)]
 
 
-cpdef void expr_parser(object exprs, dict data_dict):
+cpdef void expr_parser(ExpressionStack exprs, dict data_dict):
     """Update data.
 
     + exprs: [("PLAP", "P0", "L0", "a0", "P1", "P2"), ..."]
     + data_dict: {'a0':0., 'L1':10., 'A':(30., 40.), ...}
     """
-    cdef int params_count
+    cdef symbol target
     cdef double x, y, x1, y1, x2, y2, x3, y3
-    cdef str func
-    cdef tuple expr
-    for expr in exprs:
-        # If the mechanism has no any solution.
-        if not expr:
-            break
-
-        func = expr[0]
-        params_count = len(expr) - 2
+    cdef Expression expr
+    for expr in exprs.stack:
         x = NAN
         y = NAN
-        if func == 'PLAP':
-            x1, y1 = data_dict[expr[1]]
-            if params_count == 3:
+        if expr.func in {PLA, PLAP}:
+            x1, y1 = data_dict[symbol_str(expr.c1)]
+            if expr.func == PLA:
+                target = expr.c2
                 x, y = plap(
                     Coordinate(x1, y1),
-                    data_dict[expr[2]],
-                    data_dict[expr[3]]
+                    data_dict[symbol_str(expr.v1)],
+                    data_dict[symbol_str(expr.v2)]
                 )
             else:
-                x2, y2 = data_dict[expr[4]]
-                if params_count == 4:
-                    x, y = plap(
-                        Coordinate(x1, y1),
-                        data_dict[expr[2]],
-                        data_dict[expr[3]],
-                        Coordinate(x2, y2)
-                    )
-                elif params_count == 5:
-                    x, y = plap(
-                        Coordinate(x1, y1),
-                        data_dict[expr[2]],
-                        data_dict[expr[3]],
-                        Coordinate(x2, y2),
-                        expr[5] == 'T'
-                    )
-        elif func == 'PLLP':
-            x1, y1 = data_dict[expr[1]]
-            x2, y2 = data_dict[expr[4]]
-            if params_count == 4:
-                x, y = pllp(
+                target = expr.c3
+                x2, y2 = data_dict[symbol_str(expr.c2)]
+                x, y = plap(
                     Coordinate(x1, y1),
-                    data_dict[expr[2]],
-                    data_dict[expr[3]],
-                    Coordinate(x2, y2)
-                )
-            elif params_count == 5:
-                x, y = pllp(
-                    Coordinate(x1, y1),
-                    data_dict[expr[2]],
-                    data_dict[expr[3]],
+                    data_dict[symbol_str(expr.v1)],
+                    data_dict[symbol_str(expr.v2)],
                     Coordinate(x2, y2),
-                    expr[5] == 'T'
+                    expr.op
                 )
-        elif func == 'PLPP':
-            x1, y1 = data_dict[expr[1]]
-            x2, y2 = data_dict[expr[3]]
-            x3, y3 = data_dict[expr[4]]
-            if params_count == 4:
-                x, y = plpp(
-                    Coordinate(x1, y1),
-                    data_dict[expr[2]],
-                    Coordinate(x2, y2),
-                    Coordinate(x3, y3)
-                )
-            elif params_count == 5:
-                x, y = plpp(
-                    Coordinate(x1, y1),
-                    data_dict[expr[2]],
-                    Coordinate(x2, y2),
-                    Coordinate(x3, y3),
-                    expr[5] == 'T'
-                )
-        elif func == 'PXY':
-            x1, y1 = data_dict[expr[1]]
-            if params_count == 3:
-                x, y = pxy(
-                    Coordinate(x1, y1),
-                    data_dict[expr[2]],
-                    data_dict[expr[3]]
-                )
-        data_dict[expr[-1]] = (x, y)
-
-
-cpdef str expr_join(object exprs):
-    """Use to append a list of symbols into a string."""
-    return ';'.join([
-        f"{expr[0]}[{','.join(expr[1:-1])}, {expr[-1]}]({expr[-1]})" for expr in exprs
-    ])
-
-
-cpdef tuple expr_parse(str exprs):
-    """Parse expression as tuple."""
-    exprs = exprs.replace(" ", '')
-    cdef list tmp_list = []
-    cdef list params = []
-    cdef str expr, p
-    for expr in exprs.split(';'):
-        if not expr:
-            return ()
-        params.clear()
-        params.append(str_before(expr, '['))
-        params.extend(str_between(expr, '[', ']').split(','))
-        params.append(str_between(expr, '(', ')'))
-        tmp_list.append(tuple(params))
-    return tuple(tmp_list)
+        elif expr.func == PLLP:
+            target = expr.c3
+            x1, y1 = data_dict[symbol_str(expr.c1)]
+            x2, y2 = data_dict[symbol_str(expr.c2)]
+            x, y = pllp(
+                Coordinate(x1, y1),
+                data_dict[symbol_str(expr.v1)],
+                data_dict[symbol_str(expr.v2)],
+                Coordinate(x2, y2),
+                expr.op
+            )
+        elif expr.func == PLPP:
+            target = expr.c4
+            x1, y1 = data_dict[symbol_str(expr.c1)]
+            x2, y2 = data_dict[symbol_str(expr.c2)]
+            x3, y3 = data_dict[symbol_str(expr.c3)]
+            x, y = plpp(
+                Coordinate(x1, y1),
+                data_dict[symbol_str(expr.v1)],
+                Coordinate(x2, y2),
+                Coordinate(x3, y3),
+                expr.op
+            )
+        elif expr.func == PXY:
+            target = expr.c2
+            x1, y1 = data_dict[symbol_str(expr.c1)]
+            x, y = pxy(
+                Coordinate(x1, y1),
+                data_dict[symbol_str(expr.v1)],
+                data_dict[symbol_str(expr.v2)]
+            )
+        else:
+            raise ValueError("unsupported function")
+        data_dict[symbol_str(target)] = (x, y)
 
 
 cpdef int vpoint_dof(object vpoints):
@@ -315,7 +276,7 @@ cdef inline double tuple_distance(tuple c1, tuple c2):
     return distance(c1[0], c1[1], c2[0], c2[1])
 
 
-cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
+cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_):
     """Data collecting process.
 
     Input data:
@@ -347,6 +308,7 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     # Replace the P joints and their friends with RP joint.
     # DOF must be same after properties changed.
     cdef int base
+    cdef double x, y
     cdef VPoint vpoint_
     cdef set links = set()
     for base in range(len(vpoints)):
@@ -357,9 +319,10 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
             links.clear()
             for node in vlinks[link]:
                 vpoint_ = vpoints[node]
-                if node == base or (vpoint_.type in {VJoint.P, VJoint.RP}):
+                if node == base or vpoint_.type in {VJoint.P, VJoint.RP}:
                     continue
                 links.update(vpoint_.links)
+                x, y = vpoint_.c[0]
                 vpoints[node] = VPoint.c_slider_joint(
                     [vpoint.links[0]] + [
                         link_ for link_ in vpoint_.links
@@ -367,8 +330,8 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
                     ],
                     VJoint.RP,
                     vpoint.angle,
-                    vpoint_.cx,
-                    vpoint_.cy
+                    x,
+                    y
                 )
 
     # Reverse mapping, exclude specified link length.
@@ -411,65 +374,71 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
     # Add data to 'data_dict' and counting DOF.
     cdef int dof = 0
     cdef int target
-    cdef tuple expr
+    cdef Expression expr
     cdef frozenset pair
-    for expr in exprs:
-        node = mapping_r[expr[1]]
-        target = mapping_r[expr[-1]]
+    for expr in exprs.stack:
+        node = mapping_r[symbol_str(expr.c1)]
 
-        # Point 1: expr[1]
-        if expr[1] not in data_dict:
-            data_dict[expr[1]] = pos[mapping_r[expr[1]]]
+        # Point 1
+        if symbol_str(expr.c1) not in data_dict:
+            data_dict[symbol_str(expr.c1)] = pos[mapping_r[symbol_str(expr.c1)]]
 
-        if expr[0] == 'PLAP':
-            # Link 1: expr[2]
+        if expr.func in {PLA, PLAP}:
+            if expr.func == PLA:
+                target = mapping_r[symbol_str(expr.c2)]
+            else:
+                target = mapping_r[symbol_str(expr.c3)]
+            # Link 1
             pair = frozenset({node, target})
             if pair in length:
-                data_dict[expr[2]] = length[pair]
+                data_dict[symbol_str(expr.v1)] = length[pair]
             else:
-                data_dict[expr[2]] = tuple_distance(pos[node], pos[target])
-            # Point 2: expr[4]
-            if expr[4] not in data_dict:
-                data_dict[expr[4]] = pos[mapping_r[expr[4]]]
+                data_dict[symbol_str(expr.v1)] = tuple_distance(pos[node], pos[target])
+            # Point 2
+            if expr.func == PLAP and symbol_str(expr.c2) not in data_dict:
+                data_dict[symbol_str(expr.c2)] = pos[mapping_r[symbol_str(expr.c2)]]
             # Inputs
             dof += 1
-        elif expr[0] == 'PLLP':
-            # Link 1: expr[2]
+        elif expr.func == PLLP:
+            target = mapping_r[symbol_str(expr.c3)]
+            # Link 1
             pair = frozenset({node, target})
             if pair in length:
-                data_dict[expr[2]] = length[pair]
+                data_dict[symbol_str(expr.v1)] = length[pair]
             else:
-                data_dict[expr[2]] = tuple_distance(pos[node], pos[target])
-            # Link 2: expr[3]
-            pair = frozenset({mapping_r[expr[4]], target})
+                data_dict[symbol_str(expr.v1)] = tuple_distance(pos[node], pos[target])
+            # Link 2
+            pair = frozenset({mapping_r[symbol_str(expr.c2)], target})
             if pair in length:
-                data_dict[expr[3]] = length[pair]
+                data_dict[symbol_str(expr.v2)] = length[pair]
             else:
-                data_dict[expr[3]] = tuple_distance(pos[mapping_r[expr[4]]], pos[target])
-            # Point 2: expr[4]
-            if expr[4] not in data_dict:
-                data_dict[expr[4]] = pos[mapping_r[expr[4]]]
-        elif expr[0] == 'PLPP':
-            # Link 1: expr[2]
+                data_dict[symbol_str(expr.v2)] = tuple_distance(pos[mapping_r[symbol_str(expr.c2)]], pos[target])
+            # Point 2
+            if symbol_str(expr.c2) not in data_dict:
+                data_dict[symbol_str(expr.c2)] = pos[mapping_r[symbol_str(expr.c2)]]
+        elif expr.func == PLPP:
+            target = mapping_r[symbol_str(expr.c4)]
+            # Link 1
             pair = frozenset({node, target})
             if pair in length:
-                data_dict[expr[2]] = length[pair]
+                data_dict[symbol_str(expr.v1)] = length[pair]
             else:
-                data_dict[expr[2]] = tuple_distance(pos[node], pos[target])
-            # Point 2:  expr[3]
-            if expr[3] not in data_dict:
-                data_dict[expr[3]] = pos[mapping_r[expr[3]]]
-        elif expr[0] == 'PXY':
-            # X: expr[2]
-            if expr[2] in mapping:
-                data_dict[expr[2]] = mapping[expr[2]]
+                data_dict[symbol_str(expr.v1)] = tuple_distance(pos[node], pos[target])
+            # Point 2
+            if symbol_str(expr.c2) not in data_dict:
+                data_dict[symbol_str(expr.c2)] = pos[mapping_r[symbol_str(expr.c2)]]
+        elif expr.func == PXY:
+            target = mapping_r[symbol_str(expr.c2)]
+            # X
+            if symbol_str(expr.v1) in mapping:
+                data_dict[symbol_str(expr.v1)] = mapping[symbol_str(expr.v1)]
             else:
-                data_dict[expr[2]] = pos[target][0] - pos[node][0]
-            # Y: expr[3]
-            if expr[3] in mapping:
-                data_dict[expr[3]] = mapping[expr[3]]
+                data_dict[symbol_str(expr.v1)] = pos[target][0] - pos[node][0]
+            # Y
+            if symbol_str(expr.v2) in mapping:
+                data_dict[symbol_str(expr.v2)] = mapping[symbol_str(expr.v2)]
             else:
-                data_dict[expr[3]] = pos[target][1] - pos[node][1]
+                data_dict[symbol_str(expr.v2)] = pos[target][1] - pos[node][1]
 
     # Other grounded R joints.
     for i, vpoint in enumerate(vpoints):
@@ -480,7 +449,7 @@ cpdef tuple data_collecting(object exprs, dict mapping, object vpoints_):
 
 
 cpdef list expr_solving(
-    object exprs,
+    ExpressionStack exprs,
     dict mapping,
     object vpoints,
     object angles = None
@@ -512,10 +481,18 @@ cpdef list expr_solving(
     cdef dict mapping_r = {v: k for k, v in mapping.items() if type(k) == int}
 
     # Check input pairs.
-    cdef tuple expr
-    for expr in exprs:
-        if expr[0] == 'PLAP':
-            if vpoints[mapping_r[expr[1]]].grounded() and vpoints[mapping_r[expr[-1]]].grounded():
+    cdef int target
+    cdef Expression expr
+    for expr in exprs.stack:
+        if expr.func in {PLA, PLAP}:
+            if expr.func == PLA:
+                target = mapping_r[symbol_str(expr.c2)]
+            else:
+                target = mapping_r[symbol_str(expr.c3)]
+            if (
+                vpoints[mapping_r[symbol_str(expr.c1)]].grounded()
+                and vpoints[target].grounded()
+            ):
                 raise ValueError("wrong driver definition.")
 
     # Angles.
@@ -525,7 +502,7 @@ cpdef list expr_solving(
         data_dict[f'a{i}'] = radians(a)
 
     # Solve
-    if exprs:
+    if not exprs.stack.empty():
         expr_parser(exprs, data_dict)
 
     cdef dict p_data_dict = {}
