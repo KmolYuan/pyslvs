@@ -36,7 +36,6 @@ from triangulation cimport (
     vpoints_configure,
     symbol_str,
     Expression,
-    ExpressionStack,
     PLA,
     PLLP,
     PLPP,
@@ -119,8 +118,7 @@ cdef class Planar(Verification):
         # Options
         self.vpoints = list(mech_params.get('Expression', []))
         cdef dict status = {}
-        cdef ExpressionStack exprs = vpoints_configure(self.vpoints, self.inputs, status)
-        self.exprs = exprs.stack
+        self.exprs = vpoints_configure(self.vpoints, self.inputs, status).stack
         self.bfgs_mode = not all(status.values())
 
         # Bound

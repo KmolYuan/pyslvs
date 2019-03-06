@@ -152,9 +152,16 @@ class CoreTest(TestCase):
         """
         expr, inputs = example_list["Jansen's linkage (Single)"]
         vpoints = parse_vpoints(expr)
-        self.assertTrue(len(vpoints) == 8)
+        self.assertEqual(8, len(vpoints))
         exprs = vpoints_configure(vpoints, inputs)
-        print(exprs)
+        self.assertEqual([
+            ('PLAP', 'P0', 'L0', 'a0', 'P1'),
+            ('PLLP', 'P2', 'L1', 'L2', 'P1', 'P3'),
+            ('PLLP', 'P2', 'L3', 'L4', 'P3', 'P4'),
+            ('PLLP', 'P1', 'L5', 'L6', 'P2', 'P5'),
+            ('PLLP', 'P5', 'L7', 'L8', 'P4', 'P6'),
+            ('PLLP', 'P5', 'L9', 'L10', 'P6', 'P7')
+        ], exprs.as_list())
         mapping = {n: f'P{n}' for n in range(len(vpoints))}
         data_dict, dof = data_collecting(exprs, mapping, vpoints)
         for link, link_length in (
