@@ -63,7 +63,6 @@ cdef class Coordinate:
         return isnan(self.x)
 
     def __repr__(self):
-        """Debug printing."""
         return f"Coordinate({self.x:.02f}, {self.y:.02f})"
 
 

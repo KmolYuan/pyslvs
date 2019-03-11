@@ -16,6 +16,7 @@ email: pyslvs@gmail.com
 """
 
 from time import time
+from logging import getLogger
 from libcpp.vector cimport vector as c_vector
 from libcpp.map cimport map as c_map
 from numpy cimport ndarray, int16_t
@@ -25,6 +26,8 @@ from numpy import (
 )
 from graph cimport Graph
 from planar_check cimport is_planar
+
+cdef object logger = getLogger()
 
 ctypedef unsigned int uint
 ctypedef c_map[int, int] map_int
@@ -394,7 +397,7 @@ cpdef tuple topo(
 
     # NumPy array type.
     cdef ndarray[int16_t, ndim=1] link_num = np_array(link_num_list, ndmin=1, dtype=int16)
-    print("Assortments:", link_num, c_j_list)
+    logger.debug(f"Assortments: {link_num} {c_j_list}")
 
     # Initial time.
     cdef double t0 = time()
@@ -413,6 +416,6 @@ cpdef tuple topo(
     else:
         _splice(result, m_link, _labels(c_j, 1, 0, True), no_degenerate, stop_func)
 
-    print(f"Count: {len(result)}")
+    logger.debug(f"Count: {len(result)}")
     # Return graph list and time.
     return result, (time() - t0)
