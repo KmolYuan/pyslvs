@@ -40,6 +40,7 @@ cdef class ExpressionStack:
         e.v1 = v1
         e.v2 = v2
         e.c2 = target
+        e.op = False
         self.stack.push_back(e)
 
     cdef void add_plap(self, symbol c1, symbol v1, symbol v2, symbol c2, symbol target):
@@ -50,6 +51,7 @@ cdef class ExpressionStack:
         e.v2 = v2
         e.c2 = c2
         e.c3 = target
+        e.op = False
         self.stack.push_back(e)
 
     cdef void add_pllp(self, symbol c1, symbol v1, symbol v2, symbol c2, symbol target):
@@ -60,6 +62,7 @@ cdef class ExpressionStack:
         e.v2 = v2
         e.c2 = c2
         e.c3 = target
+        e.op = False
         self.stack.push_back(e)
 
     cdef void add_plpp(self, symbol c1, symbol v1, symbol c2, symbol c3, symbol target, bint op):
@@ -80,6 +83,7 @@ cdef class ExpressionStack:
         e.v1 = v1
         e.v2 = v2
         e.c2 = target
+        e.op = False
         self.stack.push_back(e)
 
     cpdef list as_list(self):
@@ -314,7 +318,6 @@ cpdef ExpressionStack vpoints_configure(
 
     cdef int friend_a, friend_b, friend_c, friend_d
     cdef double tmp_x, tmp_y, angle
-    cdef bint reverse
     # Friend iterator.
     cdef object fi
     while not _is_all_lock(status):
@@ -464,14 +467,13 @@ cpdef ExpressionStack vpoints_configure(
                     [S_LABEL, node]
                 )
                 # Two conditions.
-                reverse = (pos[friend_a][0] - pos[node][0] > 0) != (vpoints[node].angle > 90)
                 exprs.add_plpp(
                     [P_LABEL, friend_a],
                     [L_LABEL, link_symbol + 2],
                     [P_LABEL, node],
                     [S_LABEL, node],
                     [P_LABEL, node],
-                    reverse
+                    (pos[friend_a][0] - pos[node][0] > 0) != (vpoints[node].angle > 90)
                 )
                 status[node] = True
                 link_symbol += 3
