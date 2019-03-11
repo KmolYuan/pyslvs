@@ -50,4 +50,4 @@ build_script:
 - mingw32-make
 
 test_script:
-- python test_pyslvs.py
+- mingw32-make test

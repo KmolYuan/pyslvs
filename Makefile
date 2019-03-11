@@ -9,27 +9,27 @@ ifeq ($(OS),Windows_NT)
     SHELL = cmd
 endif
 
+.PHONY: build test clean
+
 all: build
 
-.PHONY: build
-
 # Into package folder
-build:
+build: setup.py
 ifeq ($(OS),Windows_NT)
 	-rename __init__.py .__init__.py
-	python setup.py build_ext -j0 --inplace
+	python $< build_ext -j0 --inplace
 	-rename .__init__.py __init__.py
 else
 	-mv __init__.py .__init__.py
-	python3 setup.py build_ext -j0 --inplace
+	python3 $< build_ext -j0 --inplace
 	-mv .__init__.py __init__.py
 endif
 
-test: build
+test: test_pyslvs.py build
 ifeq ($(OS),Windows_NT)
-	python test.py
+	python $<
 else
-	python3 test.py
+	python3 $<
 endif
 
 clean:
