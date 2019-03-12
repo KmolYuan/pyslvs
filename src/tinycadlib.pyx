@@ -340,12 +340,12 @@ cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_
 
     cdef object k, v
     for k, v in mapping.items():
-        if type(k) == int:
+        if type(k) is int:
             mapping_r[v] = k
             if v in mapping:
                 x, y = mapping[v]
                 data_dict[v] = Coordinate.__new__(Coordinate, x, y)
-        elif type(k) == tuple:
+        elif type(k) is tuple:
             length[frozenset(k)] = v
 
     cdef list pos = []
@@ -492,7 +492,7 @@ cpdef list expr_solving(
 
     # Reverse mapping, exclude specified link length.
     cdef object k, v
-    cdef dict mapping_r = {v: k for k, v in mapping.items() if type(k) == int}
+    cdef dict mapping_r = {v: k for k, v in mapping.items() if type(k) is int}
 
     # Check input pairs.
     cdef int target
@@ -536,7 +536,7 @@ cpdef list expr_solving(
 
         # Add specified link lengths.
         for k, v in mapping.items():
-            if type(k) == tuple:
+            if type(k) is tuple:
                 p_data_dict[k] = v
 
         # Solve

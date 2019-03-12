@@ -60,7 +60,7 @@ cdef inline void _sort_pairs(dict data_dict):
     """Sort the pairs in data_dict."""
     cdef object k
     for k in data_dict:
-        if type(k) == tuple:
+        if type(k) is tuple:
             data_dict[frozenset(k)] = data_dict.pop(k)
 
 

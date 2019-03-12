@@ -8,6 +8,7 @@ Version 19.03
 + Triangulation data type changed for performance improvement.
 + Change "print" function as "logger.debug".
 + Embed the "Coordinate" object in return value to improve performance.
++ Use "is" instead of "==" in type comparison.
 
 Version 19.02
 ===

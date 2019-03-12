@@ -282,7 +282,7 @@ cdef class Planar(Verification):
 
         # Add specified link lengths.
         for k, v in self.mapping.items():
-            if type(k) == frozenset:
+            if type(k) is frozenset:
                 p_data_dict[k] = v
 
         # Solve
@@ -330,7 +330,7 @@ cdef class Planar(Verification):
         cdef VPoint vpoint
         cdef object m
         for m in self.mapping_list:
-            if type(m) == int:
+            if type(m) is int:
                 vpoint = self.vpoints[m]
                 vpoint.locate(v[target_index], v[target_index + 1])
                 target_index += 2
@@ -360,7 +360,7 @@ cdef class Planar(Verification):
         cdef VPoint vpoint
         cdef object m
         for m in self.mapping_list:
-            if type(m) == int:
+            if type(m) is int:
                 vpoint = self.vpoints[m]
                 vpoint.locate(v[target_index], v[target_index + 1])
                 target_index += 2
