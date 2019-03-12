@@ -72,34 +72,34 @@ class CoreTest(TestCase):
 
     def test_plap(self):
         """Test for plap function."""
-        x, y = plap(Coordinate(0, 0), 50 * sqrt(2), radians(45), Coordinate(50, 0))
-        self.assertAlmostEqual(50, x)
-        self.assertAlmostEqual(50, y)
+        coord = plap(Coordinate(0, 0), 50 * sqrt(2), radians(45), Coordinate(50, 0))
+        self.assertAlmostEqual(50, coord.x)
+        self.assertAlmostEqual(50, coord.y)
 
     def test_pllp(self):
         """Test for pllp function."""
         c1 = Coordinate(-30, 0)
         c2 = Coordinate(30, 0)
-        x, y = pllp(c1, 50, 50, c2)
-        self.assertAlmostEqual(0, x)
-        self.assertAlmostEqual(40, y)
-        x, y = pllp(c1, 30, 30, c2)
-        self.assertAlmostEqual(x, 0)
-        self.assertAlmostEqual(y, 0)
-        x, y = pllp(c1, 90, 30, c2)
-        self.assertAlmostEqual(60, x)
-        self.assertAlmostEqual(0, y)
+        coord = pllp(c1, 50, 50, c2)
+        self.assertAlmostEqual(0, coord.x)
+        self.assertAlmostEqual(40, coord.y)
+        coord = pllp(c1, 30, 30, c2)
+        self.assertAlmostEqual(coord.x, 0)
+        self.assertAlmostEqual(coord.y, 0)
+        coord = pllp(c1, 90, 30, c2)
+        self.assertAlmostEqual(60, coord.x)
+        self.assertAlmostEqual(0, coord.y)
 
     def test_plpp(self):
         """Test for plpp function."""
-        x, y = plpp(Coordinate(0, 0), sqrt(5), Coordinate(0, -3), Coordinate(3 / 2, 0))
-        self.assertAlmostEqual(2, x)
-        self.assertAlmostEqual(1, y)
+        coord = plpp(Coordinate(0, 0), sqrt(5), Coordinate(0, -3), Coordinate(3 / 2, 0))
+        self.assertAlmostEqual(2, coord.x)
+        self.assertAlmostEqual(1, coord.y)
 
     def test_pxy(self):
-        x, y = pxy(Coordinate(80, 90), 40, -20)
-        self.assertAlmostEqual(120, x)
-        self.assertAlmostEqual(70, y)
+        coord = pxy(Coordinate(80, 90), 40, -20)
+        self.assertAlmostEqual(120, coord.x)
+        self.assertAlmostEqual(70, coord.y)
 
     def test_graph_function(self):
         """Test 'graph' libraries."""

@@ -45,6 +45,9 @@ cdef inline double distance(double x1, double y1, double x2, double y2) nogil:
     return hypot(x2 - x1, y2 - y1)
 
 
+cdef Coordinate _NAN_COORD = Coordinate.__new__(Coordinate, NAN, NAN)
+
+
 @cython.final
 cdef class Coordinate:
 
@@ -66,7 +69,7 @@ cdef class Coordinate:
         return f"Coordinate({self.x:.02f}, {self.y:.02f})"
 
 
-cpdef tuple plap(
+cpdef Coordinate plap(
     Coordinate c1,
     double d0,
     double a0,
@@ -76,13 +79,14 @@ cpdef tuple plap(
     """Point on circle by angle."""
     cdef double a1 = atan2(c2.y - c1.y, c2.x - c1.x) if c2 is not None else 0
     if inverse:
-        return (c1.x + d0 * cos(a1 - a0)), (c1.y + d0 * sin(a1 - a0))
+        a1 -= a0
     else:
-        return (c1.x + d0 * cos(a1 + a0)), (c1.y + d0 * sin(a1 + a0))
+        a1 += a0
+    return Coordinate.__new__(Coordinate, c1.x + d0 * cos(a1), c1.y + d0 * sin(a1))
 
 
 @cython.cdivision
-cpdef tuple pllp(
+cpdef Coordinate pllp(
     Coordinate c1,
     double d0,
     double d1,
@@ -96,28 +100,28 @@ cpdef tuple pllp(
 
     # No solutions, the circles are separate.
     if d > d0 + d1:
-        return NAN, NAN
+        return _NAN_COORD
 
     # No solutions because one circle is contained within the other.
     if d < abs(d0 - d1):
-        return NAN, NAN
+        return _NAN_COORD
 
     # Circles are coincident and there are an infinite number of solutions.
     if d == 0 and d0 == d1:
-        return NAN, NAN
+        return _NAN_COORD
     cdef double a = (d0 * d0 - d1 * d1 + d * d) / (2 * d)
     cdef double h = sqrt(d0 * d0 - a * a)
     cdef double xm = c1.x + a * dx / d
     cdef double ym = c1.y + a * dy / d
 
     if inverse:
-        return (xm + h * dy / d), (ym - h * dx / d)
+        return Coordinate.__new__(Coordinate, xm + h * dy / d, ym - h * dx / d)
     else:
-        return (xm - h * dy / d), (ym + h * dx / d)
+        return Coordinate.__new__(Coordinate, xm - h * dy / d, ym + h * dx / d)
 
 
 @cython.cdivision
-cpdef tuple plpp(
+cpdef Coordinate plpp(
     Coordinate c1,
     double d0,
     Coordinate c2,
@@ -129,28 +133,30 @@ cpdef tuple plpp(
     cdef double dx = c3.x - c2.x
     cdef double dy = c3.y - c2.y
     cdef double u = ((c1.x - c2.x) * dx + (c1.y - c2.y) * dy) / (line_mag * line_mag)
-    cdef Coordinate inter = Coordinate(c2.x + u * dx, c2.y + u * dy)
+    cdef Coordinate inter = Coordinate.__new__(Coordinate, c2.x + u * dx, c2.y + u * dy)
 
     # Test distance between point A and intersection.
     cdef double d = c1.distance(inter)
     if d > d0:
         # No intersection.
-        return NAN, NAN
+        return _NAN_COORD
     elif d == d0:
         # One intersection point.
         return inter.x, inter.y
 
     # Two intersection points.
     d = sqrt(d0 * d0 - d * d) / line_mag
+    dx *= d
+    dy *= d
     if inverse:
-        return (inter.x - dx * d), (inter.y - dy * d)
+        return Coordinate.__new__(Coordinate, inter.x - dx, inter.y - dy)
     else:
-        return (inter.x + dx * d), (inter.y + dy * d)
+        return Coordinate.__new__(Coordinate, inter.x + dx, inter.y + dy)
 
 
-cpdef tuple pxy(Coordinate c1, double x, double y):
+cpdef Coordinate pxy(Coordinate c1, double x, double y):
     """Using relative cartesian coordinate to get solution."""
-    return (c1.x + x), (c1.y + y)
+    return Coordinate.__new__(Coordinate, c1.x + x, c1.y + y)
 
 
 cdef inline str str_between(str s, str front, str back):
@@ -170,64 +176,63 @@ cpdef void expr_parser(ExpressionStack exprs, dict data_dict):
     + data_dict: {'a0':0., 'L1':10., 'A':(30., 40.), ...}
     """
     cdef symbol target
-    cdef double x, y, x1, y1, x2, y2, x3, y3
+    cdef Coordinate coord, coord1, coord2, coord3
     cdef Expression expr
     for expr in exprs.stack:
-        x = NAN
-        y = NAN
+        coord = _NAN_COORD
         if expr.func in {PLA, PLAP}:
-            x1, y1 = data_dict[symbol_str(expr.c1)]
+            coord1 = data_dict[symbol_str(expr.c1)]
             if expr.func == PLA:
                 target = expr.c2
-                x, y = plap(
-                    Coordinate(x1, y1),
+                coord = plap(
+                    coord1,
                     data_dict[symbol_str(expr.v1)],
                     data_dict[symbol_str(expr.v2)]
                 )
             else:
                 target = expr.c3
-                x2, y2 = data_dict[symbol_str(expr.c2)]
-                x, y = plap(
-                    Coordinate(x1, y1),
+                coord2 = data_dict[symbol_str(expr.c2)]
+                coord = plap(
+                    coord1,
                     data_dict[symbol_str(expr.v1)],
                     data_dict[symbol_str(expr.v2)],
-                    Coordinate(x2, y2),
+                    coord2,
                     expr.op
                 )
         elif expr.func == PLLP:
             target = expr.c3
-            x1, y1 = data_dict[symbol_str(expr.c1)]
-            x2, y2 = data_dict[symbol_str(expr.c2)]
-            x, y = pllp(
-                Coordinate(x1, y1),
+            coord1 = data_dict[symbol_str(expr.c1)]
+            coord2 = data_dict[symbol_str(expr.c2)]
+            coord = pllp(
+                coord1,
                 data_dict[symbol_str(expr.v1)],
                 data_dict[symbol_str(expr.v2)],
-                Coordinate(x2, y2),
+                coord2,
                 expr.op
             )
         elif expr.func == PLPP:
             target = expr.c4
-            x1, y1 = data_dict[symbol_str(expr.c1)]
-            x2, y2 = data_dict[symbol_str(expr.c2)]
-            x3, y3 = data_dict[symbol_str(expr.c3)]
-            x, y = plpp(
-                Coordinate(x1, y1),
+            coord1 = data_dict[symbol_str(expr.c1)]
+            coord2 = data_dict[symbol_str(expr.c2)]
+            coord3 = data_dict[symbol_str(expr.c3)]
+            coord = plpp(
+                coord1,
                 data_dict[symbol_str(expr.v1)],
-                Coordinate(x2, y2),
-                Coordinate(x3, y3),
+                coord2,
+                coord3,
                 expr.op
             )
         elif expr.func == PXY:
             target = expr.c2
-            x1, y1 = data_dict[symbol_str(expr.c1)]
-            x, y = pxy(
-                Coordinate(x1, y1),
+            coord1 = data_dict[symbol_str(expr.c1)]
+            coord = pxy(
+                coord1,
                 data_dict[symbol_str(expr.v1)],
                 data_dict[symbol_str(expr.v2)]
             )
         else:
             raise ValueError("unsupported function")
-        data_dict[symbol_str(target)] = (x, y)
+        data_dict[symbol_str(target)] = coord
 
 
 cpdef int vpoint_dof(object vpoints):
@@ -268,11 +273,6 @@ cdef inline int base_friend(int node, object vpoints):
             continue
         if vpoints[node].links[0] in vpoint.links:
             return i
-
-
-cdef inline double tuple_distance(tuple c1, tuple c2):
-    """Calculate the distance between two tuple coordinates."""
-    return distance(c1[0], c1[1], c2[0], c2[1])
 
 
 cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_):
@@ -342,17 +342,18 @@ cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_
     for k, v in mapping.items():
         if type(k) == int:
             mapping_r[v] = k
-            if mapping[k] in mapping:
-                data_dict[mapping[k]] = mapping[mapping[k]]
+            if v in mapping:
+                x, y = mapping[v]
+                data_dict[v] = Coordinate.__new__(Coordinate, x, y)
         elif type(k) == tuple:
             length[frozenset(k)] = v
 
     cdef list pos = []
     for vpoint in vpoints:
         if vpoint.type == VJoint.R:
-            pos.append(vpoint.c[0])
+            pos.append(Coordinate.__new__(Coordinate, vpoint.c[0][0], vpoint.c[0][1]))
         else:
-            pos.append(vpoint.c[1])
+            pos.append(Coordinate.__new__(Coordinate, vpoint.c[1][0], vpoint.c[1][1]))
 
     cdef int i, bf
     cdef double angle
@@ -367,7 +368,7 @@ cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_
             vpoint.slope_angle(vpoints[bf], 1, 0) +
             vpoint.slope_angle(vpoints[bf], 0, 0)
         )
-        pos.append((vpoint.c[1][0] + cos(angle), vpoint.c[1][1] + sin(angle)))
+        pos.append(Coordinate.__new__(Coordinate, vpoint.c[1][0] + cos(angle), vpoint.c[1][1] + sin(angle)))
         mapping_r[f'S{i}'] = len(pos) - 1
 
     # Add data to 'data_dict' and counting DOF.
@@ -375,6 +376,7 @@ cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_
     cdef int target
     cdef Expression expr
     cdef frozenset pair
+    cdef Coordinate coord1, coord2
     for expr in exprs.stack:
         node = mapping_r[symbol_str(expr.c1)]
 
@@ -392,7 +394,9 @@ cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_
             if pair in length:
                 data_dict[symbol_str(expr.v1)] = length[pair]
             else:
-                data_dict[symbol_str(expr.v1)] = tuple_distance(pos[node], pos[target])
+                coord1 = pos[node]
+                coord2 = pos[target]
+                data_dict[symbol_str(expr.v1)] = coord1.distance(coord2)
             # Point 2
             if expr.func == PLAP and symbol_str(expr.c2) not in data_dict:
                 data_dict[symbol_str(expr.c2)] = pos[mapping_r[symbol_str(expr.c2)]]
@@ -405,13 +409,17 @@ cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_
             if pair in length:
                 data_dict[symbol_str(expr.v1)] = length[pair]
             else:
-                data_dict[symbol_str(expr.v1)] = tuple_distance(pos[node], pos[target])
+                coord1 = pos[node]
+                coord2 = pos[target]
+                data_dict[symbol_str(expr.v1)] = coord1.distance(coord2)
             # Link 2
             pair = frozenset({mapping_r[symbol_str(expr.c2)], target})
             if pair in length:
                 data_dict[symbol_str(expr.v2)] = length[pair]
             else:
-                data_dict[symbol_str(expr.v2)] = tuple_distance(pos[mapping_r[symbol_str(expr.c2)]], pos[target])
+                coord1 = pos[mapping_r[symbol_str(expr.c2)]]
+                coord2 = pos[target]
+                data_dict[symbol_str(expr.v2)] = coord1.distance(coord2)
             # Point 2
             if symbol_str(expr.c2) not in data_dict:
                 data_dict[symbol_str(expr.c2)] = pos[mapping_r[symbol_str(expr.c2)]]
@@ -422,27 +430,34 @@ cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_
             if pair in length:
                 data_dict[symbol_str(expr.v1)] = length[pair]
             else:
-                data_dict[symbol_str(expr.v1)] = tuple_distance(pos[node], pos[target])
+                coord1 = pos[node]
+                coord2 = pos[target]
+                data_dict[symbol_str(expr.v1)] = coord1.distance(coord2)
             # Point 2
             if symbol_str(expr.c2) not in data_dict:
                 data_dict[symbol_str(expr.c2)] = pos[mapping_r[symbol_str(expr.c2)]]
         elif expr.func == PXY:
             target = mapping_r[symbol_str(expr.c2)]
+            coord1 = pos[node]
+            coord2 = pos[target]
             # X
             if symbol_str(expr.v1) in mapping:
-                data_dict[symbol_str(expr.v1)] = mapping[symbol_str(expr.v1)]
+                x, y = mapping[symbol_str(expr.v1)]
+                data_dict[symbol_str(expr.v1)] = Coordinate.__new__(Coordinate, x, y)
             else:
-                data_dict[symbol_str(expr.v1)] = pos[target][0] - pos[node][0]
+                data_dict[symbol_str(expr.v1)] = coord2.x - coord1.x
             # Y
             if symbol_str(expr.v2) in mapping:
-                data_dict[symbol_str(expr.v2)] = mapping[symbol_str(expr.v2)]
+                x, y = mapping[symbol_str(expr.v2)]
+                data_dict[symbol_str(expr.v2)] = Coordinate.__new__(Coordinate, x, y)
             else:
-                data_dict[symbol_str(expr.v2)] = pos[target][1] - pos[node][1]
+                data_dict[symbol_str(expr.v2)] = coord2.y - coord1.y
 
     # Other grounded R joints.
     for i, vpoint in enumerate(vpoints):
         if vpoint.grounded() and vpoint.type == VJoint.R:
-            data_dict[mapping[i]] = vpoint.c[0]
+            x, y = vpoint.c[0]
+            data_dict[mapping[i]] = Coordinate.__new__(Coordinate, x, y)
 
     return data_dict, dof
 
@@ -535,16 +550,18 @@ cpdef list expr_solving(
     # P or RP joint: [[p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))]
     cdef list solved_points = []
     cdef VPoint vpoint
+    cdef Coordinate coord
     for i in range(len(vpoints)):
         vpoint = vpoints[i]
         if mapping[i] in data_dict:
             # These points has been solved.
-            if isnan(data_dict[mapping[i]][0]):
+            coord = data_dict[mapping[i]]
+            if isnan(coord.x):
                 raise ValueError(f"result contains failure: Point{i}")
             if vpoint.type == VJoint.R:
-                solved_points.append(data_dict[mapping[i]])
+                solved_points.append((coord.x, coord.y))
             else:
-                solved_points.append((vpoint.c[0], data_dict[mapping[i]]))
+                solved_points.append((vpoint.c[0], (coord.x, coord.y)))
         elif solved_bfgs is not None:
             # These points solved by Sketch Solve.
             if vpoint.type == VJoint.R:

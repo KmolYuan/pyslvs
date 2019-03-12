@@ -13,6 +13,7 @@ from triangulation cimport ExpressionStack
 
 
 cdef class Coordinate:
+
     cdef readonly double x, y
 
     cpdef double distance(self, Coordinate p)
@@ -20,10 +21,10 @@ cdef class Coordinate:
 
 
 cdef double radians(double degree) nogil
-cpdef tuple plap(Coordinate c1, double d0, double a0, Coordinate c2 = *, bint inverse = *)
-cpdef tuple pllp(Coordinate c1, double d0, double d1, Coordinate c2, bint inverse = *)
-cpdef tuple plpp(Coordinate c1, double d0, Coordinate c2, Coordinate c3, bint inverse = *)
-cpdef tuple pxy(Coordinate c1, double x, double y)
+cpdef Coordinate plap(Coordinate c1, double d0, double a0, Coordinate c2 = *, bint inverse = *)
+cpdef Coordinate pllp(Coordinate c1, double d0, double d1, Coordinate c2, bint inverse = *)
+cpdef Coordinate plpp(Coordinate c1, double d0, Coordinate c2, Coordinate c3, bint inverse = *)
+cpdef Coordinate pxy(Coordinate c1, double x, double y)
 
 cdef str str_between(str s, str front, str back)
 cdef str str_before(str s, str front)

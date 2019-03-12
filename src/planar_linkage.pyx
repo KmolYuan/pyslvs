@@ -11,18 +11,12 @@ email: pyslvs@gmail.com
 
 cimport cython
 from numpy import (
-    zeros as np_zeros,
     array as np_array,
     float as np_float,
     sort as np_sort,
 )
 # Not a number and a large fitness. Infinity cannot be used for a chart.
-from libc.math cimport (
-    hypot,
-    HUGE_VAL,
-    NAN,
-    isnan,
-)
+from libc.math cimport HUGE_VAL, NAN
 from libcpp.list cimport list as c_list
 from numpy cimport ndarray
 from verify cimport Verification
@@ -61,8 +55,8 @@ cdef class Planar(Verification):
     cdef int target_count, base_index
     cdef c_list[Expression] exprs
     cdef list vpoints, inputs, mapping_list
-    cdef dict placement, target, mapping, mapping_r
-    cdef ndarray upper, lower, result_list
+    cdef dict placement, target, mapping, mapping_r, data_dict
+    cdef ndarray upper, lower
 
     def __cinit__(self, mech_params: dict):
         """mech_params = {
@@ -97,9 +91,9 @@ cdef class Planar(Verification):
         cdef dict same = mech_params.get('same', {})
 
         cdef int i, j
-        cdef double[:, :] path
+        cdef Coordinate[:] path
         for i in target:
-            path = np_array(target[i], dtype=np_float)
+            path = np_array([Coordinate(x, y) for x, y in target[i]], dtype=object)
             for j in range(i):
                 if j in same:
                     i -= 1
@@ -177,7 +171,7 @@ cdef class Planar(Verification):
                 self.upper[i], self.lower[i] = self.lower[i], self.upper[i]
 
         # Result list
-        self.result_list = np_zeros((len(self.vpoints), 2, 2), dtype=np_float)
+        self.data_dict = {}
 
     cdef ndarray[double, ndim=1] get_upper(self):
         return self.upper
@@ -195,76 +189,84 @@ cdef class Planar(Verification):
     cdef inline bint solve(self, double[:] input_list):
         """Start solver function."""
         # TODO: Need to be optimized.
-        cdef dict data_dict = {}
+        self.data_dict.clear()
 
         cdef int i
         cdef VPoint vpoint
+        cdef Coordinate coord1, coord2
         for i, vpoint in enumerate(self.vpoints):
             if not vpoint.grounded():
                 continue
+
+            coord1 = Coordinate.__new__(Coordinate, vpoint.c[0][0], vpoint.c[0][1])
             if vpoint.type == VJoint.R:
-                self.result_list[i, 0] = vpoint.c[0]
-                data_dict[self.mapping[i]] = vpoint.c[0]
+                self.data_dict[self.mapping[i]] = coord1
+                self.data_dict[i, -1] = coord1
             else:
-                self.result_list[i, 0] = vpoint.c[0]
-                self.result_list[i, 1] = vpoint.c[1]
-                data_dict[self.mapping[i]] = vpoint.c[1]
+                coord2 = Coordinate.__new__(Coordinate, vpoint.c[1][0], vpoint.c[1][1])
+                self.data_dict[self.mapping[i]] = coord2
+                self.data_dict[i, -1] = coord1
+                self.data_dict[i, -2] = coord2
 
         # Solve
+        i = 0
         cdef int t, params_count
-        cdef double x, y, x1, y1, x2, y2, x3, y3, a, d1, d2
+        cdef Coordinate coord, coord3
         cdef str target
         cdef Expression expr
-        i = 0
         for expr in self.exprs:
-            x = NAN
-            y = NAN
+            coord = Coordinate.__new__(Coordinate, NAN, NAN)
             if expr.func == PLA:
                 target = symbol_str(expr.c2)
-                x1, y1 = data_dict[symbol_str(expr.c1)]
-                d1 = self.get_len(symbol_str(expr.c1), target)
-                a = radians(input_list[i])
-                x, y = plap(Coordinate(x1, y1), d1, a)
+                coord1 = self.data_dict[symbol_str(expr.c1)]
+                coord = plap(
+                    coord1,
+                    self.get_len(symbol_str(expr.c1), target),
+                    radians(input_list[i])
+                )
                 i += 1
             elif expr.func == PLLP:
                 target = symbol_str(expr.c3)
-                x1, y1 = data_dict[symbol_str(expr.c1)]
-                d1 = self.get_len(symbol_str(expr.c1), target)
-                d2 = self.get_len(symbol_str(expr.c2), target)
-                x2, y2 = data_dict[symbol_str(expr.c2)]
-                x, y = pllp(Coordinate(x1, y1), d1, d2, Coordinate(x2, y2), expr.op)
+                coord1 = self.data_dict[symbol_str(expr.c1)]
+                coord2 = self.data_dict[symbol_str(expr.c2)]
+                coord = pllp(
+                    coord1,
+                    self.get_len(symbol_str(expr.c1), target),
+                    self.get_len(symbol_str(expr.c2), target),
+                    coord2,
+                    expr.op
+                )
             elif expr.func == PLPP:
                 target = symbol_str(expr.c4)
-                x1, y1 = data_dict[symbol_str(expr.c1)]
-                d1 = self.get_len(symbol_str(expr.c1), target)
-                x2, y2 = data_dict[symbol_str(expr.c2)]
-                x3, y3 = data_dict[symbol_str(expr.c3)]
-                x, y = plpp(
-                    Coordinate(x1, y1),
-                    d1,
-                    Coordinate(x2, y2),
-                    Coordinate(x3, y3),
+                coord1 = self.data_dict[symbol_str(expr.c1)]
+                coord2 = self.data_dict[symbol_str(expr.c2)]
+                coord3 = self.data_dict[symbol_str(expr.c3)]
+                coord = plpp(
+                    coord1,
+                    self.get_len(symbol_str(expr.c1), target),
+                    coord2,
+                    coord3,
                     expr.op
                 )
             elif expr.func == PXY:
                 target = symbol_str(expr.c2)
                 vpoint = self.vpoints[self.mapping_r[target]]
-                x1, y1 = data_dict[symbol_str(expr.c1)]
-                x, y = pxy(Coordinate(x1, y1), vpoint.c[0][0] - x1, vpoint.c[0][1] - y1)
+                coord1 = self.data_dict[symbol_str(expr.c1)]
+                coord = pxy(coord1, vpoint.c[0][0] - coord1.x, vpoint.c[0][1] - coord1.y)
             else:
                 return False
 
-            if isnan(x):
+            if coord.is_nan():
                 return False
 
             t = self.mapping_r[target]
             vpoint = self.vpoints[t]
-            data_dict[target] = (x, y)
+            self.data_dict[target] = coord
             if vpoint.type == VJoint.R:
-                self.result_list[t, 0] = (x, y)
+                self.data_dict[t, -1] = coord
             else:
-                self.result_list[t, 0] = vpoint.c[0]
-                self.result_list[t, 1] = (x, y)
+                self.data_dict[t, -1] = vpoint.c[0]
+                self.data_dict[t, -2] = coord
 
         if not self.bfgs_mode:
             return True
@@ -275,8 +277,8 @@ cdef class Planar(Verification):
         p_data_dict = {}
         for i in range(len(self.vpoints)):
             # {1: 'A'} vs {'A': (10., 20.)}
-            if self.mapping[i] in data_dict:
-                p_data_dict[i] = data_dict[self.mapping[i]]
+            if self.mapping[i] in self.data_dict:
+                p_data_dict[i] = self.data_dict[self.mapping[i]]
 
         # Add specified link lengths.
         for k, v in self.mapping.items():
@@ -294,16 +296,28 @@ cdef class Planar(Verification):
         # R joint: [[p0]: (p0_x, p0_y), [p1]: (p1_x, p1_y)]
         # P or RP joint: [[p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))]
         for i in range(len(self.vpoints)):
-            if self.mapping[i] in data_dict:
+            if self.mapping[i] in self.data_dict:
                 continue
 
             vpoint = self.vpoints[i]
             # These points solved by Sketch Solve.
             if vpoint.type == VJoint.R:
-                self.result_list[i, 0] = solved_bfgs[i]
+                self.data_dict[i, -1] = Coordinate.__new__(
+                    Coordinate,
+                    solved_bfgs[i][0],
+                    solved_bfgs[i][1]
+                )
             else:
-                self.result_list[i, 0] = solved_bfgs[i][0]
-                self.result_list[i, 1] = solved_bfgs[i][1]
+                self.data_dict[i, -1] = Coordinate.__new__(
+                    Coordinate,
+                    solved_bfgs[i][0][0],
+                    solved_bfgs[i][0][1]
+                )
+                self.data_dict[i, -2] = Coordinate.__new__(
+                    Coordinate,
+                    solved_bfgs[i][1][0],
+                    solved_bfgs[i][1][1]
+                )
 
         return True
 
@@ -328,16 +342,15 @@ cdef class Planar(Verification):
         cdef double fitness = 0.
 
         cdef int node
-        cdef double x, y, tx, ty
-        cdef double[:, :] path
+        cdef Coordinate coord
+        cdef Coordinate[:] path
         for target_index in range(self.target_count):
             if not self.solve(input_list[target_index::self.target_count]):
                 return HUGE_VAL
 
             for node, path in self.target.items():
-                tx, ty = path[target_index]
-                x, y = self.result_list[node, 0]
-                fitness += hypot(x - tx, y - ty)
+                coord = self.data_dict[node, -1]
+                fitness += coord.distance(path[target_index])
 
         return fitness
 
@@ -362,14 +375,15 @@ cdef class Planar(Verification):
 
         cdef int i
         cdef double x1, y1, x2, y2
+        cdef Coordinate coord1, coord2
         for i in range(len(self.vpoints)):
             vpoint = self.vpoints[i]
-            x1, y1 = self.result_list[i, 0]
-            vpoint.locate(x1, y1)
+            coord1 = self.data_dict[i, -1]
+            vpoint.locate(coord1.x, coord1.y)
             if vpoint.type != VJoint.R:
-                x1, y1 = self.result_list[i, 0]
-                x2, y2 = self.result_list[i, 0]
-                vpoint.move((x1, y1), (x2, y2))
+                coord1 = self.data_dict[i, -1]
+                coord2 = self.data_dict[i, -2]
+                vpoint.move((coord1.x, coord1.y), (coord2.x, coord2.y))
             expressions.append(vpoint.expr())
 
         return "M[" + ", ".join(expressions) + "]"

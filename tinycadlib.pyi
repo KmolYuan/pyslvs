@@ -41,7 +41,7 @@ def plap(
     a0: float,
     c2: Optional[Coordinate] = None,
     inverse: bool = False
-) -> TuplePoint:
+) -> Coordinate:
     """Point on circle by angle."""
     ...
 
@@ -51,7 +51,7 @@ def pllp(
     d1: float,
     c2: Coordinate,
     inverse: bool = False
-) -> TuplePoint:
+) -> Coordinate:
     """Two intersection points of two circles."""
     ...
 
@@ -61,11 +61,11 @@ def plpp(
     c2: Coordinate,
     c3: Coordinate,
     inverse: bool = False
-) -> TuplePoint:
+) -> Coordinate:
     """Two intersection points of a line and a circle."""
     ...
 
-def pxy(c1: Coordinate, x: float, y: float) -> TuplePoint:
+def pxy(c1: Coordinate, x: float, y: float) -> Coordinate:
     """Using relative cartesian coordinate to get solution."""
     ...
 

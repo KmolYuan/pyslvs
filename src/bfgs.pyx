@@ -37,7 +37,13 @@ from sketch_solve cimport (
     LineInternalAngleConstraint,
     solve,
 )
-from expression cimport get_vlinks, VJoint, VPoint, VLink
+from expression cimport (
+    get_vlinks,
+    VJoint,
+    VPoint,
+    VLink,
+)
+from tinycadlib cimport Coordinate
 
 
 ctypedef fused T:
@@ -75,7 +81,7 @@ cpdef list vpoint_solving(
     + inputs: {(b0, d0): a0, (b1, d1): a1, ...}
 
     Known coordinates import from data_dict.
-    + data_dict: {0: (10.0, 20.0), ..., (0, 2): 30.0, ...}
+    + data_dict: {0: Coordinate(10.0, 20.0), ..., (0, 2): 30.0, ...}
     """
     # Sequences.
     cdef list vpoints = list(vpoints_)
@@ -100,6 +106,7 @@ cpdef list vpoint_solving(
     cdef double x, y
     cdef double *tmp_ptr
     cdef VPoint vpoint
+    cdef Coordinate coord
     for i, vpoint in enumerate(vpoints):
         if vpoint.no_link():
             x, y = vpoint.c[0]
@@ -112,10 +119,10 @@ cpdef list vpoint_solving(
         if vpoint.grounded():
             if i in data_dict:
                 # Known coordinates.
-                x, y = data_dict[i]
-                constants.push_back(x)
+                coord = data_dict[i]
+                constants.push_back(coord.x)
                 tmp_ptr = end_ptr(&constants)
-                constants.push_back(y)
+                constants.push_back(coord.y)
                 points.push_back([tmp_ptr, end_ptr(&constants)])
                 continue
 
@@ -151,10 +158,10 @@ cpdef list vpoint_solving(
 
         if i in data_dict:
             # Known coordinates.
-            x, y = data_dict[i]
-            constants.push_back(x)
+            coord = data_dict[i]
+            constants.push_back(coord.x)
             tmp_ptr = end_ptr(&constants)
-            constants.push_back(y)
+            constants.push_back(coord.y)
             points.push_back([tmp_ptr, end_ptr(&constants)])
             continue
 
