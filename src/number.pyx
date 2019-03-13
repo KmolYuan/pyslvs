@@ -40,7 +40,7 @@ cdef inline list _product(int pool_size, int repeat, object stop_func):
 @cython.cdivision
 cdef inline int _m_max(int nl, int nj) nogil:
     """Find max number of joint on each link.
-    
+
     + nl <= nj and nj <= (2 * nl - 3)
     + (2 * nl - 3) <= nj and nj <= (nl * (nl - 1) / 2)
     + other exceptions (return -1).
@@ -64,7 +64,7 @@ cdef inline int _sum_factors(list factors):
 
 
 cpdef list number_synthesis(int nl, int nj, object stop_func = None):
-    """Number _synthesis try-error function."""
+    """Number synthesis try and error function."""
     cdef list result = []
     cdef int m_max_v = _m_max(nl, nj)
     if m_max_v == -1:
@@ -83,7 +83,7 @@ cpdef list number_synthesis(int nl, int nj, object stop_func = None):
 
 
 cdef inline int _j_m(int16_t[:] link_num):
-    """Return value of Jm."""
+    """Return value of JM."""
     cdef int num
     cdef int i = 3
     cdef float c = 0
@@ -95,8 +95,8 @@ cdef inline int _j_m(int16_t[:] link_num):
 
 
 cdef inline int _j_m_p(int n_m) nogil:
-    """Return value of J'm. This is improved function.
-    
+    """Return value of J'M. This is improved function.
+
     + Origin equation:
     if n_m % 2 == 0:
         return <int>((3 * (n_m - 1) - 1) / 2)
@@ -128,8 +128,8 @@ cpdef list contracted_link(list link_num_list, object stop_func = None):
     cdef int n_c_min = max(1, j_m_v - _j_m_p(sum(link_num[1:])))
     cdef int n_c_max = min(link_num[0], j_m_v)
 
-    # NL2 - Nc + 2
-    cdef int i_max = link_num[0] - n_c_min + 2
+    # i = NL2 - NC + 2
+    cdef int i_max = min(link_num[0], link_num[0] - n_c_min + 2)
 
     # Matching formula.
     cdef int count, factor, index

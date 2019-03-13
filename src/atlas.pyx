@@ -384,7 +384,7 @@ cpdef tuple topo(
     """Linkage mechanism topological function.
     
     link_num_list = [L2, L3, L4, ...]
-    c_j_list = [Nc1, Nc2, Nc3, ...]
+    c_j_list = [NC1, NC2, NC3, ...]
     no_degenerate:
         0: only degenerate.
         1: no degenerate.
