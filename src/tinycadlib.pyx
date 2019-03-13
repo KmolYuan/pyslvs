@@ -16,8 +16,6 @@ from libc.math cimport (
     sin,
     cos,
     atan2,
-    hypot,
-    isnan,
     NAN,
 )
 from expression cimport VJoint, VPoint
@@ -34,39 +32,13 @@ from triangulation cimport (
 from bfgs cimport vpoint_solving
 
 
+cdef Coordinate _NAN_COORD = Coordinate.__new__(Coordinate, NAN, NAN)
+
+
 @cython.cdivision
 cdef inline double radians(double degree) nogil:
     """Deg to rad."""
     return degree / 180 * M_PI
-
-
-cdef inline double distance(double x1, double y1, double x2, double y2) nogil:
-    """Distance of two cartesian coordinates."""
-    return hypot(x2 - x1, y2 - y1)
-
-
-cdef Coordinate _NAN_COORD = Coordinate.__new__(Coordinate, NAN, NAN)
-
-
-@cython.final
-cdef class Coordinate:
-
-    """A class to store the coordinate."""
-
-    def __cinit__(self, x: double, y: double):
-        self.x = x
-        self.y = y
-
-    cpdef double distance(self, Coordinate p):
-        """Distance."""
-        return distance(self.x, self.y, p.x, p.y)
-
-    cpdef bint is_nan(self):
-        """Test this coordinate is a error-occurred answer."""
-        return isnan(self.x)
-
-    def __repr__(self):
-        return f"Coordinate({self.x:.02f}, {self.y:.02f})"
 
 
 cpdef Coordinate plap(
@@ -556,7 +528,7 @@ cpdef list expr_solving(
         if mapping[i] in data_dict:
             # These points has been solved.
             coord = data_dict[mapping[i]]
-            if isnan(coord.x):
+            if coord.is_nan():
                 raise ValueError(f"result contains failure: Point{i}")
             if vpoint.type == VJoint.R:
                 solved_points.append((coord.x, coord.y))

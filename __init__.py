@@ -37,11 +37,11 @@ from .expression import (
     VJoint,
     VPoint,
     VLink,
+    Coordinate,
 )
 from .bfgs import vpoint_solving
 from .triangulation import vpoints_configure, ExpressionStack
 from .tinycadlib import (
-    Coordinate,
     plap,
     pllp,
     plpp,

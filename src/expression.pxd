@@ -15,6 +15,14 @@ from numpy cimport ndarray
 cpdef list get_vlinks(object vpoints)
 
 
+cdef class Coordinate:
+
+    cdef readonly double x, y
+
+    cpdef double distance(self, Coordinate p)
+    cpdef bint is_nan(self)
+
+
 cpdef enum VJoint:
     # Joint types.
     # Actually "class VJoint(IntEnum)" in Python but "enum" in C++.

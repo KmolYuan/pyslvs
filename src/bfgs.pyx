@@ -42,8 +42,8 @@ from expression cimport (
     VJoint,
     VPoint,
     VLink,
+    Coordinate,
 )
-from tinycadlib cimport Coordinate
 
 
 ctypedef fused T:

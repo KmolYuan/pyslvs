@@ -10,14 +10,7 @@ email: pyslvs@gmail.com
 """
 
 from triangulation cimport ExpressionStack
-
-
-cdef class Coordinate:
-
-    cdef readonly double x, y
-
-    cpdef double distance(self, Coordinate p)
-    cpdef bint is_nan(self)
+from expression cimport Coordinate
 
 
 cdef double radians(double degree) nogil

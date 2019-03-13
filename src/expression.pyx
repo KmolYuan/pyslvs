@@ -14,6 +14,7 @@ from libc.math cimport (
     M_PI,
     atan2,
     hypot,
+    isnan,
 )
 from cpython.object cimport Py_EQ, Py_NE
 from typing import (
@@ -23,6 +24,11 @@ from typing import (
     Optional,
 )
 from numpy import array as np_array
+
+
+cdef inline double distance(double x1, double y1, double x2, double y2) nogil:
+    """Distance of two cartesian coordinates."""
+    return hypot(x2 - x1, y2 - y1)
 
 
 cpdef list get_vlinks(object vpoints):
@@ -46,6 +52,27 @@ cpdef list get_vlinks(object vpoints):
         vlinks.append(VLink(name, "", points))
 
     return vlinks
+
+
+@cython.final
+cdef class Coordinate:
+
+    """A class to store the coordinate."""
+
+    def __cinit__(self, x: double, y: double):
+        self.x = x
+        self.y = y
+
+    cpdef double distance(self, Coordinate p):
+        """Distance."""
+        return distance(self.x, self.y, p.x, p.y)
+
+    cpdef bint is_nan(self):
+        """Test this coordinate is a error-occurred answer."""
+        return isnan(self.x)
+
+    def __repr__(self):
+        return f"Coordinate({self.x:.02f}, {self.y:.02f})"
 
 
 @cython.final

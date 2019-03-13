@@ -43,19 +43,19 @@ In Pyslvs, expression is mainly to [PMKS](http://designengrlab.github.io/PMKS/),
 
 + **bfgs** library:
 
-    **preload**: *expression*
+    **preload**: `expression`
 
     Python wrapper of [Sketch Solve](https://code.google.com/archive/p/sketchsolve/). A simple and fast constraint solver with BFGS algorithm.
 
 + **tinycadlib** library:
 
-    **preload**: *expression*, *bfgs*
+    **preload**: `expression`, `bfgs`
 
     Particular solution takes more faster then constraint solving.
 
 + **triangulation** library:
 
-    **preload**: *expression*, *tinycadlib*
+    **preload**: `expression`, `tinycadlib`
 
     Autometic configuration algorithm for particular solution function in "tinycadlib".
 
@@ -71,13 +71,13 @@ In Pyslvs, expression is mainly to [PMKS](http://designengrlab.github.io/PMKS/),
 
 + **planar_check** library:
 
-    **preload**: *graph*
+    **preload**: `graph`
 
     Planar graph checking came from NetworkX.
 
 + **atlas** library:
 
-    **preload**: *graph*, *planar_check*
+    **preload**: `graph`, `planar_check`
 
     Graph combination algorithm.
 
@@ -91,24 +91,24 @@ In Pyslvs, expression is mainly to [PMKS](http://designengrlab.github.io/PMKS/),
 
 + **planar_linkage** library:
 
-    **preload**: *expression*, *triangulation*, *tinycadlib*, *verify*
+    **preload**: `expression`, `triangulation`, `bfgs`, `tinycadlib`, `verify`
 
     Dimensional synthesis verification function objects.
 
 + **rga** library:
 
-    **preload**: *verify*
+    **preload**: `verify`
 
     Real-coded genetic algorithm for dimensional synthesis.
 
 + **firefly** library:
 
-    **preload**: *verify*
+    **preload**: `verify`
 
     Firefly algorithm for dimensional synthesis.
 
 + **de** library:
 
-    **preload**: *verify*
+    **preload**: `verify`
 
     Differential Evolution for dimensional synthesis.

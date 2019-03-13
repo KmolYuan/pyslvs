@@ -19,6 +19,28 @@ def get_vlinks(vpoints: Iterable[VPoint]) -> List[VLink]:
     ...
 
 
+class Coordinate:
+
+    """A class to store the coordinate."""
+
+    x: float
+    y: float
+
+    def __init__(self, x: float, y: float):
+        ...
+
+    def distance(self, p: Coordinate) -> float:
+        """Distance."""
+        ...
+
+    def is_nan(self) -> bool:
+        """Test this coordinate is a error-occurred answer."""
+        ...
+
+    def __repr__(self) -> str:
+        ...
+
+
 class VJoint(IntEnum):
     R: int
     P: int

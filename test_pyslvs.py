@@ -11,9 +11,9 @@ import unittest
 from unittest import TestCase
 from math import sqrt, radians
 from copy import deepcopy
+from expression import Coordinate
 from bfgs import vpoint_solving
 from tinycadlib import (
-    Coordinate,
     plap,
     pllp,
     plpp,
