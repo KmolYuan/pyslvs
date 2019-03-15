@@ -26,7 +26,7 @@ class Firefly:
         settings = {
             'n',
             'alpha',
-            'betaMin',
+            'beta_min',
             'beta0',
             'gamma',
             'max_gen', 'min_fit' or 'max_time',

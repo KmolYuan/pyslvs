@@ -224,7 +224,7 @@ class CoreTest(TestCase):
             # Firefly
             'n': 80,
             'alpha': 0.01,
-            'betaMin': 0.2,
+            'beta_min': 0.2,
             'gamma': 1.,
             'beta0': 1.,
         }).run()
