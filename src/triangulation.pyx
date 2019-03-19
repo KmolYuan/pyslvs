@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# cython: language_level=3, embedsignature=True
+# cython: language_level=3, embedsignature=True, cdivision=True
 
 """Triangular expressions.
 
@@ -212,7 +212,6 @@ cdef inline int _get_input_base(int node, object inputs):
     return -1
 
 
-@cython.cdivision
 cpdef ExpressionStack vpoints_configure(
     object vpoints_,
     object inputs,

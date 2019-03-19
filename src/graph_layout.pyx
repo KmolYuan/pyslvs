@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# cython: language_level=3, embedsignature=True
+# cython: language_level=3, embedsignature=True, cdivision=True
 
 """Layout functions for graph object.
 
@@ -72,8 +72,7 @@ cdef inline dict _line_polygon_layout(Graph g, double scale):
             _linear_layout(x1, y1, x2, y2, line, pos)
         else:
             line_counter[start][end] += 1
-            with cython.cdivision:
-                p = <double>line_counter[start][end] / (limit + 1)
+            p = <double>line_counter[start][end] / (limit + 1)
             _bezier_layout(p, x1, y1, x2, y2, line, pos)
         used_nodes.update(line)
 
@@ -89,7 +88,6 @@ cdef inline dict _line_polygon_layout(Graph g, double scale):
     return pos
 
 
-@cython.cdivision
 cdef inline void _regular_polygon_layout(OrderedSet vertices, double scale, dict pos):
     """Return position of a regular polygon with radius 5.
     Start from bottom with clockwise.
@@ -104,7 +102,6 @@ cdef inline void _regular_polygon_layout(OrderedSet vertices, double scale, dict
         angle -= angle_step
 
 
-@cython.cdivision
 cdef inline void _linear_layout(
     double x1,
     double y1,
@@ -127,7 +124,6 @@ cdef inline void _linear_layout(
         pos[vertices[i - 1]] = (x1 + i * sx, y1 + i * sy)
 
 
-@cython.cdivision
 cdef inline void _bezier_layout(
     double p,
     double x1,
@@ -186,7 +182,6 @@ cdef inline double _uv(double u, double v1, double v2) nogil:
     return v1 + u * (v2 - v1)
 
 
-@cython.cdivision
 cdef inline tuple _middle_point(double x1, double y1, double x2, double y2):
     """Return middle point of two coordinates."""
     return ((x1 + x2) / 2), ((y1 + y2) / 2)

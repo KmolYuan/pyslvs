@@ -9,6 +9,7 @@ Version 19.03
 + Change "print" function as "logger.debug".
 + Embed the "Coordinate" object in return value to improve performance.
 + Use "is" instead of "==" in type comparison.
++ Enable C division as default for all Cython sources.
 
 Version 19.02
 ===

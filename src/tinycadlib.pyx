@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# cython: language_level=3, embedsignature=True
+# cython: language_level=3, embedsignature=True, cdivision=True
 
 """Tiny CAD library of PMKS simbolic and position analysis.
 
@@ -35,7 +35,6 @@ from bfgs cimport vpoint_solving
 cdef Coordinate _NAN_COORD = Coordinate.__new__(Coordinate, NAN, NAN)
 
 
-@cython.cdivision
 cdef inline double radians(double degree) nogil:
     """Deg to rad."""
     return degree / 180 * M_PI
@@ -57,7 +56,6 @@ cpdef Coordinate plap(
     return Coordinate.__new__(Coordinate, c1.x + d0 * cos(a1), c1.y + d0 * sin(a1))
 
 
-@cython.cdivision
 cpdef Coordinate pllp(
     Coordinate c1,
     double d0,
@@ -92,7 +90,6 @@ cpdef Coordinate pllp(
         return Coordinate.__new__(Coordinate, xm - h * dy / d, ym + h * dx / d)
 
 
-@cython.cdivision
 cpdef Coordinate plpp(
     Coordinate c1,
     double d0,

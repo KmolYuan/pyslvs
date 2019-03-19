@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# cython: language_level=3, embedsignature=True
+# cython: language_level=3, embedsignature=True, cdivision=True
 
 """PMKS simbolics.
 
@@ -269,7 +269,6 @@ cdef class VPoint:
         """Return offset between slot and pin."""
         return hypot(self.c[1][0] - self.c[0][0], self.c[1][1] - self.c[0][1])
 
-    @cython.cdivision
     cpdef double slope_angle(self, VPoint p, int num1 = 2, int num2 = 2):
         """Angle between horizontal line and two point.
         

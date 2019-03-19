@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# cython: language_level=3, embedsignature=True
+# cython: language_level=3, embedsignature=True, cdivision=True
 
 """Wrapper of BFGS algorithm.
 
@@ -64,7 +64,6 @@ cdef inline void _sort_pairs(dict data_dict):
             data_dict[frozenset(k)] = data_dict.pop(k)
 
 
-@cython.cdivision
 cdef inline double _radians(double degree):
     """Degrees to radians."""
     return degree / 180 * M_PI

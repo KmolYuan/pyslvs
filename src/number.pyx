@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# cython: language_level=3, embedsignature=True
+# cython: language_level=3, embedsignature=True, cdivision=True
 
 """Number _synthesis.
 
@@ -37,7 +37,6 @@ cdef inline list _product(int pool_size, int repeat, object stop_func):
     return result
 
 
-@cython.cdivision
 cdef inline int _m_max(int nl, int nj) nogil:
     """Find max number of joint on each link.
 
@@ -88,8 +87,7 @@ cdef inline int _j_m(int16_t[:] link_num):
     cdef int i = 3
     cdef float c = 0
     for num in link_num[1:]:
-        with cython.cdivision:
-            c += <double>i / 2 * num
+        c += <double>i / 2 * num
         i += 1
     return <int>c
 
@@ -144,8 +142,7 @@ cpdef list contracted_link(list link_num_list, object stop_func = None):
             index += 1
 
         # Check if the last factor is a natural number.
-        with cython.cdivision:
-            last_factor = <double>(link_num[0] - count) / index
+        last_factor = <double>(link_num[0] - count) / index
         factor = <int>last_factor
         if last_factor < 0 or last_factor != factor:
             continue
