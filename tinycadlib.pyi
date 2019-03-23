@@ -69,6 +69,6 @@ def data_collecting(
     exprs: ExpressionStack,
     mapping: Dict[int, str],
     vpoints_: Sequence[VPoint],
-) -> Tuple[Dict[str, float], int]:
+) -> Tuple[Dict[str, Union[Coordinate, float]], int]:
     """Data collecting process."""
     ...
