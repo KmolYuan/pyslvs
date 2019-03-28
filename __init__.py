@@ -29,7 +29,7 @@ __author__ = "Yuan Chang"
 __copyright__ = "Copyright (C) 2016-2019"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
-__version__ = (19, 3, 0, 'dev')
+__version__ = (19, 3, 0, 'release')
 __version_str__ = f"{__version__[0]}.{__version__[1]:02d}.{__version__[2]} ({__version__[3]})"
 
 from .expression import (
