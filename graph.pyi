@@ -29,7 +29,7 @@ class Graph:
         """Add two nodes for an edge."""
         ...
 
-    def add_nodes_from(self, nodes: Tuple[int, ...]):
+    def add_nodes(self, nodes: Iterable[int]):
         """Add nodes from a tuple."""
         ...
 

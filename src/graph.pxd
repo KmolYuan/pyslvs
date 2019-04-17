@@ -9,9 +9,9 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from libcpp.map cimport map as c_map
+from libcpp.map cimport map as cmap
 
-ctypedef c_map[int, int] c_map_int
+ctypedef cmap[int, int] imap
 
 
 cdef class Graph:
@@ -23,11 +23,13 @@ cdef class Graph:
     cdef dict adj
 
     cpdef void add_edge(self, int n1, int n2)
-    cpdef void add_nodes_from(self, tuple nodes)
+    cpdef void add_nodes(self, object nodes)
+    cpdef void add_path(self, object nodes)
+    cpdef void remove_edge(self, int n1, int n2)
 
     cpdef int dof(self)
     cpdef tuple neighbors(self, int n)
-    cdef c_map_int degrees(self)
+    cdef imap degrees(self)
 
     cpdef bint is_connected(self, int with_out=*)
     cpdef bint has_cut_link(self)

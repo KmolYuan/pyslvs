@@ -14,7 +14,7 @@ email: pyslvs@gmail.com
 
 from collections import defaultdict
 from libcpp.list cimport list as c_list
-from libcpp.map cimport map as c_map
+from libcpp.map cimport map as cmap
 
 
 cpdef inline bint is_planar(Graph g):
@@ -65,7 +65,7 @@ cdef class _LRPlanarity:
 
         # oriented DFS graph
         self.DG = Graph.__new__(Graph, [])
-        self.DG.add_nodes_from(g.nodes)
+        self.DG.add_nodes(g.nodes)
 
         self.adjs = {}
         self.ordered_adjs = {}
@@ -130,7 +130,7 @@ cdef class _LRPlanarity:
         for e in self.DG.edges:
             self.nesting_depth[e] = self.sign(e) * self.nesting_depth[e]
 
-        self.embedding.add_nodes_from(self.DG.nodes)
+        self.embedding.add_nodes(self.DG.nodes)
 
         cdef int previous_node, w
         for v in self.DG.nodes:
@@ -161,7 +161,7 @@ cdef class _LRPlanarity:
         # the recursion stack
         cdef c_list[int] dfs_stack = [v]
         # index of next edge to handle in adjacency list of each node
-        cdef c_map[int, int] ind
+        cdef cmap[int, int] ind
         # bintean to indicate whether to skip the initial work for an edge
         cdef object skip_init = defaultdict(lambda: False)
 
@@ -214,7 +214,7 @@ cdef class _LRPlanarity:
         # the recursion stack
         cdef c_list[int] dfs_stack = [v]
         # index of next edge to handle in adjacency list of each node
-        cdef c_map[int, int] ind
+        cdef cmap[int, int] ind
 
         cdef int w
         while not dfs_stack.empty():
@@ -245,7 +245,7 @@ cdef class _LRPlanarity:
         # the recursion stack
         cdef c_list[int] dfs_stack = [v]
         # index of next edge to handle in adjacency list of each node
-        cdef c_map[int, int] ind
+        cdef cmap[int, int] ind
         # bintean to indicate whether to skip the initial work for an edge
         cdef object skip_init = defaultdict(lambda: False)
 
@@ -475,8 +475,8 @@ cdef class _PlanarEmbedding(Graph):
 
     """Represents a planar graph with its planar embedding."""
 
-    cdef c_map[int, int] node_label
-    cdef c_map[int, c_map[int, c_map[int, int]]] edge_label
+    cdef cmap[int, int] node_label
+    cdef cmap[int, cmap[int, cmap[int, int]]] edge_label
 
     cdef void add_half_edge_cw(self, int start_node, int end_node, int reference_neighbor):
         """Adds a half-edge from start_node to end_node.

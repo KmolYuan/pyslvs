@@ -18,7 +18,7 @@ email: pyslvs@gmail.com
 from time import time
 from logging import getLogger
 from libcpp.vector cimport vector as c_vector
-from libcpp.map cimport map as c_map
+from libcpp.map cimport map as cmap
 from numpy cimport ndarray, int16_t
 from numpy import (
     int16,
@@ -30,7 +30,7 @@ from planar_check cimport is_planar
 cdef object logger = getLogger()
 
 ctypedef unsigned int uint
-ctypedef c_map[int, int] map_int
+ctypedef cmap[int, int] imap
 
 
 cdef int16_t[:] _labels(int16_t[:] numbers, int index, int offset, bint negative):
@@ -47,11 +47,11 @@ cdef int16_t[:] _labels(int16_t[:] numbers, int index, int offset, bint negative
     return np_array(labels, dtype=int16)
 
 
-cdef inline bint _over_count(list pick_list, map_int &limit, map_int &count):
+cdef inline bint _over_count(list pick_list, imap &limit, imap &count):
     """Return True if it is a feasible pick list."""
     cdef int n
     cdef tuple candidate
-    cdef map_int pre_count
+    cdef imap pre_count
     for candidate in pick_list:
         for n in candidate:
             pre_count[n] += 1
@@ -66,7 +66,7 @@ cdef inline bint _over_count(list pick_list, map_int &limit, map_int &count):
     return False
 
 
-cdef inline list _picked_branch(int node, map_int &limit, map_int &count):
+cdef inline list _picked_branch(int node, imap &limit, imap &count):
     """Return feasible node for combination."""
     cdef int pick_count = limit[node] - count[node]
     if pick_count < 1:
@@ -156,7 +156,7 @@ cdef inline list _picked_branch(int node, map_int &limit, map_int &count):
             indices[n2] = indices[n2 - 1] + 1
 
 
-cdef inline int _feasible_link(map_int &limit, map_int &count):
+cdef inline int _feasible_link(imap &limit, imap &count):
     """Return next feasible multiple link, return -1 if no any matched."""
     cdef int n, c
     for n, c in limit:
@@ -165,7 +165,7 @@ cdef inline int _feasible_link(map_int &limit, map_int &count):
     return -1
 
 
-cdef inline bint _all_connected(map_int &limit, map_int &count):
+cdef inline bint _all_connected(imap &limit, imap &count):
     """Return True if all multiple links and contracted links is connected."""
     cdef int n, c
     for n, c in limit:
@@ -199,7 +199,7 @@ cdef inline tuple _contracted_chain(int node, int num, set edges):
     return chain, last_node
 
 
-cdef inline set _dyad_patch(set edges, map_int &limit):
+cdef inline set _dyad_patch(set edges, imap &limit):
     """Return a patched edges for contracted links."""
     cdef int n, c, last_node, u, v
     cdef set new_chain
@@ -222,40 +222,68 @@ cdef inline set _dyad_patch(set edges, map_int &limit):
     return new_edges
 
 
+cdef inline void _test_contracted_graph(
+    set edges,
+    imap &limit,
+    imap *count,
+    list result
+):
+    """Test the contracted graph."""
+    # All links connected
+    if not _all_connected(limit, count[0]):
+        return
+    # Preliminary test
+    cdef Graph g = Graph.__new__(Graph, edges)
+    # All connected
+    if not g.is_connected():
+        return
+    # Cut link
+    if g.has_cut_link():
+        return
+    # Planar graph
+    if not is_planar(g):
+        return
+    # Isomorphism
+    if _is_isomorphic(g, result):
+        return
+
+    result.append(g)
+
+
 cdef inline void _test_graph(
     set edges,
-    map_int &limit,
-    map_int *count,
+    imap &limit,
+    imap *count,
     list result,
     uint no_degenerate
 ):
     """Test the graph."""
-    # Is all links connected.
+    # All links connected
     if not _all_connected(limit, count[0]):
         return
-    # Preliminary test.
+    # Preliminary test
     cdef Graph g = Graph.__new__(Graph, edges)
-    # Is graph all connected.
+    # All connected
     if not g.is_connected():
         return
-    # Is graph has cut link.
+    # Cut link
     if g.has_cut_link():
         return
-    # Is planar graph.
+    # Planar graph
     if not is_planar(g):
         return
 
-    # Result graph.
+    # Result graph
     g = Graph.__new__(Graph, _dyad_patch(edges, limit))
-    # Graph filter depending on degenerate option.
+    # Graph filter depending on degenerate option
     if no_degenerate == 0 and not g.is_degenerate():
         return
     elif no_degenerate == 1 and g.is_degenerate():
         return
-    # Is graph repeated.
+    # Isomorphism
     if _is_isomorphic(g, result):
         return
-    # Collecting to result.
+
     result.append(g)
 
 
@@ -263,7 +291,7 @@ cdef inline void _insert_combine(
     int node,
     tuple combine,
     set edges,
-    map_int *count,
+    imap *count,
 ):
     """Insert combinations."""
     # Collecting to edges.
@@ -282,20 +310,20 @@ cdef inline void _insert_combine(
             count[0][d] += 1
 
 
-cdef void _synthesis(
+cdef void _synthesis_contracted_graph(
     int node,
     list result,
     set edges_origin,
-    map_int &limit,
-    map_int &count_origin,
+    imap &limit,
+    imap &count_origin,
     uint no_degenerate,
     object stop_func
 ):
     """Recursive _synthesis function."""
     # Copied edge list.
     cdef set edges
-    cdef map_int tmp
-    cdef map_int *count
+    cdef imap tmp
+    cdef imap *count
     # Combinations.
     cdef int next_node
     cdef tuple combine
@@ -321,7 +349,7 @@ cdef void _synthesis(
         if next_node == -1:
             _test_graph(edges, limit, count, result, no_degenerate)
         else:
-            _synthesis(next_node, result, edges, limit, count[0], no_degenerate, stop_func)
+            _synthesis_contracted_graph(next_node, result, edges, limit, count[0], no_degenerate, stop_func)
 
 
 cdef void _splice(
@@ -329,14 +357,14 @@ cdef void _splice(
     int16_t[:] m_link,
     int16_t[:] c_link,
     uint no_degenerate,
-    object stop_func,
+    object stop_func
 ):
     """Splice multiple links by:
     
     + Connect to contracted links.
     + Connect to other multiple links.
     """
-    cdef map_int limit, count
+    cdef imap limit, count
     cdef int num
     cdef int i = 0
     for num in m_link:
@@ -349,9 +377,11 @@ cdef void _splice(
         count[i] = 0
         i += 1
 
-    # Synthesis of multiple links.
+    # TODO: Synthesis of contracted graphs
     cdef set edges = set()
-    _synthesis(0, result, edges, limit, count, no_degenerate, stop_func)
+    _synthesis_contracted_graph(0, result, edges, limit, count, no_degenerate, stop_func)
+
+    # TODO: Synthesis of multiple links
 
 
 cdef bint _is_isomorphic(Graph g, list result):

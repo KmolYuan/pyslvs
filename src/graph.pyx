@@ -28,7 +28,7 @@ cpdef list link_assortments(Graph g):
         return [0]
 
     cdef list assortments = [0]
-    cdef c_map_int g_degrees = g.degrees()
+    cdef imap g_degrees = g.degrees()
 
     cdef int n, d
     for n, d in g_degrees:
@@ -59,7 +59,7 @@ cpdef list contracted_link_assortments(Graph g):
 
     # For single contracted links.
     cdef int n
-    cdef c_map_int g_degrees = g.degrees()
+    cdef imap g_degrees = g.degrees()
     for n, d in g_degrees:
         if d != 2:
             continue
@@ -133,8 +133,7 @@ cdef class Graph:
         self.edges += ((n1, n2),)
 
         cdef int n
-        self.adj.clear()
-        for n in self.nodes:
+        for n in (n1, n2):
             self.adj[n] = self.neighbors(n)
 
         if n1 not in self.nodes:
@@ -142,9 +141,40 @@ cdef class Graph:
         if n2 not in self.nodes:
             self.nodes += (n2,)
 
-    cpdef void add_nodes_from(self, tuple nodes):
-        """Add nodes from a tuple."""
+    cpdef void add_nodes(self, object nodes):
+        """Add nodes from a iterable."""
         self.nodes = tuple(set(self.nodes) | set(nodes))
+
+    cpdef void add_path(self, object nodes):
+        """Add path from a iterable."""
+        cdef int n1 = -1
+        cdef int n2
+        for n2 in nodes:
+            if n1 != -1:
+                self.add_edge(n1, n2)
+            n1 = n2
+
+    cpdef void remove_edge(self, int n1, int n2):
+        """Remove edge(s) {n1, n2} if exist, otherwise do nothing."""
+        cdef set nodes = set()
+        cdef list edges = []
+
+        cdef tuple edge
+        for edge in self.edges:
+            if {n1, n2} != set(edge):
+                nodes.add(n1)
+                nodes.add(n2)
+                edges.append(edge)
+
+        self.edges = tuple(edges)
+
+        cdef int n
+        for n in nodes:
+            edge = self.neighbors(n)
+            if edge:
+                self.adj[n] = edge
+            else:
+                self.adj.pop(n, None)
 
     cpdef int dof(self):
         """Return degrees of freedom."""
@@ -161,11 +191,11 @@ cdef class Graph:
                 neighbors.append(l1)
         return tuple(neighbors)
 
-    cdef c_map_int degrees(self):
+    cdef imap degrees(self):
         """Return number of neighbors par node."""
         cdef int n
         cdef tuple neighbors
-        cdef c_map_int g_degrees
+        cdef imap g_degrees
         for n, neighbors in self.adj.items():
             g_degrees[n] = len(neighbors)
         return g_degrees
@@ -194,7 +224,7 @@ cdef class Graph:
 
     cpdef bint has_cut_link(self):
         """Return True if the graph has any cut links."""
-        cdef c_map_int g_degrees = self.degrees()
+        cdef imap g_degrees = self.degrees()
 
         cdef int n, d
         for n, d in g_degrees:
@@ -215,7 +245,7 @@ cdef class Graph:
             return True
 
         cdef int n1, n2
-        cdef c_map_int g_degrees
+        cdef imap g_degrees
         cdef list c_l
         cdef Graph g = self.copy()
         cdef set mcl = set()

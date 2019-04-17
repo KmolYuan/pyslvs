@@ -17,7 +17,7 @@ cimport cython
 from cpython cimport PyDict_Contains, PyIndex_Check
 from cpython.slice cimport PySlice_GetIndicesEx
 from libc.math cimport hypot, M_PI, sin, cos, atan2
-from graph cimport Graph, c_map
+from graph cimport Graph, cmap
 
 
 cpdef dict external_loop_layout(Graph g, bint node_mode, double scale = 1.):
@@ -57,7 +57,7 @@ cdef inline dict _line_polygon_layout(Graph g, double scale):
 
     cdef int start, end
     cdef OrderedSet line
-    cdef c_map[int, c_map[int, int]] line_limit, line_counter
+    cdef cmap[int, cmap[int, int]] line_limit, line_counter
     for line, start, end in lines:
         line_limit[start][end] += 1
 
@@ -308,7 +308,7 @@ cdef inline OrderedSet _external_loop(Graph g):
     if not cycles:
         raise ValueError(f"invalid graph has no any cycle: {g.edges}")
 
-    cdef c_map[int, int] g_degrees = g.degrees()
+    cdef cmap[int, int] g_degrees = g.degrees()
     cdef OrderedSet c1, c2
     while len(cycles) > 1:
         c1 = cycles.pop()
@@ -406,7 +406,7 @@ cdef inline bint _merge_no_inter(
 ):
     """Merge function for the strategy without intersection."""
     cdef OrderedSet inter = OrderedSet.__new__(OrderedSet)
-    cdef c_map[int, int] inter_map
+    cdef cmap[int, int] inter_map
 
     cdef int n1, n2
     for n1, n2 in g.edges:

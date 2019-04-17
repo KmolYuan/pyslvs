@@ -22,7 +22,7 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.math cimport M_PI, cos, sin
 from libcpp.list cimport list as c_list
 from libcpp.vector cimport vector
-from libcpp.map cimport map as c_map
+from libcpp.map cimport map as cmap
 from libcpp.pair cimport pair
 from sketch_solve cimport (
     Rough,
@@ -95,7 +95,7 @@ cpdef list vpoint_solving(
     cdef c_list[double] params
     cdef c_list[double] constants
     cdef vector[Point] points
-    cdef c_map[int, int] sliders
+    cdef cmap[int, int] sliders
     cdef vector[Point] slider_bases
     cdef vector[Point] slider_slots
     cdef c_list[Line] slider_lines
