@@ -13,6 +13,7 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
+from libcpp.pair cimport pair as cpair
 import sys
 from typing import (
     Tuple,
@@ -20,6 +21,8 @@ from typing import (
     Dict,
     Iterator,
 )
+
+ctypedef cpair[int, int] ipair
 
 
 cpdef list link_assortments(Graph g):
@@ -30,11 +33,12 @@ cpdef list link_assortments(Graph g):
     cdef list assortments = [0]
     cdef imap g_degrees = g.degrees()
 
-    cdef int n, d
-    for n, d in g_degrees:
-        if d < 2:
+    cdef int d
+    cdef ipair it
+    for it in g_degrees:
+        if it.second < 2:
             continue
-        d -= 2
+        d = it.second - 2
         while d >= len(assortments):
             assortments.append(0)
         assortments[d] += 1
@@ -58,12 +62,12 @@ cpdef list contracted_link_assortments(Graph g):
         assortments[d] += 1
 
     # For single contracted links.
-    cdef int n
     cdef imap g_degrees = g.degrees()
-    for n, d in g_degrees:
-        if d != 2:
+    cdef ipair it
+    for it in g_degrees:
+        if it.second != 2:
             continue
-        if n not in counted:
+        if it.first not in counted:
             assortments[0] += 1
 
     return assortments
@@ -225,13 +229,12 @@ cdef class Graph:
     cpdef bint has_cut_link(self):
         """Return True if the graph has any cut links."""
         cdef imap g_degrees = self.degrees()
-
-        cdef int n, d
-        for n, d in g_degrees:
+        cdef ipair it
+        for it in g_degrees:
             # Only for multiple links.
-            if d > 2:
+            if it.second > 2:
                 # Remove a multiple link should be keep connected.
-                if not self.is_connected(n):
+                if not self.is_connected(it.first):
                     return True
         return False
 

@@ -115,24 +115,24 @@ cdef inline list _picked_branch(int node, imap &limit, imap &count):
 
     # Create pool
     cdef list pool_list = []
-    cdef int n1, n2, c1, c2
-    for n1, c1 in limit:
-        if node == n1:
+    cdef ipair it1, it2
+    for it1 in limit:
+        if node == it1.first:
             continue
-        if c1 > 0:
+        if it1.second > 0:
             # Multiple links
-            if count[n1] < c1:
-                pool_list.append((n1,))
+            if count[it1.first] < it1.second:
+                pool_list.append((it1.first,))
         else:
             # Contracted links
-            if count[n1] > 0:
+            if count[it1.first] > 0:
                 continue
-            for n2, c2 in limit:
-                if node == n2:
+            for it2 in limit:
+                if node == it2.first:
                     continue
                 # Multiple links
-                if c2 > 0 and count[n2] < c2:
-                    pool_list.append((n1, n2))
+                if it2.second > 0 and count[it2.first] < it2.second:
+                    pool_list.append((it1.first, it2.first))
 
     # Check over picked
     cdef int pool_size = len(pool_list)
@@ -152,6 +152,7 @@ cdef inline list _picked_branch(int node, imap &limit, imap &count):
 
     # Combinations loop with number checking.
     # TODO: Need to be optimized: Remove same type link picking.
+    cdef int n1, c1, n2, c2
     cdef tuple hash_code, hash_codes
     while True:
         # Combine
@@ -206,24 +207,24 @@ cdef inline list _picked_branch(int node, imap &limit, imap &count):
 
 cdef inline int _feasible_link(imap &limit, imap &count):
     """Return next feasible multiple link, return -1 if no any matched."""
-    cdef int n, c
-    for n, c in limit:
-        if c > 0 and count[n] < c:
-            return n
+    cdef ipair it
+    for it in limit:
+        if it.second > 0 and count[it.first] < it.second:
+            return it.first
     return -1
 
 
 cdef inline bint _all_connected(imap &limit, imap &count):
     """Return True if all multiple links and contracted links is connected."""
-    cdef int n, c
-    for n, c in limit:
-        if c < 0:
+    cdef ipair it
+    for it in limit:
+        if it.second < 0:
             # Contracted links.
-            if count[n] == 0:
+            if count[it.first] == 0:
                 return False
         else:
             # Multiple links.
-            if count[n] != c:
+            if count[it.first] != it.second:
                 return False
     return True
 
@@ -249,19 +250,20 @@ cdef inline tuple _contracted_chain(int node, int num, set edges):
 
 cdef inline set _dyad_patch(set edges, imap &limit):
     """Return a patched edges for contracted links."""
-    cdef int n, c, last_node, u, v
+    cdef int last_node, u, v
     cdef set new_chain
     cdef set new_edges = edges.copy()
-    for n, c in limit:
+    cdef ipair it
+    for it in limit:
         # Only for contracted links.
-        if not c < 0 or c == -1:
+        if not it.second < 0 or it.second == -1:
             continue
-        new_chain, last_node = _contracted_chain(n, abs(c), new_edges)
+        new_chain, last_node = _contracted_chain(it.first, abs(it.second), new_edges)
         for u, v in edges:
             # Find once.
-            if n == u or n == v:
+            if it.first == u or it.first == v:
                 new_edges.remove((u, v))
-                if n == u:
+                if it.first == u:
                     new_edges.add((v, last_node))
                 else:
                     new_edges.add((u, last_node))
@@ -407,8 +409,12 @@ cdef inline list _picked_multi_branch(int node, imap &limit, imap &count):
     if pick_count < 1:
         return []
 
+    cdef ipair it1, it2
+
     # TODO: Create pool
     cdef list pool_list = []
+    for it1 in limit:
+        pass
 
     # Over picked (error graph).
     cdef int pool_size = len(pool_list)
