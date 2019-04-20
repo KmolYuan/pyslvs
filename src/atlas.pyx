@@ -17,7 +17,10 @@ email: pyslvs@gmail.com
 
 from time import time
 from logging import getLogger
-from libcpp.vector cimport vector as c_vector
+from cpython.mem cimport PyMem_Malloc, PyMem_Free
+from libcpp.string cimport string
+from libcpp.pair cimport pair as cpair
+from libcpp.set cimport set as cset
 from libcpp.map cimport map as cmap
 from numpy cimport ndarray, int16_t
 from numpy import (
@@ -30,6 +33,7 @@ from planar_check cimport is_planar
 cdef object logger = getLogger()
 
 ctypedef unsigned int uint
+ctypedef cpair[int, int] ipair
 ctypedef cmap[int, int] imap
 
 
@@ -45,6 +49,43 @@ cdef int16_t[:] _labels(int16_t[:] numbers, int index, int offset, bint negative
                 labels.append(index)
         index += 1
     return np_array(labels, dtype=int16)
+
+
+# NOTE: New method
+cdef inline cset[string] *_combinations(string labels, int r):
+    """Combination function of pure C++ implementation.
+    
+    combinations(b'ABCD', 2) --> AB AC AD BC BD CD
+    combinations(b'0123', 3) --> 012 013 023 123
+    """
+    cdef int n = labels.size()
+    cdef cset[string] *collections = new cset[string]()
+    if r > n:
+        return collections
+
+    cdef int *indices = <int *>PyMem_Malloc(r * sizeof(int))
+    cdef string s
+
+    cdef int i
+    for i in range(r):
+        indices[i] = i
+        s += labels[i]
+    collections.insert(s)
+    while True:
+        for i in reversed(range(r)):
+            if indices[i] != i + n - r:
+                break
+        else:
+            PyMem_Free(indices)
+            return collections
+        indices[i] += 1
+        for j in range(i + 1, r):
+            indices[j] = indices[j - 1] + 1
+
+        s.clear()
+        for i in range(r):
+            s += labels[indices[i]]
+        collections.insert(s)
 
 
 cdef inline bint _over_count(list pick_list, imap &limit, imap &count):
@@ -72,44 +113,50 @@ cdef inline list _picked_branch(int node, imap &limit, imap &count):
     if pick_count < 1:
         return []
 
-    # Create pool.
-    cdef int n1, n2, c1, c2
+    # Create pool
     cdef list pool_list = []
+    cdef int n1, n2, c1, c2
     for n1, c1 in limit:
         if node == n1:
             continue
         if c1 > 0:
-            # Multiple links.
+            # Multiple links
             if count[n1] < c1:
                 pool_list.append((n1,))
         else:
-            # Contracted links.
+            # Contracted links
             if count[n1] > 0:
                 continue
             for n2, c2 in limit:
                 if node == n2:
                     continue
-                # Multiple links.
+                # Multiple links
                 if c2 > 0 and count[n2] < c2:
                     pool_list.append((n1, n2))
 
-    # Over picked (error graph).
+    # Check over picked
     cdef int pool_size = len(pool_list)
     if pick_count > pool_size:
         return []
 
-    # Combinations loop with number checking.
-    # TODO: Need to be optimized: Remove same type link picking.
-    cdef tuple hash_code, hash_codes
-    cdef c_vector[int] indices = range(pick_count)
+    cdef int *indices = <int *>PyMem_Malloc(pick_count * sizeof(int))
+    cdef int i
+    for i in range(pick_count):
+        indices[i] = i
+
     cdef bint failed = False
     cdef set types = set()
     cdef list pick_list = []
     cdef list hash_list = []
     cdef list combine_list = []
+
+    # Combinations loop with number checking.
+    # TODO: Need to be optimized: Remove same type link picking.
+    cdef tuple hash_code, hash_codes
     while True:
-        # Combine.
-        for n1 in indices:
+        # Combine
+        for i in range(pick_count):
+            n1 = indices[i]
             pick_list.append(pool_list[n1])
             c1 = pool_list[n1][0]
             if len(pool_list[n1]) == 1:
@@ -148,6 +195,7 @@ cdef inline list _picked_branch(int node, imap &limit, imap &count):
             if indices[n1] != (n1 + pool_size - pick_count):
                 break
         else:
+            PyMem_Free(indices)
             return combine_list
 
         # Next indexing.
@@ -291,7 +339,7 @@ cdef inline void _insert_combine(
     int node,
     tuple combine,
     set edges,
-    imap *count,
+    imap *count
 ):
     """Insert combinations."""
     # Collecting to edges.
@@ -310,7 +358,7 @@ cdef inline void _insert_combine(
             count[0][d] += 1
 
 
-cdef void _synthesis_contracted_graph(
+cdef void _synthesis(
     int node,
     list result,
     set edges_origin,
@@ -319,7 +367,7 @@ cdef void _synthesis_contracted_graph(
     uint no_degenerate,
     object stop_func
 ):
-    """Recursive _synthesis function."""
+    """Recursive synthesis function."""
     # Copied edge list.
     cdef set edges
     cdef imap tmp
@@ -328,13 +376,13 @@ cdef void _synthesis_contracted_graph(
     cdef int next_node
     cdef tuple combine
     cdef list branches = _picked_branch(node, limit, count_origin)
-    cdef bint one_case = len(branches) > 1
+    cdef bint multi_case = len(branches) > 1
     for combine in branches:
         # Check if stop.
         if stop_func and stop_func():
             return
 
-        if one_case:
+        if multi_case:
             edges = edges_origin.copy()
             tmp = count_origin
             count = &tmp
@@ -349,7 +397,68 @@ cdef void _synthesis_contracted_graph(
         if next_node == -1:
             _test_graph(edges, limit, count, result, no_degenerate)
         else:
-            _synthesis_contracted_graph(next_node, result, edges, limit, count[0], no_degenerate, stop_func)
+            _synthesis(next_node, result, edges, limit, count[0], no_degenerate, stop_func)
+
+
+# NOTE: New method
+cdef inline list _picked_multi_branch(int node, imap &limit, imap &count):
+    """Return feasible node for contracted graph combination."""
+    cdef int pick_count = limit[node] - count[node]
+    if pick_count < 1:
+        return []
+
+    # TODO: Create pool
+    cdef list pool_list = []
+
+    # Over picked (error graph).
+    cdef int pool_size = len(pool_list)
+    if pick_count > pool_size:
+        return []
+
+    # TODO: combinations
+    return []
+
+
+# NOTE: New method
+cdef _contracted_graph(
+    int node,
+    list result,
+    set edges_origin,
+    imap &limit,
+    imap &count_origin,
+    object stop_func
+):
+    """Synthesis contracted graphs."""
+    # Copied edge list.
+    cdef set edges
+    cdef imap tmp
+    cdef imap *count
+    # Combinations.
+    cdef int next_node
+    cdef tuple combine
+    cdef list branches = _picked_multi_branch(node, limit, count_origin)
+    cdef bint multi_case = len(branches) > 1
+    for combine in branches:
+        # Check if stop.
+        if stop_func and stop_func():
+            return
+
+        if multi_case:
+            edges = edges_origin.copy()
+            tmp = count_origin
+            count = &tmp
+        else:
+            edges = edges_origin
+            count = &count_origin
+
+        _insert_combine(node, combine, edges, count)
+
+        # Recursive or end.
+        next_node = _feasible_link(limit, count[0])
+        if next_node == -1:
+            _test_contracted_graph(edges, limit, count, result)
+        else:
+            _contracted_graph(next_node, result, edges, limit, count[0], stop_func)
 
 
 cdef void _splice(
@@ -377,11 +486,20 @@ cdef void _splice(
         count[i] = 0
         i += 1
 
-    # TODO: Synthesis of contracted graphs
-    cdef set edges = set()
-    _synthesis_contracted_graph(0, result, edges, limit, count, no_degenerate, stop_func)
+    cdef list contracted_graphs = []
+    _contracted_graph(0, contracted_graphs, set(), limit, count, stop_func)
 
     # TODO: Synthesis of multiple links
+
+    # Origin one
+    i = 0
+    for num in m_link:
+        count[i] = 0
+        i += 1
+    for num in c_link:
+        count[i] = 0
+        i += 1
+    _synthesis(0, result, set(), limit, count, no_degenerate, stop_func)
 
 
 cdef bint _is_isomorphic(Graph g, list result):
