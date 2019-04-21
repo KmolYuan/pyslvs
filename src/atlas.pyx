@@ -18,9 +18,7 @@ email: pyslvs@gmail.com
 from time import time
 from logging import getLogger
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
-from libcpp.string cimport string
 from libcpp.pair cimport pair as cpair
-from libcpp.set cimport set as cset
 from libcpp.map cimport map as cmap
 from numpy cimport ndarray, int16_t
 from numpy import (
@@ -49,43 +47,6 @@ cdef int16_t[:] _labels(int16_t[:] numbers, int index, int offset, bint negative
                 labels.append(index)
         index += 1
     return np_array(labels, dtype=int16)
-
-
-# NOTE: New method
-cdef inline cset[string] *_combinations(string labels, int r):
-    """Combination function of pure C++ implementation.
-    
-    combinations(b'ABCD', 2) --> AB AC AD BC BD CD
-    combinations(b'0123', 3) --> 012 013 023 123
-    """
-    cdef int n = labels.size()
-    cdef cset[string] *collections = new cset[string]()
-    if r > n:
-        return collections
-
-    cdef int *indices = <int *>PyMem_Malloc(r * sizeof(int))
-    cdef string s
-
-    cdef int i
-    for i in range(r):
-        indices[i] = i
-        s += labels[i]
-    collections.insert(s)
-    while True:
-        for i in reversed(range(r)):
-            if indices[i] != i + n - r:
-                break
-        else:
-            PyMem_Free(indices)
-            return collections
-        indices[i] += 1
-        for j in range(i + 1, r):
-            indices[j] = indices[j - 1] + 1
-
-        s.clear()
-        for i in range(r):
-            s += labels[indices[i]]
-        collections.insert(s)
 
 
 cdef inline bint _over_count(list pick_list, imap &limit, imap &count):
@@ -193,7 +154,7 @@ cdef inline list _picked_branch(int node, imap &limit, imap &count):
 
         # Check combination is over.
         for n1 in reversed(range(pick_count)):
-            if indices[n1] != (n1 + pool_size - pick_count):
+            if indices[n1] != n1 + pool_size - pick_count:
                 break
         else:
             PyMem_Free(indices)
@@ -279,10 +240,6 @@ cdef inline void _test_contracted_graph(
     list result
 ):
     """Test the contracted graph."""
-    # All links connected
-    if not _all_connected(limit, count[0]):
-        return
-    # Preliminary test
     cdef Graph g = Graph.__new__(Graph, edges)
     # All connected
     if not g.is_connected():
@@ -409,24 +366,70 @@ cdef inline list _picked_multi_branch(int node, imap &limit, imap &count):
     if pick_count < 1:
         return []
 
-    cdef ipair it1, it2
-
-    # TODO: Create pool
+    # Create pool
     cdef list pool_list = []
+    cdef int i, margin
+    cdef ipair it1, it2
     for it1 in limit:
-        pass
+        if node == it1.first:
+            continue
+        if it1.second <= 0:
+            continue
+        # Multiple links
+        margin = it1.second - count[it1.first]
+        if margin <= 0:
+            continue
+        for i in range(margin):
+            pool_list.append((it1.first,))
 
-    # Over picked (error graph).
+    # Check over picked
     cdef int pool_size = len(pool_list)
     if pick_count > pool_size:
         return []
 
-    # TODO: combinations
-    return []
+    cdef int *indices = <int *>PyMem_Malloc(pick_count * sizeof(int))
+    for i in range(pick_count):
+        indices[i] = i
+
+    cdef set types = set()
+    cdef list pick_list = []
+    cdef list combine_list = []
+
+    # Combinations loop with number checking.
+    cdef bint failed
+    cdef int n1, n2
+    while True:
+        # Combine
+        for i in range(pick_count):
+            pick_list.append(pool_list[indices[i]])
+
+        # Check if contracted link is over selected.
+        failed = _over_count(pick_list, limit, count)
+
+        # Collecting
+        if not failed:
+            combine_list.append(tuple(pick_list))
+
+        # Initialize
+        failed = False
+        pick_list.clear()
+
+        # Check combination is over.
+        for n1 in reversed(range(pick_count)):
+            if indices[n1] != n1 + pool_size - pick_count:
+                break
+        else:
+            PyMem_Free(indices)
+            return combine_list
+
+        # Next indicator
+        indices[n1] += 1
+        for n2 in range(n1 + 1, pick_count):
+            indices[n2] = indices[n2 - 1] + 1
 
 
 # NOTE: New method
-cdef _contracted_graph(
+cdef void _contracted_graph(
     int node,
     list result,
     set edges_origin,
@@ -467,6 +470,12 @@ cdef _contracted_graph(
             _contracted_graph(next_node, result, edges, limit, count[0], stop_func)
 
 
+# NOTE: New method
+cdef void _graph_atlas(list contracted_graph, list result):
+    """Synthesis of atlas."""
+    # TODO: Atlas from contracted graph.
+
+
 cdef void _splice(
     list result,
     int16_t[:] m_link,
@@ -495,7 +504,8 @@ cdef void _splice(
     cdef list contracted_graphs = []
     _contracted_graph(0, contracted_graphs, set(), limit, count, stop_func)
 
-    # TODO: Synthesis of multiple links
+    # Synthesis of multiple links
+    _graph_atlas(contracted_graphs, result)
 
     # Origin one
     i = 0
@@ -506,6 +516,11 @@ cdef void _splice(
         count[i] = 0
         i += 1
     _synthesis(0, result, set(), limit, count, no_degenerate, stop_func)
+
+    if len(contracted_graphs) == 0 and len(result) > 0:
+        print(f"error: {len(contracted_graphs)}, {len(result)}")
+
+    logger.debug(f"Contracted graph(s): {len(contracted_graphs)}")
 
 
 cdef bint _is_isomorphic(Graph g, list result):
