@@ -29,7 +29,7 @@ cdef inline list _product(int pool_size, int repeat, object stop_func):
     for i in range(repeat):
         tmp_list = []
         for x in result:
-            if stop_func and stop_func():
+            if stop_func is not None and stop_func():
                 return []
             for y in range(pool_size):
                 tmp_list.append(x + [y])

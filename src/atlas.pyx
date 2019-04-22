@@ -338,7 +338,7 @@ cdef void _synthesis(
     cdef bint multi_case = len(branches) > 1
     for combine in branches:
         # Check if stop.
-        if stop_func and stop_func():
+        if stop_func is not None and stop_func():
             return
 
         if multi_case:
@@ -449,7 +449,7 @@ cdef void _contracted_graph(
     cdef bint multi_case = len(branches) > 1
     for combine in branches:
         # Check if stop.
-        if stop_func and stop_func():
+        if stop_func is not None and stop_func():
             return
 
         if multi_case:
@@ -471,9 +471,21 @@ cdef void _contracted_graph(
 
 
 # NOTE: New method
-cdef void _graph_atlas(list contracted_graph, list result):
+cdef inline void _graph_atlas(
+    list result,
+    list contracted_graph,
+    imap &limit,
+    uint no_degenerate,
+    object stop_func
+):
     """Synthesis of atlas."""
-    # TODO: Atlas from contracted graph.
+    cdef Graph g
+    for g in contracted_graph:
+        # Check if stop.
+        if stop_func is not None and stop_func():
+            return
+
+        # TODO: Atlas from contracted graph.
 
 
 cdef void _splice(
@@ -505,7 +517,7 @@ cdef void _splice(
     _contracted_graph(0, contracted_graphs, set(), limit, count, stop_func)
 
     # Synthesis of multiple links
-    _graph_atlas(contracted_graphs, result)
+    _graph_atlas(result, contracted_graphs, limit, no_degenerate, stop_func)
 
     # Origin one
     i = 0
