@@ -391,12 +391,10 @@ cdef inline list _picked_multi_branch(int node, imap &limit, imap &count):
     for i in range(pick_count):
         indices[i] = i
 
-    cdef set types = set()
     cdef list pick_list = []
     cdef list combine_list = []
 
     # Combinations loop with number checking.
-    cdef bint failed
     cdef int n1, n2
     while True:
         # Combine
@@ -404,14 +402,10 @@ cdef inline list _picked_multi_branch(int node, imap &limit, imap &count):
             pick_list.append(pool_list[indices[i]])
 
         # Check if contracted link is over selected.
-        failed = _over_count(pick_list, limit, count)
-
-        # Collecting
-        if not failed:
+        if not _over_count(pick_list, limit, count):
             combine_list.append(tuple(pick_list))
 
         # Initialize
-        failed = False
         pick_list.clear()
 
         # Check combination is over.
@@ -471,10 +465,77 @@ cdef void _contracted_graph(
 
 
 # NOTE: New method
+cdef inline void _contracted_links(
+    tuple edges,
+    list result,
+    imap &limit,
+    imap &count,
+    uint no_degenerate
+):
+    """Combination of contracted links."""
+    cdef int pick_count = len(edges)
+    cdef cmap[ipair, int] edge_type
+
+    cdef int n1, n2
+    cdef ipair key
+    for n1, n2 in edges:
+        key = [n1, n2]
+        edge_type[key] += 1
+
+    cdef list pool_list = []
+
+    cdef int i
+    cdef ipair it
+    for it in limit:
+        for i in range(count[it.first]):
+            pool_list.append(it.first)
+
+    # Check over picked
+    cdef int pool_size = len(pool_list)
+    if pick_count - <int>edge_type.size() > pool_size:
+        return
+
+    cdef int *indices = <int *>PyMem_Malloc(pick_count * sizeof(int))
+    for i in range(pick_count):
+        indices[i] = i
+
+    cdef list pick_list = []
+    cdef list combine_list = []
+
+    # Combinations loop with number checking.
+    while True:
+        # Combine
+        for i in range(pick_count):
+            pick_list.append(pool_list[indices[i]])
+
+        # Collecting
+        # TODO: Needs to filtered
+        combine_list.append(tuple(pick_list))
+
+        # Initialize
+        pick_list.clear()
+
+        # Check combination is over.
+        for n1 in reversed(range(pick_count)):
+            if indices[n1] != n1 + pool_size - pick_count:
+                break
+        else:
+            PyMem_Free(indices)
+            # TODO: result
+            return
+
+        # Next indicator
+        indices[n1] += 1
+        for n2 in range(n1 + 1, pick_count):
+            indices[n2] = indices[n2 - 1] + 1
+
+
+# NOTE: New method
 cdef inline void _graph_atlas(
     list result,
     list contracted_graph,
     imap &limit,
+    imap &count,
     uint no_degenerate,
     object stop_func
 ):
@@ -484,8 +545,7 @@ cdef inline void _graph_atlas(
         # Check if stop.
         if stop_func is not None and stop_func():
             return
-
-        # TODO: Atlas from contracted graph.
+        _contracted_links(g.edges, result, count, limit, no_degenerate)
 
 
 cdef void _splice(
@@ -500,24 +560,26 @@ cdef void _splice(
     + Connect to contracted links.
     + Connect to other multiple links.
     """
-    cdef imap limit, count
+    cdef imap limit, m_limit, c_limit, count
     cdef int num
     cdef int i = 0
     for num in m_link:
         limit[i] = num
+        m_limit[i] = num
         count[i] = 0
         i += 1
     for num in c_link:
         # Actual limit is 1.
         limit[i] = num
+        c_limit[i] = num
         count[i] = 0
         i += 1
 
     cdef list contracted_graphs = []
-    _contracted_graph(0, contracted_graphs, set(), limit, count, stop_func)
+    _contracted_graph(0, contracted_graphs, set(), m_limit, count, stop_func)
 
     # Synthesis of multiple links
-    _graph_atlas(result, contracted_graphs, limit, no_degenerate, stop_func)
+    _graph_atlas(result, contracted_graphs, c_limit, count, no_degenerate, stop_func)
 
     # Origin one
     i = 0
