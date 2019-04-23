@@ -1,6 +1,12 @@
 Change Log
 ===
 
+Version 19.04
+===
+
++ More methods of graph class.
++ Support multi-graph for "Planar check" function.
+
 Version 19.03
 ===
 

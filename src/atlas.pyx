@@ -558,11 +558,10 @@ cdef inline void _graph_atlas(
         if stop_func is not None and stop_func():
             return
 
-        # print(g)
+        print(g)
         for combine in _contracted_links(g.edges, limit):
-            # print(limit.size(), combine)
+            print(limit.size(), combine)
             # TODO: contracted links combination
-            pass
 
 
 cdef void _splice(
