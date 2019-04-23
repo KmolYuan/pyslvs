@@ -48,20 +48,17 @@ cdef class _LRPlanarity:
 
     def __cinit__(self, g: Graph):
         # copy G without adding self-loops
-        self.g = g.copy()
-
-        def return_none():
-            return None
+        self.g = Graph.__new__(Graph, set(g.edges))
 
         # distance from tree root
-        self.height = defaultdict(return_none)
+        self.height = defaultdict(lambda: None)
 
         self.lowpt = {}  # height of lowest return point of an edge
         self.lowpt2 = {}  # height of second lowest return point
         self.nesting_depth = {}  # for nesting order
 
         # None -> missing edge
-        self.parent_edge = defaultdict(return_none)
+        self.parent_edge = defaultdict(lambda: None)
 
         # oriented DFS graph
         self.DG = Graph.__new__(Graph, [])
@@ -70,7 +67,7 @@ cdef class _LRPlanarity:
         self.adjs = {}
         self.ordered_adjs = {}
 
-        self.ref = defaultdict(return_none)
+        self.ref = defaultdict(lambda: None)
         self.side = defaultdict(lambda: 1)
 
         # stack of conflict pairs

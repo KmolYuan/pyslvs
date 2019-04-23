@@ -248,8 +248,6 @@ cdef inline void _test_contracted_graph(
         return
     # Planar graph
     if not is_planar(g):
-        # TODO: Exception of multi-graph
-        # Graph([(0, 1), (0, 2), (0, 2), (1, 2), (1, 2)])
         return
     # Isomorphism
     if _is_isomorphic(g, result):
