@@ -295,6 +295,10 @@ cdef class Graph:
         """Copy the graph."""
         return Graph.__new__(Graph, self.edges)
 
+    def __repr__(self) -> str:
+        """Print the edges."""
+        return f"{self.__class__.__name__}({list(self.edges)})"
+
 
 cdef bint _is_adjacent(Graph g, int u, int v):
     """Find the distance between u and v."""

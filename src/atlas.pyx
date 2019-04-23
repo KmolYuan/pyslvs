@@ -431,7 +431,7 @@ cdef void _contracted_graph(
     imap &count_origin,
     object stop_func
 ):
-    """Synthesis contracted graphs."""
+    """Synthesis of contracted graphs."""
     # Copied edge list.
     cdef set edges
     cdef imap tmp
@@ -465,42 +465,31 @@ cdef void _contracted_graph(
 
 
 # NOTE: New method
-cdef inline void _contracted_links(
-    tuple edges,
-    list result,
-    imap &limit,
-    imap &count,
-    uint no_degenerate
-):
-    """Combination of contracted links."""
-    cdef int pick_count = len(edges)
-    cdef cmap[ipair, int] edge_type
-
-    cdef int n1, n2
-    cdef ipair key
-    for n1, n2 in edges:
-        key = [n1, n2]
-        edge_type[key] += 1
-
-    cdef list pool_list = []
-
-    cdef int i
-    cdef ipair it
-    for it in limit:
-        for i in range(count[it.first]):
-            pool_list.append(it.first)
+cdef inline tuple _contracted_links(tuple edges, imap &limit):
+    """Combination of contracted links.
+    
+    pool: edges
+    pick: contracted links
+    
+    If the edge is not picked, it represent the joint is connected directly.
+    """
+    cdef int pick_count = limit.size()
+    if pick_count < 1:
+        return ()
 
     # Check over picked
+    cdef list pool_list = [frozenset(edge) for edge in edges]
     cdef int pool_size = len(pool_list)
-    if pick_count - <int>edge_type.size() > pool_size:
-        return
+    if pick_count > pool_size:
+        return ()
 
     cdef int *indices = <int *>PyMem_Malloc(pick_count * sizeof(int))
+    cdef int i
     for i in range(pick_count):
         indices[i] = i
 
     cdef list pick_list = []
-    cdef list combine_list = []
+    cdef set combine_list = set()
 
     # Combinations loop with number checking.
     while True:
@@ -509,8 +498,9 @@ cdef inline void _contracted_links(
             pick_list.append(pool_list[indices[i]])
 
         # Collecting
-        # TODO: Needs to filtered
-        combine_list.append(tuple(pick_list))
+        # TODO: filter
+        pick_list.sort()
+        combine_list.add(tuple(pick_list))
 
         # Initialize
         pick_list.clear()
@@ -521,8 +511,7 @@ cdef inline void _contracted_links(
                 break
         else:
             PyMem_Free(indices)
-            # TODO: result
-            return
+            return tuple(combine_list)
 
         # Next indicator
         indices[n1] += 1
@@ -535,17 +524,21 @@ cdef inline void _graph_atlas(
     list result,
     list contracted_graph,
     imap &limit,
-    imap &count,
     uint no_degenerate,
     object stop_func
 ):
     """Synthesis of atlas."""
     cdef Graph g
+    cdef tuple combine
     for g in contracted_graph:
         # Check if stop.
         if stop_func is not None and stop_func():
             return
-        _contracted_links(g.edges, result, count, limit, no_degenerate)
+
+        print(g)
+        for combine in _contracted_links(g.edges, limit):
+            print(limit.size(), combine)
+            # TODO: contracted links combination
 
 
 cdef void _splice(
@@ -575,11 +568,12 @@ cdef void _splice(
         count[i] = 0
         i += 1
 
+    # Synthesis of contracted graphs
     cdef list contracted_graphs = []
     _contracted_graph(0, contracted_graphs, set(), m_limit, count, stop_func)
 
     # Synthesis of multiple links
-    _graph_atlas(result, contracted_graphs, c_limit, count, no_degenerate, stop_func)
+    _graph_atlas(result, contracted_graphs, c_limit, no_degenerate, stop_func)
 
     # Origin one
     i = 0
