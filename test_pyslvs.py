@@ -126,6 +126,13 @@ class CoreTest(TestCase):
         """Test 'atlas' libraries."""
         answers = []
 
+        type_0 = [4]
+        for c_j in contracted_link(type_0):
+            answer, _ = topo(type_0, c_j)
+            answers.extend(answer)
+        self.assertEqual(1, len(answers))
+        answers.clear()
+
         type_1 = [4, 2]
         for c_j in contracted_link(type_1):
             answer, _ = topo(type_1, c_j)
