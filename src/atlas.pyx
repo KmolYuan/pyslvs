@@ -112,7 +112,6 @@ cdef inline list _picked_branch(int node, imap &limit, imap &count):
     cdef list combine_list = []
 
     # Combinations loop with number checking.
-    # TODO: Need to be optimized: Remove same type link picking.
     cdef int n1, c1, n2, c2
     cdef tuple hash_code, hash_codes
     while True:
@@ -233,14 +232,14 @@ cdef inline set _dyad_patch(set edges, imap &limit):
     return new_edges
 
 
+# NOTE: New method
 cdef inline void _test_contracted_graph(
-    set edges,
+    Graph g,
     imap &limit,
     imap *count,
     list result
 ):
     """Test the contracted graph."""
-    cdef Graph g = Graph.__new__(Graph, edges)
     # All connected
     if not g.is_connected():
         return
@@ -249,6 +248,8 @@ cdef inline void _test_contracted_graph(
         return
     # Planar graph
     if not is_planar(g):
+        # TODO: Exception of multi-graph
+        # Graph([(0, 1), (0, 2), (0, 2), (1, 2), (1, 2)])
         return
     # Isomorphism
     if _is_isomorphic(g, result):
@@ -423,17 +424,41 @@ cdef inline list _picked_multi_branch(int node, imap &limit, imap &count):
 
 
 # NOTE: New method
+cdef inline void _insert_edges(
+    int node,
+    tuple combine,
+    list edges,
+    imap *count
+):
+    """Insert combinations."""
+    # Collecting to edges.
+    cdef int b, d
+    cdef tuple dyad
+    for dyad in combine:
+        b = node
+        for d in dyad:
+            if b < d:
+                edges.append((b , d))
+            else:
+                edges.append((d , b))
+            b = d
+        count[0][node] += 1
+        for d in dyad:
+            count[0][d] += 1
+
+
+# NOTE: New method
 cdef void _contracted_graph(
     int node,
     list result,
-    set edges_origin,
+    list edges_origin,
     imap &limit,
     imap &count_origin,
     object stop_func
 ):
     """Synthesis of contracted graphs."""
     # Copied edge list.
-    cdef set edges
+    cdef list edges
     cdef imap tmp
     cdef imap *count
     # Combinations.
@@ -454,12 +479,12 @@ cdef void _contracted_graph(
             edges = edges_origin
             count = &count_origin
 
-        _insert_combine(node, combine, edges, count)
+        _insert_edges(node, combine, edges, count)
 
         # Recursive or end.
         next_node = _feasible_link(limit, count[0])
         if next_node == -1:
-            _test_contracted_graph(edges, limit, count, result)
+            _test_contracted_graph(Graph.__new__(Graph, edges), limit, count, result)
         else:
             _contracted_graph(next_node, result, edges, limit, count[0], stop_func)
 
@@ -535,10 +560,11 @@ cdef inline void _graph_atlas(
         if stop_func is not None and stop_func():
             return
 
-        print(g)
+        # print(g)
         for combine in _contracted_links(g.edges, limit):
-            print(limit.size(), combine)
+            # print(limit.size(), combine)
             # TODO: contracted links combination
+            pass
 
 
 cdef void _splice(
@@ -570,7 +596,7 @@ cdef void _splice(
 
     # Synthesis of contracted graphs
     cdef list contracted_graphs = []
-    _contracted_graph(0, contracted_graphs, set(), m_limit, count, stop_func)
+    _contracted_graph(0, contracted_graphs, [], m_limit, count, stop_func)
 
     # Synthesis of multiple links
     _graph_atlas(result, contracted_graphs, c_limit, no_degenerate, stop_func)
