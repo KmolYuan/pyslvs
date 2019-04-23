@@ -503,7 +503,7 @@ cdef inline tuple _contracted_links(tuple edges, imap &limit):
     # Check over picked
     cdef list pool_list = [frozenset(edge) for edge in edges]
     cdef int pool_size = len(pool_list)
-    if pick_count > pool_size:
+    if pool_size - len(set(pool_list)) > pick_count > pool_size:
         return ()
 
     cdef int *indices = <int *>PyMem_Malloc(pick_count * sizeof(int))
@@ -560,7 +560,7 @@ cdef inline void _graph_atlas(
 
         print(g)
         for combine in _contracted_links(g.edges, limit):
-            print(limit.size(), combine)
+            print(combine)
             # TODO: contracted links combination
 
 
