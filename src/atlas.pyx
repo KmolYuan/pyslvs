@@ -17,6 +17,7 @@ email: pyslvs@gmail.com
 
 from time import time
 from logging import getLogger
+from collections import Counter
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libcpp.pair cimport pair as cpair
 from libcpp.map cimport map as cmap
@@ -501,10 +502,14 @@ cdef inline tuple _contracted_links(tuple edges, imap &limit):
         return ()
 
     # Check over picked
-    cdef list pool_list = [frozenset(edge) for edge in edges]
+    cdef tuple pool_list = tuple([frozenset(edge) for edge in edges])
+    cdef set single_link = set(pool_list)
     cdef int pool_size = len(pool_list)
-    if pool_size - len(set(pool_list)) > pick_count > pool_size:
+    if pool_size - len(single_link) > pick_count > pool_size:
         return ()
+
+    # The list including required edge(s).
+    cdef object confirm_list = Counter(pool_list) - Counter(single_link)
 
     cdef int *indices = <int *>PyMem_Malloc(pick_count * sizeof(int))
     cdef int i
@@ -521,9 +526,9 @@ cdef inline tuple _contracted_links(tuple edges, imap &limit):
             pick_list.append(pool_list[indices[i]])
 
         # Collecting
-        # TODO: filter
-        pick_list.sort()
-        combine_list.add(tuple(pick_list))
+        if not (confirm_list - Counter(pick_list)):
+            pick_list.sort()
+            combine_list.add(tuple(pick_list))
 
         # Initialize
         pick_list.clear()
@@ -676,6 +681,6 @@ cpdef tuple topo(
     else:
         _splice(result, m_link, _labels(c_j, 1, 0, True), no_degenerate, stop_func)
 
-    logger.debug(f"Count: {len(result)}")
     # Return graph list and time.
+    logger.debug(f"Count: {len(result)}")
     return result, (time() - t0)
