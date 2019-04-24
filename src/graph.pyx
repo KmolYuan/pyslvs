@@ -159,16 +159,19 @@ cdef class Graph:
             n1 = n2
 
     cpdef void remove_edge(self, int n1, int n2):
-        """Remove edge(s) {n1, n2} if exist, otherwise do nothing."""
+        """Remove edge(s) {n1, n2} once if exist, otherwise do nothing."""
         cdef set nodes = set()
         cdef list edges = []
 
+        cdef short times = 0
         cdef tuple edge
         for edge in self.edges:
-            if {n1, n2} != set(edge):
+            if {n1, n2} != set(edge) or times:
                 nodes.add(n1)
                 nodes.add(n2)
                 edges.append(edge)
+            else:
+                times += 1
 
         self.edges = tuple(edges)
 

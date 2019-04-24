@@ -20,6 +20,7 @@ from logging import getLogger
 from collections import Counter
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libcpp.pair cimport pair as cpair
+from libcpp.vector cimport vector
 from libcpp.map cimport map as cmap
 from numpy cimport ndarray, int16_t
 from numpy import (
@@ -29,11 +30,11 @@ from numpy import (
 from graph cimport Graph
 from planar_check cimport is_planar
 
-cdef object logger = getLogger()
-
 ctypedef unsigned int uint
 ctypedef cpair[int, int] ipair
 ctypedef cmap[int, int] imap
+
+cdef object logger = getLogger()
 
 
 cdef int16_t[:] _labels(int16_t[:] numbers, int index, int offset, bint negative):
@@ -257,17 +258,31 @@ cdef inline void _test_contracted_graph(
     result.append(g)
 
 
+# NOTE: New method
 cdef inline void _test_graph(
+    Graph g,
+    list result,
+    uint no_degenerate
+):
+    """Test result graph."""
+    # Graph filter depending on degenerate option
+    if no_degenerate == 0 and not g.is_degenerate():
+        return
+    elif no_degenerate == 1 and g.is_degenerate():
+        return
+    # Isomorphism
+    if _is_isomorphic(g, result):
+        return
+    result.append(g)
+
+
+cdef inline void _test_graph_old(
     set edges,
     imap &limit,
-    imap *count,
     list result,
     uint no_degenerate
 ):
     """Test the graph."""
-    # All links connected
-    if not _all_connected(limit, count[0]):
-        return
     # Preliminary test
     cdef Graph g = Graph.__new__(Graph, edges)
     # All connected
@@ -354,7 +369,10 @@ cdef void _synthesis(
         # Recursive or end.
         next_node = _feasible_link(limit, count[0])
         if next_node == -1:
-            _test_graph(edges, limit, count, result, no_degenerate)
+            # All links connected
+            if not _all_connected(limit, count[0]):
+                continue
+            _test_graph_old(edges, limit, result, no_degenerate)
         else:
             _synthesis(next_node, result, edges, limit, count[0], no_degenerate, stop_func)
 
@@ -489,6 +507,76 @@ cdef void _contracted_graph(
 
 
 # NOTE: New method
+cdef inline void _dyad_insert(Graph g, frozenset edge, uint amount):
+    """Insert dyad to the graph."""
+    cdef int n1, n2
+    n1, n2 = edge
+    cdef int last_num = max(g.nodes) + 1
+
+    cdef list path = [n1]
+    path.extend(range(last_num, last_num + amount))
+    path.append(n2)
+
+    g.remove_edge(n1, n2)
+    g.add_path(path)
+
+
+# NOTE: New method
+cdef inline void _permute_combine(
+    imap &limit,
+    set combine_list,
+    list pick_list
+):
+    """Permutation of combined list."""
+    cdef int n = limit.size()
+    cdef vector[int] indices = range(n)
+    cdef int *cycles = <int *>PyMem_Malloc(n * sizeof(int))
+    cdef int *pool = <int *>PyMem_Malloc(n * sizeof(int))
+
+    cdef set permute_list = set()
+
+    cdef int i = 0
+    cdef ipair it1
+    for it1 in limit:
+        pool[i] = it1.second
+        i += 1
+
+    cdef int j
+    for i, j in enumerate(range(n, 0, -1)):
+        cycles[i] = j
+
+    permute_list.add(tuple(sorted(pool[indices[i]] for i in range(n))))
+
+    cdef vector[int].const_iterator it2 = indices.const_begin()
+
+    cdef int tmp
+    while True:
+        for i in reversed(range(n)):
+            cycles[i] -= 1
+            if cycles[i] == 0:
+                tmp = indices[i]
+                indices.erase(it2 + i)
+                indices.push_back(tmp)
+                cycles[i] = n - i
+            else:
+                j = cycles[i]
+                tmp = indices[i]
+                indices[i] = indices[n - j]
+                indices[n - j] = tmp
+                permute_list.add(tuple(sorted(pool[indices[i]] for i in range(n))))
+                break
+        else:
+            break
+
+    PyMem_Free(pool)
+    PyMem_Free(cycles)
+
+    cdef tuple tmp_array
+    for tmp_array in permute_list:
+        combine_list.add(tuple(sorted(zip(pick_list, tmp_array), key=lambda x: abs(x[1]))))
+
+
+# NOTE: New method
 cdef inline tuple _contracted_links(tuple edges, imap &limit):
     """Combination of contracted links.
     
@@ -527,8 +615,7 @@ cdef inline tuple _contracted_links(tuple edges, imap &limit):
 
         # Collecting
         if not (confirm_list - Counter(pick_list)):
-            pick_list.sort()
-            combine_list.add(tuple(pick_list))
+            _permute_combine(limit, combine_list, pick_list)
 
         # Initialize
         pick_list.clear()
@@ -556,17 +643,20 @@ cdef inline void _graph_atlas(
     object stop_func
 ):
     """Synthesis of atlas."""
-    cdef Graph g
+    cdef int n
+    cdef Graph cg, g
     cdef tuple combine
-    for g in contracted_graph:
+    cdef frozenset edge
+    for cg in contracted_graph:
         # Check if stop.
         if stop_func is not None and stop_func():
             return
 
-        print(g)
-        for combine in _contracted_links(g.edges, limit):
-            print(combine)
-            # TODO: contracted links combination
+        for combine in _contracted_links(cg.edges, limit):
+            g = Graph(cg.edges)
+            for edge, n in combine:
+                _dyad_insert(g, edge, abs(n))
+            _test_graph(g, result, no_degenerate)
 
 
 cdef void _splice(
@@ -601,7 +691,8 @@ cdef void _splice(
     _contracted_graph(0, contracted_graphs, [], m_limit, count, stop_func)
 
     # Synthesis of multiple links
-    _graph_atlas(result, contracted_graphs, c_limit, no_degenerate, stop_func)
+    cdef list result_test = []
+    _graph_atlas(result_test, contracted_graphs, c_limit, no_degenerate, stop_func)
 
     # Origin one
     i = 0
@@ -613,8 +704,11 @@ cdef void _splice(
         i += 1
     _synthesis(0, result, set(), limit, count, no_degenerate, stop_func)
 
-    if len(contracted_graphs) == 0 and len(result) > 0:
-        print(f"error: {len(contracted_graphs)}, {len(result)}")
+    # TODO: Lost part of result
+    if len(result_test) != len(result):
+        print(f"T({len(result_test)}): {result_test}")
+        print(f"O({len(result)}): {result}")
+        print('-' * 12)
 
     logger.debug(f"Contracted graph(s): {len(contracted_graphs)}")
 
