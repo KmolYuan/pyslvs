@@ -132,51 +132,56 @@ cdef class Graph:
         cdef int n
         self.adj = {n: self.neighbors(n) for n in self.nodes}
 
+    cpdef void add_nodes(self, object new_nodes):
+        """Add nodes from a iterable."""
+        self.nodes = tuple(set(self.nodes) | set(new_nodes))
+
     cpdef void add_edge(self, int n1, int n2):
         """Add two nodes for an edge."""
         self.edges += ((n1, n2),)
-
+        self.nodes = tuple(set(self.nodes) | {n1, n2})
         cdef int n
         for n in (n1, n2):
             self.adj[n] = self.neighbors(n)
 
-        if n1 not in self.nodes:
-            self.nodes += (n1,)
-        if n2 not in self.nodes:
-            self.nodes += (n2,)
-
-    cpdef void add_nodes(self, object nodes):
-        """Add nodes from a iterable."""
-        self.nodes = tuple(set(self.nodes) | set(nodes))
-
-    cpdef void add_path(self, object nodes):
+    cpdef void add_path(self, object new_nodes):
         """Add path from a iterable."""
+        cdef list edges = list(self.edges)
+        cdef set nodes = set(self.nodes)
+
         cdef int n1 = -1
         cdef int n2
-        for n2 in nodes:
+        for n2 in new_nodes:
             if n1 != -1:
-                self.add_edge(n1, n2)
+                edges.append((n1, n2))
+                nodes.update((n1, n2))
             n1 = n2
+
+        self.edges = tuple(edges)
+        self.nodes = tuple(nodes)
+
+        for n1 in nodes:
+            self.adj[n1] = self.neighbors(n1)
 
     cpdef void remove_edge(self, int n1, int n2):
         """Remove edge(s) {n1, n2} once if exist, otherwise do nothing."""
         cdef set nodes = set()
         cdef list edges = []
 
-        cdef short times = 0
+        cdef bint once = False
         cdef tuple edge
         for edge in self.edges:
-            if {n1, n2} != set(edge) or times:
-                nodes.add(n1)
-                nodes.add(n2)
+            if {n1, n2} != set(edge) or once:
+                nodes.update(edge)
                 edges.append(edge)
             else:
-                times += 1
+                once = True
 
         self.edges = tuple(edges)
+        self.nodes = tuple(nodes)
 
         cdef int n
-        for n in nodes:
+        for n in self.nodes:
             edge = self.neighbors(n)
             if edge:
                 self.adj[n] = edge

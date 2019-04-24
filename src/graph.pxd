@@ -22,9 +22,9 @@ cdef class Graph:
     cdef readonly tuple nodes
     cdef dict adj
 
+    cpdef void add_nodes(self, object new_nodes)
     cpdef void add_edge(self, int n1, int n2)
-    cpdef void add_nodes(self, object nodes)
-    cpdef void add_path(self, object nodes)
+    cpdef void add_path(self, object new_nodes)
     cpdef void remove_edge(self, int n1, int n2)
 
     cpdef int dof(self)

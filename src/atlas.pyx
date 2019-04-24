@@ -507,11 +507,14 @@ cdef void _contracted_graph(
 
 
 # NOTE: New method
-cdef inline void _dyad_insert(Graph g, frozenset edge, uint amount):
+cdef inline void _dyad_insert(Graph g, frozenset edge, int amount):
     """Insert dyad to the graph."""
+    if amount < 1:
+        return
+
+    cdef int last_num = max(g.nodes) + 1
     cdef int n1, n2
     n1, n2 = edge
-    cdef int last_num = max(g.nodes) + 1
 
     cdef list path = [n1]
     path.extend(range(last_num, last_num + amount))
@@ -538,7 +541,7 @@ cdef inline void _permute_combine(
     cdef int i = 0
     cdef ipair it1
     for it1 in limit:
-        pool[i] = it1.second
+        pool[i] = abs(it1.second)
         i += 1
 
     cdef int j
@@ -573,7 +576,7 @@ cdef inline void _permute_combine(
 
     cdef tuple tmp_array
     for tmp_array in permute_list:
-        combine_list.add(tuple(sorted(zip(pick_list, tmp_array), key=lambda x: abs(x[1]))))
+        combine_list.add(tuple(sorted(zip(pick_list, tmp_array), key=lambda x: x[1])))
 
 
 # NOTE: New method
@@ -655,7 +658,7 @@ cdef inline void _graph_atlas(
         for combine in _contracted_links(cg.edges, limit):
             g = Graph(cg.edges)
             for edge, n in combine:
-                _dyad_insert(g, edge, abs(n))
+                _dyad_insert(g, edge, n)
             _test_graph(g, result, no_degenerate)
 
 
