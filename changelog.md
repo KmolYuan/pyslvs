@@ -6,6 +6,8 @@ Version 19.04
 
 + More methods of graph class.
 + Support multi-graph for "Planar check" function.
++ Add contracted graph enumeration algorithm:
+    + Speed up performance for searching between link assortment.
 
 Version 19.03
 ===
