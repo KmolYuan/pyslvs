@@ -26,7 +26,7 @@ from rga import Genetic
 from firefly import Firefly
 from de import Differential
 from number import number_synthesis, contracted_link
-from atlas import topo
+from atlas import topo, contracted_graph
 from graph import (
     Graph,
     link_assortments,
@@ -127,25 +127,28 @@ class CoreTest(TestCase):
         answers = []
 
         type_0 = [4]
+        cg_list = contracted_graph(type_0)
         for c_j in contracted_link(type_0):
-            answer, _ = topo(type_0, c_j)
+            answer, _ = topo(cg_list, c_j)
             answers.extend(answer)
         self.assertEqual(1, len(answers))
         answers.clear()
 
         type_1 = [4, 2]
+        cg_list = contracted_graph(type_1)
         for c_j in contracted_link(type_1):
-            answer, _ = topo(type_1, c_j)
+            answer, _ = topo(cg_list, c_j)
             answers.extend(answer)
         self.assertEqual(2, len(answers))
         answers.clear()
 
         answers_degenerated = []
         for type_2 in ([4, 4, 0], [5, 2, 1], [6, 0, 2]):
+            cg_list = contracted_graph(type_2)
             for c_j in contracted_link(type_2):
-                answer, _ = topo(type_2, c_j)
+                answer, _ = topo(cg_list, c_j)
                 answers.extend(answer)
-                answer, _ = topo(type_2, c_j, 2)
+                answer, _ = topo(cg_list, c_j, 2)
                 answers_degenerated.extend(answer)
         self.assertEqual(16, len(answers))
         self.assertEqual(40, len(answers_degenerated))

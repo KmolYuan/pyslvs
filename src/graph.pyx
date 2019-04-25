@@ -27,18 +27,15 @@ ctypedef cpair[int, int] ipair
 
 cpdef list link_assortments(Graph g):
     """Return link assortments of the graph."""
-    if not g.edges:
-        return [0]
-
     cdef list assortments = [0]
-    cdef imap g_degrees = g.degrees()
+    if not g.edges:
+        return assortments
 
-    cdef int d
-    cdef ipair it
-    for it in g_degrees:
-        if it.second < 2:
+    cdef int d, n
+    for n in g.degrees().values():
+        if n < 2:
             continue
-        d = it.second - 2
+        d = n - 2
         while d >= len(assortments):
             assortments.append(0)
         assortments[d] += 1
@@ -62,12 +59,11 @@ cpdef list contracted_link_assortments(Graph g):
         assortments[d] += 1
 
     # For single contracted links.
-    cdef imap g_degrees = g.degrees()
-    cdef ipair it
-    for it in g_degrees:
-        if it.second != 2:
+    cdef int n
+    for n, d in g.degrees().items():
+        if d != 2:
             continue
-        if it.first not in counted:
+        if n not in counted:
             assortments[0] += 1
 
     return assortments
@@ -203,14 +199,9 @@ cdef class Graph:
                 neighbors.append(l1)
         return tuple(neighbors)
 
-    cdef imap degrees(self):
+    cdef dict degrees(self):
         """Return number of neighbors par node."""
-        cdef int n
-        cdef tuple neighbors
-        cdef imap g_degrees
-        for n, neighbors in self.adj.items():
-            g_degrees[n] = len(neighbors)
-        return g_degrees
+        return {n: len(neighbors) for n, neighbors in self.adj.items()}
 
     cpdef bint is_connected(self, int with_out = -1):
         """Return True if the graph is not isolated."""
@@ -236,13 +227,12 @@ cdef class Graph:
 
     cpdef bint has_cut_link(self):
         """Return True if the graph has any cut links."""
-        cdef imap g_degrees = self.degrees()
-        cdef ipair it
-        for it in g_degrees:
+        cdef int n, d
+        for n, d in self.degrees().items():
             # Only for multiple links.
-            if it.second > 2:
+            if d > 2:
                 # Remove a multiple link should be keep connected.
-                if not self.is_connected(it.first):
+                if not self.is_connected(n):
                     return True
         return False
 
@@ -256,7 +246,6 @@ cdef class Graph:
             return True
 
         cdef int n1, n2
-        cdef imap g_degrees
         cdef list c_l
         cdef Graph g = self.copy()
         cdef set mcl = set()
@@ -273,8 +262,7 @@ cdef class Graph:
 
             # Pruned graph.
             g = Graph.__new__(Graph, c_l)
-            g_degrees = g.degrees()
-            if {n2 for n1, n2 in g_degrees} == {2}:
+            if {n2 for n2 in g.degrees().values()} == {2}:
                 # The graph is a basic loop.
                 break
 

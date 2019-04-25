@@ -308,7 +308,6 @@ cdef inline OrderedSet _external_loop(Graph g):
     if not cycles:
         raise ValueError(f"invalid graph has no any cycle: {g.edges}")
 
-    cdef cmap[int, int] g_degrees = g.degrees()
     cdef OrderedSet c1, c2
     while len(cycles) > 1:
         c1 = cycles.pop()

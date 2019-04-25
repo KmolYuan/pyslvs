@@ -64,7 +64,7 @@ from .graph import (
 )
 from .planar_check import is_planar
 from .graph_layout import external_loop_layout
-from .atlas import topo
+from .atlas import topo, contracted_graph
 from .expression_parser import (
     color_names,
     color_rgb,
@@ -106,6 +106,7 @@ __all__ = [
     'is_planar',
     'external_loop_layout',
     'topo',
+    'contracted_graph',
     'Graph',
     'link_assortments',
     'contracted_link_assortments',

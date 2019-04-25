@@ -14,6 +14,10 @@ from libcpp.map cimport map as cmap
 ctypedef cmap[int, int] imap
 
 
+cpdef list link_assortments(Graph g)
+cpdef list contracted_link_assortments(Graph g)
+
+
 cdef class Graph:
 
     # Graph(edges)
@@ -29,7 +33,7 @@ cdef class Graph:
 
     cpdef int dof(self)
     cpdef tuple neighbors(self, int n)
-    cdef imap degrees(self)
+    cdef dict degrees(self)
 
     cpdef bint is_connected(self, int with_out=*)
     cpdef bint has_cut_link(self)
