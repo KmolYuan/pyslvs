@@ -550,7 +550,7 @@ cdef inline void _permute_combine(
 
     permute_list.add(tuple(sorted(pool[indices[i]] for i in range(n))))
 
-    cdef vector[int].const_iterator it2 = indices.const_begin()
+    cdef vector[int].iterator it2 = indices.begin()
 
     cdef int tmp
     while True:
