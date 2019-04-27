@@ -1,6 +1,3 @@
-Change Log
-===
-
 Version 19.04
 ===
 
