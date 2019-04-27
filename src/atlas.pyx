@@ -284,8 +284,7 @@ cdef inline void _permute_combine(
 ):
     """Permutation of combined list."""
     cdef int n = len(limit)
-    if n == 1:
-        combine_list.append(((pick_list[0], limit[0]),))
+    if n == 0:
         return
 
     cdef vector[int] indices = range(n)
