@@ -15,7 +15,7 @@ def topo(
     c_j_list: Sequence[int],
     no_degenerate: int = 1,
     stop_func: Optional[Callable[[], bool]] = None
-) -> Tuple[List[Graph], float]:
+) -> List[Graph]:
     """Linkage mechanism topological function."""
     ...
 

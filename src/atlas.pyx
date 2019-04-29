@@ -368,7 +368,7 @@ cdef inline list _contracted_links(tuple edges, int16_t[:] limit):
             pick_list[pool_list[indices[i]]] += 1
 
         # Collecting
-        combine_set.add(tuple(sorted(tuple(confirm_list.elements()) + tuple(pick_list.elements()))))
+        combine_set.add(tuple(pick_list.elements()))
 
         # Initialize
         pick_list.clear()
@@ -388,9 +388,10 @@ cdef inline list _contracted_links(tuple edges, int16_t[:] limit):
     PyMem_Free(indices)
 
     cdef list combine_list = []
+    pool_list = tuple(confirm_list.elements())
     cdef tuple picked
     for picked in combine_set:
-        _permute_combine(limit, combine_list, picked)
+        _permute_combine(limit, combine_list, pool_list + picked)
     return combine_list
 
 
@@ -459,7 +460,7 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
     return cg_list
 
 
-cpdef tuple topo(
+cpdef list topo(
     list cg_list,
     object c_j_list,
     uint no_degenerate = 1,
@@ -486,11 +487,11 @@ cpdef tuple topo(
     cdef list result = []
     if not cg_list:
         if 1 not in c_j_list:
-            return [], (time() - t0)
+            return []
         # Single loop - ring graph (special case)
         result.append(Graph.__new__(Graph, _loop_chain(c_j_list.index(1))))
         logger.debug(f"Count: {len(result)}")
-        return result, (time() - t0)
+        return result
 
     # Multiple links
     cdef int16_t[:] m_link = np_array(link_assortments(cg_list[0]), ndmin=1, dtype=int16)
@@ -507,7 +508,6 @@ cpdef tuple topo(
     # Synthesis of multiple links
     _graph_atlas(result, cg_list, _labels(c_j, 1, 0, True), no_degenerate, stop_func)
 
-    # Return graph list and time.
-    cdef double t1 = time() - t0
-    logger.debug(f"Count: {len(result)}, time: {t1}")
-    return result, t1
+    # Return graph list and time
+    logger.debug(f"Count: {len(result)}, time: {time() - t0}")
+    return result
