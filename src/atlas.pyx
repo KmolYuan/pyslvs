@@ -284,7 +284,7 @@ cdef inline void _permute_combine(
 ):
     """Permutation of combined list."""
     cdef int n = len(limit)
-    if n == 0:
+    if n < 1:
         return
 
     cdef vector[int] indices = range(n)
@@ -335,37 +335,40 @@ cdef inline list _contracted_links(tuple edges, int16_t[:] limit):
     
     If the edge is not picked, it represent the joint is connected directly.
     """
+    # Number of contracted links
     cdef int pick_count = len(limit)
     if pick_count < 1:
         return []
 
     # Check over picked
     cdef tuple pool_list = tuple([frozenset(edge) for edge in edges])
-    cdef set single_link = set(pool_list)
-    cdef int pool_size = len(pool_list)
-    if pool_size - len(single_link) > pick_count > pool_size:
+    cdef object pool = Counter(pool_list)
+    # The list including required edge(s).
+    cdef object confirm_list = pool - Counter(set(pool_list))
+    # Simplified the pool
+    pool_list = tuple((pool - confirm_list).elements())
+    cdef int confirm_size = sum(confirm_list.values())
+    if confirm_size > pick_count or pick_count > len(edges):
         return []
 
-    # The list including required edge(s).
-    cdef object confirm_list = Counter(pool_list) - Counter(single_link)
-
+    pick_count -= confirm_size
+    cdef int pool_size = len(pool_list)
     cdef int *indices = <int *>PyMem_Malloc(pick_count * sizeof(int))
     cdef int i
     for i in range(pick_count):
         indices[i] = i
 
-    cdef list pick_list = []
+    cdef object pick_list = Counter()
     cdef set combine_set = set()
 
     # Combinations loop with number checking.
     while True:
         # Combine
         for i in range(pick_count):
-            pick_list.append(pool_list[indices[i]])
+            pick_list[pool_list[indices[i]]] += 1
 
         # Collecting
-        if len(confirm_list - Counter(pick_list)) == 0:
-            combine_set.add(tuple(pick_list))
+        combine_set.add(tuple(sorted(tuple(confirm_list.elements()) + tuple(pick_list.elements()))))
 
         # Initialize
         pick_list.clear()
@@ -432,6 +435,8 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
     if not link_num_list:
         return []
 
+    # Initial time
+    cdef double t0 = time()
     cdef int16_t[:] link_num = np_array(link_num_list, ndmin=1, dtype=int16)
     logger.debug(f"Link assortment: {list(link_num)}")
 
@@ -449,7 +454,8 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
     # Synthesis of contracted graphs
     cdef list cg_list = []
     _contracted_graph(0, cg_list, [], m_limit, count, stop_func)
-    logger.debug(f"Contracted graph(s): {len(cg_list)}")
+
+    logger.debug(f"Contracted graph(s): {len(cg_list)}, time: {time() - t0}")
     return cg_list
 
 
@@ -479,6 +485,8 @@ cpdef tuple topo(
 
     cdef list result = []
     if not cg_list:
+        if 1 not in c_j_list:
+            return [], (time() - t0)
         # Single loop - ring graph (special case)
         result.append(Graph.__new__(Graph, _loop_chain(c_j_list.index(1))))
         logger.debug(f"Count: {len(result)}")
@@ -500,5 +508,6 @@ cpdef tuple topo(
     _graph_atlas(result, cg_list, _labels(c_j, 1, 0, True), no_degenerate, stop_func)
 
     # Return graph list and time.
-    logger.debug(f"Count: {len(result)}")
-    return result, (time() - t0)
+    cdef double t1 = time() - t0
+    logger.debug(f"Count: {len(result)}, time: {t1}")
+    return result, t1
