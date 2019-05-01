@@ -32,6 +32,7 @@ from numpy import (
     subtract as np_sub,
     multiply as np_mul,
     floor_divide as np_div,
+    less_equal as np_le,
     any as np_any,
 )
 from graph cimport Graph, link_assortments
@@ -375,7 +376,6 @@ cdef inline void _contracted_graph_new(
             around = 0
 
     # One result
-    cdef dict edges
     cdef Graph g
     for i in range(variables_count):
         if answer[i] < 0:
@@ -390,12 +390,35 @@ cdef inline void _contracted_graph_new(
 
     # Formula simplification by GCDs.
     for i in range(n):
-        tmp = np_div(f_matrix[i, :], _gcd_all(f_matrix[i, :]))
+        # Reverse the negative coefficients.
+        if np_le(f_matrix[i, :], 0).all():
+            c = -1
+        else:
+            c = 1
+        tmp = np_div(f_matrix[i, :], _gcd_all(f_matrix[i, :])) * c
         f_matrix[i, :] = tmp
 
-    print(np_array(limit))
+    # TODO: Formula simplification
+
+    # Relation equations
+    cdef int16_t[:, :] relation = np_zeros((n, variables_count + 1), dtype=int16)
+    around = 0
+    for i in range(n):
+        c = 0
+        d = -1
+        k = -1
+        for j in range(variables_count):
+            if f_matrix[i, j] != 0:
+                if d == -1:
+                    d = j
+                else:
+                    k = j
+                c += 1
+        if c == 2:
+            relation[around, :] = f_matrix[around, :]
+            around += 1
+
     print(np_array(f_matrix))
-    print(np_array(answer))
 
     # TODO: Enumeration
 
