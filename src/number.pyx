@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3, embedsignature=True, cdivision=True
 
-"""Number _synthesis.
+"""Number synthesis.
 
 author: Yuan Chang
 copyright: Copyright (C) 2016-2019
@@ -9,7 +9,6 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-cimport cython
 from numpy cimport (
     ndarray,
     int16_t,

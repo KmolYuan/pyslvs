@@ -9,7 +9,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from libcpp.list cimport list as c_list
+from libcpp.list cimport list as clist
 from libcpp.pair cimport pair
 
 ctypedef pair[int, int] symbol
@@ -46,7 +46,7 @@ cdef struct Expression:
 
 cdef class ExpressionStack:
 
-    cdef c_list[Expression] stack
+    cdef clist[Expression] stack
 
     cdef void add_pla(self, symbol c1, symbol v1, symbol v2, symbol target)
     cdef void add_plap(self, symbol c1, symbol v1, symbol v2, symbol c2, symbol target)

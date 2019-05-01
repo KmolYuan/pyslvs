@@ -13,8 +13,11 @@ email: pyslvs@gmail.com
 """
 
 from collections import defaultdict
-from libcpp.list cimport list as c_list
+from libcpp.pair cimport pair as cpair
+from libcpp.list cimport list as clist
 from libcpp.map cimport map as cmap
+
+ctypedef cpair[int, int] ipair
 
 
 cpdef inline bint is_planar(Graph g):
@@ -92,7 +95,7 @@ cdef class _LRPlanarity:
             self.adjs[v] = list(self.g.adj[v])
 
         # orientation of the graph by depth first search traversal
-        cdef c_list[int] roots
+        cdef clist[int] roots
         for v in self.g.nodes:
             if self.height[v] is None:
                 self.height[v] = 0
@@ -156,7 +159,7 @@ cdef class _LRPlanarity:
     cdef bint dfs_testing(self, int v):
         """Test for LR partition."""
         # the recursion stack
-        cdef c_list[int] dfs_stack = [v]
+        cdef clist[int] dfs_stack = [v]
         # index of next edge to handle in adjacency list of each node
         cdef cmap[int, int] ind
         # bintean to indicate whether to skip the initial work for an edge
@@ -209,7 +212,7 @@ cdef class _LRPlanarity:
     cdef void dfs_embedding(self, int v):
         """Completes the embedding."""
         # the recursion stack
-        cdef c_list[int] dfs_stack = [v]
+        cdef clist[int] dfs_stack = [v]
         # index of next edge to handle in adjacency list of each node
         cdef cmap[int, int] ind
 
@@ -240,7 +243,7 @@ cdef class _LRPlanarity:
     cdef void dfs_orientation(self, int v):
         """Orient the graph by DFS, compute lowpoints and nesting order."""
         # the recursion stack
-        cdef c_list[int] dfs_stack = [v]
+        cdef clist[int] dfs_stack = [v]
         # index of next edge to handle in adjacency list of each node
         cdef cmap[int, int] ind
         # bintean to indicate whether to skip the initial work for an edge
@@ -473,7 +476,7 @@ cdef class _PlanarEmbedding(Graph):
     """Represents a planar graph with its planar embedding."""
 
     cdef cmap[int, int] node_label
-    cdef cmap[int, cmap[int, cmap[int, int]]] edge_label
+    cdef cmap[ipair, ipair] edge_label
 
     cdef void add_half_edge_cw(self, int start_node, int end_node, int reference_neighbor):
         """Adds a half-edge from start_node to end_node.
@@ -486,25 +489,25 @@ cdef class _PlanarEmbedding(Graph):
 
         if reference_neighbor == -1:
             # The start node has no neighbors
-            self.edge_label[start_node][end_node][0] = end_node
-            self.edge_label[start_node][end_node][1] = end_node
+            self.edge_label[ipair(start_node, end_node)].first = end_node
+            self.edge_label[ipair(start_node, end_node)].second = end_node
             self.node_label[start_node] = end_node
             return
 
         # Get half-edge at the other side
-        cdef int cw_reference = self.edge_label[start_node][reference_neighbor][0]
+        cdef int cw_reference = self.edge_label[ipair(start_node, reference_neighbor)].first
         # Alter half-edge data structures
-        self.edge_label[start_node][reference_neighbor][0] = end_node
-        self.edge_label[start_node][end_node][0] = cw_reference
-        self.edge_label[start_node][cw_reference][1] = end_node
-        self.edge_label[start_node][end_node][1] = reference_neighbor
+        self.edge_label[ipair(start_node, reference_neighbor)].first = end_node
+        self.edge_label[ipair(start_node, end_node)].first = cw_reference
+        self.edge_label[ipair(start_node, cw_reference)].second = end_node
+        self.edge_label[ipair(start_node, end_node)].second = reference_neighbor
 
     cdef void add_half_edge_ccw(self, int start_node, int end_node, int reference_neighbor):
         """Adds a half-edge from start_node to end_node."""
         self.add_half_edge_cw(
             start_node,
             end_node,
-            self.edge_label[start_node][reference_neighbor][1]
+            self.edge_label[ipair(start_node, reference_neighbor)].second
         )
         cdef int s_f_label
         if self.node_label.find(start_node) != self.node_label.end():

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3, embedsignature=True, cdivision=True
 
-"""Structure _synthesis.
+"""Structure synthesis.
 
 The algorithms references:
 + On the Number Synthesis of Kinematic Chains
@@ -18,6 +18,7 @@ email: pyslvs@gmail.com
 from time import time
 from logging import getLogger
 from collections import Counter
+cimport cython
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libcpp.pair cimport pair as cpair
 from libcpp.vector cimport vector
@@ -26,7 +27,14 @@ from numpy cimport int16_t
 from numpy import (
     int16,
     array as np_array,
+    zeros as np_zeros,
+    ones as np_ones,
     abs as np_abs,
+    sum as np_sum,
+    subtract as np_sub,
+    multiply as np_mul,
+    floor_divide as np_div,
+    any as np_any,
 )
 from graph cimport Graph, link_assortments
 from planar_check cimport is_planar
@@ -36,6 +44,15 @@ ctypedef cpair[int, int] ipair
 ctypedef cmap[int, int] imap
 
 cdef object logger = getLogger()
+
+
+cdef inline int _gcd(int a, int b) nogil:
+    cdef int r
+    while b > 0:
+        r = a % b
+        a = b
+        b = r
+    return a
 
 
 cdef inline int16_t[:] _labels(
@@ -260,6 +277,97 @@ cdef void _contracted_graph(
             _contracted_graph(next_node, result, edges, limit, count[0], stop_func)
 
 
+# Note: New method
+@cython.boundscheck(False)
+cdef inline void _contracted_graph_new(
+    list result,
+    int16_t[:] limit,
+    object stop_func
+) except *:
+    """Synthesis of contracted graphs."""
+    cdef int n = len(limit)
+
+    cdef int joint_count = np_sum(limit)
+    cdef int variables_count = (n * (n - 1) / 2)
+    cdef int16_t[:, :] f_matrix = np_zeros((n, variables_count + 1), dtype=int16)
+    f_matrix[:, -1] = limit
+
+    # Equations
+    cdef int i, j, k, c
+    for i in range(n):
+        c = 0
+        for j in range(n):
+            for k in range(n):
+                if j >= k:
+                    continue
+                if i in {j, k}:
+                    f_matrix[i, c] = 1
+                c += 1
+
+    if n == 3:
+        print(np_array(f_matrix))
+
+    # Gauss elimination
+    cdef int d
+    cdef int16_t[:] divisor, tmp
+    for j in range(variables_count):
+        # Remove all coefficient of index [i] to zero.
+        for i in range(n):
+            if f_matrix[i, j] != 0 and not np_any(f_matrix[i, :j]):
+                d = i
+                divisor = np_div(f_matrix[i, :], f_matrix[i, j])
+                break
+        else:
+            continue
+
+        for i in range(n):
+            if i == d or f_matrix[i, j] == 0:
+                continue
+            tmp = np_sub(f_matrix[i, :], np_mul(divisor, f_matrix[i, j]))
+            f_matrix[i, :] = tmp
+
+    if n == 3:
+        print(np_array(f_matrix))
+
+    # Answer
+    cdef int16_t[:] answer = -np_ones(variables_count, dtype=int16)
+
+    # Determined solution
+    for i in range(n):
+        c = 0
+        for j in range(variables_count):
+            if f_matrix[i, j] != 0:
+                d = j
+                c += 1
+
+        if c != 1:
+            continue
+
+        j = d
+        k = f_matrix[i, j]
+        c = f_matrix[i, -1]
+        if k != 1:
+            if k < 0:
+                k = -k
+                c = -c
+            if c < 0:
+                return
+            d = _gcd(k, c)
+            k /= d
+            c /= d
+        if c < 0:
+            return
+        answer[j] = c
+
+    if n == 3:
+        print(np_array(f_matrix))
+        print(np_array(answer))
+
+    # TODO: Derivation
+
+    # TODO: Enumeration
+
+
 cdef inline void _dyad_insert(Graph g, frozenset edge, int amount):
     """Insert dyad to the graph."""
     if amount < 1:
@@ -455,6 +563,7 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
     # Synthesis of contracted graphs
     cdef list cg_list = []
     _contracted_graph(0, cg_list, [], m_limit, count, stop_func)
+    _contracted_graph_new(cg_list, m_link, stop_func)
 
     logger.debug(f"Contracted graph(s): {len(cg_list)}, time: {time() - t0}")
     return cg_list

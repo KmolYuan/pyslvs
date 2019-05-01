@@ -17,7 +17,7 @@ from numpy import (
 )
 # Not a number and a large fitness. Infinity cannot be used for a chart.
 from libc.math cimport HUGE_VAL, NAN
-from libcpp.list cimport list as c_list
+from libcpp.list cimport list as clist
 from numpy cimport ndarray
 from verify cimport Verification
 from expression cimport (
@@ -53,7 +53,7 @@ cdef class Planar(Verification):
 
     cdef bint bfgs_mode
     cdef int target_count, base_index
-    cdef c_list[Expression] exprs
+    cdef clist[Expression] exprs
     cdef list vpoints, inputs, mapping_list
     cdef dict placement, target, mapping, mapping_r, data_dict
     cdef ndarray upper, lower

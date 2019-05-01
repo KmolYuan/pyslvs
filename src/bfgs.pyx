@@ -20,7 +20,7 @@ email: pyslvs@gmail.com
 cimport cython
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.math cimport M_PI, cos, sin
-from libcpp.list cimport list as c_list
+from libcpp.list cimport list as clist
 from libcpp.vector cimport vector
 from libcpp.map cimport map as cmap
 from libcpp.pair cimport pair
@@ -51,7 +51,7 @@ ctypedef fused T:
     Line
 
 
-cdef inline T *end_ptr(c_list[T] *t_list):
+cdef inline T *end_ptr(clist[T] *t_list):
     """Get last pointer."""
     return &t_list.back()
 
@@ -92,13 +92,13 @@ cpdef list vpoint_solving(
 
     _sort_pairs(data_dict)
 
-    cdef c_list[double] params
-    cdef c_list[double] constants
+    cdef clist[double] params
+    cdef clist[double] constants
     cdef vector[Point] points
     cdef cmap[int, int] sliders
     cdef vector[Point] slider_bases
     cdef vector[Point] slider_slots
-    cdef c_list[Line] slider_lines
+    cdef clist[Line] slider_lines
 
     # Point parameters
     cdef int i
@@ -203,7 +203,7 @@ cpdef list vpoint_solving(
         # Point is movable.
         points.push_back([tmp_ptr, end_ptr(&params)])
 
-    cdef c_list[Constraint] cons_list
+    cdef clist[Constraint] cons_list
 
     # Link constraints
     cdef int a, b, c, d
@@ -356,7 +356,7 @@ cpdef list vpoint_solving(
             ))
 
     # Angle constraints
-    cdef c_list[Line] handles
+    cdef clist[Line] handles
     cdef double angle
     for (b, d), angle in inputs.items():
         if b == d:
@@ -371,7 +371,7 @@ cpdef list vpoint_solving(
     # Pointer of parameters
     cdef int params_count = <int>params.size()
     cdef double **params_ptr = <double **>PyMem_Malloc(sizeof(double *) * params_count)
-    cdef c_list[double].iterator it = params.begin()
+    cdef clist[double].iterator it = params.begin()
     for i in range(params_count):
         params_ptr[i] = &cython.operator.dereference(cython.operator.postincrement(it))
 
