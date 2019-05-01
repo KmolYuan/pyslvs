@@ -205,6 +205,9 @@ cdef class Graph:
 
     cpdef bint is_connected(self, int with_out = -1):
         """Return True if the graph is not isolated."""
+        if not self.nodes:
+            return True
+
         cdef int neighbors
         cdef int index = 0
         cdef list nodes = []

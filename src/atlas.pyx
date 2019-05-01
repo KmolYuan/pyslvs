@@ -29,8 +29,6 @@ from numpy import (
     array as np_array,
     zeros as np_zeros,
     ones as np_ones,
-    abs as np_abs,
-    sum as np_sum,
     subtract as np_sub,
     multiply as np_mul,
     floor_divide as np_div,
@@ -47,6 +45,10 @@ cdef object logger = getLogger()
 
 
 cdef inline int _gcd(int a, int b) nogil:
+    """Return Greatest Common Divisor of a and b.
+    
+    Only for positive numbers.
+    """
     cdef int r
     while b > 0:
         r = a % b
@@ -55,23 +57,38 @@ cdef inline int _gcd(int a, int b) nogil:
     return a
 
 
-cdef inline int16_t[:] _labels(
-    int16_t[:] numbers,
-    int index,
-    int offset,
-    bint negative
-):
+cdef inline int _gcd_all(int16_t[:] numbers):
+    """GCD for all numbers."""
+    cdef int r = 0
+    cdef int n
+    for n in numbers:
+        r = _gcd(r, abs(n))
+    return r
+
+
+cdef inline int16_t[:] _labels(int16_t[:] numbers, int index, int offset):
     """Generate labels from numbers."""
     cdef int i, num
     cdef list labels = []
     for num in numbers[offset:]:
         for i in range(num):
-            if negative:
-                labels.append(-index)
-            else:
-                labels.append(index)
+            labels.append(index)
         index += 1
     return np_array(labels, dtype=int16)
+
+
+cdef inline Graph _multigraph(int16_t[:] counter, int n):
+    """Get multigraph from n x n matrix."""
+    cdef dict edges = {}
+    cdef int c = 0
+    cdef int i, j
+    for i in range(n):
+        for j in range(n):
+            if i >= j:
+                continue
+            edges[i, j] = counter[c]
+            c += 1
+    return Graph(Counter(edges).elements())
 
 
 cdef inline bint _over_count(list pick_list, imap &limit, imap &count):
@@ -282,7 +299,6 @@ cdef inline void _contracted_graph_new(
     """Synthesis of contracted graphs."""
     cdef int n = len(limit)
 
-    cdef int joint_count = np_sum(limit)
     cdef int variables_count = (n * (n - 1) / 2)
     cdef int16_t[:, :] f_matrix = np_zeros((n, variables_count + 1), dtype=int16)
     f_matrix[:, -1] = limit
@@ -365,18 +381,17 @@ cdef inline void _contracted_graph_new(
         if answer[i] < 0:
             break
     else:
-        edges = {}
-        c = 0
-        for i in range(n):
-            for j in range(n):
-                if i >= j:
-                    continue
-                edges[i, j] = answer[c]
-                c += 1
-        g = Graph(Counter(edges).elements())
+        g = _multigraph(answer, n)
+        if not g.edges:
+            return
         _test_contracted_graph(g, result)
         result.append(g)
         return
+
+    # Formula simplification by GCDs.
+    for i in range(n):
+        tmp = np_div(f_matrix[i, :], _gcd_all(f_matrix[i, :]))
+        f_matrix[i, :] = tmp
 
     print(np_array(limit))
     print(np_array(f_matrix))
@@ -414,7 +429,7 @@ cdef inline void _permute_combine(
 
     cdef vector[int] indices = range(n)
     cdef int *cycles = <int *>PyMem_Malloc(n * sizeof(int))
-    cdef int16_t[:] pool = np_abs(limit)
+    cdef int16_t[:] pool = limit
 
     cdef set permute_list = set()
 
@@ -567,7 +582,7 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
     logger.debug(f"Link assortment: {list(link_num)}")
 
     # Multiple links
-    cdef int16_t[:] m_link = _labels(link_num, 3, 1, False)
+    cdef int16_t[:] m_link = _labels(link_num, 3, 1)
 
     cdef imap m_limit, count
     cdef int num
@@ -621,7 +636,7 @@ cpdef list topo(
 
     # Multiple links
     cdef int16_t[:] m_link = np_array(link_assortments(cg_list[0]), ndmin=1, dtype=int16)
-    m_link = _labels(m_link, 3, 1, False)
+    m_link = _labels(m_link, 3, 1)
 
     cdef imap m_limit, count
     cdef int num
@@ -632,7 +647,7 @@ cpdef list topo(
         i += 1
 
     # Synthesis of multiple links
-    _graph_atlas(result, cg_list, _labels(c_j, 1, 0, True), no_degenerate, stop_func)
+    _graph_atlas(result, cg_list, _labels(c_j, 1, 0), no_degenerate, stop_func)
 
     # Return graph list and time
     logger.debug(f"Count: {len(result)}, time: {time() - t0}")
