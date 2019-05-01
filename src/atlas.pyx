@@ -111,12 +111,7 @@ cdef inline bint _is_isomorphic(Graph g, list result):
     return False
 
 
-cdef inline void _test_contracted_graph(
-    Graph g,
-    imap &limit,
-    imap *count,
-    list result
-):
+cdef inline void _test_contracted_graph(Graph g, list result):
     """Test the contracted graph."""
     # All connected
     if not g.is_connected():
@@ -272,7 +267,7 @@ cdef void _contracted_graph(
         # Recursive or end.
         next_node = _feasible_link(limit, count[0])
         if next_node == -1:
-            _test_contracted_graph(Graph.__new__(Graph, edges), limit, count, result)
+            _test_contracted_graph(Graph.__new__(Graph, edges), result)
         else:
             _contracted_graph(next_node, result, edges, limit, count[0], stop_func)
 
@@ -304,14 +299,11 @@ cdef inline void _contracted_graph_new(
                     f_matrix[i, c] = 1
                 c += 1
 
-    if n == 3:
-        print(np_array(f_matrix))
-
     # Gauss elimination
     cdef int d
     cdef int16_t[:] divisor, tmp
     for j in range(variables_count):
-        # Remove all coefficient of index [i] to zero.
+        # Remove all coefficients of index [i] to zero.
         for i in range(n):
             if f_matrix[i, j] != 0 and not np_any(f_matrix[i, :j]):
                 d = i
@@ -326,44 +318,69 @@ cdef inline void _contracted_graph_new(
             tmp = np_sub(f_matrix[i, :], np_mul(divisor, f_matrix[i, j]))
             f_matrix[i, :] = tmp
 
-    if n == 3:
-        print(np_array(f_matrix))
-
     # Answer
     cdef int16_t[:] answer = -np_ones(variables_count, dtype=int16)
 
     # Determined solution
-    for i in range(n):
-        c = 0
-        for j in range(variables_count):
-            if f_matrix[i, j] != 0:
-                d = j
-                c += 1
+    cdef int around = 0
+    while around < n:
+        for i in range(n):
+            c = 0
+            for j in range(variables_count):
+                # Derivation (has answer)
+                if answer[j] >= 0 and f_matrix[i, j] != 0:
+                    f_matrix[i, -1] -= f_matrix[i, j] * answer[j]
+                    f_matrix[i, j] = 0
 
-        if c != 1:
-            continue
+                # Nonzero coefficient
+                if f_matrix[i, j] != 0:
+                    d = j
+                    c += 1
 
-        j = d
-        k = f_matrix[i, j]
-        c = f_matrix[i, -1]
-        if k != 1:
-            if k < 0:
-                k = -k
-                c = -c
+            if c != 1:
+                around += 1
+                continue
+
+            j = d
+            k = f_matrix[i, j]
+            c = f_matrix[i, -1]
+            if k != 1:
+                if k < 0:
+                    k = -k
+                    c = -c
+                if c < 0:
+                    return
+                d = _gcd(k, c)
+                k /= d
+                c /= d
             if c < 0:
                 return
-            d = _gcd(k, c)
-            k /= d
-            c /= d
-        if c < 0:
-            return
-        answer[j] = c
+            answer[j] = c
+            around = 0
 
-    if n == 3:
-        print(np_array(f_matrix))
-        print(np_array(answer))
+    # One result
+    cdef dict edges
+    cdef Graph g
+    for i in range(variables_count):
+        if answer[i] < 0:
+            break
+    else:
+        edges = {}
+        c = 0
+        for i in range(n):
+            for j in range(n):
+                if i >= j:
+                    continue
+                edges[i, j] = answer[c]
+                c += 1
+        g = Graph(Counter(edges).elements())
+        _test_contracted_graph(g, result)
+        result.append(g)
+        return
 
-    # TODO: Derivation
+    print(np_array(limit))
+    print(np_array(f_matrix))
+    print(np_array(answer))
 
     # TODO: Enumeration
 
@@ -563,7 +580,7 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
     # Synthesis of contracted graphs
     cdef list cg_list = []
     _contracted_graph(0, cg_list, [], m_limit, count, stop_func)
-    _contracted_graph_new(cg_list, m_link, stop_func)
+    _contracted_graph_new([], m_link, stop_func)
 
     logger.debug(f"Contracted graph(s): {len(cg_list)}, time: {time() - t0}")
     return cg_list
