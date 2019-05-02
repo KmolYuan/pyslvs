@@ -9,31 +9,51 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from numpy cimport (
-    ndarray,
-    int16_t,
-)
 from numpy import (
     int16,
     array as np_array,
     zeros as np_zeros,
+    prod as np_prod,
+    repeat as np_repeat,
+    arange,
 )
 
 
-cdef inline list _product(int pool_size, int repeat, object stop_func):
-    """Product function as same as iteration tools."""
-    cdef int i, y
-    cdef list x, tmp_list
-    cdef list result = [[]]
-    for i in range(repeat):
-        tmp_list = []
-        for x in result:
+cdef int16_t[:, :] product(tuple pool, object stop_func):
+    """Product function as same as iteration tools.
+    
+    The pool is created by range(n).
+    """
+    if not pool:
+        return np_array([], dtype=int16)
+
+    cdef int16_t[:] tmp1
+    cdef int16_t[:, :] tmp2
+    cdef int16_t[:] array0 = arange(pool[0], dtype=int16)
+    cdef int repeat = len(pool)
+
+    cdef int n = np_prod(tuple(n for n in pool))
+    cdef int16_t[:, :] out = np_zeros((n, repeat), dtype=int16)
+
+    cdef int array0_size = len(array0)
+    cdef int m = n / array0_size
+
+    tmp1 = np_repeat(array0, m)
+    out[:, 0] = tmp1
+
+    cdef int j
+    if pool[1:]:
+        tmp2 = product(pool[1:], stop_func)
+        out[0:m, 1:] = tmp2
+        for j in range(1, array0_size):
             if stop_func is not None and stop_func():
-                return []
-            for y in range(pool_size):
-                tmp_list.append(x + [y])
-        result = tmp_list
-    return result
+                return out
+            out[j * m:(j + 1) * m, 1:] = out[0:m, 1:]
+    return out
+
+
+cdef int16_t[:, :] _product(int pool_size, int repeat, object stop_func):
+    return product((pool_size,) * repeat, stop_func)
 
 
 cdef inline int _m_max(int nl, int nj) nogil:
@@ -69,14 +89,16 @@ cpdef list number_synthesis(int nl, int nj, object stop_func = None):
         raise ValueError("incorrect mechanism.")
 
     cdef int i, p
-    cdef list symbols
+    cdef int16_t[:] symbols
+    cdef list tmp
     for symbols in _product(nl + 1, m_max_v - 2, stop_func):
         nl_m_max = nl - sum(symbols)
         if nl_m_max < 0:
             continue
-        symbols.append(nl_m_max)
-        if _sum_factors(symbols) == (2 * nj):
-            result.append(tuple(symbols))
+        tmp = list(symbols)
+        tmp.append(nl_m_max)
+        if _sum_factors(tmp) == nj * 2:
+            result.append(tuple(tmp))
     return result
 
 
@@ -111,16 +133,15 @@ cdef inline int _j_m_p(int n_m) nogil:
 
 cpdef list contracted_link(list link_num_list, object stop_func = None):
     """Generate the contracted link assortments."""
-    cdef ndarray[int16_t, ndim=1] link_num
-
+    cdef int16_t[:] link_num
     if len(link_num_list) == 1:
         link_num = np_zeros(link_num_list[0], dtype=int16)
         link_num[-1] = 1
-        return [tuple(link_num.tolist())]
+        return [tuple(link_num)]
 
-    link_num = np_array(link_num_list, ndmin=1, dtype=int16)
+    link_num = np_array(link_num_list, dtype=int16)
 
-    # Contracted link.
+    # Contracted link
     cdef int j_m_v = _j_m(link_num)
     cdef int n_c_min = max(1, j_m_v - _j_m_p(sum(link_num[1:])))
     cdef int n_c_max = min(link_num[0], j_m_v)
@@ -128,10 +149,11 @@ cpdef list contracted_link(list link_num_list, object stop_func = None):
     # i = NL2 - NC + 2
     cdef int i_max = min(link_num[0], link_num[0] - n_c_min + 2)
 
-    # Matching formula.
+    # Matching formula
     cdef int count, factor, index
     cdef float last_factor
-    cdef list m
+    cdef int16_t[:] m
+    cdef list tmp
     cdef list cj_list = []
     for m in _product(link_num[0] + 1, i_max - 1, stop_func):
         count = 0
@@ -146,9 +168,10 @@ cpdef list contracted_link(list link_num_list, object stop_func = None):
         if last_factor < 0 or last_factor != factor:
             continue
 
-        m.append(factor)
+        tmp = list(m)
+        tmp.append(factor)
 
-        if n_c_min <= sum(m) <= n_c_max:
-            cj_list.append(tuple(m))
+        if n_c_min <= sum(tmp) <= n_c_max:
+            cj_list.append(tuple(tmp))
 
     return cj_list

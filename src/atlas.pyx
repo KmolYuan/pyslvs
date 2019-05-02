@@ -32,9 +32,11 @@ from numpy import (
     subtract as np_sub,
     multiply as np_mul,
     floor_divide as np_div,
+    equal as np_eq,
     less_equal as np_le,
     any as np_any,
 )
+from number cimport product
 from graph cimport Graph, link_assortments
 from planar_check cimport is_planar
 
@@ -299,7 +301,6 @@ cdef inline void _contracted_graph_new(
 ) except *:
     """Synthesis of contracted graphs."""
     cdef int n = len(limit)
-
     cdef int variables_count = (n * (n - 1) / 2)
     cdef int16_t[:, :] f_matrix = np_zeros((n, variables_count + 1), dtype=int16)
     f_matrix[:, -1] = limit
@@ -337,6 +338,14 @@ cdef inline void _contracted_graph_new(
 
     # Answer
     cdef int16_t[:] answer = -np_ones(variables_count, dtype=int16)
+    cdef int16_t[:] l_matrix = np_zeros(variables_count, dtype=int16)
+    c = 0
+    for i in range(n):
+        for j in range(n):
+            if i >= j:
+                continue
+            l_matrix[c] = min(limit[i], limit[j])
+            c += 1
 
     # Determined solution
     cdef int around = 0
@@ -385,7 +394,6 @@ cdef inline void _contracted_graph_new(
         if not g.edges:
             return
         _test_contracted_graph(g, result)
-        result.append(g)
         return
 
     # Formula simplification by GCDs.
@@ -398,12 +406,31 @@ cdef inline void _contracted_graph_new(
         tmp = np_div(f_matrix[i, :], _gcd_all(f_matrix[i, :])) * c
         f_matrix[i, :] = tmp
 
-    # TODO: Formula simplification
+    cdef list coefficients = []
 
-    # Relation equations
-    cdef int16_t[:, :] relation = np_zeros((n, variables_count + 1), dtype=int16)
-    around = 0
+    # Formula indicator
+    cdef vector[int] formula
+    # Relation pair, used for forward replacement.
+    cdef dict relation_pair = {}
     for i in range(n):
+        # Formula simplification
+        for j in range(n):
+            if i >= j:
+                continue
+            for k in range(n, variables_count):
+                if 0 in {f_matrix[i, k], f_matrix[j, k]}:
+                    break
+                coefficients.append(_gcd(f_matrix[i, k], f_matrix[j, k]))
+            else:
+                if np_eq(coefficients, f_matrix[i, n:variables_count]).all():
+                    tmp = np_sub(f_matrix[j, :], f_matrix[i, :])
+                    f_matrix[j, :] = tmp
+                elif np_eq(coefficients, f_matrix[j, n:variables_count]).all():
+                    tmp = np_sub(f_matrix[i, :], f_matrix[j, :])
+                    f_matrix[i, :] = tmp
+            coefficients.clear()
+
+        # Relation equations
         c = 0
         d = -1
         k = -1
@@ -415,12 +442,31 @@ cdef inline void _contracted_graph_new(
                     k = j
                 c += 1
         if c == 2:
-            relation[around, :] = f_matrix[around, :]
-            around += 1
+            relation_pair[d] = (k, i)
+        elif c > 2:
+            formula.push_back(i)
+
+    # Reduce variables in formulas.
+    tmp = np_ones(variables_count, dtype=int16)
+    for i in formula:
+        for j in range(variables_count):
+            if f_matrix[i, j] == 0:
+                continue
+            if j in relation_pair:
+                k, d = relation_pair[j]
+                c = f_matrix[i, j] / f_matrix[d, j]
+                f_matrix[i, k] -= f_matrix[d, k] * c
+                f_matrix[i, -1] += f_matrix[d, -1] * c
+                f_matrix[i, j] = 0
+            else:
+                tmp[j] = l_matrix[j]
 
     print(np_array(f_matrix))
 
-    # TODO: Enumeration
+    # Enumeration
+    for tmp in product(tuple(tmp), stop_func):
+        print(np_array(tmp))
+        # TODO: Verification
 
 
 cdef inline void _dyad_insert(Graph g, frozenset edge, int amount):
@@ -618,7 +664,14 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
     # Synthesis of contracted graphs
     cdef list cg_list = []
     _contracted_graph(0, cg_list, [], m_limit, count, stop_func)
-    _contracted_graph_new([], m_link, stop_func)
+    cdef list cg_new = []
+    _contracted_graph_new(cg_new, m_link, stop_func)
+    if len(cg_new) != len(cg_list):
+        # TODO: Check
+        print(f"ERROR: {len(cg_new)} / {len(cg_list)} in {list(link_num)}")
+        print(cg_list)
+        print(cg_new)
+        print('-' * 12)
 
     logger.debug(f"Contracted graph(s): {len(cg_list)}, time: {time() - t0}")
     return cg_list
