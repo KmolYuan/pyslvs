@@ -320,13 +320,13 @@ cdef inline void _contracted_graph_new(
 
     # Gauss elimination
     cdef int d
-    cdef int16_t[:] divisor, tmp
+    cdef int16_t[:] tmp1, tmp2
     for j in range(var_count):
         # Remove all coefficients of index [i] to zero.
         for i in range(n):
             if f_matrix[i, j] != 0 and not np_any(f_matrix[i, :j]):
                 d = i
-                divisor = np_div(f_matrix[i, :], f_matrix[i, j])
+                tmp2 = np_div(f_matrix[i, :], f_matrix[i, j])
                 break
         else:
             continue
@@ -334,8 +334,8 @@ cdef inline void _contracted_graph_new(
         for i in range(n):
             if i == d or f_matrix[i, j] == 0:
                 continue
-            tmp = np_sub(f_matrix[i, :], np_mul(divisor, f_matrix[i, j]))
-            f_matrix[i, :] = tmp
+            tmp1 = np_sub(f_matrix[i, :], np_mul(tmp2, f_matrix[i, j]))
+            f_matrix[i, :] = tmp1
 
     # Answer
     cdef int16_t[:] answer = -np_ones(var_count, dtype=int16)
@@ -404,13 +404,13 @@ cdef inline void _contracted_graph_new(
             c = -1
         else:
             c = 1
-        tmp = np_div(f_matrix[i, :], _gcd_all(f_matrix[i, :])) * c
-        f_matrix[i, :] = tmp
-
-    cdef list coefficients = []
+        tmp1 = np_div(f_matrix[i, :], _gcd_all(f_matrix[i, :])) * c
+        f_matrix[i, :] = tmp1
 
     # Formula indicator
     cdef vector[int] formula
+    # Coefficients list
+    cdef list coefficients = []
     # Relation pair, used for forward replacement.
     cdef dict relation_pair = {}
     for i in range(n):
@@ -424,11 +424,11 @@ cdef inline void _contracted_graph_new(
                 coefficients.append(_gcd(f_matrix[i, k], f_matrix[j, k]))
             else:
                 if np_eq(coefficients, f_matrix[i, n:var_count]).all():
-                    tmp = np_sub(f_matrix[j, :], f_matrix[i, :])
-                    f_matrix[j, :] = tmp
+                    tmp1 = np_sub(f_matrix[j, :], f_matrix[i, :])
+                    f_matrix[j, :] = tmp1
                 elif np_eq(coefficients, f_matrix[j, n:var_count]).all():
-                    tmp = np_sub(f_matrix[i, :], f_matrix[j, :])
-                    f_matrix[i, :] = tmp
+                    tmp1 = np_sub(f_matrix[i, :], f_matrix[j, :])
+                    f_matrix[i, :] = tmp1
             coefficients.clear()
 
         # Relation equations
@@ -448,7 +448,7 @@ cdef inline void _contracted_graph_new(
             formula.push_back(i)
 
     # Reduce variables in formulas.
-    tmp = np_ones(var_count, dtype=int16)
+    tmp1 = np_ones(var_count, dtype=int16)
     for i in formula:
         for j in range(var_count):
             if f_matrix[i, j] == 0:
@@ -460,25 +460,25 @@ cdef inline void _contracted_graph_new(
                 f_matrix[i, -1] += f_matrix[d, -1] * c
                 f_matrix[i, j] = 0
             else:
-                tmp[j] = l_matrix[j]
+                tmp1[j] = l_matrix[j]
 
     # Enumeration
-    logger.debug(np_array(f_matrix))
-    logger.debug(f"product: [{len(tmp)}]{tuple(tmp)}")
-    for tmp in product(tuple(tmp), stop_func):
+    print(np_array(f_matrix))
+    logger.debug(f"product: [{len(tmp1)}]{tuple(tmp1)}")
+    for tmp1 in product(tuple(tmp1), stop_func):
         if stop_func is not None and stop_func():
             return
 
         # Verification
         for i in formula:
-            if np_sum(np_mul(tmp, f_matrix[i, :var_count])) != f_matrix[i, -1]:
+            if np_sum(np_mul(tmp1, f_matrix[i, :var_count])) != f_matrix[i, -1]:
                 break
         else:
             # Fill in the remaining variables.
             for i in relation_pair:
                 j, d = relation_pair[i]
-                tmp[i] = -tmp[j] * f_matrix[d, j] / f_matrix[d, i] - f_matrix[d, -1]
-            g = _multigraph(tmp, n)
+                tmp1[i] = -tmp1[j] * f_matrix[d, j] / f_matrix[d, i] - f_matrix[d, -1]
+            g = _multigraph(tmp1, n)
             _test_contracted_graph(g, result)
 
 

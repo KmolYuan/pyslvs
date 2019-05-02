@@ -90,8 +90,6 @@ enum ConstraintTypes {
     SymmetricArcs,
     LineInternalAngle,
     LineExternalAngle,
-    // TODO: Velocity Constraint types
-    // TODO: Acceleration Constraint types
 };
 
 struct Constraint {

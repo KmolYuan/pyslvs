@@ -188,7 +188,6 @@ cdef class Planar(Verification):
 
     cdef inline bint solve(self, double[:] input_list):
         """Start solver function."""
-        # TODO: Need to be optimized.
         self.data_dict.clear()
 
         cdef int i

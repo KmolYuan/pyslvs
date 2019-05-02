@@ -31,9 +31,9 @@ cdef int16_t[:, :] product(tuple pool, object stop_func):
     cdef int16_t[:] tmp1
     cdef int16_t[:, :] tmp2
     cdef int16_t[:] array0 = arange(pool[0], dtype=int16)
-    cdef int repeat = len(pool)
 
-    cdef int n = np_prod(tuple(n for n in pool))
+    cdef int repeat = len(pool)
+    cdef int n = np_prod(pool)
     cdef int16_t[:, :] out = np_zeros((n, repeat), dtype=int16)
 
     cdef int array0_size = len(array0)
