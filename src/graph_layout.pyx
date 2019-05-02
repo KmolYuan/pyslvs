@@ -513,7 +513,7 @@ cdef inline list _cycle_basis(Graph g):
                     used[nbr] = {z}
                 elif nbr == z:
                     # self loops
-                    cycles.append([z])
+                    cycles.append(OrderedSet([z]))
                 elif nbr not in zused:
                     # found a cycle
                     pn = used[nbr]

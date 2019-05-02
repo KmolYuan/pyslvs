@@ -13,6 +13,7 @@ from numpy import (
     int16,
     array as np_array,
     zeros as np_zeros,
+    sum as np_sum,
     prod as np_prod,
     repeat as np_repeat,
     arange,
@@ -25,7 +26,7 @@ cdef int16_t[:, :] product(tuple pool, object stop_func):
     The pool is created by range(n).
     """
     if not pool:
-        return np_array([], dtype=int16)
+        return np_array([[]], dtype=int16)
 
     cdef int16_t[:] tmp1
     cdef int16_t[:, :] tmp2
@@ -53,7 +54,7 @@ cdef int16_t[:, :] product(tuple pool, object stop_func):
 
 
 cdef int16_t[:, :] _product(int pool_size, int repeat, object stop_func):
-    return product((pool_size,) * repeat, stop_func)
+    return product((pool_size,) * repeat + (1,), stop_func)
 
 
 cdef inline int _m_max(int nl, int nj) nogil:
@@ -72,7 +73,7 @@ cdef inline int _m_max(int nl, int nj) nogil:
     return -1
 
 
-cdef inline int _sum_factors(list factors):
+cdef inline int _sum_factors(int16_t[:] factors):
     """F0*N2 + F1*N3 + F2*N4 + ... + Fn*N(n+2)"""
     cdef int factor = 0
     cdef int i
@@ -90,15 +91,13 @@ cpdef list number_synthesis(int nl, int nj, object stop_func = None):
 
     cdef int i, p
     cdef int16_t[:] symbols
-    cdef list tmp
     for symbols in _product(nl + 1, m_max_v - 2, stop_func):
-        nl_m_max = nl - sum(symbols)
+        nl_m_max = nl - np_sum(symbols)
         if nl_m_max < 0:
             continue
-        tmp = list(symbols)
-        tmp.append(nl_m_max)
-        if _sum_factors(tmp) == nj * 2:
-            result.append(tuple(tmp))
+        symbols[-1] = nl_m_max
+        if _sum_factors(symbols) == nj * 2:
+            result.append(tuple(symbols))
     return result
 
 
@@ -153,12 +152,11 @@ cpdef list contracted_link(list link_num_list, object stop_func = None):
     cdef int count, factor, index
     cdef float last_factor
     cdef int16_t[:] m
-    cdef list tmp
     cdef list cj_list = []
     for m in _product(link_num[0] + 1, i_max - 1, stop_func):
         count = 0
         index = 1
-        for factor in m:
+        for factor in m[:-1]:
             count +=  factor * index
             index += 1
 
@@ -168,10 +166,8 @@ cpdef list contracted_link(list link_num_list, object stop_func = None):
         if last_factor < 0 or last_factor != factor:
             continue
 
-        tmp = list(m)
-        tmp.append(factor)
-
-        if n_c_min <= sum(tmp) <= n_c_max:
-            cj_list.append(tuple(tmp))
+        m[-1] = factor
+        if n_c_min <= np_sum(m) <= n_c_max:
+            cj_list.append(tuple(m))
 
     return cj_list
