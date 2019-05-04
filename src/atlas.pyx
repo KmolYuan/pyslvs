@@ -79,10 +79,10 @@ cdef inline int _gcd(int a, int b) nogil:
 
 
 @cython.boundscheck(False)
-cdef inline int16_t[:, :] _r_combinations(int n, int r):
+cdef inline int16_t[:, :] _r_combinations(int n, int r, object stop_func):
     """Combinations with replacement by range(n)."""
     if r == 0:
-        return np_array([[]], dtype=int16)
+        return np_array([], dtype=int16)
 
     cdef int16_t[:] indices = np_zeros(r, dtype=int16)
     cdef int16_t[:, :] result = np_zeros(
@@ -97,6 +97,9 @@ cdef inline int16_t[:, :] _r_combinations(int n, int r):
     cdef int i
     cdef int16_t[:] tmp
     while True:
+        if stop_func is not None and stop_func():
+            return result
+
         for i in reversed(range(r)):
             if indices[i] != n - 1:
                 break
@@ -218,23 +221,32 @@ cdef void _nest_do(
 
     cdef int16_t[:] coefficients = _nonzero_index(f_matrix[i, :-1])
     cdef int c = 0
+    cdef int j = -1
     cdef int d
     for d in coefficients:
         if answer[d] == -1:
             c += 1
+            j = d
 
     if c == 0:
         if np_sum(np_mul(answer, f_matrix[i, :-1])) == f_matrix[i, -1]:
             _nest_do(result, answer, f_matrix, i + 1, n, stop_func)
         return
+    elif c == 1:
+        c = 0
+        for d in coefficients:
+            if answer[d] != -1:
+                c += answer[d] * f_matrix[i, d]
+        answer[j] = (f_matrix[i, -1] - c) / f_matrix[i, j]
+        _nest_do(result, answer, f_matrix, i + 1, n, stop_func)
+        return
 
-    cdef int j
     cdef int16_t[:] combine, tmp, answer_copy
-    for combine in _r_combinations(f_matrix[i, -1], c):
-        if stop_func is not None and stop_func():
-            return
-
+    for combine in _r_combinations(f_matrix[i, -1], c, stop_func):
         for tmp in (combine, combine[::-1]):
+            if stop_func is not None and stop_func():
+                return
+
             c = 0
             d = 0
             for j in coefficients:
@@ -331,6 +343,7 @@ cdef inline void _contracted_graph(
         _gauss_elimination(result, limit, f_matrix, n, var_count)
         return
 
+    # Nest do loop method.
     _nest_do(result, -np_ones(var_count, dtype=int16), f_matrix, 0, n, stop_func)
 
 
@@ -354,7 +367,8 @@ cdef inline void _dyad_insert(Graph g, frozenset edge, int amount):
 cdef inline void _permute_combine(
     int16_t[:] limit,
     list combine_list,
-    tuple pick_list
+    tuple pick_list,
+    object stop_func
 ):
     """Permutation of combined list."""
     cdef int n = len(limit)
@@ -377,6 +391,9 @@ cdef inline void _permute_combine(
 
     cdef int tmp
     while True:
+        if stop_func is not None and stop_func():
+            break
+
         for i in reversed(range(n)):
             cycles[i] -= 1
             if cycles[i] == 0:
@@ -399,7 +416,7 @@ cdef inline void _permute_combine(
         combine_list.append(tuple(zip(pick_list, tmp_array)))
 
 
-cdef inline list _contracted_links(tuple edges, int16_t[:] limit):
+cdef inline list _contracted_links(tuple edges, int16_t[:] limit, object stop_func):
     """Combination of contracted links.
     
     pool: edges
@@ -436,6 +453,9 @@ cdef inline list _contracted_links(tuple edges, int16_t[:] limit):
     # Combinations loop with number checking.
     cdef int n1, n2
     while True:
+        if stop_func is not None and stop_func():
+            break
+
         # Combine
         for i in range(pick_count):
             pick_list[pool_list[indices[i]]] += 1
@@ -462,7 +482,7 @@ cdef inline list _contracted_links(tuple edges, int16_t[:] limit):
     pool_list = tuple(confirm_list.elements())
     cdef tuple picked
     for picked in combine_set:
-        _permute_combine(limit, combine_list, pool_list + picked)
+        _permute_combine(limit, combine_list, pool_list + picked, stop_func)
     return combine_list
 
 
@@ -479,11 +499,7 @@ cdef inline void _graph_atlas(
     cdef tuple combine
     cdef frozenset edge
     for cg in contracted_graph:
-        # Check if stop.
-        if stop_func is not None and stop_func():
-            return
-
-        for combine in _contracted_links(cg.edges, limit):
+        for combine in _contracted_links(cg.edges, limit, stop_func):
             g = Graph.__new__(Graph, cg.edges)
             for edge, n in combine:
                 _dyad_insert(g, edge, n)

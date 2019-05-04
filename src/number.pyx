@@ -27,7 +27,7 @@ cdef int16_t[:, :] product(tuple pool, object stop_func):
     The pool is created by range(n).
     """
     if not pool:
-        return np_array([[]], dtype=int16)
+        return np_array([], dtype=int16)
 
     cdef int16_t[:] tmp1
     cdef int16_t[:, :] tmp2
