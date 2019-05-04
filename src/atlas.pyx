@@ -78,15 +78,6 @@ cdef inline int _gcd(int a, int b) nogil:
     return a
 
 
-cdef inline int _gcd_all(int16_t[:] numbers):
-    """GCD for all numbers."""
-    cdef int r = 0
-    cdef int n
-    for n in numbers:
-        r = _gcd(r, abs(n))
-    return r
-
-
 @cython.boundscheck(False)
 cdef inline int16_t[:, :] _r_combinations(int n, int r):
     """Combinations with replacement by range(n)."""
@@ -216,13 +207,13 @@ cdef void _nest_do(
     int16_t[:] answer,
     int16_t[:, :] f_matrix,
     int i,
-    int n
+    int n,
+    object stop_func
 ):
     """Nest do loop."""
-    if i == n:
+    if i >= n:
         # Result
-        g = _multigraph(answer, n)
-        _test_contracted_graph(g, result)
+        _test_contracted_graph(_multigraph(answer, n), result)
         return
 
     cdef int16_t[:] coefficients = _nonzero_index(f_matrix[i, :-1])
@@ -234,61 +225,35 @@ cdef void _nest_do(
 
     if c == 0:
         if np_sum(np_mul(answer, f_matrix[i, :-1])) == f_matrix[i, -1]:
-            _nest_do(result, answer, f_matrix, i + 1, n)
+            _nest_do(result, answer, f_matrix, i + 1, n, stop_func)
         return
 
-    # TODO: Something wrong here.
-
     cdef int j
-    cdef int16_t[:] tmp, answer_copy
-    for tmp in _r_combinations(f_matrix[i, -1], c):
-        c = 0
-        d = 0
-        for j in coefficients:
-            if answer[j] == -1:
-                c += tmp[d] * f_matrix[i, j]
-                d += 1
-            else:
-                c += answer[j] * f_matrix[i, j]
-        if c != f_matrix[i, -1]:
-            continue
+    cdef int16_t[:] combine, tmp, answer_copy
+    for combine in _r_combinations(f_matrix[i, -1], c):
+        if stop_func is not None and stop_func():
+            return
 
-        answer_copy = answer.copy()
-        d = 0
-        for j in coefficients:
-            # Pass to answer
-            if answer_copy[j] == -1:
-                answer_copy[j] = tmp[d]
-                d += 1
-        _nest_do(result, answer_copy, f_matrix, i + 1, n)
+        for tmp in (combine, combine[::-1]):
+            c = 0
+            d = 0
+            for j in coefficients:
+                if answer[j] == -1:
+                    c += tmp[d] * f_matrix[i, j]
+                    d += 1
+                else:
+                    c += answer[j] * f_matrix[i, j]
+            if c != f_matrix[i, -1]:
+                continue
 
-
-cdef inline bint _over_count(list pick_list, imap &limit, imap &count):
-    """Return True if it is a feasible pick list."""
-    cdef int n
-    cdef tuple candidate
-    cdef imap pre_count
-    for candidate in pick_list:
-        for n in candidate:
-            pre_count[n] += 1
-            if limit[n] < 0:
-                # Contracted links.
-                if pre_count[n] + count[n] > 1:
-                    return True
-            else:
-                # Multiple links.
-                if pre_count[n] + count[n] > limit[n]:
-                    return True
-    return False
-
-
-cdef inline int _feasible_link(imap &limit, imap &count):
-    """Return next feasible multiple link, return -1 if no any matched."""
-    cdef ipair it
-    for it in limit:
-        if it.second > 0 and count[it.first] < it.second:
-            return it.first
-    return -1
+            answer_copy = answer.copy()
+            d = 0
+            for j in coefficients:
+                # Pass to answer
+                if answer_copy[j] == -1:
+                    answer_copy[j] = tmp[d]
+                    d += 1
+            _nest_do(result, answer_copy, f_matrix, i + 1, n, stop_func)
 
 
 cdef inline bint _is_isomorphic(Graph g, list result):
@@ -337,133 +302,8 @@ cdef inline void _test_graph(
     result.append(g)
 
 
-cdef inline list _picked_multi_branch(int node, imap &limit, imap &count):
-    """Return feasible node for contracted graph combination."""
-    cdef int pick_count = limit[node] - count[node]
-    if pick_count < 1:
-        return []
-
-    # Create pool
-    cdef list pool_list = []
-    cdef int i, margin
-    cdef ipair it1, it2
-    for it1 in limit:
-        if node == it1.first:
-            continue
-        if it1.second <= 0:
-            continue
-        # Multiple links
-        margin = it1.second - count[it1.first]
-        if margin <= 0:
-            continue
-        for i in range(margin):
-            pool_list.append((it1.first,))
-
-    # Check over picked
-    cdef int pool_size = len(pool_list)
-    if pick_count > pool_size:
-        return []
-
-    cdef int16_t[:] indices = np_zeros(pick_count, dtype=int16)
-    for i in range(pick_count):
-        indices[i] = i
-
-    cdef list pick_list = []
-    cdef list combine_list = []
-
-    # Combinations loop with number checking.
-    cdef int n1, n2
-    while True:
-        # Combine
-        for i in range(pick_count):
-            pick_list.append(pool_list[indices[i]])
-
-        # Check if contracted link is over selected.
-        if not _over_count(pick_list, limit, count):
-            combine_list.append(tuple(pick_list))
-
-        # Initialize
-        pick_list.clear()
-
-        # Check combination is over.
-        for n1 in reversed(range(pick_count)):
-            if indices[n1] != n1 + pool_size - pick_count:
-                break
-        else:
-            return combine_list
-
-        # Next indicator
-        indices[n1] += 1
-        for n2 in range(n1 + 1, pick_count):
-            indices[n2] = indices[n2 - 1] + 1
-
-
-cdef inline void _insert_edges(
-    int node,
-    tuple combine,
-    list edges,
-    imap *count
-):
-    """Insert combinations."""
-    # Collecting to edges.
-    cdef int b, d
-    cdef tuple dyad
-    for dyad in combine:
-        b = node
-        for d in dyad:
-            if b < d:
-                edges.append((b , d))
-            else:
-                edges.append((d , b))
-            b = d
-        count[0][node] += 1
-        for d in dyad:
-            count[0][d] += 1
-
-
-cdef void _contracted_graph(
-    int node,
-    list result,
-    list edges_origin,
-    imap &limit,
-    imap &count_origin,
-    object stop_func
-):
-    """Synthesis of contracted graphs."""
-    # Copied edge list.
-    cdef list edges
-    cdef imap tmp
-    cdef imap *count
-    # Combinations.
-    cdef int next_node
-    cdef tuple combine
-    cdef list branches = _picked_multi_branch(node, limit, count_origin)
-    cdef bint multi_case = len(branches) > 1
-    for combine in branches:
-        # Check if stop.
-        if stop_func is not None and stop_func():
-            return
-
-        if multi_case:
-            edges = edges_origin.copy()
-            tmp = count_origin
-            count = &tmp
-        else:
-            edges = edges_origin
-            count = &count_origin
-
-        _insert_edges(node, combine, edges, count)
-
-        # Recursive or end.
-        next_node = _feasible_link(limit, count[0])
-        if next_node == -1:
-            _test_contracted_graph(Graph.__new__(Graph, edges), result)
-        else:
-            _contracted_graph(next_node, result, edges, limit, count[0], stop_func)
-
-
 @cython.boundscheck(False)
-cdef inline void _contracted_graph_new(
+cdef inline void _contracted_graph(
     list result,
     int16_t[:] limit,
     object stop_func
@@ -491,7 +331,7 @@ cdef inline void _contracted_graph_new(
         _gauss_elimination(result, limit, f_matrix, n, var_count)
         return
 
-    _nest_do(result, -np_ones(var_count, dtype=int16), f_matrix, 0, n)
+    _nest_do(result, -np_ones(var_count, dtype=int16), f_matrix, 0, n, stop_func)
 
 
 cdef inline void _dyad_insert(Graph g, frozenset edge, int amount):
@@ -685,11 +525,7 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
 
     # Synthesis of contracted graphs
     cdef list cg_list = []
-    _contracted_graph(0, cg_list, [], m_limit, count, stop_func)
-    cdef list cg_list_new = []
-    _contracted_graph_new(cg_list_new, m_link, stop_func)
-    print(list(link_num), len(cg_list), len(cg_list_new))
-    print('-' * 12)
+    _contracted_graph(cg_list, m_link, stop_func)
 
     logger.debug(f"Contracted graph(s): {len(cg_list)}, time: {time() - t0}")
     return cg_list
