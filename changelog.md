@@ -1,7 +1,8 @@
 Version 19.05
 ===
 
-+ None
++ Nested do loop method for contracted graph enumeration.
+    + Speed up performance of searching contracted graphs.
 
 Version 19.04
 ===
