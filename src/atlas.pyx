@@ -28,13 +28,11 @@ from numpy import (
     array as np_array,
     zeros as np_zeros,
     ones as np_ones,
-    add as np_add,
+    sum as np_sum,
+    full as np_full,
     subtract as np_sub,
     multiply as np_mul,
     floor_divide as np_div,
-    sum as np_sum,
-    equal as np_eq,
-    less_equal as np_le,
     any as np_any,
 )
 from graph cimport Graph, link_assortments
@@ -46,6 +44,16 @@ ctypedef cpair[int, int] ipair
 ctypedef cmap[int, int] imap
 
 cdef object logger = getLogger()
+
+
+cdef inline int16_t[:] _nonzero_index(int16_t[:] array):
+    """Return the number of nonzero numbers."""
+    cdef list counter = []
+    cdef int i, n
+    for i, n in enumerate(array):
+        if n != 0:
+            counter.append(i)
+    return np_array(counter, dtype=int16)
 
 
 cdef inline ullong _factorial(int n):
@@ -81,7 +89,10 @@ cdef inline int _gcd_all(int16_t[:] numbers):
 
 @cython.boundscheck(False)
 cdef inline int16_t[:, :] _r_combinations(int n, int r):
-    # combinations_with_replacement('ABC', 2) --> AA AB AC BB BC CC
+    """Combinations with replacement by range(n)."""
+    if r == 0:
+        return np_array([[]], dtype=int16)
+
     cdef int16_t[:] indices = np_zeros(r, dtype=int16)
     cdef int16_t[:, :] result = np_zeros(
         (_factorial(n + r - 1) / _factorial(r) / _factorial(n - 1), r),
@@ -92,15 +103,16 @@ cdef inline int16_t[:, :] _r_combinations(int n, int r):
     result[k, :] = indices
     k += 1
 
-    cdef int16_t[:] tmp
     cdef int i
+    cdef int16_t[:] tmp
     while True:
         for i in reversed(range(r)):
             if indices[i] != n - 1:
                 break
         else:
             return result
-        indices[i] += 1
+        tmp = np_full(r - i, indices[i] + 1, dtype=int16)
+        indices[i:] = tmp
         result[k, :] = indices
         k += 1
 
@@ -135,12 +147,13 @@ cdef inline void _gauss_elimination(
     list result,
     int16_t[:] limit,
     int16_t[:, :] f_matrix,
-    int n
+    int n,
+    int var_count
 ):
     """Gauss elimination for (n, n + 1) matrix."""
     cdef int i, j, d
     cdef int16_t[:] tmp1, tmp2
-    for j in range(n):
+    for j in range(var_count):
         # Remove all coefficients of index [i] to zero.
         for i in range(n):
             if f_matrix[i, j] != 0 and not np_any(f_matrix[i, :j]):
@@ -157,15 +170,15 @@ cdef inline void _gauss_elimination(
             f_matrix[i, :] = tmp1
 
     # Answer
-    cdef int16_t[:] answer = -np_ones(n, dtype=int16)
+    cdef int16_t[:] answer = -np_ones(var_count, dtype=int16)
 
     # Determined solution
     cdef int c, k
     for i in range(n):
         c = 0
-        for j in range(n):
+        for j in range(var_count):
             # Derivation (has answer)
-            if answer[j] >= 0 and f_matrix[i, j] != 0:
+            if answer[j] != -1 and f_matrix[i, j] != 0:
                 f_matrix[i, -1] -= f_matrix[i, j] * answer[j]
                 f_matrix[i, j] = 0
 
@@ -195,6 +208,59 @@ cdef inline void _gauss_elimination(
 
     # Result
     _test_contracted_graph(_multigraph(answer, n), result)
+
+
+@cython.boundscheck(False)
+cdef void _nest_do(
+    list result,
+    int16_t[:] answer,
+    int16_t[:, :] f_matrix,
+    int i,
+    int n
+):
+    """Nest do loop."""
+    if i == n:
+        # Result
+        g = _multigraph(answer, n)
+        _test_contracted_graph(g, result)
+        return
+
+    cdef int16_t[:] coefficients = _nonzero_index(f_matrix[i, :-1])
+    cdef int c = 0
+    cdef int d
+    for d in coefficients:
+        if answer[d] == -1:
+            c += 1
+
+    if c == 0:
+        if np_sum(np_mul(answer, f_matrix[i, :-1])) == f_matrix[i, -1]:
+            _nest_do(result, answer, f_matrix, i + 1, n)
+        return
+
+    # TODO: Something wrong here.
+
+    cdef int j
+    cdef int16_t[:] tmp, answer_copy
+    for tmp in _r_combinations(f_matrix[i, -1], c):
+        c = 0
+        d = 0
+        for j in coefficients:
+            if answer[j] == -1:
+                c += tmp[d] * f_matrix[i, j]
+                d += 1
+            else:
+                c += answer[j] * f_matrix[i, j]
+        if c != f_matrix[i, -1]:
+            continue
+
+        answer_copy = answer.copy()
+        d = 0
+        for j in coefficients:
+            # Pass to answer
+            if answer_copy[j] == -1:
+                answer_copy[j] = tmp[d]
+                d += 1
+        _nest_do(result, answer_copy, f_matrix, i + 1, n)
 
 
 cdef inline bint _over_count(list pick_list, imap &limit, imap &count):
@@ -396,7 +462,6 @@ cdef void _contracted_graph(
             _contracted_graph(next_node, result, edges, limit, count[0], stop_func)
 
 
-# Note: New method
 @cython.boundscheck(False)
 cdef inline void _contracted_graph_new(
     list result,
@@ -423,15 +488,10 @@ cdef inline void _contracted_graph_new(
 
     # Fast solution by Gauss elimination.
     if n >= var_count:
-        _gauss_elimination(result, limit, f_matrix, n)
+        _gauss_elimination(result, limit, f_matrix, n, var_count)
         return
 
-    print(np_array(f_matrix))
-    print(len(_r_combinations(3, 15)))
-
-    cdef int16_t[:] answer = -np_ones(var_count, dtype=int16)
-
-    # TODO: Combination
+    _nest_do(result, -np_ones(var_count, dtype=int16), f_matrix, 0, n)
 
 
 cdef inline void _dyad_insert(Graph g, frozenset edge, int amount):
@@ -534,6 +594,7 @@ cdef inline list _contracted_links(tuple edges, int16_t[:] limit):
     cdef set combine_set = set()
 
     # Combinations loop with number checking.
+    cdef int n1, n2
     while True:
         # Combine
         for i in range(pick_count):
@@ -625,7 +686,10 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
     # Synthesis of contracted graphs
     cdef list cg_list = []
     _contracted_graph(0, cg_list, [], m_limit, count, stop_func)
-    # _contracted_graph_new(cg_list, m_link, stop_func)
+    cdef list cg_list_new = []
+    _contracted_graph_new(cg_list_new, m_link, stop_func)
+    print(list(link_num), len(cg_list), len(cg_list_new))
+    print('-' * 12)
 
     logger.debug(f"Contracted graph(s): {len(cg_list)}, time: {time() - t0}")
     return cg_list
