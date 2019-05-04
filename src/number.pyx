@@ -9,6 +9,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
+from numpy cimport int16_t
 from numpy import (
     int16,
     array as np_array,

@@ -138,7 +138,7 @@ cdef inline void _gauss_elimination(
     int n
 ):
     """Gauss elimination for (n, n + 1) matrix."""
-    cdef int i, j, k, c, d
+    cdef int i, j, d
     cdef int16_t[:] tmp1, tmp2
     for j in range(n):
         # Remove all coefficients of index [i] to zero.
@@ -158,56 +158,43 @@ cdef inline void _gauss_elimination(
 
     # Answer
     cdef int16_t[:] answer = -np_ones(n, dtype=int16)
-    cdef int16_t[:] l_matrix = np_zeros(n, dtype=int16)
-    c = 0
-    for i in range(n):
-        for j in range(n):
-            if i >= j:
-                continue
-            l_matrix[c] = min(limit[i], limit[j])
-            c += 1
 
     # Determined solution
-    cdef int around = 0
-    while around < n:
-        for i in range(n):
-            c = 0
-            for j in range(n):
-                # Derivation (has answer)
-                if answer[j] >= 0 and f_matrix[i, j] != 0:
-                    f_matrix[i, -1] -= f_matrix[i, j] * answer[j]
-                    f_matrix[i, j] = 0
+    cdef int c, k
+    for i in range(n):
+        c = 0
+        for j in range(n):
+            # Derivation (has answer)
+            if answer[j] >= 0 and f_matrix[i, j] != 0:
+                f_matrix[i, -1] -= f_matrix[i, j] * answer[j]
+                f_matrix[i, j] = 0
 
-                # Nonzero coefficient
-                if f_matrix[i, j] != 0:
-                    d = j
-                    c += 1
+            # Nonzero coefficient
+            if f_matrix[i, j] != 0:
+                d = j
+                c += 1
 
-            if c != 1:
-                around += 1
-                continue
+        if c != 1:
+            continue
 
-            j = d
-            k = f_matrix[i, j]
-            c = f_matrix[i, -1]
-            if k != 1:
-                if k < 0:
-                    k = -k
-                    c = -c
-                if c < 0:
-                    return
-                d = _gcd(k, c)
-                k /= d
-                c /= d
+        j = d
+        k = f_matrix[i, j]
+        c = f_matrix[i, -1]
+        if k != 1:
+            if k < 0:
+                k = -k
+                c = -c
             if c < 0:
                 return
-            answer[j] = c
-            around = 0
+            d = _gcd(k, c)
+            k /= d
+            c /= d
+        if c < 0:
+            return
+        answer[j] = c
 
     # Result
-    cdef Graph g = _multigraph(answer, n)
-    if g.edges:
-        _test_contracted_graph(g, result)
+    _test_contracted_graph(_multigraph(answer, n), result)
 
 
 cdef inline bint _over_count(list pick_list, imap &limit, imap &count):
@@ -249,6 +236,8 @@ cdef inline bint _is_isomorphic(Graph g, list result):
 
 cdef inline void _test_contracted_graph(Graph g, list result):
     """Test the contracted graph."""
+    if not g.edges:
+        return
     # All connected
     if not g.is_connected():
         return
@@ -416,7 +405,7 @@ cdef inline void _contracted_graph_new(
 ) except *:
     """Synthesis of contracted graphs."""
     cdef int n = len(limit)
-    cdef int var_count = (n * (n - 1) / 2)
+    cdef int var_count = n * (n - 1) / 2
     cdef int16_t[:, :] f_matrix = np_zeros((n, var_count + 1), dtype=int16)
     f_matrix[:, -1] = limit
 
@@ -437,9 +426,12 @@ cdef inline void _contracted_graph_new(
         _gauss_elimination(result, limit, f_matrix, n)
         return
 
-    # TODO: Combination
     print(np_array(f_matrix))
     print(len(_r_combinations(3, 15)))
+
+    cdef int16_t[:] answer = -np_ones(var_count, dtype=int16)
+
+    # TODO: Combination
 
 
 cdef inline void _dyad_insert(Graph g, frozenset edge, int amount):
