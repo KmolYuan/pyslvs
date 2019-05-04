@@ -19,7 +19,6 @@ from time import time
 from logging import getLogger
 from collections import Counter
 cimport cython
-from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libcpp.pair cimport pair as cpair
 from libcpp.vector cimport vector
 from libcpp.map cimport map as cmap
@@ -29,6 +28,7 @@ from numpy import (
     array as np_array,
     zeros as np_zeros,
     ones as np_ones,
+    add as np_add,
     subtract as np_sub,
     multiply as np_mul,
     floor_divide as np_div,
@@ -37,15 +37,24 @@ from numpy import (
     less_equal as np_le,
     any as np_any,
 )
-from number cimport product
 from graph cimport Graph, link_assortments
 from planar_check cimport is_planar
 
 ctypedef unsigned int uint
+ctypedef unsigned long long ullong
 ctypedef cpair[int, int] ipair
 ctypedef cmap[int, int] imap
 
 cdef object logger = getLogger()
+
+
+cdef inline ullong _factorial(int n):
+    """Return (n!)."""
+    cdef ullong ret = 1
+    cdef int i
+    for i in range(2, n + 1):
+        ret *= i
+    return ret
 
 
 cdef inline int _gcd(int a, int b) nogil:
@@ -68,6 +77,32 @@ cdef inline int _gcd_all(int16_t[:] numbers):
     for n in numbers:
         r = _gcd(r, abs(n))
     return r
+
+
+@cython.boundscheck(False)
+cdef inline int16_t[:, :] _r_combinations(int n, int r):
+    # combinations_with_replacement('ABC', 2) --> AA AB AC BB BC CC
+    cdef int16_t[:] indices = np_zeros(r, dtype=int16)
+    cdef int16_t[:, :] result = np_zeros(
+        (_factorial(n + r - 1) / _factorial(r) / _factorial(n - 1), r),
+        dtype=int16
+    )
+
+    cdef int k = 0
+    result[k, :] = indices
+    k += 1
+
+    cdef int16_t[:] tmp
+    cdef int i
+    while True:
+        for i in reversed(range(r)):
+            if indices[i] != n - 1:
+                break
+        else:
+            return result
+        indices[i] += 1
+        result[k, :] = indices
+        k += 1
 
 
 cdef inline int16_t[:] _labels(int16_t[:] numbers, int index, int offset):
@@ -93,6 +128,86 @@ cdef inline Graph _multigraph(int16_t[:] counter, int n):
             edges[i, j] = counter[c]
             c += 1
     return Graph(Counter(edges).elements())
+
+
+@cython.boundscheck(False)
+cdef inline void _gauss_elimination(
+    list result,
+    int16_t[:] limit,
+    int16_t[:, :] f_matrix,
+    int n
+):
+    """Gauss elimination for (n, n + 1) matrix."""
+    cdef int i, j, k, c, d
+    cdef int16_t[:] tmp1, tmp2
+    for j in range(n):
+        # Remove all coefficients of index [i] to zero.
+        for i in range(n):
+            if f_matrix[i, j] != 0 and not np_any(f_matrix[i, :j]):
+                d = i
+                tmp2 = np_div(f_matrix[i, :], f_matrix[i, j])
+                break
+        else:
+            continue
+
+        for i in range(n):
+            if i == d or f_matrix[i, j] == 0:
+                continue
+            tmp1 = np_sub(f_matrix[i, :], np_mul(tmp2, f_matrix[i, j]))
+            f_matrix[i, :] = tmp1
+
+    # Answer
+    cdef int16_t[:] answer = -np_ones(n, dtype=int16)
+    cdef int16_t[:] l_matrix = np_zeros(n, dtype=int16)
+    c = 0
+    for i in range(n):
+        for j in range(n):
+            if i >= j:
+                continue
+            l_matrix[c] = min(limit[i], limit[j])
+            c += 1
+
+    # Determined solution
+    cdef int around = 0
+    while around < n:
+        for i in range(n):
+            c = 0
+            for j in range(n):
+                # Derivation (has answer)
+                if answer[j] >= 0 and f_matrix[i, j] != 0:
+                    f_matrix[i, -1] -= f_matrix[i, j] * answer[j]
+                    f_matrix[i, j] = 0
+
+                # Nonzero coefficient
+                if f_matrix[i, j] != 0:
+                    d = j
+                    c += 1
+
+            if c != 1:
+                around += 1
+                continue
+
+            j = d
+            k = f_matrix[i, j]
+            c = f_matrix[i, -1]
+            if k != 1:
+                if k < 0:
+                    k = -k
+                    c = -c
+                if c < 0:
+                    return
+                d = _gcd(k, c)
+                k /= d
+                c /= d
+            if c < 0:
+                return
+            answer[j] = c
+            around = 0
+
+    # Result
+    cdef Graph g = _multigraph(answer, n)
+    if g.edges:
+        _test_contracted_graph(g, result)
 
 
 cdef inline bint _over_count(list pick_list, imap &limit, imap &count):
@@ -194,7 +309,7 @@ cdef inline list _picked_multi_branch(int node, imap &limit, imap &count):
     if pick_count > pool_size:
         return []
 
-    cdef int *indices = <int *>PyMem_Malloc(pick_count * sizeof(int))
+    cdef int16_t[:] indices = np_zeros(pick_count, dtype=int16)
     for i in range(pick_count):
         indices[i] = i
 
@@ -220,7 +335,6 @@ cdef inline list _picked_multi_branch(int node, imap &limit, imap &count):
             if indices[n1] != n1 + pool_size - pick_count:
                 break
         else:
-            PyMem_Free(indices)
             return combine_list
 
         # Next indicator
@@ -318,168 +432,14 @@ cdef inline void _contracted_graph_new(
                     f_matrix[i, c] = 1
                 c += 1
 
-    # Gauss elimination
-    cdef int d
-    cdef int16_t[:] tmp1, tmp2
-    for j in range(var_count):
-        # Remove all coefficients of index [i] to zero.
-        for i in range(n):
-            if f_matrix[i, j] != 0 and not np_any(f_matrix[i, :j]):
-                d = i
-                tmp2 = np_div(f_matrix[i, :], f_matrix[i, j])
-                break
-        else:
-            continue
-
-        for i in range(n):
-            if i == d or f_matrix[i, j] == 0:
-                continue
-            tmp1 = np_sub(f_matrix[i, :], np_mul(tmp2, f_matrix[i, j]))
-            f_matrix[i, :] = tmp1
-
-    # Answer
-    cdef int16_t[:] answer = -np_ones(var_count, dtype=int16)
-    cdef int16_t[:] l_matrix = np_zeros(var_count, dtype=int16)
-    c = 0
-    for i in range(n):
-        for j in range(n):
-            if i >= j:
-                continue
-            l_matrix[c] = min(limit[i], limit[j])
-            c += 1
-
-    # Determined solution
-    cdef int around = 0
-    while around < n:
-        for i in range(n):
-            c = 0
-            for j in range(var_count):
-                # Derivation (has answer)
-                if answer[j] >= 0 and f_matrix[i, j] != 0:
-                    f_matrix[i, -1] -= f_matrix[i, j] * answer[j]
-                    f_matrix[i, j] = 0
-
-                # Nonzero coefficient
-                if f_matrix[i, j] != 0:
-                    d = j
-                    c += 1
-
-            if c != 1:
-                around += 1
-                continue
-
-            j = d
-            k = f_matrix[i, j]
-            c = f_matrix[i, -1]
-            if k != 1:
-                if k < 0:
-                    k = -k
-                    c = -c
-                if c < 0:
-                    return
-                d = _gcd(k, c)
-                k /= d
-                c /= d
-            if c < 0:
-                return
-            answer[j] = c
-            around = 0
-
-    # One result
-    cdef Graph g
-    for i in range(var_count):
-        if answer[i] < 0:
-            break
-    else:
-        g = _multigraph(answer, n)
-        if not g.edges:
-            return
-        _test_contracted_graph(g, result)
+    # Fast solution by Gauss elimination.
+    if n >= var_count:
+        _gauss_elimination(result, limit, f_matrix, n)
         return
 
-    # Formula simplification by GCDs.
-    for i in range(n):
-        # Reverse the negative coefficients.
-        if np_le(f_matrix[i, :], 0).all():
-            c = -1
-        else:
-            c = 1
-        tmp1 = np_div(f_matrix[i, :], _gcd_all(f_matrix[i, :])) * c
-        f_matrix[i, :] = tmp1
-
-    # Formula indicator
-    cdef vector[int] formula
-    # Coefficients list
-    cdef list coefficients = []
-    # Relation pair, used for forward replacement.
-    cdef dict relation_pair = {}
-    for i in range(n):
-        # TODO: Formula simplification
-        for j in range(n):
-            if i >= j:
-                continue
-            for k in range(n, var_count):
-                if 0 in {f_matrix[i, k], f_matrix[j, k]}:
-                    break
-                coefficients.append(_gcd(f_matrix[i, k], f_matrix[j, k]))
-            else:
-                if np_eq(coefficients, f_matrix[i, n:var_count]).all():
-                    tmp1 = np_sub(f_matrix[j, :], f_matrix[i, :])
-                    f_matrix[j, :] = tmp1
-                elif np_eq(coefficients, f_matrix[j, n:var_count]).all():
-                    tmp1 = np_sub(f_matrix[i, :], f_matrix[j, :])
-                    f_matrix[i, :] = tmp1
-            coefficients.clear()
-
-        # Relation equations
-        c = 0
-        d = -1
-        k = -1
-        for j in range(var_count):
-            if f_matrix[i, j] != 0:
-                if d == -1:
-                    d = j
-                else:
-                    k = j
-                c += 1
-        if c == 2:
-            relation_pair[d] = (k, i)
-        elif c > 2:
-            formula.push_back(i)
-
-    # Reduce variables in formulas.
-    tmp1 = np_ones(var_count, dtype=int16)
-    for i in formula:
-        for j in range(var_count):
-            if f_matrix[i, j] == 0:
-                continue
-            if j in relation_pair:
-                k, d = relation_pair[j]
-                c = f_matrix[i, j] / f_matrix[d, j]
-                f_matrix[i, k] -= f_matrix[d, k] * c
-                f_matrix[i, -1] += f_matrix[d, -1] * c
-                f_matrix[i, j] = 0
-            else:
-                tmp1[j] = l_matrix[j]
-
-    # Enumeration
+    # TODO: Combination
     print(np_array(f_matrix))
-    logger.debug(f"product: [{len(tmp1)}]{tuple(tmp1)}")
-    for tmp1 in product(tuple(tmp1), stop_func):
-        if stop_func is not None and stop_func():
-            return
-
-        # Verification
-        for i in formula:
-            if np_sum(np_mul(tmp1, f_matrix[i, :var_count])) != f_matrix[i, -1]:
-                break
-        else:
-            # Fill in the remaining variables.
-            for i in relation_pair:
-                j, d = relation_pair[i]
-                tmp1[i] = -tmp1[j] * f_matrix[d, j] / f_matrix[d, i] - f_matrix[d, -1]
-            g = _multigraph(tmp1, n)
-            _test_contracted_graph(g, result)
+    print(len(_r_combinations(3, 15)))
 
 
 cdef inline void _dyad_insert(Graph g, frozenset edge, int amount):
@@ -510,7 +470,7 @@ cdef inline void _permute_combine(
         return
 
     cdef vector[int] indices = range(n)
-    cdef int *cycles = <int *>PyMem_Malloc(n * sizeof(int))
+    cdef int16_t[:] cycles = np_zeros(n, dtype=int16)
     cdef int16_t[:] pool = limit
 
     cdef set permute_list = set()
@@ -541,8 +501,6 @@ cdef inline void _permute_combine(
                 break
         else:
             break
-
-    PyMem_Free(cycles)
 
     cdef tuple tmp_array
     for tmp_array in permute_list:
@@ -575,7 +533,7 @@ cdef inline list _contracted_links(tuple edges, int16_t[:] limit):
 
     pick_count -= confirm_size
     cdef int pool_size = len(pool_list)
-    cdef int *indices = <int *>PyMem_Malloc(pick_count * sizeof(int))
+    cdef int16_t[:] indices = np_zeros(pick_count, dtype=int16)
     cdef int i
     for i in range(pick_count):
         indices[i] = i
@@ -606,8 +564,6 @@ cdef inline list _contracted_links(tuple edges, int16_t[:] limit):
         indices[n1] += 1
         for n2 in range(n1 + 1, pick_count):
             indices[n2] = indices[n2 - 1] + 1
-
-    PyMem_Free(indices)
 
     cdef list combine_list = []
     pool_list = tuple(confirm_list.elements())
@@ -676,8 +632,8 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
 
     # Synthesis of contracted graphs
     cdef list cg_list = []
-    # _contracted_graph(0, cg_list, [], m_limit, count, stop_func)
-    _contracted_graph_new(cg_list, m_link, stop_func)
+    _contracted_graph(0, cg_list, [], m_limit, count, stop_func)
+    # _contracted_graph_new(cg_list, m_link, stop_func)
 
     logger.debug(f"Contracted graph(s): {len(cg_list)}, time: {time() - t0}")
     return cg_list
