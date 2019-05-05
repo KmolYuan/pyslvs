@@ -10,7 +10,6 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
-from numpy cimport int16_t
 from numpy import (
     int16,
     array as np_array,
