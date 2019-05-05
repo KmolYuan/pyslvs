@@ -9,6 +9,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
+cimport cython
 from numpy cimport int16_t
 from numpy import (
     int16,
@@ -21,6 +22,7 @@ from numpy import (
 )
 
 
+@cython.boundscheck(False)
 cdef int16_t[:, :] product(tuple pool, object stop_func):
     """Product function as same as iteration tools.
     

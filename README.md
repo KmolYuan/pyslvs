@@ -77,7 +77,7 @@ In Pyslvs, expression is mainly to [PMKS](http://designengrlab.github.io/PMKS/),
 
 + **atlas** library:
 
-    **preload**: `graph`, `planar_check`
+    **preload**: `number`, `graph`, `planar_check`
 
     Graph combination algorithm.
 

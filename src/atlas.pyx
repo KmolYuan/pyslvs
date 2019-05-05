@@ -29,12 +29,12 @@ from numpy import (
     zeros as np_zeros,
     ones as np_ones,
     sum as np_sum,
-    full as np_full,
     subtract as np_sub,
     multiply as np_mul,
     floor_divide as np_div,
     any as np_any,
 )
+from number cimport product
 from graph cimport Graph, link_assortments
 from planar_check cimport is_planar
 
@@ -76,39 +76,6 @@ cdef inline int _gcd(int a, int b) nogil:
         a = b
         b = r
     return a
-
-
-@cython.boundscheck(False)
-cdef inline int16_t[:, :] _r_combinations(int n, int r, object stop_func):
-    """Combinations with replacement by range(n)."""
-    if r == 0:
-        return np_array([], dtype=int16)
-
-    cdef int16_t[:] indices = np_zeros(r, dtype=int16)
-    cdef int16_t[:, :] result = np_zeros(
-        (_factorial(n + r - 1) / _factorial(r) / _factorial(n - 1), r),
-        dtype=int16
-    )
-
-    cdef int k = 0
-    result[k, :] = indices
-    k += 1
-
-    cdef int i
-    cdef int16_t[:] tmp
-    while True:
-        if stop_func is not None and stop_func():
-            return result
-
-        for i in reversed(range(r)):
-            if indices[i] != n - 1:
-                break
-        else:
-            return result
-        tmp = np_full(r - i, indices[i] + 1, dtype=int16)
-        indices[i:] = tmp
-        result[k, :] = indices
-        k += 1
 
 
 cdef inline int16_t[:] _labels(int16_t[:] numbers, int index, int offset):
@@ -216,7 +183,8 @@ cdef void _nest_do(
     """Nest do loop."""
     if i >= n:
         # Result
-        _test_contracted_graph(_multigraph(answer, n), result)
+        if <int>np_sum(answer) == <int>np_sum(f_matrix[:, -1]) / 2:
+            _test_contracted_graph(_multigraph(answer, n), result)
         return
 
     cdef int16_t[:] coefficients = _nonzero_index(f_matrix[i, :-1])
@@ -229,7 +197,7 @@ cdef void _nest_do(
             j = d
 
     if c == 0:
-        if np_sum(np_mul(answer, f_matrix[i, :-1])) == f_matrix[i, -1]:
+        if <int>np_sum(np_mul(answer, f_matrix[i, :-1])) == f_matrix[i, -1]:
             _nest_do(result, answer, f_matrix, i + 1, n, stop_func)
         return
     elif c == 1:
@@ -241,31 +209,30 @@ cdef void _nest_do(
         _nest_do(result, answer, f_matrix, i + 1, n, stop_func)
         return
 
-    cdef int16_t[:] combine, tmp, answer_copy
-    for combine in _r_combinations(f_matrix[i, -1], c, stop_func):
-        for tmp in (combine, combine[::-1]):
-            if stop_func is not None and stop_func():
-                return
+    cdef int16_t[:] combine, answer_copy
+    for combine in product((f_matrix[i, -1],) * c, stop_func):
+        if stop_func is not None and stop_func():
+            return
 
-            c = 0
-            d = 0
-            for j in coefficients:
-                if answer[j] == -1:
-                    c += tmp[d] * f_matrix[i, j]
-                    d += 1
-                else:
-                    c += answer[j] * f_matrix[i, j]
-            if c != f_matrix[i, -1]:
-                continue
+        c = 0
+        d = 0
+        for j in coefficients:
+            if answer[j] == -1:
+                c += combine[d] * f_matrix[i, j]
+                d += 1
+            else:
+                c += answer[j] * f_matrix[i, j]
+        if c != f_matrix[i, -1]:
+            continue
 
-            answer_copy = answer.copy()
-            d = 0
-            for j in coefficients:
-                # Pass to answer
-                if answer_copy[j] == -1:
-                    answer_copy[j] = tmp[d]
-                    d += 1
-            _nest_do(result, answer_copy, f_matrix, i + 1, n, stop_func)
+        answer_copy = answer.copy()
+        d = 0
+        for j in coefficients:
+            # Pass to answer
+            if answer_copy[j] == -1:
+                answer_copy[j] = combine[d]
+                d += 1
+        _nest_do(result, answer_copy, f_matrix, i + 1, n, stop_func)
 
 
 cdef inline bint _is_isomorphic(Graph g, list result):
@@ -319,7 +286,7 @@ cdef inline void _contracted_graph(
     list result,
     int16_t[:] limit,
     object stop_func
-) except *:
+):
     """Synthesis of contracted graphs."""
     cdef int n = len(limit)
     cdef int var_count = n * (n - 1) / 2
@@ -338,13 +305,12 @@ cdef inline void _contracted_graph(
                     f_matrix[i, c] = 1
                 c += 1
 
-    # Fast solution by Gauss elimination.
     if n >= var_count:
+        # Fast solution by Gauss elimination.
         _gauss_elimination(result, limit, f_matrix, n, var_count)
-        return
-
-    # Nest do loop method.
-    _nest_do(result, -np_ones(var_count, dtype=int16), f_matrix, 0, n, stop_func)
+    else:
+        # Nest do loop method.
+        _nest_do(result, -np_ones(var_count, dtype=int16), f_matrix, 0, n, stop_func)
 
 
 cdef inline void _dyad_insert(Graph g, frozenset edge, int amount):
