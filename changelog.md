@@ -1,6 +1,7 @@
 Version 19.05
 ===
 
++ Add "Six bar linkage mechanism" configuration.
 + Speed up performance of Cartesian product function.
 + Nested do loop method for contracted graph enumeration.
     + Speed up performance of searching contracted graphs.

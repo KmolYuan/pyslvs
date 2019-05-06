@@ -26,6 +26,25 @@ collection_list = {
         'same': {},
     },
 
+    "Six bar linkage mechanism": {
+        'Expression':
+            "M["
+            "J[R, P[5.8511, -103.2831], L[ground, L2]], "
+            "J[R, P[-71.3292, -109.7644], L[ground, L3]], "
+            "J[R, P[77.8903, -110.263], L[ground, L5]], "
+            "J[R, P[23.7994, 20.3606], L[L1, L2]], "
+            "J[R, P[-33.1974, 90.658], L[L1, L4]], "
+            "J[R, P[112.2951, 18.3663], L[L1, L5]], "
+            "J[R, P[-117.0519, -18.5671], L[L3, L4]]"
+            "]",
+        'Graph': ((0, 2), (2, 1), (0, 3), (3, 4), (4, 1), (0, 5), (5, 1)),
+        'Placement': {0: None, 1: None, 2: None},
+        'Target': {4: None},
+        'cus': {},
+        'input': [(1, 6)],
+        'same': {},
+    },
+
     "Eight bar linkage mechanism": {
         'Expression':
             "M["
