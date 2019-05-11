@@ -35,7 +35,7 @@ from numpy import (
     any as np_any,
 )
 from number cimport product
-from graph cimport Graph, link_assortments
+from graph cimport Graph, link_assortment
 from planar_check cimport is_planar
 
 ctypedef unsigned int uint
@@ -555,7 +555,7 @@ cpdef list topo(
         return result
 
     # Multiple links
-    cdef int16_t[:] m_link = np_array(link_assortments(cg_list[0]), ndmin=1, dtype=int16)
+    cdef int16_t[:] m_link = np_array(link_assortment(cg_list[0]), ndmin=1, dtype=int16)
     m_link = _labels(m_link, 3, 1)
 
     # Synthesis of multiple links

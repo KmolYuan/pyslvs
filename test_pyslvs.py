@@ -29,8 +29,8 @@ from number import number_synthesis, contracted_link
 from atlas import topo, contracted_graph
 from graph import (
     Graph,
-    link_assortments,
-    contracted_link_assortments,
+    link_assortment,
+    contracted_link_assortment,
 )
 from planar_check import is_planar
 from graph_layout import external_loop_layout
@@ -114,8 +114,8 @@ class CoreTest(TestCase):
 
         g1 = Graph([(0, 1), (2, 7), (1, 5), (1, 6), (3, 6), (0, 4), (3, 7), (2, 5), (3, 4), (0, 2)])
         self.assertTrue(is_planar(g1))
-        self.assertEqual([4, 4], link_assortments(g1))
-        self.assertEqual([4, 0, 0, 0], contracted_link_assortments(g1))
+        self.assertEqual([4, 4], link_assortment(g1))
+        self.assertEqual([4, 0, 0, 0], contracted_link_assortment(g1))
 
         g1 = Graph([(0, 1), (4, 10), (1, 3), (2, 9), (5, 6), (4, 5), (5, 7), (8, 10),
                     (1, 8), (9, 11), (3, 6), (0, 4), (3, 7), (2, 5), (0, 2), (4, 11)])

@@ -132,8 +132,8 @@ cdef inline int _j_m_p(int n_m) nogil:
         return 3 * (n_m - 2)
 
 
-cpdef list contracted_link(list link_num_list, object stop_func = None):
-    """Generate the contracted link assortments."""
+cpdef list contracted_link(object link_num_list, object stop_func = None):
+    """Generate the contracted link assortment."""
     cdef int16_t[:] link_num
     if len(link_num_list) == 1:
         link_num = np_zeros(link_num_list[0], dtype=int16)

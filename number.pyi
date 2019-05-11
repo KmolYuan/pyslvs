@@ -22,5 +22,5 @@ def contracted_link(
     link_num_list: Sequence[int],
     stop_func: Optional[Callable[[], bool]] = None
 ) -> List[Tuple[int, ...]]:
-    """Generate the contracted link assortments."""
+    """Generate the contracted link assortment."""
     ...

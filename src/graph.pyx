@@ -25,30 +25,30 @@ from typing import (
 ctypedef cpair[int, int] ipair
 
 
-cpdef list link_assortments(Graph g):
-    """Return link assortments of the graph."""
-    cdef list assortments = [0]
+cpdef list link_assortment(Graph g):
+    """Return link assortment of the graph."""
+    cdef list assortment = [0]
     if not g.edges:
-        return assortments
+        return assortment
 
     cdef int d, n
     for n in g.degrees().values():
         if n < 2:
             continue
         d = n - 2
-        while d >= len(assortments):
-            assortments.append(0)
-        assortments[d] += 1
+        while d >= len(assortment):
+            assortment.append(0)
+        assortment[d] += 1
 
-    return assortments
+    return assortment
 
 
-cpdef list contracted_link_assortments(Graph g):
-    """Return contracted link assortments of the graph."""
+cpdef list contracted_link_assortment(Graph g):
+    """Return contracted link assortment of the graph."""
     if not g.edges:
         return [0]
 
-    cdef list assortments = [0] * link_assortments(g)[0]
+    cdef list assortment = [0] * link_assortment(g)[0]
 
     cdef int d
     cdef tuple mcl
@@ -56,7 +56,7 @@ cpdef list contracted_link_assortments(Graph g):
     for mcl in _multi_contracted_links(g, False):
         d = len(mcl) - 1
         counted.update(mcl)
-        assortments[d] += 1
+        assortment[d] += 1
 
     # For single contracted links.
     cdef int n
@@ -64,9 +64,9 @@ cpdef list contracted_link_assortments(Graph g):
         if d != 2:
             continue
         if n not in counted:
-            assortments[0] += 1
+            assortment[0] += 1
 
-    return assortments
+    return assortment
 
 
 cdef list _multi_contracted_links(Graph g, bint only_one):

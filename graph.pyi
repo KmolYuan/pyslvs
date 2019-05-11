@@ -7,13 +7,13 @@ from typing import (
 )
 
 
-def link_assortments(g: Graph) -> List[int]:
-    """Return link assortments of the graph."""
+def link_assortment(g: Graph) -> List[int]:
+    """Return link assortment of the graph."""
     ...
 
 
-def contracted_link_assortments(g: Graph) -> List[int]:
-    """Return contracted link assortments of the graph."""
+def contracted_link_assortment(g: Graph) -> List[int]:
+    """Return contracted link assortment of the graph."""
     ...
 
 

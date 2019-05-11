@@ -59,8 +59,8 @@ from .de import Differential
 from .number import number_synthesis, contracted_link
 from .graph import (
     Graph,
-    link_assortments,
-    contracted_link_assortments,
+    link_assortment,
+    contracted_link_assortment,
     labeled_enumerate,
 )
 from .planar_check import is_planar
@@ -109,8 +109,8 @@ __all__ = [
     'topo',
     'contracted_graph',
     'Graph',
-    'link_assortments',
-    'contracted_link_assortments',
+    'link_assortment',
+    'contracted_link_assortment',
     'labeled_enumerate',
     'vpoints_configure',
     'ExpressionStack',

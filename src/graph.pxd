@@ -14,8 +14,8 @@ from libcpp.map cimport map as cmap
 ctypedef cmap[int, int] imap
 
 
-cpdef list link_assortments(Graph g)
-cpdef list contracted_link_assortments(Graph g)
+cpdef list link_assortment(Graph g)
+cpdef list contracted_link_assortment(Graph g)
 
 
 cdef class Graph:
