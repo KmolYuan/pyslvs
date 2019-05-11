@@ -24,6 +24,7 @@ def plap(
     """Point on circle by angle."""
     ...
 
+
 def pllp(
     c1: Coordinate,
     d0: float,
@@ -33,6 +34,7 @@ def pllp(
 ) -> Coordinate:
     """Two intersection points of two circles."""
     ...
+
 
 def plpp(
     c1: Coordinate,
@@ -44,17 +46,21 @@ def plpp(
     """Two intersection points of a line and a circle."""
     ...
 
+
 def pxy(c1: Coordinate, x: float, y: float) -> Coordinate:
     """Using relative cartesian coordinate to get solution."""
     ...
+
 
 def vpoint_dof(vpoints: Sequence[VPoint]) -> int:
     """Degree of freedoms calculate from PMKS expressions."""
     ...
 
+
 def expr_parser(exprs: Sequence[Tuple[str, ...]], data_dict: Dict[str, float]):
     """Update data."""
     ...
+
 
 def expr_solving(
     exprs: ExpressionStack,
@@ -64,6 +70,7 @@ def expr_solving(
 ) -> List[Union[TuplePoint, Tuple[TuplePoint, TuplePoint]]]:
     """Solving function."""
     ...
+
 
 def data_collecting(
     exprs: ExpressionStack,

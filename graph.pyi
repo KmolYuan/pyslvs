@@ -11,8 +11,14 @@ def link_assortments(g: Graph) -> List[int]:
     """Return link assortments of the graph."""
     ...
 
+
 def contracted_link_assortments(g: Graph) -> List[int]:
     """Return contracted link assortments of the graph."""
+    ...
+
+
+def labeled_enumerate(g: Graph) -> List[Tuple[int, Graph]]:
+    """Enumerate each node with labeled except isomorphism."""
     ...
 
 

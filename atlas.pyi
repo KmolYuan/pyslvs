@@ -19,6 +19,7 @@ def topo(
     """Linkage mechanism topological function."""
     ...
 
+
 def contracted_graph(
     link_num: Sequence[int],
     stop_func: Optional[Callable[[], bool]] = None

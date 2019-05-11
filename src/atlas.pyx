@@ -538,25 +538,25 @@ cpdef list topo(
     cdef int16_t[:] c_j = np_array(c_j_list, ndmin=1, dtype=int16)
 
     cdef list result = []
+    cdef int i, num
     if not cg_list:
         if 1 not in c_j_list:
             return []
         # Single loop - ring graph (special case)
-        result.append(Graph.__new__(Graph, _loop_chain(c_j_list.index(1))))
+        i = 1
+        for num in c_j:
+            if num == 1:
+                break
+            i += 1
+        else:
+            raise ValueError("Invalid assortment!")
+        result.append(Graph.__new__(Graph, _loop_chain(i)))
         logger.debug(f"Count: {len(result)}")
         return result
 
     # Multiple links
     cdef int16_t[:] m_link = np_array(link_assortments(cg_list[0]), ndmin=1, dtype=int16)
     m_link = _labels(m_link, 3, 1)
-
-    cdef imap m_limit, count
-    cdef int num
-    cdef int i = 0
-    for num in m_link:
-        m_limit[i] = num
-        count[i] = 0
-        i += 1
 
     # Synthesis of multiple links
     _graph_atlas(result, cg_list, _labels(c_j, 1, 0), no_degenerate, stop_func)

@@ -105,6 +105,23 @@ cdef list _multi_contracted_links(Graph g, bint only_one):
         return contracted_links
 
 
+cpdef list labeled_enumerate(Graph g):
+    """Enumerate each node with labeled except isomorphism."""
+    cdef list result = []
+
+    cdef int n1, n2
+    cdef Graph g1, g2
+    for n1 in g.nodes:
+        g1 = Graph.__new__(Graph, [e for e in g.edges if n1 not in e])
+        for n2, g2 in result:
+            if g1.is_isomorphic(g2):
+                break
+        else:
+            result.append((n1, g1))
+
+    return result
+
+
 @cython.final
 cdef class Graph:
 

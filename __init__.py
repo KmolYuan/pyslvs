@@ -61,6 +61,7 @@ from .graph import (
     Graph,
     link_assortments,
     contracted_link_assortments,
+    labeled_enumerate,
 )
 from .planar_check import is_planar
 from .graph_layout import external_loop_layout
@@ -110,6 +111,7 @@ __all__ = [
     'Graph',
     'link_assortments',
     'contracted_link_assortments',
+    'labeled_enumerate',
     'vpoints_configure',
     'ExpressionStack',
     'vpoint_dof',
