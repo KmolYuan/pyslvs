@@ -133,7 +133,7 @@ _GRAMMAR = Lark(r"""
     color: "color[" (("(" color_value ("," color_value) ~ 2 ")") | COLOR) "]"
     mechanism: "M[" [joint ("," joint)* ","?] "]"
     ?start: mechanism
-""")
+""", parser='lalr')
 
 
 class _ParamsTrans(Transformer):
