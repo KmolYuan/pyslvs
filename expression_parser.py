@@ -127,7 +127,7 @@ _GRAMMAR = Lark(r"""
 
     // Main grammar
     joint: "J[" type ["," angle] ["," color] "," point "," link "]"
-    link: "L[" name ("," name)* "]"
+    link: "L[" [name ("," name)* ","?] "]"
     point: "P[" number "," number "]"
     angle: "A[" number "]"
     color: "color[" (("(" color_value ("," color_value) ~ 2 ")") | COLOR) "]"

@@ -6,6 +6,7 @@ Version 19.05
 + Nested do loop method for contracted graph enumeration.
     + Speed up performance of searching contracted graphs.
 + Function renaming of "link_synthesis", "contracted_link_synthesis" and "conventional_graph".
++ Allow empty links in mechanism expression grammar.
 
 Version 19.04
 ===
