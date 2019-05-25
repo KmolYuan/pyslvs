@@ -25,8 +25,8 @@ from planar_linkage import Planar
 from rga import Genetic
 from firefly import Firefly
 from de import Differential
-from number import number_synthesis, contracted_link
-from atlas import topo, contracted_graph
+from number import link_synthesis, contracted_link_synthesis
+from atlas import conventional_graph, contracted_graph
 from graph import (
     Graph,
     link_assortment,
@@ -128,16 +128,16 @@ class CoreTest(TestCase):
 
         type_0 = [4]
         cg_list = contracted_graph(type_0)
-        for c_j in contracted_link(type_0):
-            answer = topo(cg_list, c_j)
+        for c_j in contracted_link_synthesis(type_0):
+            answer = conventional_graph(cg_list, c_j)
             answers.extend(answer)
         self.assertEqual(1, len(answers))
         answers.clear()
 
         type_1 = [4, 2]
         cg_list = contracted_graph(type_1)
-        for c_j in contracted_link(type_1):
-            answer = topo(cg_list, c_j)
+        for c_j in contracted_link_synthesis(type_1):
+            answer = conventional_graph(cg_list, c_j)
             answers.extend(answer)
         self.assertEqual(2, len(answers))
         answers.clear()
@@ -145,10 +145,10 @@ class CoreTest(TestCase):
         answers_degenerated = []
         for type_2 in ([4, 4, 0], [5, 2, 1], [6, 0, 2]):
             cg_list = contracted_graph(type_2)
-            for c_j in contracted_link(type_2):
-                answer = topo(cg_list, c_j)
+            for c_j in contracted_link_synthesis(type_2):
+                answer = conventional_graph(cg_list, c_j)
                 answers.extend(answer)
-                answer = topo(cg_list, c_j, 2)
+                answer = conventional_graph(cg_list, c_j, 2)
                 answers_degenerated.extend(answer)
         self.assertEqual(16, len(answers))
         self.assertEqual(40, len(answers_degenerated))
@@ -206,7 +206,7 @@ class CoreTest(TestCase):
     def test_number_synthesis(self):
         """Test Number Synthesis function."""
         for nl, nj in [(4, 4), (6, 7), (8, 9), (10, 12)]:
-            for factors in number_synthesis(nl, nj):
+            for factors in link_synthesis(nl, nj):
                 count = 0
                 for i, factor in enumerate(factors):
                     count += factor * (i + 2)

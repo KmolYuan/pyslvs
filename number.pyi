@@ -9,16 +9,16 @@ from typing import (
 )
 
 
-def number_synthesis(
+def link_synthesis(
     nl: int,
     nj: int,
     stop_func: Optional[Callable[[], bool]] = None
 ) -> List[Tuple[int, ...]]:
-    """Number _synthesis try-error function."""
+    """Generate the link assortment."""
     ...
 
 
-def contracted_link(
+def contracted_link_synthesis(
     link_num_list: Sequence[int],
     stop_func: Optional[Callable[[], bool]] = None
 ) -> List[Tuple[int, ...]]:

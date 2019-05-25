@@ -56,7 +56,7 @@ from .planar_linkage import Planar
 from .rga import Genetic
 from .firefly import Firefly
 from .de import Differential
-from .number import number_synthesis, contracted_link
+from .number import link_synthesis, contracted_link_synthesis
 from .graph import (
     Graph,
     link_assortment,
@@ -65,7 +65,7 @@ from .graph import (
 )
 from .planar_check import is_planar
 from .graph_layout import external_loop_layout
-from .atlas import topo, contracted_graph
+from .atlas import conventional_graph, contracted_graph
 from .expression_parser import (
     color_names,
     color_rgb,
@@ -102,11 +102,11 @@ __all__ = [
     'VLink',
     'vpoint_solving',
     'Planar',
-    'number_synthesis',
-    'contracted_link',
+    'link_synthesis',
+    'contracted_link_synthesis',
     'is_planar',
     'external_loop_layout',
-    'topo',
+    'conventional_graph',
     'contracted_graph',
     'Graph',
     'link_assortment',

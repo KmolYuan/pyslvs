@@ -84,7 +84,7 @@ cdef inline int _sum_factors(int16_t[:] factors):
     return factor
 
 
-cpdef list number_synthesis(int nl, int nj, object stop_func = None):
+cpdef list link_synthesis(int nl, int nj, object stop_func = None):
     """Number synthesis try and error function."""
     cdef list result = []
     cdef int m_max_v = _m_max(nl, nj)
@@ -132,7 +132,7 @@ cdef inline int _j_m_p(int n_m) nogil:
         return 3 * (n_m - 2)
 
 
-cpdef list contracted_link(object link_num_list, object stop_func = None):
+cpdef list contracted_link_synthesis(object link_num_list, object stop_func = None):
     """Generate the contracted link assortment."""
     cdef int16_t[:] link_num
     if len(link_num_list) == 1:

@@ -5,6 +5,7 @@ Version 19.05
 + Speed up performance of Cartesian product function.
 + Nested do loop method for contracted graph enumeration.
     + Speed up performance of searching contracted graphs.
++ Function renaming of "link_synthesis", "contracted_link_synthesis" and "conventional_graph".
 
 Version 19.04
 ===

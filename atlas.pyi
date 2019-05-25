@@ -10,7 +10,7 @@ from typing import (
 from .graph import Graph
 
 
-def topo(
+def conventional_graph(
     cg_list: List[Graph],
     c_j_list: Sequence[int],
     no_degenerate: int = 1,

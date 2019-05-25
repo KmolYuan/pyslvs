@@ -513,7 +513,7 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
     return cg_list
 
 
-cpdef list topo(
+cpdef list conventional_graph(
     list cg_list,
     object c_j_list,
     uint no_degenerate = 1,
