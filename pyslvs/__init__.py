@@ -50,11 +50,13 @@ from .tinycadlib import (
     expr_solving,
     data_collecting,
 )
-from .Adesign.verify import Verification
+from .Adesign import (
+    Verification,
+    Genetic,
+    Firefly,
+    Differential,
+)
 from .planar_linkage import Planar
-from .Adesign.rga import Genetic
-from .Adesign.firefly import Firefly
-from .Adesign.de import Differential
 from .number import link_synthesis, contracted_link_synthesis
 from .graph import (
     Graph,

@@ -103,7 +103,7 @@ setup(
     description="Python library of Solvespace",
     long_description=read("README.md"),
     url="https://github.com/KmolYuan/pyslvs",
-    packages=find_packages(),
+    packages=find_packages(exclude=('tests',)),
     package_data={'': ["*.pyi"]},
     ext_modules=ext_modules,
     cmdclass={'build_ext': Build},
