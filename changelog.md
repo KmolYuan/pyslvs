@@ -7,6 +7,7 @@ Version 19.05
     + Speed up performance of searching contracted graphs.
 + Function renaming of "link_synthesis", "contracted_link_synthesis" and "conventional_graph".
 + Allow empty links in mechanism expression grammar.
++ Changed into standard PyPA module.
 
 Version 19.04
 ===
