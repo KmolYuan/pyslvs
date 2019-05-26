@@ -29,8 +29,7 @@ __author__ = "Yuan Chang"
 __copyright__ = "Copyright (C) 2016-2019"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
-__version__ = (19, 5, 0, 'dev')
-__version_str__ = f"{__version__[0]}.{__version__[1]:02d}.{__version__[2]} ({__version__[3]})"
+__version__ = "19.5.0.dev0"
 
 from .expression import (
     get_vlinks,
@@ -84,7 +83,6 @@ if HAS_PYGMENTS:
 
 __all__ = [
     '__version__',
-    '__version_str__',
     'Genetic',
     'Firefly',
     'Differential',
