@@ -103,9 +103,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-#Cython .c files
-src/*.c
-src/*.cpp
+#Cython source
+pyslvs/*.c
+pyslvs/*.cpp
 
 #Qt project
 *.pro.user

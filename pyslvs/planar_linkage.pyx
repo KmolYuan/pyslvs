@@ -19,14 +19,14 @@ from numpy import (
 from libc.math cimport HUGE_VAL, NAN
 from libcpp.list cimport list as clist
 from numpy cimport ndarray
-from verify cimport Verification
-from expression cimport (
+from pyslvs.Adesign.verify cimport Verification
+from pyslvs.expression cimport (
     get_vlinks,
     VJoint,
     VPoint,
     VLink,
 )
-from triangulation cimport (
+from pyslvs.triangulation cimport (
     vpoints_configure,
     symbol_str,
     Expression,
@@ -35,8 +35,8 @@ from triangulation cimport (
     PLPP,
     PXY,
 )
-from bfgs cimport vpoint_solving
-from tinycadlib cimport (
+from pyslvs.bfgs cimport vpoint_solving
+from pyslvs.tinycadlib cimport (
     radians,
     Coordinate,
     plap,

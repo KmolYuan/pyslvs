@@ -9,7 +9,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from graph cimport Graph
+from pyslvs.graph cimport Graph
 
 
 cpdef bint is_planar(Graph g)

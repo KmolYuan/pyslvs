@@ -9,8 +9,8 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from triangulation cimport ExpressionStack
-from expression cimport Coordinate
+from pyslvs.triangulation cimport ExpressionStack
+from pyslvs.expression cimport Coordinate
 
 
 cdef double radians(double degree) nogil

@@ -7,23 +7,30 @@ __copyright__ = "Copyright (C) 2016-2019"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
-from os import listdir
+import os
+import re
+import codecs
 from setuptools import setup, Extension, find_packages
-from setuptools.command.build_ext import build_ext as _build_ext
+from setuptools.command.build_ext import build_ext
 from platform import system
 
-src_path = 'src/'
+here = os.path.abspath(os.path.dirname(__file__))
+src_path = 'pyslvs/'
 bfgs_path = src_path + 'bfgs_solver/'
+adesign_path = src_path + 'Adesign/'
 
-"""
-with open("__init__.py", "r") as f:
-    for line in f:
-        if line.startswith('__version__'):
-            __version__ = line.split()[-1]
-            break
-"""
-with open("README.md", "r") as f:
-    long_description = f.read()
+
+def read(*parts):
+    with codecs.open(os.path.join(here, *parts), 'r') as f:
+        return f.read()
+
+
+def find_version(*file_paths):
+    m = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", read(*file_paths), re.M)
+    if m:
+        return m.group(1)
+    raise RuntimeError("Unable to find version string.")
+
 
 macros = [
     ('_hypot', 'hypot'),
@@ -44,8 +51,8 @@ if system() == 'Windows':
     macros.append(('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION'))
 
 ext_modules = [Extension(
-    "bfgs",
-    sources=[
+    src_path.replace('/', '.') + 'bfgs',
+    [
         src_path + 'bfgs.pyx',
         bfgs_path + 'geometric_constraint.cpp',
         bfgs_path + 'derivatives.cpp',
@@ -58,16 +65,16 @@ ext_modules = [Extension(
     extra_compile_args=compile_args
 )]
 
-for place in [src_path, "Adesign/src/"]:
-    for source in listdir(place):
-        source = place + source
+git_modules = [src_path, adesign_path]
+for place in git_modules:
+    for source in os.listdir(place):
         if not source.endswith('.pyx'):
             continue
-        if source == "src/bfgs.pyx":
+        if place == src_path and source == 'bfgs.pyx':
             continue
         ext_modules.append(Extension(
-            source.split('/')[-1].split('.')[0],  # Base name
-            sources=[source],
+            place.replace('/', '.') + source.split('.')[0],  # Base name
+            [place + source],
             language="c++",
             include_dirs=[],
             define_macros=macros,
@@ -75,7 +82,7 @@ for place in [src_path, "Adesign/src/"]:
         ))
 
 
-class Build(_build_ext):
+class Build(build_ext):
     def finalize_options(self):
         super(Build, self).finalize_options()
         # Prevent numpy from thinking it is still in its setup process
@@ -86,20 +93,27 @@ class Build(_build_ext):
 
 setup(
     name='pyslvs',
-    # version="18.5.0.dev0",
+    version=find_version('pyslvs', '__init__.py'),
     author=__author__,
     author_email=__email__,
+    license=__license__,
     description="Python library of Solvespace",
-    long_description=long_description,
+    long_description=read("README.md"),
     url="https://github.com/solvespace/solvespace",
     packages=find_packages(),
+    package_data={'': ["*.pyi"]},
     ext_modules=ext_modules,
     cmdclass={'build_ext': Build},
+    zip_safe=False,
+    python_requires=">=3.6",
     setup_requires=[
-        'setuptools>=18.0',
+        'setuptools',
         'wheel',
         'numpy',
         'cython',
+    ],
+    install_requires=[
+        'numpy',
         'lark-parser',
         'pygments',
     ],

@@ -47,7 +47,7 @@ before_build:
     - git submodule update --init --recursive
 
 build_script:
-    - mingw32-make
+    - python setup.py install
 
 test_script:
-    - mingw32-make test
+    - python tests/test_pyslvs.py

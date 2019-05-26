@@ -34,9 +34,9 @@ from numpy import (
     floor_divide as np_div,
     any as np_any,
 )
-from number cimport product
-from graph cimport Graph, link_assortment
-from planar_check cimport is_planar
+from pyslvs.number cimport product
+from pyslvs.graph cimport Graph, link_assortment
+from pyslvs.planar_check cimport is_planar
 
 ctypedef unsigned int uint
 ctypedef unsigned long long ullong

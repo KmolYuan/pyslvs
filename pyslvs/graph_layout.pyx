@@ -17,7 +17,7 @@ cimport cython
 from cpython cimport PyDict_Contains, PyIndex_Check
 from cpython.slice cimport PySlice_GetIndicesEx
 from libc.math cimport hypot, M_PI, sin, cos, atan2
-from graph cimport Graph, cmap
+from pyslvs.graph cimport Graph, cmap
 
 
 cpdef dict external_loop_layout(Graph g, bint node_mode, double scale = 1.):

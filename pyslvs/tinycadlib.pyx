@@ -9,7 +9,6 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-cimport cython
 from libc.math cimport (
     M_PI,
     sqrt,
@@ -18,8 +17,8 @@ from libc.math cimport (
     atan2,
     NAN,
 )
-from expression cimport VJoint, VPoint
-from triangulation cimport (
+from pyslvs.expression cimport VJoint, VPoint
+from pyslvs.triangulation cimport (
     symbol,
     symbol_str,
     Expression,
@@ -29,7 +28,7 @@ from triangulation cimport (
     PLPP,
     PXY,
 )
-from bfgs cimport vpoint_solving
+from pyslvs.bfgs cimport vpoint_solving
 
 
 cdef Coordinate _NAN_COORD = Coordinate.__new__(Coordinate, NAN, NAN)

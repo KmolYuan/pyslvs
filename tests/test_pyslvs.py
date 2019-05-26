@@ -11,33 +11,33 @@ import unittest
 from unittest import TestCase
 from math import sqrt, radians
 from copy import deepcopy
-from expression import Coordinate
-from bfgs import vpoint_solving
-from tinycadlib import (
+from pyslvs import (
+    Coordinate,
+    vpoint_solving,
     plap,
     pllp,
     plpp,
     pxy,
     expr_solving,
     data_collecting,
-)
-from planar_linkage import Planar
-from rga import Genetic
-from firefly import Firefly
-from de import Differential
-from number import link_synthesis, contracted_link_synthesis
-from atlas import conventional_graph, contracted_graph
-from graph import (
+    Planar,
+    Genetic,
+    Firefly,
+    Differential,
+    link_synthesis,
+    contracted_link_synthesis,
+    conventional_graph,
+    contracted_graph,
     Graph,
     link_assortment,
     contracted_link_assortment,
+    is_planar,
+    external_loop_layout,
+    vpoints_configure,
+    parse_vpoints,
+    example_list,
+    collection_list,
 )
-from planar_check import is_planar
-from graph_layout import external_loop_layout
-from triangulation import vpoints_configure
-from expression_parser import parse_vpoints
-from example import example_list
-from collection import collection_list
 
 
 _four_bar = deepcopy(collection_list["Four bar linkage mechanism"])
