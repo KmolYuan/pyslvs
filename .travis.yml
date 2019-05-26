@@ -55,9 +55,9 @@ before_install:
 
 script:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-        python3 setup.py install --user
+        python3 setup.py install --user;
         else
-        python3 setup.py install
+        python3 setup.py install;
         fi
     - python3 tests/test_pyslvs.py
 

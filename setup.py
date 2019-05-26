@@ -99,7 +99,7 @@ setup(
     license=__license__,
     description="Python library of Solvespace",
     long_description=read("README.md"),
-    url="https://github.com/solvespace/solvespace",
+    url="https://github.com/KmolYuan/pyslvs",
     packages=find_packages(),
     package_data={'': ["*.pyi"]},
     ext_modules=ext_modules,
