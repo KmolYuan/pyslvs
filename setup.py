@@ -86,7 +86,10 @@ class Build(build_ext):
     def finalize_options(self):
         super(Build, self).finalize_options()
         # Prevent numpy from thinking it is still in its setup process
-        __builtins__.__NUMPY_SETUP__ = False
+        if isinstance(__builtins__, dict):
+            __builtins__['__NUMPY_SETUP__'] = False
+        else:
+            setattr(__builtins__, '__NUMPY_SETUP__', False)
         import numpy
         self.include_dirs.append(numpy.get_include())
 
