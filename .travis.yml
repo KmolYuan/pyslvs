@@ -8,21 +8,36 @@ matrix:
           sudo: required
           python: "3.6"
           dist: xenial
+          deploy: &deploy-options
+              provider: pypi
+              user: $PYPI_USER
+              password: $PYPI_PASSWORD
+              distributions: "sdist bdist_wheel"
+              skip_cleanup: true
+              skip_existing: true
+              on:
+                  tags: true
 
         - os: linux
           sudo: required
           python: "3.7"
           dist: xenial
+          deploy:
+              <<: *deploy-options
 
         - os: osx
           osx_image: xcode10
           language: generic
           env: PYTHON=36
+          deploy:
+              <<: *deploy-options
 
         - os: osx
           osx_image: xcode10
           language: generic
           env: PYTHON=37
+          deploy:
+              <<: *deploy-options
 
 branches:
     only:

@@ -48,6 +48,14 @@ before_build:
 
 build_script:
     - python setup.py install
+    - python setup.py bdist_wheel
 
 test_script:
     - python tests/test_pyslvs.py
+
+artifacts:
+    - path: dist\*.whl
+
+deploy_script:
+    - IF "%APPVEYOR_REPO_TAG%"=="true" (pip install twine) ELSE (echo deployment has been skipped as environment variable has not matched)
+    - IF "%APPVEYOR_REPO_TAG%"=="true" (twine upload dist\*.whl)
