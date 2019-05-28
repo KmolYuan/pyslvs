@@ -100,7 +100,7 @@ setup(
     author=__author__,
     author_email=__email__,
     license=__license__,
-    description="Python library of Solvespace",
+    description="Pyslvs library",
     long_description=read("README.md"),
     url="https://github.com/KmolYuan/pyslvs",
     packages=find_packages(exclude=('tests',)),
