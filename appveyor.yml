@@ -51,7 +51,7 @@ build_script:
     - python setup.py bdist_wheel
 
 test_script:
-    - python tests/test_pyslvs.py
+    - python tests
 
 artifacts:
     - path: dist\*.whl

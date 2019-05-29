@@ -74,7 +74,7 @@ script:
         else
         python3 setup.py install;
         fi
-    - python3 tests/test_pyslvs.py
+    - python3 tests
 
 before_cache:
     - rm -rf $HOME/.cache/pip/log

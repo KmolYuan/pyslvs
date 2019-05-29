@@ -6,13 +6,13 @@
 
 A no-GUI module of mechanism synthesis system and a 2D geometric constraint solver.
 
-## Build and Test
+## Install and Test
 
 Enter directory and execute the Makefile. Then, run the unit test script after compiling.
 
 ```bash
-make
-python test_pyslvs.py
+python setup.py install
+python tests
 ```
 
 ## Documentation
