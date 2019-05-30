@@ -102,6 +102,7 @@ setup(
     license=__license__,
     description="Pyslvs library",
     long_description=read("README.md"),
+    long_description_content_type='text/markdown',
     url="https://github.com/KmolYuan/pyslvs",
     packages=find_packages(exclude=('tests',)),
     package_data={'': ["*.pyi"]},
