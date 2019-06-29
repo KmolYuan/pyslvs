@@ -1,6 +1,6 @@
 setuptools
 wheel
 numpy
-cython<=0.29.8
+cython
 lark-parser
 pygments
