@@ -55,6 +55,7 @@ cdef class VPoint:
 
     # Set values
     cpdef void set_links(self, object links) except *
+    cpdef void replace_link(self, str link1, str link2) except *
     cpdef void move(self, tuple c1, tuple c2 = *) except *
     cpdef void locate(self, double x, double y) except *
     cpdef void rotate(self, double)
@@ -86,3 +87,6 @@ cdef class VLink:
     cdef readonly str name, color_str
     cdef readonly tuple color
     cdef readonly long[:] points
+
+    # Set values
+    cpdef void set_points(self, object points) except *

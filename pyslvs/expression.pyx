@@ -159,6 +159,10 @@ cdef class VPoint:
         """Set links."""
         self.links = tuple(links)
 
+    cpdef void replace_link(self, str link1, str link2) except *:
+        """Replace link1 as link2."""
+        self.links = tuple([link2 if link == link1 else link for link in self.links])
+
     cpdef void move(self, tuple c1, tuple c2 = None) except *:
         """Change the coordinates of this point."""
         cdef double x, y
@@ -372,6 +376,10 @@ cdef class VLink:
             self.color = None
         else:
             self.color = color_func(color_str)
+        self.points = np_array(sorted(points), dtype=int)
+
+    cpdef void set_points(self, object points) except *:
+        """Set points."""
         self.points = np_array(sorted(points), dtype=int)
 
     def __contains__(self, point: cython.int) -> bint:

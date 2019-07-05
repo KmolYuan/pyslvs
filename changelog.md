@@ -1,6 +1,6 @@
 # Version 19.07
 
-+ Add "set_links" method for VPoint object.
++ Add "set attribute" methods for expression classes.
 
 # Version 19.06
 

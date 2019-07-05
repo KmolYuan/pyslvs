@@ -101,6 +101,10 @@ class VPoint:
         """Set links."""
         ...
 
+    def replace_link(self, link1: str, link2: str):
+        """Replace link1 as link2."""
+        ...
+
     def move(self, c1: Tuple[float, float], c2: Optional[Tuple[float, float]] = None):
         """Change coordinates of this point."""
         ...
@@ -194,6 +198,10 @@ class VLink:
         points: Iterable[int],
         color_func: Optional[Callable[[str], _Color]] = None
     ):
+        ...
+
+    def set_points(self, points: Iterable[int]):
+        """Set points."""
         ...
 
     def __contains__(self, point: int) -> bool:
