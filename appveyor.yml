@@ -7,7 +7,7 @@ platform:
 environment:
     matrix:
 
-        - MINGW_DIR: &mingw C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0
+        - MINGW_DIR: &mingw C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0
           MSYS_DIR: &msys2 C:\msys64
           PYTHON_DIR: C:\Python36-x64
 
