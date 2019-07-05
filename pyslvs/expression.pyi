@@ -69,7 +69,7 @@ class VPoint:
         color_str: str,
         x: float,
         y: float,
-        color_func: Optional[Callable[..., _Color]] = None
+        color_func: Optional[Callable[[str], _Color]] = None
     ):
         ...
 
@@ -96,6 +96,10 @@ class VPoint:
     def cy(self) -> float:
         """Y value of first current coordinate."""
         return ...
+
+    def set_links(self, links: Iterable[str]):
+        """Set links."""
+        ...
 
     def move(self, c1: Tuple[float, float], c2: Optional[Tuple[float, float]] = None):
         """Change coordinates of this point."""
@@ -188,7 +192,7 @@ class VLink:
         name: str,
         color_str: str,
         points: Iterable[int],
-        color_func: Optional[Callable[..., _Color]] = None
+        color_func: Optional[Callable[[str], _Color]] = None
     ):
         ...
 

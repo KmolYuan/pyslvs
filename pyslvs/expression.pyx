@@ -135,49 +135,9 @@ cdef class VPoint:
     cdef VPoint c_slider_joint(object links, VJoint type_int, double angle, double x, double y):
         return VPoint.__new__(VPoint, links, type_int, angle, '', x, y)
 
-    def __copy__(self) -> VPoint:
-        """Copy method."""
-        cdef VPoint vpoint = VPoint.__new__(
-            VPoint,
-            self.links,
-            self.type,
-            self.angle,
-            self.color_str,
-            self.x,
-            self.y
-        )
-        vpoint.move(self.c[0], self.c[1])
-        return vpoint
-
     cpdef VPoint copy(self):
         """Copy method of Python."""
         return self.__copy__()
-
-    def __richcmp__(self, other: VPoint, op: cython.int) -> bint:
-        """Rich comparison."""
-        if op == Py_EQ:
-            return (
-                self.links == other.links and
-                (self.c == other.c).all() and
-                self.type == other.type and
-                self.x == other.x and
-                self.y == other.y and
-                self.angle == other.angle
-            )
-        elif op == Py_NE:
-            return (
-                self.links != other.links or
-                (self.c != other.c).any() or
-                self.type != other.type or
-                self.x != other.x or
-                self.y != other.y or
-                self.angle != other.angle
-            )
-        else:
-            raise TypeError(
-                f"'{op}' not support between instances of "
-                f"{type(self)} and {type(other)}"
-            )
 
     @property
     def cx(self) -> float:
@@ -194,6 +154,10 @@ cdef class VPoint:
             return self.c[0][1]
         else:
             return self.c[1][1]
+
+    cpdef void set_links(self, object links) except *:
+        """Set links."""
+        self.links = tuple(links)
 
     cpdef void move(self, tuple c1, tuple c2 = None) except *:
         """Change the coordinates of this point."""
@@ -334,6 +298,46 @@ cdef class VPoint:
         x_text = f"{self.x:.4f}".rstrip('0').rstrip('.')
         y_text = f"{self.y:.4f}".rstrip('0').rstrip('.')
         return f"J[{type_text}{color}, P[{x_text}, {y_text}], L[{links_text}]]"
+
+    def __copy__(self) -> VPoint:
+        """Copy method."""
+        cdef VPoint vpoint = VPoint.__new__(
+            VPoint,
+            self.links,
+            self.type,
+            self.angle,
+            self.color_str,
+            self.x,
+            self.y
+        )
+        vpoint.move(self.c[0], self.c[1])
+        return vpoint
+
+    def __richcmp__(self, other: VPoint, op: cython.int) -> bint:
+        """Rich comparison."""
+        if op == Py_EQ:
+            return (
+                self.links == other.links and
+                (self.c == other.c).all() and
+                self.type == other.type and
+                self.x == other.x and
+                self.y == other.y and
+                self.angle == other.angle
+            )
+        elif op == Py_NE:
+            return (
+                self.links != other.links or
+                (self.c != other.c).any() or
+                self.type != other.type or
+                self.x != other.x or
+                self.y != other.y or
+                self.angle != other.angle
+            )
+        else:
+            raise TypeError(
+                f"'{op}' not support between instances of "
+                f"{type(self)} and {type(other)}"
+            )
 
     def __getitem__(self, i: cython.int) -> float:
         """Get coordinate like this:

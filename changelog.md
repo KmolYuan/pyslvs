@@ -1,6 +1,6 @@
 # Version 19.07
 
-+ None
++ Add "set_links" method for VPoint object.
 
 # Version 19.06
 

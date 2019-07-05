@@ -54,6 +54,7 @@ cdef class VPoint:
     cpdef VPoint copy(self)
 
     # Set values
+    cpdef void set_links(self, object links) except *
     cpdef void move(self, tuple c1, tuple c2 = *) except *
     cpdef void locate(self, double x, double y) except *
     cpdef void rotate(self, double)
