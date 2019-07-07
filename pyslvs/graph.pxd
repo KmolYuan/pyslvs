@@ -41,4 +41,5 @@ cdef class Graph:
     cpdef bint is_isomorphic(self, Graph graph)
     cdef bint has_triangles(self)
 
+    cpdef Graph make_symmetric(self, object nodes)
     cpdef Graph copy(self)

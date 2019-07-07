@@ -307,6 +307,26 @@ cdef class Graph:
                         return True
         return False
 
+    cpdef Graph make_symmetric(self, object nodes):
+        """Make graph symmetric by specific nodes. Return a new graph."""
+        cdef int max_num = max(self.nodes) + 1
+        cdef dict mapping = {}
+        cdef int n1, n2
+        for n1 in sorted(set(self.nodes) - set(nodes)):
+            mapping[n1] = max_num
+            max_num += 1
+        cdef set edges = set()
+        for n1, n2 in self.edges:
+            if n1 in mapping:
+                n1 = mapping[n1]
+            if n2 in mapping:
+                n2 = mapping[n2]
+            if n1 > n2:
+                n1, n2 = n2, n1
+            edges.add((n1, n2))
+        edges.update(self.edges)
+        return Graph.__new__(Graph, edges)
+
     cpdef Graph copy(self):
         """Copy the graph."""
         return Graph.__new__(Graph, self.edges)

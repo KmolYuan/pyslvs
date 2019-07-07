@@ -1,6 +1,7 @@
 # Version 19.07
 
 + Add "set attribute" methods for expression classes.
++ Add "make_symmetric" method for graph class.
 
 # Version 19.06
 
