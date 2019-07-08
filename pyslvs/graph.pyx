@@ -647,8 +647,8 @@ cdef class GMState:
         # First we remove the node that was added from the core vectors.
         # Watch out! g1_node == 0 should evaluate to True.
         if self.g1_node != -1 and self.g2_node != -1:
-            del self.gm.core_1[self.g1_node]
-            del self.gm.core_2[self.g2_node]
+            self.gm.core_1.pop(self.g1_node)
+            self.gm.core_2.pop(self.g2_node)
 
         # Now we revert the other two vectors.
         # Thus, we delete all entries which have this depth level.
@@ -657,4 +657,4 @@ cdef class GMState:
         for vector in (self.gm.inout_1, self.gm.inout_2):
             for node in tuple(vector):
                 if vector[node] == self.depth:
-                    del vector[node]
+                    vector.pop(node)
