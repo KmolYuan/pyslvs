@@ -67,7 +67,7 @@ class Graph:
         """Return True if two graphs is isomorphic."""
         ...
 
-    def make_symmetric(self, nodes: Iterable[int]) -> Graph:
+    def duplicate(self, nodes: Iterable[int], times: int) -> Graph:
         """Make graph symmetric by specific nodes. Return a new graph."""
         ...
 
