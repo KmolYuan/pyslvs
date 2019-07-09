@@ -280,13 +280,13 @@ cdef class Graph:
                     c_l.append((n1, n2))
             mcl.clear()
 
-            # Pruned graph.
+            # Pruned graph
             g = Graph.__new__(Graph, c_l)
             if {n2 for n2 in g.degrees().values()} == {2}:
                 # The graph is a basic loop.
                 break
 
-        # Check the DOF.
+        # Check the DOF
         return g.dof() < 1
 
     cpdef bint is_isomorphic(self, Graph g):
@@ -315,12 +315,11 @@ cdef class Graph:
         cdef dict mapping = {}
 
         cdef int i, n1, n2
-        cdef set edges = set()
+        cdef set edges = set(self.edges)
         for i in range(times):
             for n1 in sorted(set(nodes)):
                 mapping[n1] = max_num
                 max_num += 1
-
             for n1, n2 in self.edges:
                 if n1 in mapping:
                     n1 = mapping[n1]
@@ -329,7 +328,6 @@ cdef class Graph:
                 if n1 > n2:
                     n1, n2 = n2, n1
                 edges.add((n1, n2))
-            edges.update(self.edges)
         return Graph.__new__(Graph, edges)
 
     cpdef Graph copy(self):

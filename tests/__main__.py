@@ -117,6 +117,13 @@ class CoreTest(TestCase):
         self.assertEqual([4, 4], link_assortment(g1))
         self.assertEqual([4, 0, 0, 0], contracted_link_assortment(g1))
 
+        g1 = Graph([(0, 1), (0, 2), (2, 1), (0, 3), (3, 4), (4, 5), (5, 1)])
+        self.assertTrue(g1.is_degenerate())
+
+        g1 = Graph([(0, 1), (1, 2), (2, 3), (0, 3)])
+        g2 = g1.duplicate([2, 3], 1)
+        self.assertEqual(set(g2.edges), {(0, 1), (1, 2), (4, 5), (1, 4), (2, 3), (0, 5), (0, 3)})
+
         g1 = Graph([(0, 1), (4, 10), (1, 3), (2, 9), (5, 6), (4, 5), (5, 7), (8, 10),
                     (1, 8), (9, 11), (3, 6), (0, 4), (3, 7), (2, 5), (0, 2), (4, 11)])
         pos = external_loop_layout(g1, True)
