@@ -220,7 +220,7 @@ cdef class Graph:
         """Return number of neighbors par node."""
         return {n: len(neighbors) for n, neighbors in self.adj.items()}
 
-    cpdef bint is_connected(self, int with_out = -1):
+    cpdef bint is_connected(self, int without = -1):
         """Return True if the graph is not isolated."""
         if not self.nodes:
             return True
@@ -229,7 +229,7 @@ cdef class Graph:
         cdef int index = 0
         cdef list nodes = []
         # Change start node if index zero has been excluded.
-        if with_out == self.nodes[0]:
+        if without == self.nodes[0]:
             nodes.append(self.nodes[1])
         else:
             nodes.append(self.nodes[0])
@@ -237,12 +237,12 @@ cdef class Graph:
         # Search node by node.
         while index < len(nodes):
             for neighbors in self.adj[nodes[index]]:
-                if (neighbors not in nodes) and (neighbors != with_out):
+                if (neighbors not in nodes) and (neighbors != without):
                     nodes.append(neighbors)
             index += 1
 
-        if with_out != -1:
-            nodes.append(with_out)
+        if without != -1:
+            nodes.append(without)
         return len(nodes) == len(self.nodes)
 
     cpdef bint has_cut_link(self):

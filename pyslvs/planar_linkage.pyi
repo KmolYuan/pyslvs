@@ -16,13 +16,14 @@ class Planar(Verification):
 
     def __init__(self, mech_params: Dict[str, Any]):
         """mech_params = {
-            'Driver': {'pt': (x, y, r)},
-            'Follower': {'pt': (x, y, r)},
-            'Target': {'pt': [(x0, y0), (x1, y1), ...]},
-            'constraints': [('pt', 'pt', 'pt', 'pt')],
-            'Expression': str,
-            'upper': ndarray[np_float32],
-            'lower': ndarray[np_float32],
+            'Expression': List[VPoint],
+            'input': [(b0, d0), ...],
+            'Placement': {pt: (x, y, r)},
+            'Target': {pt: [(x0, y0), (x1, y1), ...]},
+            'same': {pt: match_to_pt},
+            # Bound has no position data.
+            'upper': List[float],
+            'lower': List[float],
         }
         """
         ...

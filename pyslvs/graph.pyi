@@ -47,7 +47,7 @@ class Graph:
         """Neighbors except the node."""
         ...
 
-    def is_connected(self, with_out: int = ...) -> bool:
+    def is_connected(self, without: int = -1) -> bool:
         """Return True if the graph is not isolated."""
         ...
 
@@ -68,7 +68,7 @@ class Graph:
         ...
 
     def duplicate(self, nodes: Iterable[int], times: int) -> Graph:
-        """Make graph symmetric by specific nodes. Return a new graph."""
+        """Make graph duplicate by specific nodes. Return a new graph."""
         ...
 
     def copy(self) -> Graph:
