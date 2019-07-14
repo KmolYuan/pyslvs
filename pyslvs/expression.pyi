@@ -53,7 +53,7 @@ class VPoint:
 
     links: Tuple[str, ...]
     c: ndarray
-    type: int
+    type: VJoint
     color: Optional[_Color]
     color_str: str
     type_str: str
@@ -64,7 +64,7 @@ class VPoint:
     def __init__(
         self,
         links: Iterable[str],
-        type_int: int,
+        type_int: VJoint,
         angle: float,
         color_str: str,
         x: float,
