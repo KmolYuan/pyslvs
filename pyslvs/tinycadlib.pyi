@@ -62,6 +62,15 @@ def expr_parser(exprs: Sequence[Tuple[str, ...]], data_dict: Dict[str, float]):
     ...
 
 
+def data_collecting(
+    exprs: ExpressionStack,
+    mapping: Dict[int, str],
+    vpoints_: Sequence[VPoint],
+) -> Tuple[Dict[str, Union[Coordinate, float]], int]:
+    """Data collecting process."""
+    ...
+
+
 def expr_solving(
     exprs: ExpressionStack,
     mapping: Dict[Union[int, Tuple[int, int]], Union[str, float]],
@@ -69,13 +78,4 @@ def expr_solving(
     angles: Optional[Sequence[float]] = None
 ) -> List[Union[TuplePoint, Tuple[TuplePoint, TuplePoint]]]:
     """Solving function."""
-    ...
-
-
-def data_collecting(
-    exprs: ExpressionStack,
-    mapping: Dict[int, str],
-    vpoints_: Sequence[VPoint],
-) -> Tuple[Dict[str, Union[Coordinate, float]], int]:
-    """Data collecting process."""
     ...
