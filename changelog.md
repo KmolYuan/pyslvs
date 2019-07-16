@@ -2,6 +2,7 @@
 
 + Add "set attribute" methods for expression classes.
 + Add "duplicate" method for graph class.
++ Some corrections of stub files.
 
 # Version 19.06
 

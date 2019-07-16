@@ -18,6 +18,6 @@ python tests
 
 ## Documentation
 
-The documentation of Pyslvs is on [Readthedocs](https://pyslvs-ui.readthedocs.io/en/latest/).
+The documentation of Pyslvs library is on [Readthedocs](https://pyslvs-ui.readthedocs.io/en/latest/pyslvs-lib/).
 
 If you have any questions, please post on GitHub issue or contact <pyslvs@gmail.com>.
