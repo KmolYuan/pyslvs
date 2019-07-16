@@ -66,7 +66,7 @@ def expr_solving(
     exprs: ExpressionStack,
     mapping: Dict[Union[int, Tuple[int, int]], Union[str, float]],
     vpoints: Sequence[VPoint],
-    angles: Sequence[float] = None
+    angles: Optional[Sequence[float]] = None
 ) -> List[Union[TuplePoint, Tuple[TuplePoint, TuplePoint]]]:
     """Solving function."""
     ...
