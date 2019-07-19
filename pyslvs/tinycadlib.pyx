@@ -17,8 +17,8 @@ from libc.math cimport (
     atan2,
     NAN,
 )
-from pyslvs.expression cimport VJoint, VPoint
-from pyslvs.triangulation cimport (
+from .expression cimport VJoint, VPoint
+from .triangulation cimport (
     symbol,
     symbol_str,
     Expression,
@@ -28,7 +28,7 @@ from pyslvs.triangulation cimport (
     PLPP,
     PXY,
 )
-from pyslvs.bfgs cimport vpoint_solving
+from .bfgs cimport vpoint_solving
 
 
 cdef Coordinate _NAN_COORD = Coordinate.__new__(Coordinate, NAN, NAN)

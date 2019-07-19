@@ -12,7 +12,7 @@ email: pyslvs@gmail.com
 from typing import Sequence, Iterator
 cimport cython
 from libc.math cimport sin, cos, M_PI
-from pyslvs.expression cimport VJoint, VPoint
+from .expression cimport VJoint, VPoint
 
 
 cdef inline str symbol_str(symbol p):
