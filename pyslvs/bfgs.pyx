@@ -24,7 +24,7 @@ from libcpp.list cimport list as clist
 from libcpp.vector cimport vector
 from libcpp.map cimport map as cmap
 from libcpp.pair cimport pair
-from pyslvs.sketch_solve cimport (
+from .sketch_solve cimport (
     Rough,
     Succsess,
     Point,
@@ -37,7 +37,7 @@ from pyslvs.sketch_solve cimport (
     LineInternalAngleConstraint,
     solve,
 )
-from pyslvs.expression cimport (
+from .expression cimport (
     get_vlinks,
     VJoint,
     VPoint,

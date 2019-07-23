@@ -3,7 +3,7 @@
 + Add "set attribute" methods for expression classes.
 + Add "duplicate" method for graph class.
 + Some corrections of stub files.
-+ Correction of Cython "cimport".
++ Adjust Cython "cimport" to related import instead of direct import.
 
 # Version 19.06
 
