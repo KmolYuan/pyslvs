@@ -9,5 +9,28 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
+from libcpp.list cimport list as clist
+from libcpp.vector cimport vector
+from libcpp.map cimport map as cmap
+from .sketch_solve cimport Point, Line, Constraint
 
-cpdef list vpoint_solving(object vpoints, dict inputs = *, dict data_dict = *)
+
+cdef class SolverSystem:
+
+    cdef list vpoints
+    cdef dict vlinks
+    cdef dict inputs
+    cdef dict data_dict
+
+    cdef clist[double] params
+    cdef clist[double] constants
+    cdef vector[Point] points
+    cdef cmap[int, int] sliders
+    cdef vector[Point] slider_bases
+    cdef vector[Point] slider_slots
+    cdef clist[Line] slider_lines
+
+    cdef clist[Constraint] cons_list
+
+    cdef void build_expression(self)
+    cpdef list solve(self)

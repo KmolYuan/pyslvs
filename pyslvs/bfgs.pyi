@@ -13,10 +13,18 @@ from .expression import VPoint, Coordinate
 _Coord = Tuple[float, float]
 
 
-def vpoint_solving(
-    vpoints: Sequence[VPoint],
-    inputs: Optional[Dict[Tuple[int, int], float]] = None,
-    data_dict: Optional[Dict[Union[int, Tuple[int, int]], Union[Coordinate, float]]] = None
-) -> List[Union[_Coord, Tuple[_Coord, _Coord]]]:
-    """Solving function from vpoint list."""
-    ...
+class SolverSystem:
+
+    """Sketch Solve solver."""
+
+    def __init__(
+        self,
+        vpoints: Sequence[VPoint],
+        inputs: Optional[Dict[Tuple[int, int], float]] = None,
+        data_dict: Optional[Dict[Union[int, Tuple[int, int]], Union[Coordinate, float]]] = None
+    ):
+        ...
+
+    def solve(self) -> List[Union[_Coord, Tuple[_Coord, _Coord]]]:
+        """Solve the expression."""
+        ...

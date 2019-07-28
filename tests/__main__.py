@@ -13,7 +13,7 @@ from math import sqrt, radians
 from copy import deepcopy
 from pyslvs import (
     Coordinate,
-    vpoint_solving,
+    SolverSystem,
     plap,
     pllp,
     plpp,
@@ -204,8 +204,8 @@ class CoreTest(TestCase):
     def test_solving_bfgs(self):
         """Test Sketch Solve kernel."""
         expr, _ = example_list["Jansen's linkage (Single)"]
-        vpoints = parse_vpoints(expr)
-        result = vpoint_solving(vpoints, {(0, 1): 0.})
+        system = SolverSystem(parse_vpoints(expr), {(0, 1): 0.})
+        result = system.solve()
         x, y = result[-1]
         self.assertAlmostEqual(-43.170055, x, 6)
         self.assertAlmostEqual(-91.753226, y, 6)

@@ -38,7 +38,7 @@ from .expression import (
     VLink,
     Coordinate,
 )
-from .bfgs import vpoint_solving
+from .bfgs import SolverSystem
 from .triangulation import vpoints_configure, ExpressionStack
 from .tinycadlib import (
     plap,
@@ -100,7 +100,7 @@ __all__ = [
     'VJoint',
     'VPoint',
     'VLink',
-    'vpoint_solving',
+    'SolverSystem',
     'Planar',
     'link_synthesis',
     'contracted_link_synthesis',

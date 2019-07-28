@@ -8,4 +8,4 @@
 #include "solve.h"
 
 
-double calc(Constraint *, const int);
+double calc(Constraint *, const size_t);

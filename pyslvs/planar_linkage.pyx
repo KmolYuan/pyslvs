@@ -35,7 +35,7 @@ from .triangulation cimport (
     PLPP,
     PXY,
 )
-from .bfgs cimport vpoint_solving
+from .bfgs cimport SolverSystem
 from .tinycadlib cimport (
     radians,
     Coordinate,
@@ -287,7 +287,7 @@ cdef class Planar(Verification):
         # Solve
         cdef list solved_bfgs
         try:
-            solved_bfgs = vpoint_solving(self.vpoints, {}, p_data_dict)
+            solved_bfgs = SolverSystem(self.vpoints, {}, p_data_dict).solve()
         except ValueError:
             return False
 

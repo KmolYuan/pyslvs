@@ -28,7 +28,7 @@ from .triangulation cimport (
     PLPP,
     PXY,
 )
-from .bfgs cimport vpoint_solving
+from .bfgs cimport SolverSystem
 
 
 cdef Coordinate _NAN_COORD = Coordinate.__new__(Coordinate, NAN, NAN)
@@ -509,7 +509,7 @@ cpdef list expr_solving(
 
         # Solve
         try:
-            solved_bfgs = vpoint_solving(vpoints, {}, p_data_dict)
+            solved_bfgs = SolverSystem(vpoints, {}, p_data_dict).solve()
         except ValueError:
             raise ValueError("result contains failure from sketch solve")
 

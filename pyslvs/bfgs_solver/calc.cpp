@@ -494,9 +494,9 @@ inline double symmetric_arcs(Constraint &con){
 }
 
 
-double calc(Constraint *cons, const int consLength) {
+double calc(Constraint *cons, const size_t consLength) {
     double error = 0;
-    for (int i = 0; i < consLength; i++) {
+    for (size_t i = 0; i < consLength; i++) {
         Constraint &con = cons[i];
 
         switch((int)con.type) {

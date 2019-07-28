@@ -9,7 +9,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-cdef extern from "solve.h" nogil:
+cdef extern from "bfgs_solver/solve.h" nogil:
 
     int Rough
     int Fine
@@ -92,5 +92,5 @@ cdef extern from "solve.h" nogil:
     Constraint LineInternalAngleConstraint(Line *, double *)
     Constraint LineExternalAngleConstraint(Line *, double *)
 
-    int solve(double **, int, Constraint *, int, int)
+    int solve(double **, const size_t, Constraint *, const size_t, int)
     void derivatives(double **, double *, int, Constraint *, int)

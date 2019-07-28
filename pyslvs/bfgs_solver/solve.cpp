@@ -18,14 +18,14 @@ using namespace std;
 
 int solve(
     double **param_ptr,
-    const int xLength,
+    const size_t xLength,
     Constraint *cons,
-    const int consLength,
+    const size_t consLength,
     const int isFine
 ) {
     // Save the original parameters for later.
     double *origSolution = new double[xLength];
-    for (int i = 0; i < xLength; i++)
+    for (size_t i = 0; i < xLength; i++)
         origSolution[i] = *param_ptr[i];
 
     double convergence = (isFine > 0) ? XConvergenceFine : XConvergenceRough;
@@ -48,7 +48,7 @@ int solve(
 
     // The norm of the gradient vector
     double first, second, temper;
-    for (int j = 0; j < xLength; j++) {
+    for (size_t j = 0; j < xLength; j++) {
         temper = *param_ptr[j];
         *param_ptr[j] = temper - pert;
         first = calc(cons, consLength);
@@ -66,11 +66,11 @@ int solve(
     // The current search direction
     double *s = new double[xLength];
     double **N = new double *[xLength];
-    for (int i = 0; i < xLength; i++)
+    for (size_t i = 0; i < xLength; i++)
         // The estimate of the Hessian inverse
         N[i] = new double[xLength];
-    for (int i = 0; i < xLength; i++)
-        for (int j = 0; j < xLength; j++) {
+    for (size_t i = 0; i < xLength; i++)
+        for (size_t j = 0; j < xLength; j++) {
             if (i == j) {
                 N[i][j] = 1;
                 // Calculate the initial search vector
@@ -88,7 +88,7 @@ int solve(
 
     // Storage for the previous design variables
     double *xold = new double[xLength];
-    for (int i = 0; i < xLength; i++)
+    for (size_t i = 0; i < xLength; i++)
         // Copy last values to xold
         xold[i] = *param_ptr[i];
 
@@ -102,7 +102,7 @@ int solve(
 
     // Take a step of alpha=1 as alpha2
     alpha2 = 1;
-    for (int i = 0; i < xLength; i++)
+    for (size_t i = 0; i < xLength; i++)
         // calculate the new x
         *param_ptr[i] = xold[i] + alpha2 * s[i];
 
@@ -111,7 +111,7 @@ int solve(
 
     // Take a step of alpha 3 that is 2*alpha2
     alpha3 = alpha * 2;
-    for (int i = 0; i < xLength; i++)
+    for (size_t i = 0; i < xLength; i++)
         // calculate the new x
         *param_ptr[i] = xold[i] + alpha3 * s[i];
 
@@ -127,7 +127,7 @@ int solve(
             alpha3 = alpha2;
             f3 = f2;
             alpha2 = alpha2 / 2;
-            for (int i = 0; i < xLength; i++)
+            for (size_t i = 0; i < xLength; i++)
                 // calculate the new x
                 *param_ptr[i] = xold[i] + alpha2 * s[i];
             f2 = calc(cons, consLength);
@@ -138,7 +138,7 @@ int solve(
             alpha2 = alpha3;
             f2 = f3;
             alpha3 = alpha3 * 2;
-            for (int i = 0; i < xLength; i++)
+            for (size_t i = 0; i < xLength; i++)
                 //calculate the new x
                 *param_ptr[i] = xold[i] + alpha3 * s[i];
             f3 = calc(cons, consLength);
@@ -155,7 +155,7 @@ int solve(
         alphaStar = 0.001;
 
     /// Set the values to alphaStar
-    for (int i = 0; i < xLength; i++)
+    for (size_t i = 0; i < xLength; i++)
         // calculate the new x
         *param_ptr[i] = xold[i] + alphaStar * s[i];
     fnew = calc(cons, consLength);
@@ -173,7 +173,7 @@ int solve(
     double **deltaXDotGammatDotN = new double *[xLength];
     double **gammatDotDeltaXt = new double *[xLength];
     double **NDotGammaDotDeltaXt = new double *[xLength];
-    for (int i = 0; i < xLength; i++) {
+    for (size_t i = 0; i < xLength; i++) {
         FirstSecond[i] = new double[xLength];
         deltaXDotGammatDotN[i] = new double[xLength];
         gammatDotDeltaXt[i] = new double[xLength];
@@ -181,11 +181,11 @@ int solve(
     }
 
     // Calculate deltaX
-    for (int i = 0; i < xLength; i++)
+    for (size_t i = 0; i < xLength; i++)
         // Calculate the difference in x for the Hessian update
         deltaX[i] = *param_ptr[i] - xold[i];
 
-    int iterations = 1;
+    size_t iterations = 1;
     double maxIterNumber = MaxIterations * xLength;
     double deltaXnorm = 1;
     double deltaXtDotGamma, gammatDotNDotGamma, firstTerm, bottom;
@@ -198,7 +198,7 @@ int solve(
         pert = fnew * PertMag;
         if (pert < PertMin)
             pert = PertMin;
-        for (int i = 0; i < xLength; i++) {
+        for (size_t i = 0; i < xLength; i++) {
             // Calculate the new gradient vector
             temper = *param_ptr[i];
             *param_ptr[i] = temper - pert;
@@ -220,16 +220,16 @@ int solve(
             bottom = 0.0000000001;
 
         // calculate all (1xn).(nxn)
-        for (int i = 0; i < xLength; i++) {
+        for (size_t i = 0; i < xLength; i++) {
             gammatDotN[i] = 0;
-            for (int j = 0; j < xLength; j++)
+            for (size_t j = 0; j < xLength; j++)
                 // This is gammatDotN transpose
                 gammatDotN[i] += gamma[j] * N[i][j];
         }
 
         // calculate all (1xn).(nx1)
         gammatDotNDotGamma = 0;
-        for (int i = 0; i < xLength; i++)
+        for (size_t i = 0; i < xLength; i++)
             gammatDotNDotGamma += gammatDotN[i] * gamma[i];
 
         // Calculate the first term
@@ -237,31 +237,31 @@ int solve(
         firstTerm = 1 + gammatDotNDotGamma / bottom;
 
         // Calculate all (nx1).(1xn) matrices
-        for (int i = 0; i < xLength; i++)
-            for (int j = 0; j < xLength; j++) {
+        for (size_t i = 0; i < xLength; i++)
+            for (size_t j = 0; j < xLength; j++) {
                 FirstSecond[i][j] = deltaX[j] * deltaX[i] / bottom * firstTerm;
                 deltaXDotGammatDotN[i][j] = deltaX[i] * gammatDotN[j];
                 gammatDotDeltaXt[i][j] = gamma[i] * deltaX[j];
             }
 
         // Calculate all (nxn).(nxn) matrices
-        for (int i = 0; i < xLength; i++)
-            for (int j = 0; j < xLength; j++) {
+        for (size_t i = 0; i < xLength; i++)
+            for (size_t j = 0; j < xLength; j++) {
                 NDotGammaDotDeltaXt[i][j] = 0;
-                for (int k = 0; k < xLength; k++)
+                for (size_t k = 0; k < xLength; k++)
                     NDotGammaDotDeltaXt[i][j] += N[i][k] * gammatDotDeltaXt[k][j];
             }
 
         // Now calculate the BFGS update on N
-        for (int i = 0; i < xLength; i++)
-            for (int j = 0; j < xLength; j++)
+        for (size_t i = 0; i < xLength; i++)
+            for (size_t j = 0; j < xLength; j++)
                 N[i][j] = N[i][j] + FirstSecond[i][j] -
                         (deltaXDotGammatDotN[i][j] + NDotGammaDotDeltaXt[i][j]) / bottom;
 
         // Calculates
-        for (int i = 0; i < xLength; i++) {
+        for (size_t i = 0; i < xLength; i++) {
             s[i] = 0;
-            for (int j = 0; j < xLength; j++)
+            for (size_t j = 0; j < xLength; j++)
                 s[i] += -N[i][j] * gradnew[j];
         }
 
@@ -269,9 +269,8 @@ int solve(
         alpha = 1;
 
         // copy newest values to the xold
-        for (int i = 0; i < xLength; i++)
-            //Copy last values to xold
-            xold[i] = *param_ptr[i];
+        for (size_t i = 0; i < xLength; i++)
+            xold[i] = *param_ptr[i];  //Copy last values to xold
 
         ///////////////////////////////////////////////////////
         /// Start of line search
@@ -283,7 +282,7 @@ int solve(
 
         // Take a step of alpha=1 as alpha2
         alpha2 = 1;
-        for (int i = 0; i < xLength; i++)
+        for (size_t i = 0; i < xLength; i++)
             // calculate the new x
             *param_ptr[i] = xold[i] + alpha2 * s[i];
         f2 = calc(cons, consLength);
@@ -291,7 +290,7 @@ int solve(
 
         // Take a step of alpha 3 that is 2*alpha2
         alpha3 = alpha2 * 2;
-        for (int i = 0; i < xLength; i++)
+        for (size_t i = 0; i < xLength; i++)
             // calculate the new x
             *param_ptr[i] = xold[i] + alpha3 * s[i];
         f3 = calc(cons, consLength);
@@ -306,7 +305,7 @@ int solve(
                 alpha3 = alpha2;
                 f3 = f2;
                 alpha2 /= 2;
-                for (int i = 0; i < xLength; i++)
+                for (size_t i = 0; i < xLength; i++)
                     // calculate the new x
                     *param_ptr[i] = xold[i] + alpha2 * s[i];
                 f2 = calc(cons, consLength);
@@ -317,7 +316,7 @@ int solve(
                 alpha2 = alpha3;
                 f2 = f3;
                 alpha3 *= 2;
-                for (int i = 0; i < xLength; i++)
+                for (size_t i = 0; i < xLength; i++)
                     // calculate the new x
                     *param_ptr[i] = xold[i] + alpha3 * s[i];
                 f3 = calc(cons, consLength);
@@ -335,7 +334,7 @@ int solve(
             alphaStar = 0;
 
         // Set the values to alphaStar
-        for (int i = 0; i < xLength; i++)
+        for (size_t i = 0; i < xLength; i++)
             // calculate the new x
             *param_ptr[i] = xold[i] + alphaStar * s[i];
         fnew = calc(cons, consLength);
@@ -346,7 +345,7 @@ int solve(
         ////////////////////////////////////
 
         deltaXnorm = 0;
-        for (int i = 0; i < xLength; i++) {
+        for (size_t i = 0; i < xLength; i++) {
             // Calculate the difference in x for the hessian update
             deltaX[i] = *param_ptr[i] - xold[i];
             deltaXnorm += deltaX[i] * deltaX[i];
@@ -367,7 +366,7 @@ int solve(
 
     delete[] grad;
     delete[] s;
-    for (int i = 0; i < xLength; i++) {
+    for (size_t i = 0; i < xLength; i++) {
         delete[] N[i];
         delete[] FirstSecond[i];
         delete[] deltaXDotGammatDotN[i];
@@ -391,7 +390,7 @@ int solve(
         return Succsess;
     }
     // Replace the bad numbers with the last result.
-    for (int i = 0; i < xLength; i++)
+    for (size_t i = 0; i < xLength; i++)
         *param_ptr[i] = origSolution[i];
     delete[] origSolution;
     return NoSolution;

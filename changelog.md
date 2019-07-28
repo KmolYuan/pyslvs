@@ -4,6 +4,7 @@
 + Add "duplicate" method for graph class.
 + Some corrections of stub files.
 + Adjust Cython "cimport" to related import instead of direct import.
++ Change Sketch Solve solver function to a class.
 
 # Version 19.06
 

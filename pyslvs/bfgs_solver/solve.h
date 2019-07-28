@@ -6,6 +6,8 @@
  *  Contributor: KmolYuan
  */
 
+#include <cstddef>
+
 ///////////////////////////////////////
 /// BFGS Solver parameters
 ///////////////////////////////////////
@@ -151,5 +153,5 @@ Constraint LineExternalAngleConstraint(Line *, double *);
 /// Public Functions
 ///////////////////////////////////////
 
-int solve(double **, int, Constraint *, int, int);
+int solve(double **, const size_t, Constraint *, const size_t, int);
 void derivatives(double **, double *, int, Constraint *, int);
