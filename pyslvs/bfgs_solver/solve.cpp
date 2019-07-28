@@ -36,7 +36,7 @@ int solve(
     //Calculate Function at the starting point:
     double f0 = calc(cons, consLength);
     if (f0 < SmallF)
-        return Succsess;
+        return Success;
     ftimes++;
 
     // Calculate the gradient at the starting point:
@@ -387,7 +387,7 @@ int solve(
     // End of function
     if (fnew < ((isFine == 1) ? ValidSolutionFine : ValidSoltuionRough)) {
         delete[] origSolution;
-        return Succsess;
+        return Success;
     }
     // Replace the bad numbers with the last result.
     for (size_t i = 0; i < xLength; i++)

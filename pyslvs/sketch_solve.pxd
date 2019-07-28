@@ -15,7 +15,7 @@ cdef extern from "bfgs_solver/solve.h" nogil:
     int Fine
     int MaxIterations
 
-    int Succsess
+    int Success
     int NoSolution
 
     struct Point:

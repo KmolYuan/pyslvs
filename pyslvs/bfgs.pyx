@@ -23,7 +23,7 @@ from libc.math cimport M_PI, cos, sin
 from libcpp.pair cimport pair
 from .sketch_solve cimport (
     Rough,
-    Succsess,
+    Success,
     PointOnPointConstraint,
     P2PDistanceConstraint,
     InternalAngleConstraint,
@@ -379,7 +379,7 @@ cdef class SolverSystem:
         cdef int flag = solve(params_ptr, params_count, cons, cons_count, Rough)
 
         cdef list solved_points
-        if flag == Succsess:
+        if flag == Success:
             solved_points = []
             for i, vpoint in enumerate(self.vpoints):
                 if vpoint.type == VJoint.R:
@@ -393,7 +393,7 @@ cdef class SolverSystem:
         PyMem_Free(params_ptr)
         PyMem_Free(cons)
 
-        if flag == Succsess:
+        if flag == Success:
             return solved_points
         else:
             raise ValueError("no valid solutions were found from initialed values")
