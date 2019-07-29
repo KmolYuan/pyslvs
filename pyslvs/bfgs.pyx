@@ -347,9 +347,16 @@ cdef class SolverSystem:
 
     cpdef void set_inputs(self, dict inputs):
         """Set input pairs."""
-        self.inputs = inputs
-        if self.inputs is None:
-            self.inputs = {}
+        if inputs is None:
+            if not self.inputs:
+                # Do nothing
+                return
+            else:
+                raise ValueError(f"format must be {set(self.inputs)}, not None")
+        if set(self.inputs) != set(inputs):
+            raise ValueError(f"format must be {set(self.inputs)}, not {set(inputs)}")
+
+        self.inputs.update(inputs)
 
         cdef size_t i = 0
         cdef double angle
