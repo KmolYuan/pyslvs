@@ -25,6 +25,10 @@ class SolverSystem:
     ):
         ...
 
+    def set_inputs(self, inputs: Dict[Tuple[int, int], float]):
+        """Set input pairs."""
+        ...
+
     def solve(self) -> List[Union[_Coord, Tuple[_Coord, _Coord]]]:
         """Solve the expression."""
         ...

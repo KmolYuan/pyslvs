@@ -31,6 +31,9 @@ cdef class SolverSystem:
     cdef clist[Line] slider_lines
 
     cdef clist[Constraint] cons_list
+    cdef clist[Line] handles
+    cdef vector[double] inputs_angle
 
     cdef void build_expression(self)
+    cpdef void set_inputs(self, dict inputs)
     cpdef list solve(self)
