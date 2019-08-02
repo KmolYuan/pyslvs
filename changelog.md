@@ -1,3 +1,7 @@
+# Version 19.08
+
++ None
+
 # Version 19.07
 
 + Add "set attribute" methods for expression classes.
