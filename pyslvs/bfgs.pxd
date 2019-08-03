@@ -32,7 +32,8 @@ cdef class SolverSystem:
 
     cdef clist[Constraint] cons_list
     cdef clist[Line] handles
-    cdef vector[double] inputs_angle
+    cdef vector[double] inputs_angle  # For editing angles
+    cdef vector[double] data_values  # For editing custom values
 
     cdef void build_expression(self)
     cpdef void set_inputs(self, dict inputs)
