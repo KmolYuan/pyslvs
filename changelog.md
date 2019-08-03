@@ -1,6 +1,6 @@
 # Version 19.08
 
-+ None
++ Add "set_data" method for Sketch Solve solver.
 
 # Version 19.07
 

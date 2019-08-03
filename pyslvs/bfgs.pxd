@@ -36,4 +36,5 @@ cdef class SolverSystem:
 
     cdef void build_expression(self)
     cpdef void set_inputs(self, dict inputs)
+    cpdef void set_data(self, dict data_dict)
     cpdef list solve(self)

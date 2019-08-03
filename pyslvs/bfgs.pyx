@@ -353,7 +353,7 @@ cdef class SolverSystem:
                 return
             else:
                 raise ValueError(f"format must be {set(self.inputs)}, not None")
-        if set(self.inputs) != set(inputs):
+        if not set(self.inputs) >= set(inputs):
             raise ValueError(f"format must be {set(self.inputs)}, not {set(inputs)}")
 
         self.inputs.update(inputs)
@@ -365,6 +365,21 @@ cdef class SolverSystem:
                 continue
             self.inputs_angle[i] = _radians(angle)
             i += 1
+
+    cpdef void set_data(self, dict data_dict):
+        """Set data."""
+        if data_dict is None:
+            if not self.data_dict:
+                # Do nothing
+                return
+            else:
+                raise ValueError(f"format must be {set(self.data_dict)}, not None")
+        if not set(self.data_dict) >= set(data_dict):
+            raise ValueError(f"format must be {set(self.data_dict)}, not {set(data_dict)}")
+
+        self.data_dict.update(data_dict)
+
+        # TODO: Set values.
 
     cpdef list solve(self):
         """Solve the expression."""

@@ -29,6 +29,10 @@ class SolverSystem:
         """Set input pairs."""
         ...
 
+    def set_data(self, data_dict: Dict[Union[int, Tuple[int, int]], Union[Coordinate, float]]):
+        """Set data."""
+        ...
+
     def solve(self) -> List[Union[_Coord, Tuple[_Coord, _Coord]]]:
         """Solve the expression."""
         ...
