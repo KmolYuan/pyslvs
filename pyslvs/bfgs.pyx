@@ -17,6 +17,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
+from typing import Sequence, Set
 cimport cython
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.math cimport M_PI, cos, sin
@@ -44,7 +45,7 @@ cdef inline void _sort_pairs(dict data_dict):
     """Sort the pairs in data_dict."""
     cdef object k
     for k in data_dict:
-        if type(k) is tuple:
+        if isinstance(k, (Sequence, Set)) and len(k) == 2:
             data_dict[frozenset(k)] = data_dict.pop(k)
 
 
@@ -387,6 +388,7 @@ cdef class SolverSystem:
         """Set data."""
         if self.data_dict is None or data_dict is None:
             raise ValueError(f"do not accept modifications")
+        _sort_pairs(data_dict)
         if not self.show_data() >= set(data_dict):
             raise ValueError(f"format must be {set(self.data_dict)}, not {set(data_dict)}")
 
