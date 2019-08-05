@@ -78,6 +78,20 @@ cdef class SolverSystem:
         _sort_pairs(self.data_dict)
         self.build_expression()
 
+    cpdef frozenset show_inputs(self):
+        """Show the current inputs keys."""
+        if self.inputs is None:
+            return frozenset()
+        else:
+            return frozenset(self.inputs)
+
+    cpdef frozenset show_data(self):
+        """Show the current data keys."""
+        if self.data_dict is None:
+            return frozenset()
+        else:
+            return frozenset(self.data_dict)
+
     cdef void build_expression(self):
         """Build the expression for solver."""
         # Point parameters
@@ -352,13 +366,9 @@ cdef class SolverSystem:
 
     cpdef void set_inputs(self, dict inputs):
         """Set input pairs."""
-        if inputs is None:
-            if not self.inputs:
-                # Do nothing
-                return
-            else:
-                raise ValueError(f"format must be {set(self.inputs)}, not None")
-        if not set(self.inputs) >= set(inputs):
+        if self.inputs is None or inputs is None:
+            raise ValueError(f"do not accept modifications")
+        if not self.show_inputs() >= set(inputs):
             raise ValueError(f"format must be {set(self.inputs)}, not {set(inputs)}")
 
         self.inputs.update(inputs)
@@ -375,13 +385,9 @@ cdef class SolverSystem:
 
     cpdef void set_data(self, dict data_dict):
         """Set data."""
-        if data_dict is None:
-            if not self.data_dict:
-                # Do nothing
-                return
-            else:
-                raise ValueError(f"format must be {set(self.data_dict)}, not None")
-        if not set(self.data_dict) >= set(data_dict):
+        if self.data_dict is None or data_dict is None:
+            raise ValueError(f"do not accept modifications")
+        if not self.show_data() >= set(data_dict):
             raise ValueError(f"format must be {set(self.data_dict)}, not {set(data_dict)}")
 
         self.data_dict.update(data_dict)

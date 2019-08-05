@@ -35,6 +35,8 @@ cdef class SolverSystem:
     cdef vector[double] inputs_angle  # For editing angles
     cdef vector[double] data_values  # For editing custom values
 
+    cpdef frozenset show_inputs(self)
+    cpdef frozenset show_data(self)
     cdef void build_expression(self)
     cpdef void set_inputs(self, dict inputs)
     cpdef void set_data(self, dict data_dict)

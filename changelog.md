@@ -1,6 +1,10 @@
 # Version 19.08
 
-+ Add "set_data" method for Sketch Solve solver.
++ Add methods for Sketch Solve solver:
+    + show_inputs
+    + show_data
+    + set_data
+    + Add test cases for new methods.
 
 # Version 19.07
 

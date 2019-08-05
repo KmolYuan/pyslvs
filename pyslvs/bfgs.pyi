@@ -4,6 +4,7 @@ from typing import (
     Tuple,
     List,
     Sequence,
+    FrozenSet,
     Dict,
     Optional,
     Union,
@@ -23,6 +24,14 @@ class SolverSystem:
         inputs: Optional[Dict[Tuple[int, int], float]] = None,
         data_dict: Optional[Dict[Union[int, Tuple[int, int]], Union[Coordinate, float]]] = None
     ):
+        ...
+
+    def show_inputs(self) -> FrozenSet[Tuple[int, int]]:
+        """Show the current inputs keys."""
+        ...
+
+    def show_data(self) -> FrozenSet[Union[int, Tuple[int, int]]]:
+        """Show the current data keys."""
         ...
 
     def set_inputs(self, inputs: Dict[Tuple[int, int], float]):
