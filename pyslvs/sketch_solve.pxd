@@ -2,6 +2,8 @@
 # cython: language_level=3
 
 """Wrapper header of BFGS algorithm.
+If you need to use container to carry floating point data,
+std::list is recommended instead of std::vector.
 
 author: Yuan Chang
 copyright: Copyright (C) 2016-2019

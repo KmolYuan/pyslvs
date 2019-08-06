@@ -41,6 +41,11 @@ from .expression cimport (
 )
 
 
+cdef inline double *de_refer_post_inc(clist[double].iterator &it):
+    """Implement &(*it) in C++."""
+    return &cython.operator.dereference(cython.operator.postincrement(it))
+
+
 cdef inline void _sort_pairs(dict data_dict):
     """Sort the pairs in data_dict."""
     cdef object k
@@ -94,7 +99,7 @@ cdef class SolverSystem:
             return frozenset(self.data_dict)
 
     cdef void build_expression(self):
-        """Build the expression for solver."""
+        """Build the expression for solver at first time."""
         # Point parameters
         cdef int i
         cdef double x, y
@@ -199,10 +204,10 @@ cdef class SolverSystem:
             self.points.push_back([tmp_ptr, &self.params.back()])
 
         # Link constraints
+        # (automatic fill up the link length options of data keys)
         cdef int a, b, c, d
         cdef frozenset frozen_pair
         cdef VPoint vp1, vp2
-        cdef double *v
         cdef Point *p1
         cdef Point *p2
         cdef VLink vlink
@@ -217,6 +222,7 @@ cdef class SolverSystem:
             if (a not in self.data_dict) or (b not in self.data_dict):
                 vp1 = self.vpoints[a]
                 vp2 = self.vpoints[b]
+
                 if a not in self.data_dict and vp1.is_slot_link(vlink.name):
                     p1 = &self.slider_bases[self.sliders[a]]
                 else:
@@ -229,13 +235,12 @@ cdef class SolverSystem:
 
                 frozen_pair = frozenset({a, b})
                 if frozen_pair in self.data_dict:
-                    self.data_values.push_back(self.data_dict[frozen_pair])
-                    v = &self.data_values.back()
+                    x = self.data_dict[frozen_pair]
                 else:
-                    self.constants.push_back(vp1.distance(vp2))
-                    v = &self.constants.back()
-
-                self.cons_list.push_back(P2PDistanceConstraint(p1, p2, v))
+                    x = vp1.distance(vp2)
+                    self.data_dict[frozen_pair] = x
+                self.data_values.push_back(x)
+                self.cons_list.push_back(P2PDistanceConstraint(p1, p2, &self.data_values.back()))
 
             for c in vlink.points[2:]:
                 if c in self.data_dict:
@@ -244,6 +249,7 @@ cdef class SolverSystem:
                 for d in (a, b):
                     vp1 = self.vpoints[c]
                     vp2 = self.vpoints[d]
+
                     if vp1.is_slot_link(vlink.name):
                         p1 = &self.slider_bases[self.sliders[c]]
                     else:
@@ -256,13 +262,12 @@ cdef class SolverSystem:
 
                     frozen_pair = frozenset({c, d})
                     if frozen_pair in self.data_dict:
-                        self.data_values.push_back(self.data_dict[frozen_pair])
-                        v = &self.data_values.back()
+                        x = self.data_dict[frozen_pair]
                     else:
-                        self.constants.push_back(vp1.distance(vp2))
-                        v = &self.constants.back()
-
-                    self.cons_list.push_back(P2PDistanceConstraint(p1, p2, v))
+                        x = vp1.distance(vp2)
+                        self.data_dict[frozen_pair] = x
+                    self.data_values.push_back(x)
+                    self.cons_list.push_back(P2PDistanceConstraint(p1, p2, &self.data_values.back()))
 
         # Slider constraints
         cdef str name
@@ -373,16 +378,17 @@ cdef class SolverSystem:
             raise ValueError(f"format must be {set(self.inputs)}, not {set(inputs)}")
 
         self.inputs.update(inputs)
-        cdef size_t n = 0
 
         # Set values
         cdef int b, d
         cdef double angle
+        cdef double *handle
+        cdef clist[double].iterator it = self.inputs_angle.begin()
         for (b, d), angle in self.inputs.items():
             if b == d:
                 continue
-            self.inputs_angle[n] = _radians(angle)
-            n += 1
+            handle = de_refer_post_inc(it)
+            handle[0] = _radians(angle)
 
     cpdef void set_data(self, dict data_dict):
         """Set data."""
@@ -397,22 +403,26 @@ cdef class SolverSystem:
 
         # Set values
         cdef int i
+        cdef double *handle
         cdef VPoint vpoint
         cdef Coordinate coord
+        cdef clist[double].iterator it = self.data_values.begin()
         for i, vpoint in enumerate(self.vpoints):
             if vpoint.grounded():
                 if i in self.data_dict:
                     # Known coordinates.
                     coord = self.data_dict[i]
-                    self.data_values[n] = coord.x
-                    self.data_values[n + 1] = coord.y
-                    n += 2
+                    handle = de_refer_post_inc(it)
+                    handle[0] = coord.x
+                    handle = de_refer_post_inc(it)
+                    handle[0] = coord.y
             if i in self.data_dict:
                 # Known coordinates.
                 coord = self.data_dict[i]
-                self.data_values[n] = coord.x
-                self.data_values[n + 1] = coord.y
-                n += 2
+                handle = de_refer_post_inc(it)
+                handle[0] = coord.x
+                handle = de_refer_post_inc(it)
+                handle[0] = coord.y
 
         cdef int a, b, c, d
         cdef frozenset frozen_pair
@@ -426,20 +436,15 @@ cdef class SolverSystem:
             a = vlink.points[0]
             b = vlink.points[1]
             if (a not in self.data_dict) or (b not in self.data_dict):
-                frozen_pair = frozenset({a, b})
-                if frozen_pair in self.data_dict:
-                    self.data_values[n] = self.data_dict[frozen_pair]
-                    n += 1
-
+                handle = de_refer_post_inc(it)
+                handle[0] = self.data_dict[frozenset({a, b})]
             for c in vlink.points[2:]:
                 if c in self.data_dict:
                     # Known coordinate
                     continue
                 for d in (a, b):
-                    frozen_pair = frozenset({c, d})
-                    if frozen_pair in self.data_dict:
-                        self.data_values[n] = self.data_dict[frozen_pair]
-                        n += 1
+                    handle = de_refer_post_inc(it)
+                    handle[0] = self.data_dict[frozenset({c, d})]
 
     cpdef list solve(self):
         """Solve the expression."""
@@ -449,7 +454,7 @@ cdef class SolverSystem:
         cdef clist[double].iterator it = self.params.begin()
         cdef size_t i
         for i in range(params_count):
-            params_ptr[i] = &cython.operator.dereference(cython.operator.postincrement(it))
+            params_ptr[i] = de_refer_post_inc(it)
 
         # Pointer of constraints
         cdef size_t cons_count = <int>self.cons_list.size()

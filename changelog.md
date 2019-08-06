@@ -5,6 +5,7 @@
     + show_data
     + set_data
     + Add test cases for new methods.
++ Automatic fill up the link length options of data keys.
 
 # Version 19.07
 
