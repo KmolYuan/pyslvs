@@ -7,6 +7,7 @@
     + Add test cases for new methods.
 + Automatic fill up the link length options of data keys.
 + Add "AlgorithmBase" class to share the same functions of three algorithms.
++ Add "slow down" option for algorithm stop limitations.
 
 # Version 19.07
 
