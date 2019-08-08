@@ -197,7 +197,7 @@ class CoreTest(TestCase):
             self.assertAlmostEqual(data_dict[link], link_length, 6)
         self.assertEqual(1, dof)
         result = expr_solving(exprs, mapping, vpoints, [0.])
-        x, y = result[-1]
+        x, y = result[7]
         self.assertAlmostEqual(-43.170055, x, 6)
         self.assertAlmostEqual(-91.753226, y, 6)
 
@@ -206,15 +206,21 @@ class CoreTest(TestCase):
         expr, _ = example_list["Jansen's linkage (Single)"]
         system = SolverSystem(parse_vpoints(expr), {(0, 1): 0.})
         result = system.solve()
-        x, y = result[-1]
+        x, y = result[7]
         self.assertAlmostEqual(-43.170055, x, 6)
         self.assertAlmostEqual(-91.753226, y, 6)
         # Test if angle value changed
         system.set_inputs({(0, 1): 45.})
         result = system.solve()
-        x, y = result[-1]
+        x, y = result[7]
         self.assertAlmostEqual(-24.406394, x, 6)
         self.assertAlmostEqual(-91.789596, y, 6)
+        # Test if link length changed
+        system.set_data({(0, 1): 16.})
+        result = system.solve()
+        x, y = result[7]
+        self.assertAlmostEqual(-24.117994, x, 6)
+        self.assertAlmostEqual(-91.198072, y, 6)
 
     def test_number_synthesis(self):
         """Test Number Synthesis function."""
