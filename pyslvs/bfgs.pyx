@@ -84,6 +84,16 @@ cdef class SolverSystem:
         _sort_pairs(self.data_dict)
         self.build_expression()
 
+    cpdef bint same_points(self, object vpoints_):
+        """Return True if two expressions are same."""
+        cdef int i
+        cdef VPoint p1, p2
+        for i, p1 in enumerate(vpoints_):
+            p2 = self.vpoints[i]
+            if p1.links != p2.links:
+                return False
+        return True
+
     cpdef frozenset show_inputs(self):
         """Show the current inputs keys."""
         if self.inputs is None:

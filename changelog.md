@@ -1,6 +1,7 @@
 # Version 19.08
 
 + Add methods for Sketch Solve solver:
+    + same_points
     + show_inputs
     + show_data
     + set_data

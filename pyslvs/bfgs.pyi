@@ -26,6 +26,10 @@ class SolverSystem:
     ):
         ...
 
+    def same_points(self, vpoints_: Sequence[VPoint]) -> bool:
+        """Return True if two expressions are same."""
+        ...
+
     def show_inputs(self) -> FrozenSet[Tuple[int, int]]:
         """Show the current inputs keys."""
         ...

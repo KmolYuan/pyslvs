@@ -35,6 +35,7 @@ cdef class SolverSystem:
     cdef clist[double] inputs_angle  # For editing angles
     cdef clist[double] data_values  # For editing custom values
 
+    cpdef bint same_points(self, object vpoints_)
     cpdef frozenset show_inputs(self)
     cpdef frozenset show_data(self)
     cdef void build_expression(self)

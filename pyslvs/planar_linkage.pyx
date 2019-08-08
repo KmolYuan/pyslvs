@@ -57,6 +57,7 @@ cdef class Planar(Verification):
     cdef list vpoints, inputs, mapping_list
     cdef dict placement, target, mapping, mapping_r, data_dict
     cdef ndarray upper, lower
+    cdef SolverSystem bfgs_solver
 
     def __cinit__(self, mech_params: dict):
         """mech_params = {
@@ -114,6 +115,8 @@ cdef class Planar(Verification):
         cdef dict status = {}
         self.exprs = vpoints_configure(self.vpoints, self.inputs, status).stack
         self.bfgs_mode = not all(status.values())
+        # TODO: BFGS solver
+        self.bfgs_solver = SolverSystem(self.vpoints, {}, {})
 
         # Bound
         cdef list upper = list(mech_params.get('upper', []))
