@@ -115,8 +115,8 @@ cdef class Planar(Verification):
         cdef dict status = {}
         self.exprs = vpoints_configure(self.vpoints, self.inputs, status).stack
         self.bfgs_mode = not all(status.values())
-        # TODO: BFGS solver
-        self.bfgs_solver = SolverSystem(self.vpoints, {}, {})
+        # BFGS solver
+        self.bfgs_solver = None
 
         # Bound
         cdef list upper = list(mech_params.get('upper', []))
@@ -287,10 +287,15 @@ cdef class Planar(Verification):
             if type(k) is frozenset:
                 p_data_dict[k] = v
 
+        if self.bfgs_solver is None:
+            self.bfgs_solver = SolverSystem(self.vpoints, {}, p_data_dict)
+        else:
+            self.bfgs_solver.set_data(p_data_dict)
+
         # Solve
         cdef list solved_bfgs
         try:
-            solved_bfgs = SolverSystem(self.vpoints, {}, p_data_dict).solve()
+            solved_bfgs = self.bfgs_solver.solve()
         except ValueError:
             return False
 
@@ -383,7 +388,6 @@ cdef class Planar(Verification):
             coord1 = self.data_dict[i, -1]
             vpoint.locate(coord1.x, coord1.y)
             if vpoint.type != VJoint.R:
-                coord1 = self.data_dict[i, -1]
                 coord2 = self.data_dict[i, -2]
                 vpoint.move((coord1.x, coord1.y), (coord2.x, coord2.y))
             expressions.append(vpoint.expr())
