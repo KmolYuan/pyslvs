@@ -96,17 +96,11 @@ cdef class SolverSystem:
 
     cpdef frozenset show_inputs(self):
         """Show the current inputs keys."""
-        if self.inputs is None:
-            return frozenset()
-        else:
-            return frozenset(self.inputs)
+        return frozenset(self.inputs)
 
     cpdef frozenset show_data(self):
         """Show the current data keys."""
-        if self.data_dict is None:
-            return frozenset()
-        else:
-            return frozenset(self.data_dict)
+        return frozenset(self.data_dict)
 
     cdef void build_expression(self):
         """Build the expression for solver at first time."""
