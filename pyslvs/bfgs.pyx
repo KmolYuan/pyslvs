@@ -3,14 +3,6 @@
 
 """Wrapper of BFGS algorithm.
 
-Note of Pointer:
-+ In Cython, pointer is more convenient then array.
-    Because we can not "new" them or using "const" decorator on size_t.
-+ There is NO pointer's "get value" operator in Cython,
-    please use "index" operator.
-+ Pointers can be plus with C's Integer, but not Python's.
-    So please copy or declare to C's Integer.
-
 author: Yuan Chang
 copyright: Copyright (C) 2016-2019
 license: AGPL
