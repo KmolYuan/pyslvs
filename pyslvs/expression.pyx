@@ -376,11 +376,11 @@ cdef class VLink:
             self.color = None
         else:
             self.color = color_func(color_str)
-        self.points = np_array(sorted(points), dtype=int)
+        self.points = np_array(list(points), dtype=int)
 
     cpdef void set_points(self, object points) except *:
         """Set points."""
-        self.points = np_array(sorted(points), dtype=int)
+        self.points = np_array(list(points), dtype=int)
 
     def __contains__(self, point: cython.int) -> bint:
         """Check if point number is in the link."""
