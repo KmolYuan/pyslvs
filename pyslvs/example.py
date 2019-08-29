@@ -113,6 +113,21 @@ example_list = {
         "J[RP, A[0.0], color[Green], P[65.0, -45.0], L[L2, ground]], "
         "]", ((0, 1),)),
 
+    "Horse leg": (
+        "M["
+        "J[R, color[Green], P[49, -75], L[ground, link_1]], "
+        "J[R, color[Green], P[100, -69], L[ground, link_2]], "
+        "J[R, color[Green], P[139, -63], L[link_5, ground]], "
+        "J[R, color[Green], P[52, -97], L[link_1, link_3]], "
+        "J[R, color[Green], P[108, -81], L[link_3, link_4]], "
+        "J[R, color[Green], P[108, -107], L[link_2, link_3]], "
+        "J[R, color[Green], P[156, -114], L[link_4, link_5]], "
+        "J[R, color[Green], P[193, -149], L[link_5, link_7]], "
+        "J[R, color[Green], P[109, -127], L[link_2, link_6]], "
+        "J[R, color[Green], P[204, -169], L[link_6, link_7]], "
+        "J[R, color[Green], P[230, -219], L[link_7]], "
+        "]", ((0, 3),)),
+
     "Inverted slider": (
         "M["
         "J[R, color[Green], P[-15.0, 0.0], L[ground, L1]], "

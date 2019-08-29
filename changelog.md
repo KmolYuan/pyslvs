@@ -10,6 +10,7 @@
 + Add "AlgorithmBase" class to share the same functions of three algorithms.
 + Add "slow down" option for algorithm stop limitations.
 + Member types optimization of algorithm classes.
++ Add "Horse leg" example.
 
 # Version 19.07
 
