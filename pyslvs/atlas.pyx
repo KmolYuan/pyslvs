@@ -115,7 +115,7 @@ cdef inline void _gauss_elimination(
     cdef int i, j, d
     cdef int16_t[:] tmp1, tmp2
     for j in range(var_count):
-        # Remove all coefficients of index [i] to zero.
+        # Remove all coefficients of index [i] to zero
         for i in range(n):
             if f_matrix[i, j] != 0 and not np_any(f_matrix[i, :j]):
                 d = i

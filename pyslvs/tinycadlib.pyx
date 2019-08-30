@@ -67,15 +67,15 @@ cpdef Coordinate pllp(
     cdef double dy = c2.y - c1.y
     cdef double d = c1.distance(c2)
 
-    # No solutions, the circles are separate.
+    # No solutions, the circles are separate
     if d > d0 + d1:
         return _NAN_COORD
 
-    # No solutions because one circle is contained within the other.
+    # No solutions because one circle is contained within the other
     if d < abs(d0 - d1):
         return _NAN_COORD
 
-    # Circles are coincident and there are an infinite number of solutions.
+    # Circles are coincident and there are an infinite number of solutions
     if d == 0 and d0 == d1:
         return _NAN_COORD
     cdef double a = (d0 * d0 - d1 * d1 + d * d) / (2 * d)
@@ -103,16 +103,16 @@ cpdef Coordinate plpp(
     cdef double u = ((c1.x - c2.x) * dx + (c1.y - c2.y) * dy) / (line_mag * line_mag)
     cdef Coordinate inter = Coordinate.__new__(Coordinate, c2.x + u * dx, c2.y + u * dy)
 
-    # Test distance between point A and intersection.
+    # Test distance between point A and intersection
     cdef double d = c1.distance(inter)
     if d > d0:
-        # No intersection.
+        # No intersection
         return _NAN_COORD
     elif d == d0:
-        # One intersection point.
+        # One intersection point
         return inter.x, inter.y
 
-    # Two intersection points.
+    # Two intersection points
     d = sqrt(d0 * d0 - d * d) / line_mag
     dx *= d
     dy *= d
@@ -205,11 +205,11 @@ cpdef void expr_parser(ExpressionStack exprs, dict data_dict):
 
 cpdef int vpoint_dof(object vpoints):
     """Degree of freedoms calculate from PMKS expressions."""
-    # Joint with DOF 1.
+    # Joint with DOF 1
     cdef int j1 = 0
-    # Joint with DOF 2.
+    # Joint with DOF 2
     cdef int j2 = 0
-    # First link 'ground'.
+    # First link 'ground'
     cdef set vlinks = {'ground'}
 
     cdef int link_count

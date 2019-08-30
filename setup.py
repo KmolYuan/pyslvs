@@ -42,12 +42,12 @@ compile_args = [
 ]
 
 if system() == 'Windows':
-    # Avoid compile error with CYTHON_USE_PYLONG_INTERNALS.
+    # Avoid compile error with CYTHON_USE_PYLONG_INTERNALS
     # https://github.com/cython/cython/issues/2670#issuecomment-432212671
     macros.append(('MS_WIN64', None))
-    # Disable format warning.
+    # Disable format warning
     compile_args.append('-Wno-format')
-    # Disable NumPy warning.
+    # Disable NumPy warning
     macros.append(('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION'))
 
 ext_modules = [Extension(
