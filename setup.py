@@ -8,20 +8,25 @@ __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
 import os
+from os.path import (
+    abspath,
+    dirname,
+    join as pth_join,
+)
 import re
 import codecs
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 from platform import system
 
-here = os.path.abspath(os.path.dirname(__file__))
+here = abspath(dirname(__file__))
 src_path = 'pyslvs/'
 bfgs_path = src_path + 'bfgs_solver/'
 adesign_path = src_path + 'Adesign/'
 
 
 def read(*parts):
-    with codecs.open(os.path.join(here, *parts), 'r') as f:
+    with codecs.open(pth_join(here, *parts), 'r') as f:
         return f.read()
 
 
@@ -94,6 +99,7 @@ class Build(build_ext):
         self.include_dirs.append(numpy.get_include())
 
 
+requires = read('requirements.txt').splitlines()
 setup(
     name='pyslvs',
     version=find_version('pyslvs', '__init__.py'),
@@ -110,17 +116,8 @@ setup(
     cmdclass={'build_ext': Build},
     zip_safe=False,
     python_requires=">=3.6",
-    setup_requires=[
-        'setuptools',
-        'wheel',
-        'numpy',
-        'cython',
-    ],
-    install_requires=[
-        'numpy',
-        'lark-parser',
-        'pygments',
-    ],
+    setup_requires=requires[:3],
+    install_requires=requires[3:-1],
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Cython",
