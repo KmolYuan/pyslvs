@@ -23,7 +23,7 @@ class SolverSystem:
         vpoints: Sequence[VPoint],
         inputs: Optional[Dict[Tuple[int, int], float]] = None,
         data_dict: Optional[Dict[Union[int, Tuple[int, int]], Union[Coordinate, float]]] = None
-    ):
+    ) -> None:
         ...
 
     def same_points(self, vpoints_: Sequence[VPoint]) -> bool:
@@ -38,11 +38,11 @@ class SolverSystem:
         """Show the current data keys."""
         ...
 
-    def set_inputs(self, inputs: Dict[Tuple[int, int], float]):
+    def set_inputs(self, inputs: Dict[Tuple[int, int], float]) -> None:
         """Set input pairs."""
         ...
 
-    def set_data(self, data_dict: Dict[Union[int, Tuple[int, int]], Union[Coordinate, float]]):
+    def set_data(self, data_dict: Dict[Union[int, Tuple[int, int]], Union[Coordinate, float]]) -> None:
         """Set data."""
         ...
 

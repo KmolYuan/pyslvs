@@ -26,7 +26,7 @@ class Coordinate:
     x: float
     y: float
 
-    def __init__(self, x: float, y: float):
+    def __init__(self, x: float, y: float) -> None:
         ...
 
     def distance(self, p: Coordinate) -> float:
@@ -97,31 +97,31 @@ class VPoint:
         """Y value of first current coordinate."""
         return ...
 
-    def set_links(self, links: Iterable[str]):
+    def set_links(self, links: Iterable[str]) -> None:
         """Set links."""
         ...
 
-    def replace_link(self, link1: str, link2: str):
+    def replace_link(self, link1: str, link2: str) -> None:
         """Replace link1 as link2."""
         ...
 
-    def move(self, c1: Tuple[float, float], c2: Optional[Tuple[float, float]] = None):
+    def move(self, c1: Tuple[float, float], c2: Optional[Tuple[float, float]] = None) -> None:
         """Change coordinates of this point."""
         ...
 
-    def locate(self, x: float, y: float):
+    def locate(self, x: float, y: float) -> None:
         """Change the origin coordinate of this point directly."""
         ...
 
-    def rotate(self, angle: float):
+    def rotate(self, angle: float) -> None:
         """Change the angle of slider slot by degrees."""
         ...
 
-    def set_offset(self, offset: float):
+    def set_offset(self, offset: float) -> None:
         """Set slider offset."""
         ...
 
-    def disable_offset(self):
+    def disable_offset(self) -> None:
         """Disable offset status."""
         ...
 
@@ -200,7 +200,7 @@ class VLink:
     ):
         ...
 
-    def set_points(self, points: Iterable[int]):
+    def set_points(self, points: Iterable[int]) -> None:
         """Set points."""
         ...
 

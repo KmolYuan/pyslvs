@@ -14,7 +14,7 @@ class Planar(Verification):
 
     """This class is used to verified kinematics of the linkage mechanism."""
 
-    def __init__(self, mech_params: Dict[str, Any]):
+    def __init__(self, mech_params: Dict[str, Any]) -> None:
         """mech_params = {
             'Expression': List[VPoint],
             'input': [(b0, d0), ...],

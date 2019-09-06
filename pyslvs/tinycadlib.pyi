@@ -57,7 +57,7 @@ def vpoint_dof(vpoints: Sequence[VPoint]) -> int:
     ...
 
 
-def expr_parser(exprs: Sequence[Tuple[str, ...]], data_dict: Dict[str, float]):
+def expr_parser(exprs: Sequence[Tuple[str, ...]], data_dict: Dict[str, float]) -> None:
     """Update data."""
     ...
 

@@ -29,13 +29,13 @@ class Graph:
     edges: Tuple[Tuple[int, int], ...]
     nodes: Tuple[int, ...]
 
-    def __init__(self, edges: Iterable[Tuple[int, int]]): ...
+    def __init__(self, edges: Iterable[Tuple[int, int]]) -> None: ...
 
-    def add_edge(self, n1: int, n2: int):
+    def add_edge(self, n1: int, n2: int) -> None:
         """Add two nodes for an edge."""
         ...
 
-    def add_nodes(self, nodes: Iterable[int]):
+    def add_nodes(self, nodes: Iterable[int]) -> None:
         """Add nodes from a tuple."""
         ...
 
