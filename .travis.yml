@@ -66,8 +66,7 @@ before_install:
         fi
 
 script:
-    - python3 setup.py install;
-    - python3 tests
+    - python3 setup.py test
 
 before_cache:
     - rm -rf $HOME/.cache/pip/log

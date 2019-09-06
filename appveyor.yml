@@ -45,17 +45,14 @@ before_build:
     # Clone submodules
     - git submodule update --init --recursive
 
-build_script:
-    - python setup.py install
-    - python setup.py bdist_wheel
-
 test_script:
-    - python tests
+    - python setup.py test
 
 artifacts:
     - path: dist\*.whl
 
 deploy_script:
+    - python setup.py bdist_wheel
     - IF "%APPVEYOR_REPO_TAG%"=="true" (pip install twine)
          ELSE (echo deployment has been skipped as environment variable has not matched)
     - IF "%APPVEYOR_REPO_TAG%"=="true" (twine upload dist\*.whl --skip-existing)

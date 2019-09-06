@@ -118,6 +118,7 @@ setup(
     python_requires=">=3.6",
     setup_requires=requires[:3],
     install_requires=requires[3:-1],
+    test_suite="tests",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Cython",
