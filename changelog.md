@@ -1,6 +1,7 @@
 # Version 19.09
 
 + Add test suit option of `setup.py`.
++ Replace "time.time" with "time.perf_counter".
 
 # Version 19.08
 

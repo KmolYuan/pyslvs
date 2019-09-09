@@ -15,7 +15,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from time import time
+from time import perf_counter
 from logging import getLogger
 from collections import Counter
 cimport cython
@@ -67,7 +67,7 @@ cdef inline ullong _factorial(int n):
 
 cdef inline int _gcd(int a, int b) nogil:
     """Return Greatest Common Divisor of a and b.
-    
+
     Only for positive numbers.
     """
     cdef int r
@@ -384,10 +384,10 @@ cdef inline void _permute_combine(
 
 cdef inline list _contracted_links(tuple edges, int16_t[:] limit, object stop_func):
     """Combination of contracted links.
-    
+
     pool: edges
     pick: contracted links
-    
+
     If the edge is not picked, it represent the joint is connected directly.
     """
     # Number of contracted links
@@ -490,7 +490,7 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
         return []
 
     # Initial time
-    cdef double t0 = time()
+    cdef double t0 = perf_counter()
     cdef int16_t[:] link_num = np_array(link_num_list, ndmin=1, dtype=int16)
     logger.debug(f"Link assortment: {list(link_num)}")
 
@@ -509,7 +509,7 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
     cdef list cg_list = []
     _contracted_graph(cg_list, m_link, stop_func)
 
-    logger.debug(f"Contracted graph(s): {len(cg_list)}, time: {time() - t0}")
+    logger.debug(f"Contracted graph(s): {len(cg_list)}, time: {perf_counter() - t0}")
     return cg_list
 
 
@@ -520,7 +520,7 @@ cpdef list conventional_graph(
     object stop_func = None
 ):
     """Linkage mechanism topological function.
-    
+
     cg_list: Contracted graph list (List[Graph]).
     c_j_list = [NC1, NC2, NC3, ...]
     no_degenerate:
@@ -531,7 +531,7 @@ cpdef list conventional_graph(
         stop function can check the break point and send response.
     """
     # Initial time
-    cdef double t0 = time()
+    cdef double t0 = perf_counter()
     logger.debug(f"Contracted link assortment: {list(c_j_list)}")
 
     # Synthesis of contracted link and multiple link combination.
@@ -562,5 +562,5 @@ cpdef list conventional_graph(
     _graph_atlas(result, cg_list, _labels(c_j, 1, 0), no_degenerate, stop_func)
 
     # Return graph list and time
-    logger.debug(f"Count: {len(result)}, time: {time() - t0}")
+    logger.debug(f"Count: {len(result)}, time: {perf_counter() - t0}")
     return result
