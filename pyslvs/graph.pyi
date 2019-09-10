@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import (
-    Tuple,
-    List,
-    Iterable,
-)
+from typing import Tuple, List, Iterable
 
 
 def link_assortment(g: Graph) -> List[int]:

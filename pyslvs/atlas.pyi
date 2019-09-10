@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from typing import (
-    Tuple,
     List,
     Sequence,
     Callable,

@@ -1,13 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from typing import (
-    Tuple,
-    Dict,
-    Union,
-    Any,
-)
+from typing import Dict, Any
 from numpy import ndarray
-from .verify import Verification
+from .Adesign.verify import Verification
 
 
 class Planar(Verification):
