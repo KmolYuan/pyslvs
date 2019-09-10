@@ -1040,13 +1040,13 @@ cdef class OrderedSet:
     def __reduce__(self):
         items = list(self)
         inst_dict = vars(self).copy()
-        return self.__class__, (items, ), inst_dict
+        return type(self), (items, ), inst_dict
 
     def __repr__(self) -> str:
         """Implement of '!r' operator in string."""
         if not self:
-            return f'{self.__class__.__name__}()'
-        return f'{self.__class__.__name__}({list(self)!r})'
+            return f'{type(self).__name__}()'
+        return f'{type(self).__name__}({list(self)!r})'
 
     def __eq__(self, other: Iterable[Any]) -> bool:
         """Implement of '==' operator."""

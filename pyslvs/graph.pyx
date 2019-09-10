@@ -336,7 +336,7 @@ cdef class Graph:
 
     def __repr__(self) -> str:
         """Print the edges."""
-        return f"{self.__class__.__name__}({list(self.edges)})"
+        return f"{type(self).__name__}({list(self.edges)})"
 
 
 cdef bint _is_adjacent(Graph g, int u, int v):
@@ -469,7 +469,7 @@ cdef class GraphMatcher:
             for g1_node, g2_node in self.candidate_pairs_iter():
                 if self.syntactic_feasibility(g1_node, g2_node):
                     # Recursive call, adding the feasible state.
-                    new_state = self.state.__class__(self, g1_node, g2_node)
+                    new_state = type(self.state)(self, g1_node, g2_node)
 
                     yield from self.match()
 

@@ -136,7 +136,7 @@ cdef class ExpressionStack:
         return stack
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.as_list()})"
+        return f"{type(self).__name__}({self.as_list()})"
 
 
 cdef inline bint _is_all_lock(dict status):
