@@ -2,6 +2,7 @@
 
 + Add test suit option of `setup.py`.
 + Replace "time.time" with "time.perf_counter".
++ Add Windows patch script `set_pycompiler`.
 
 # Version 19.08
 
