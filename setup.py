@@ -99,7 +99,6 @@ class Build(build_ext):
         self.include_dirs.append(numpy.get_include())
 
 
-requires = read('requirements.txt').splitlines()
 setup(
     name='pyslvs',
     version=find_version('pyslvs', '__init__.py'),
@@ -116,15 +115,12 @@ setup(
     cmdclass={'build_ext': Build},
     zip_safe=False,
     python_requires=">=3.6",
-    setup_requires=requires[:3],
-    install_requires=requires[3:-1],
+    install_requires=read('requirements.txt').splitlines(),
     test_suite="tests",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Cython",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Operating System :: OS Independent",
     ]
 )
