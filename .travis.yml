@@ -8,7 +8,7 @@ matrix:
       sudo: required
       python: "3.6"
       dist: xenial
-      deploy: &deploy-options
+      deploy: &pypi-deploy
         provider: pypi
         user: $TWINE_USERNAME
         password: $TWINE_PASSWORD
@@ -22,14 +22,14 @@ matrix:
       python: "3.7"
       dist: xenial
       deploy:
-        <<: *deploy-options
+        <<: *pypi-deploy
 
     - os: linux
       sudo: required
       python: "3.8-dev"
       dist: xenial
       deploy:
-        <<: *deploy-options
+        <<: *pypi-deploy
 
     - os: osx
       osx_image: xcode10
@@ -78,6 +78,7 @@ cache:
     - $HOME/.cache/pip
 
 after_success:
+  # PyPI deployment
   - if [[ "$TRAVIS_OS_NAME" == "osx" && -n "$TRAVIS_TAG" ]]; then
     python3 -m pip install twine;
     python3 setup.py sdist bdist_wheel;
