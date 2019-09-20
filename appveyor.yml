@@ -48,7 +48,11 @@ artifacts:
   - path: dist\*.whl
 
 deploy_script:
-  - python setup.py bdist_wheel
-  - IF "%APPVEYOR_REPO_TAG%"=="true" (pip install twine)
-    ELSE (echo deployment has been skipped as environment variable has not matched)
-  - IF "%APPVEYOR_REPO_TAG%"=="true" (twine upload dist\*.whl --skip-existing)
+  # PyPI deployment
+  - IF "%APPVEYOR_REPO_TAG%"=="true" (
+    pip install twine &&
+    python setup.py bdist_wheel &&
+    twine upload dist\*.whl --skip-existing
+    ) ELSE (
+    echo deployment has been skipped as environment variable has not matched
+    )
