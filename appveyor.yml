@@ -4,10 +4,8 @@ platform: x64
 
 environment:
   matrix:
-
     - MSYS_DIR: &msys2 C:\msys64
       PYTHON_DIR: C:\Python36-x64
-
     - MSYS_DIR: *msys2
       PYTHON_DIR: C:\Python37-x64
 
@@ -15,20 +13,15 @@ install:
   # Environment variables
   - set Path=%MSYS_DIR%\mingw64\bin;%MSYS_DIR%\usr\bin;%Path%
   - set Path=%PYTHON_DIR%;%PYTHON_DIR%\Scripts;%Path%
-
   # Show Python
   - python --version
   - pip --version
-
   # Upgrade setuptools
   - pip install setuptools -U
-
   # Set Python compiler to MinGW
   - platform\set_pycompiler %PYTHON_DIR%
-
   # Install modules
   - pip install -r requirements.txt
-
   # Show tool kits
   - gcc --version
   - mingw32-make --version
