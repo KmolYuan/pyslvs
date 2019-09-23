@@ -3,11 +3,10 @@ image: Visual Studio 2019
 platform: x64
 
 environment:
+  MSYS_DIR: C:\msys64
   matrix:
-    - MSYS_DIR: &msys2 C:\msys64
-      PYTHON_DIR: C:\Python36-x64
-    - MSYS_DIR: *msys2
-      PYTHON_DIR: C:\Python37-x64
+    - PYTHON_DIR: C:\Python36-x64
+    - PYTHON_DIR: C:\Python37-x64
 
 install:
   # Environment variables
