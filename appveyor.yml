@@ -37,10 +37,9 @@ artifacts:
 
 deploy_script:
   # PyPI deployment
-  - IF "%APPVEYOR_REPO_TAG%"=="true" (
+  - IF "%APPVEYOR_REPO_TAG%"=="true"
+    IF "%APPVEYOR_REPO_NAME%"=="KmolYuan/pyslvs" (
     pip install twine &&
     python setup.py bdist_wheel &&
     twine upload dist\*.whl --skip-existing
-    ) ELSE (
-    echo deployment has been skipped as environment variable has not matched
     )
