@@ -8,7 +8,7 @@ matrix:
       os: linux
       sudo: required
       python: "3.6"
-      dist: xenial
+      dist: bionic
       deploy:
         provider: pypi
         user: $TWINE_USERNAME
