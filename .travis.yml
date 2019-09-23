@@ -3,7 +3,6 @@ language: python
 
 matrix:
   include:
-
     - &linux
       os: linux
       sudo: required
@@ -15,8 +14,9 @@ matrix:
         password: $TWINE_PASSWORD
         skip_cleanup: true
         skip_existing: true
-        file: dist/*.whl
+        distributions: sdist
         on:
+          repo: KmolYuan/pyslvs
           tags: true
 
     - <<: *linux
@@ -42,9 +42,9 @@ matrix:
         - python3 -m pip install -r requirements.txt
       after_success:
         # PyPI deployment
-        - if [ -n "$TRAVIS_TAG" ]; then
+        - if [ "$TRAVIS_REPO_SLUG" == "KmolYuan/pyslvs" && -n "$TRAVIS_TAG" ]; then
           python3 -m pip install twine;
-          python3 setup.py sdist bdist_wheel;
+          python3 setup.py bdist_wheel;
           python3 -m twine upload dist/*.whl --skip-existing;
           fi
 
