@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-19.09.0-yellow.svg)](https://github.com/KmolYuan/pyslvs/releases/latest)
+[![Version](https://img.shields.io/badge/version-19.10.0-yellow.svg)](https://github.com/KmolYuan/pyslvs/releases/latest)
 [![Build status](https://ci.appveyor.com/api/projects/status/6l1bh1197ncahd0q?svg=true)](https://ci.appveyor.com/project/KmolYuan/pyslvs)
 [![Build status](https://img.shields.io/travis/KmolYuan/pyslvs.svg?logo=travis)](https://travis-ci.org/KmolYuan/pyslvs)
 [![PyPI](https://img.shields.io/pypi/v/pyslvs.svg)](https://pypi.org/project/pyslvs/)

@@ -1,3 +1,7 @@
+# Version 19.10
+
++ None
+
 # Version 19.09
 
 + Add test suit option of `setup.py`.
