@@ -15,19 +15,13 @@ from os.path import (
     join as pth_join,
 )
 import re
-import codecs
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 from platform import system
 
-here = abspath(dirname(__file__))
-src_path = 'pyslvs'
-bfgs_path = pth_join(src_path, 'bfgs_solver')
-adesign_path = pth_join(src_path, 'Adesign')
-
 
 def read(*parts):
-    with codecs.open(pth_join(here, *parts), 'r') as f:
+    with open(pth_join(here, *parts), 'r', encoding='utf-8') as f:
         return f.read()
 
 
@@ -38,15 +32,12 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-macros = [
-    ('_hypot', 'hypot'),
-]
-
-compile_args = [
-    '-O3',
-    '-Wno-cpp',
-]
-
+here = abspath(dirname(__file__))
+src_path = 'pyslvs'
+bfgs_path = pth_join(src_path, 'bfgs_solver')
+adesign_path = pth_join(src_path, 'Adesign')
+macros = [('_hypot', 'hypot')]
+compile_args = ['-O3', '-Wno-cpp']
 if system() == 'Windows':
     # Avoid compile error with CYTHON_USE_PYLONG_INTERNALS
     # https://github.com/cython/cython/issues/2670#issuecomment-432212671
@@ -70,7 +61,6 @@ ext_modules = [Extension(
     define_macros=macros,
     extra_compile_args=compile_args
 )]
-
 for place in [src_path, adesign_path]:
     for source in listdir(place):
         if not source.endswith('.pyx'):
