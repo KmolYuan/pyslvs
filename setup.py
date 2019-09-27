@@ -7,10 +7,11 @@ __copyright__ = "Copyright (C) 2016-2019"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
-import os
+from os import listdir
 from os.path import (
     abspath,
     dirname,
+    sep,
     join as pth_join,
 )
 import re
@@ -20,9 +21,9 @@ from setuptools.command.build_ext import build_ext
 from platform import system
 
 here = abspath(dirname(__file__))
-src_path = 'pyslvs/'
-bfgs_path = src_path + 'bfgs_solver/'
-adesign_path = src_path + 'Adesign/'
+src_path = 'pyslvs'
+bfgs_path = pth_join(src_path, 'bfgs_solver')
+adesign_path = pth_join(src_path, 'Adesign')
 
 
 def read(*parts):
@@ -56,13 +57,13 @@ if system() == 'Windows':
     macros.append(('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION'))
 
 ext_modules = [Extension(
-    src_path.replace('/', '.') + 'bfgs',
+    src_path.replace(sep, '.') + '.bfgs',
     [
-        src_path + 'bfgs.pyx',
-        bfgs_path + 'geometric_constraint.cpp',
-        bfgs_path + 'derivatives.cpp',
-        bfgs_path + 'solve.cpp',
-        bfgs_path + 'calc.cpp',
+        pth_join(src_path, 'bfgs.pyx'),
+        pth_join(bfgs_path, 'geometric_constraint.cpp'),
+        pth_join(bfgs_path, 'derivatives.cpp'),
+        pth_join(bfgs_path, 'solve.cpp'),
+        pth_join(bfgs_path, 'calc.cpp'),
     ],
     language="c++",
     include_dirs=[bfgs_path],
@@ -70,16 +71,15 @@ ext_modules = [Extension(
     extra_compile_args=compile_args
 )]
 
-git_modules = [src_path, adesign_path]
-for place in git_modules:
-    for source in os.listdir(place):
+for place in [src_path, adesign_path]:
+    for source in listdir(place):
         if not source.endswith('.pyx'):
             continue
         if place == src_path and source == 'bfgs.pyx':
             continue
         ext_modules.append(Extension(
-            place.replace('/', '.') + source.split('.')[0],  # Base name
-            [place + source],
+            place.replace(sep, '.') + '.' + source.split('.')[0],  # Base name
+            [pth_join(place, source)],
             language="c++",
             include_dirs=[],
             define_macros=macros,
@@ -90,11 +90,6 @@ for place in git_modules:
 class Build(build_ext):
     def finalize_options(self):
         super(Build, self).finalize_options()
-        # Prevent numpy from thinking it is still in its setup process
-        if isinstance(__builtins__, dict):
-            __builtins__['__NUMPY_SETUP__'] = False
-        else:
-            setattr(__builtins__, '__NUMPY_SETUP__', False)
         import numpy
         self.include_dirs.append(numpy.get_include())
 
@@ -120,6 +115,7 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Cython",
+        "Topic :: Scientific/Engineering",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Operating System :: OS Independent",
     ]
