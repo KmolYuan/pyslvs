@@ -284,7 +284,7 @@ def graph2vpoints(
 ) -> List[VPoint]:
     """Change NetworkX graph into VPoints.
 
-    cus: custom nodes (not joint)
+    cus: custom vertices (not joint)
         {node_name: link_number}
     same: multiple joints
         {n1: n2, n3: n2} => (n1 as n2) and (n3 as n2)

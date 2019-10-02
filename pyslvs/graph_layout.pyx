@@ -77,12 +77,12 @@ cdef inline dict _line_polygon_layout(Graph g, double scale):
         used_nodes.update(line)
 
     # Last check for debug.
-    if set(g.nodes) != set(pos):
+    if set(g.vertices) != set(pos):
         raise ValueError(
             f"the algorithm is error with {g.edges}\n"
             f"external loop: {o_loop}\n"
             f"inner layout: {set(pos) - o_loop}\n"
-            f"node {set(g.nodes) - set(pos)} are not included"
+            f"node {set(g.vertices) - set(pos)} are not included"
         )
 
     return pos
@@ -188,9 +188,9 @@ cdef inline tuple _middle_point(double x1, double y1, double x2, double y2):
 
 
 cdef list _inner_lines(Graph g, OrderedSet o_loop):
-    """Layout for inner nodes of graph block."""
-    cdef OrderedSet nodes = set(g.nodes) - o_loop
-    if not nodes:
+    """Layout for inner vertices of graph block."""
+    cdef OrderedSet vertices = set(g.vertices) - o_loop
+    if not vertices:
         return []
 
     cdef list lines = []
@@ -198,22 +198,22 @@ cdef list _inner_lines(Graph g, OrderedSet o_loop):
 
     cdef int n
     cdef OrderedSet line, inter
-    while nodes:
-        n = nodes.pop(0)
+    while vertices:
+        n = vertices.pop(0)
         if not (used_nodes & g.adj[n]):
             # Not contacted yet.
-            nodes.add(n)
+            vertices.add(n)
             continue
 
         line = OrderedSet.__new__(OrderedSet)
         line.add(n)
         inter = set(g.adj[n]) - used_nodes
         while inter:
-            # New nodes to add.
+            # New vertices to add.
             n = inter.pop()
             line.add(n)
-            nodes.remove(n)
-            inter = nodes & g.adj[n]
+            vertices.remove(n)
+            inter = vertices & g.adj[n]
             if used_nodes & g.adj[n]:
                 # If connected with any used node.
                 break
@@ -303,7 +303,7 @@ cdef inline bint _split_loop(OrderedSet o_loop, OrderedSet line, int n1, int n2)
 
 
 cdef inline OrderedSet _external_loop(Graph g):
-    """Return nodes of external loop."""
+    """Return vertices of external loop."""
     cdef list cycles = _cycle_basis(g)
     if not cycles:
         raise ValueError(f"invalid graph has no any cycle: {g.edges}")
@@ -484,7 +484,7 @@ cdef inline list _cycle_basis(Graph g):
     """Returns a list of cycles which form a basis for cycles of G.
     Reference from NetworkX.
     """
-    cdef set g_nodes = set(g.nodes)
+    cdef set g_nodes = set(g.vertices)
     cdef list cycles = []
     cdef int root = -1
 

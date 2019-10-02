@@ -23,16 +23,16 @@ class Graph:
     """NetworkX-like graph class."""
 
     edges: Tuple[Tuple[int, int], ...]
-    nodes: Tuple[int, ...]
+    vertices: Tuple[int, ...]
 
     def __init__(self, edges: Iterable[Tuple[int, int]]) -> None: ...
 
     def add_edge(self, n1: int, n2: int) -> None:
-        """Add two nodes for an edge."""
+        """Add two vertices for an edge."""
         ...
 
-    def add_nodes(self, nodes: Iterable[int]) -> None:
-        """Add nodes from a tuple."""
+    def add_vertices(self, vertices: Iterable[int]) -> None:
+        """Add vertices from a tuple."""
         ...
 
     def dof(self) -> int:
@@ -63,8 +63,8 @@ class Graph:
         """Return True if two graphs is isomorphic."""
         ...
 
-    def duplicate(self, nodes: Iterable[int], times: int) -> Graph:
-        """Make graph duplicate by specific nodes. Return a new graph."""
+    def duplicate(self, vertices: Iterable[int], times: int) -> Graph:
+        """Make graph duplicate by specific vertices. Return a new graph."""
         ...
 
     def copy(self) -> Graph:

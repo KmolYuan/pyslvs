@@ -1,6 +1,6 @@
 # Version 19.10
 
-+ None
++ Change the term "nodes" to "vertices".
 
 # Version 19.09
 

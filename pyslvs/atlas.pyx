@@ -318,7 +318,7 @@ cdef inline void _dyad_insert(Graph g, frozenset edge, int amount):
     if amount < 1:
         return
 
-    cdef int last_num = max(g.nodes) + 1
+    cdef int last_num = max(g.vertices) + 1
     cdef int n1, n2
     n1, n2 = edge
 

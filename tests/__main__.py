@@ -127,7 +127,7 @@ class CoreTest(TestCase):
         g1 = Graph([(0, 1), (4, 10), (1, 3), (2, 9), (5, 6), (4, 5), (5, 7), (8, 10),
                     (1, 8), (9, 11), (3, 6), (0, 4), (3, 7), (2, 5), (0, 2), (4, 11)])
         pos = external_loop_layout(g1, True)
-        self.assertEqual(set(g1.nodes), set(pos))
+        self.assertEqual(set(g1.vertices), set(pos))
 
     def test_atlas(self):
         """Test 'atlas' libraries."""

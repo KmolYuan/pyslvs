@@ -161,7 +161,7 @@ def _get_reliable_friend(
     vlinks: dict,
     status: dict
 ) -> Iterator[int]:
-    """Return a generator yield the nodes
+    """Return a generator yield the vertices
         that "has been solved" on the same link.
     """
     cdef str link
@@ -170,7 +170,7 @@ def _get_reliable_friend(
         if len(vlinks[link]) < 2:
             continue
         for friend in vlinks[link]:
-            if status[friend] and (friend != node):
+            if status[friend] and friend != node:
                 yield friend
 
 

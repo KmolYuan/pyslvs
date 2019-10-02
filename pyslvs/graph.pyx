@@ -75,7 +75,7 @@ cdef list _multi_contracted_links(Graph g, bint only_one):
     cdef list c_links
     cdef list contracted_links = []
     cdef set counted = set()
-    for n1 in g.nodes:
+    for n1 in g.vertices:
         # Only for binary link.
         if len(g.adj[n1]) != 2:
             continue
@@ -111,7 +111,7 @@ cpdef list labeled_enumerate(Graph g):
 
     cdef int n1, n2
     cdef Graph g1, g2
-    for n1 in g.nodes:
+    for n1 in g.vertices:
         g1 = Graph.__new__(Graph, [e for e in g.edges if n1 not in e])
         for n2, g2 in result:
             if g1.is_isomorphic(g2):
@@ -131,28 +131,28 @@ cdef class Graph:
         """edges: [(l1, l2), ...]"""
         self.edges = tuple(edges)
 
-        # nodes
+        # vertices
         cdef int p1, p2
-        cdef list nodes = []
+        cdef list vertices = []
         for p1, p2 in self.edges:
-            if p1 not in nodes:
-                nodes.append(p1)
-            if p2 not in nodes:
-                nodes.append(p2)
-        self.nodes = tuple(nodes)
+            if p1 not in vertices:
+                vertices.append(p1)
+            if p2 not in vertices:
+                vertices.append(p2)
+        self.vertices = tuple(vertices)
 
         # adj
         cdef int n
-        self.adj = {n: self.neighbors(n) for n in self.nodes}
+        self.adj = {n: self.neighbors(n) for n in self.vertices}
 
-    cpdef void add_nodes(self, object new_nodes):
-        """Add nodes from a iterable."""
-        self.nodes = tuple(set(self.nodes) | set(new_nodes))
+    cpdef void add_vertices(self, object vertices):
+        """Add vertices from a iterable."""
+        self.vertices = tuple(set(self.vertices) | set(vertices))
 
     cpdef void add_edge(self, int n1, int n2):
-        """Add two nodes for an edge."""
+        """Add two vertices for an edge."""
         self.edges += ((n1, n2),)
-        self.nodes = tuple(set(self.nodes) | {n1, n2})
+        self.vertices = tuple(set(self.vertices) | {n1, n2})
         cdef int n
         for n in (n1, n2):
             self.adj[n] = self.neighbors(n)
@@ -160,41 +160,41 @@ cdef class Graph:
     cpdef void add_path(self, object new_nodes):
         """Add path from a iterable."""
         cdef list edges = list(self.edges)
-        cdef set nodes = set(self.nodes)
+        cdef set vertices = set(self.vertices)
 
         cdef int n1 = -1
         cdef int n2
         for n2 in new_nodes:
             if n1 != -1:
                 edges.append((n1, n2))
-                nodes.update((n1, n2))
+                vertices.update((n1, n2))
             n1 = n2
 
         self.edges = tuple(edges)
-        self.nodes = tuple(nodes)
+        self.vertices = tuple(vertices)
 
-        for n1 in nodes:
+        for n1 in vertices:
             self.adj[n1] = self.neighbors(n1)
 
     cpdef void remove_edge(self, int n1, int n2):
         """Remove edge(s) {n1, n2} once if exist, otherwise do nothing."""
-        cdef set nodes = set()
+        cdef set vertices = set()
         cdef list edges = []
 
         cdef bint once = False
         cdef tuple edge
         for edge in self.edges:
             if {n1, n2} != set(edge) or once:
-                nodes.update(edge)
+                vertices.update(edge)
                 edges.append(edge)
             else:
                 once = True
 
         self.edges = tuple(edges)
-        self.nodes = tuple(nodes)
+        self.vertices = tuple(vertices)
 
         cdef int n
-        for n in self.nodes:
+        for n in self.vertices:
             edge = self.neighbors(n)
             if edge:
                 self.adj[n] = edge
@@ -203,7 +203,7 @@ cdef class Graph:
 
     cpdef int dof(self):
         """Return degrees of freedom."""
-        return 3 * (len(self.nodes) - 1) - (2 * len(self.edges))
+        return 3 * (len(self.vertices) - 1) - (2 * len(self.edges))
 
     cpdef inline tuple neighbors(self, int n):
         """Neighbors except the node."""
@@ -222,28 +222,28 @@ cdef class Graph:
 
     cpdef bint is_connected(self, int without = -1):
         """Return True if the graph is not isolated."""
-        if not self.nodes:
+        if not self.vertices:
             return True
 
         cdef int neighbors
         cdef int index = 0
-        cdef list nodes = []
+        cdef list vertices = []
         # Change start node if index zero has been excluded.
-        if without == self.nodes[0]:
-            nodes.append(self.nodes[1])
+        if without == self.vertices[0]:
+            vertices.append(self.vertices[1])
         else:
-            nodes.append(self.nodes[0])
+            vertices.append(self.vertices[0])
 
         # Search node by node.
-        while index < len(nodes):
-            for neighbors in self.adj[nodes[index]]:
-                if (neighbors not in nodes) and (neighbors != without):
-                    nodes.append(neighbors)
+        while index < len(vertices):
+            for neighbors in self.adj[vertices[index]]:
+                if (neighbors not in vertices) and (neighbors != without):
+                    vertices.append(neighbors)
             index += 1
 
         if without != -1:
-            nodes.append(without)
-        return len(nodes) == len(self.nodes)
+            vertices.append(without)
+        return len(vertices) == len(self.vertices)
 
     cpdef bint has_cut_link(self):
         """Return True if the graph has any cut links."""
@@ -307,17 +307,17 @@ cdef class Graph:
                         return True
         return False
 
-    cpdef Graph duplicate(self, object nodes, int times):
+    cpdef Graph duplicate(self, object vertices, int times):
         """Make the graph duplicate specific nodes. Return a new graph."""
         if times < 1:
             raise ValueError("please input a number larger than 1.")
-        cdef int max_num = max(self.nodes) + 1
+        cdef int max_num = max(self.vertices) + 1
         cdef dict mapping = {}
 
         cdef int i, n1, n2
         cdef set edges = set(self.edges)
         for i in range(times):
-            for n1 in sorted(set(nodes)):
+            for n1 in sorted(set(vertices)):
                 mapping[n1] = max_num
                 max_num += 1
             for n1, n2 in self.edges:
@@ -369,12 +369,12 @@ cdef class GraphMatcher:
     def __cinit__(self, g1: Graph, g2: Graph):
         self.g1 = g1
         self.g2 = g2
-        self.g1_nodes = set(g1.nodes)
-        self.g2_nodes = set(g2.nodes)
+        self.g1_nodes = set(g1.vertices)
+        self.g2_nodes = set(g2.vertices)
 
         # Set recursion limit.
         cdef int old_recursion_limit = sys.getrecursionlimit()
-        cdef int expected_max_recursion_level = len(self.g2.nodes)
+        cdef int expected_max_recursion_level = len(self.g2.vertices)
         if old_recursion_limit < 1.5 * expected_max_recursion_level:
             # Give some breathing room.
             sys.setrecursionlimit(int(1.5 * expected_max_recursion_level))
@@ -426,7 +426,7 @@ cdef class GraphMatcher:
             # as suggested by  [2], incorrect
             # as inferred from [1], correct
             # First we determine the candidate node for g2
-            for node in self.g1.nodes:
+            for node in self.g1.vertices:
                 if node not in self.core_1:
                     yield node, min(self.g2_nodes - set(self.core_2))
         # For all other cases, we don't have any candidate pairs.
@@ -438,7 +438,7 @@ cdef class GraphMatcher:
         # For now, graph3 just copy the code.
 
         # Check global properties
-        if len(self.g1.nodes) != len(self.g2.nodes):
+        if len(self.g1.vertices) != len(self.g2.vertices):
             return False
 
         # Check local properties
@@ -460,7 +460,7 @@ cdef class GraphMatcher:
         """Extends the isomorphism mapping."""
         cdef int g1_node, g2_node
         cdef GMState new_state
-        if len(self.core_1) == len(self.g2.nodes):
+        if len(self.core_1) == len(self.g2.vertices):
             # Save the final mapping, otherwise garbage collection deletes it.
             self.mapping = self.core_1.copy()
             # The mapping is complete.

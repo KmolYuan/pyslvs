@@ -65,7 +65,7 @@ cdef class _LRPlanarity:
 
         # oriented DFS graph
         self.DG = Graph.__new__(Graph, [])
-        self.DG.add_nodes(g.nodes)
+        self.DG.add_vertices(g.vertices)
 
         self.adjs = {}
         self.ordered_adjs = {}
@@ -85,18 +85,18 @@ cdef class _LRPlanarity:
 
     cdef _PlanarEmbedding lr_planarity(self):
         """Execute the LR planarity test."""
-        if len(self.g.nodes) > 2 and len(self.g.edges) > 3 * len(self.g.nodes) - 6:
+        if len(self.g.vertices) > 2 and len(self.g.edges) > 3 * len(self.g.vertices) - 6:
             # graph is not planar
             return None
 
         # make adjacency lists for dfs
         cdef int v
-        for v in self.g.nodes:
+        for v in self.g.vertices:
             self.adjs[v] = list(self.g.adj[v])
 
         # orientation of the graph by depth first search traversal
         cdef clist[int] roots
-        for v in self.g.nodes:
+        for v in self.g.vertices:
             if self.height[v] is None:
                 self.height[v] = 0
                 roots.push_back(v)
@@ -109,7 +109,7 @@ cdef class _LRPlanarity:
 
         # testing
         cdef int n1, n2
-        for v in self.DG.nodes:  # sort the adjacency lists by nesting depth
+        for v in self.DG.vertices:  # sort the adjacency lists by nesting depth
             # note: this sorting leads to non linear time
             self.ordered_adjs[v] = sorted(
                 [n2 for n1, n2 in self.DG.edges if n1 == v],
@@ -130,10 +130,10 @@ cdef class _LRPlanarity:
         for e in self.DG.edges:
             self.nesting_depth[e] = self.sign(e) * self.nesting_depth[e]
 
-        self.embedding.add_nodes(self.DG.nodes)
+        self.embedding.add_vertices(self.DG.vertices)
 
         cdef int previous_node, w
-        for v in self.DG.nodes:
+        for v in self.DG.vertices:
             # sort the adjacency lists again
             self.ordered_adjs[v] = sorted(
                 [n2 for n1, n2 in self.DG.edges if n1 == v],

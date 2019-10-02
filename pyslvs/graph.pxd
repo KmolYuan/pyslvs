@@ -23,10 +23,10 @@ cdef class Graph:
     # Graph(edges)
 
     cdef readonly tuple edges
-    cdef readonly tuple nodes
+    cdef readonly tuple vertices
     cdef dict adj
 
-    cpdef void add_nodes(self, object new_nodes)
+    cpdef void add_vertices(self, object new_nodes)
     cpdef void add_edge(self, int n1, int n2)
     cpdef void add_path(self, object new_nodes)
     cpdef void remove_edge(self, int n1, int n2)
@@ -41,5 +41,5 @@ cdef class Graph:
     cpdef bint is_isomorphic(self, Graph graph)
     cdef bint has_triangles(self)
 
-    cpdef Graph duplicate(self, object nodes, int times)
+    cpdef Graph duplicate(self, object vertices, int times)
     cpdef Graph copy(self)
