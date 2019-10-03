@@ -1,7 +1,7 @@
 # AppVeyor for Pyslvs-UI
 image: Visual Studio 2019
 platform: x64
-
+clone_depth: 1
 environment:
   MSYS_DIR: C:\msys64
   matrix:
