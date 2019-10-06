@@ -8,12 +8,7 @@ __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
 from os import listdir
-from os.path import (
-    abspath,
-    dirname,
-    sep,
-    join as pth_join,
-)
+from os.path import sep, join as pth_join
 import re
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
@@ -21,7 +16,7 @@ from platform import system
 
 
 def read(*parts):
-    with open(pth_join(here, *parts), 'r', encoding='utf-8') as f:
+    with open(pth_join(*parts), 'r', encoding='utf-8') as f:
         return f.read()
 
 
@@ -32,7 +27,6 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-here = abspath(dirname(__file__))
 src_path = 'pyslvs'
 bfgs_path = pth_join(src_path, 'bfgs_solver')
 adesign_path = pth_join(src_path, 'Adesign')
@@ -57,8 +51,7 @@ ext_modules = [Extension(
         pth_join(bfgs_path, 'calc.cpp'),
     ],
     language="c++",
-    include_dirs=[bfgs_path],
-    define_macros=macros
+    include_dirs=[bfgs_path]
 )]
 for place in [src_path, adesign_path]:
     for source in listdir(place):
@@ -75,11 +68,12 @@ for place in [src_path, adesign_path]:
 
 class Build(build_ext):
     def build_extensions(self):
-        if self.compiler.compiler_type in {'mingw32'}:
+        compiler = self.compiler.compiler_type
+        if compiler in {'mingw32', 'unix'}:
             for e in self.extensions:
                 e.define_macros = macros
                 e.extra_compile_args = compile_args
-        elif self.compiler.compiler_type == 'msvc':
+        elif compiler == 'msvc':
             for e in self.extensions:
                 e.define_macros = [('_USE_MATH_DEFINES', None)]
         super(Build, self).build_extensions()
