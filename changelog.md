@@ -1,6 +1,7 @@
 # Version 19.10
 
 + Change the term "nodes" to "vertices".
++ Support MSVC compiler.
 
 # Version 19.09
 

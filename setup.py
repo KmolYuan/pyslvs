@@ -36,7 +36,7 @@ here = abspath(dirname(__file__))
 src_path = 'pyslvs'
 bfgs_path = pth_join(src_path, 'bfgs_solver')
 adesign_path = pth_join(src_path, 'Adesign')
-macros = [('_hypot', 'hypot')]
+macros = [('_hypot', 'hypot'), ('M_PI', 'PI')]
 compile_args = ['-O3', '-Wno-cpp']
 if system() == 'Windows':
     # Avoid compile error with CYTHON_USE_PYLONG_INTERNALS
@@ -44,8 +44,8 @@ if system() == 'Windows':
     macros.append(('MS_WIN64', None))
     # Disable format warning
     compile_args.append('-Wno-format')
-    # Disable NumPy warning
-    macros.append(('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION'))
+# Disable NumPy warning
+macros.append(('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION'))
 
 ext_modules = [Extension(
     src_path.replace(sep, '.') + '.bfgs',
@@ -58,8 +58,7 @@ ext_modules = [Extension(
     ],
     language="c++",
     include_dirs=[bfgs_path],
-    define_macros=macros,
-    extra_compile_args=compile_args
+    define_macros=macros
 )]
 for place in [src_path, adesign_path]:
     for source in listdir(place):
@@ -70,14 +69,21 @@ for place in [src_path, adesign_path]:
         ext_modules.append(Extension(
             place.replace(sep, '.') + '.' + source.split('.')[0],  # Base name
             [pth_join(place, source)],
-            language="c++",
-            include_dirs=[],
-            define_macros=macros,
-            extra_compile_args=compile_args
+            language="c++"
         ))
 
 
 class Build(build_ext):
+    def build_extensions(self):
+        if self.compiler.compiler_type in {'mingw32'}:
+            for e in self.extensions:
+                e.define_macros = macros
+                e.extra_compile_args = compile_args
+        elif self.compiler.compiler_type == 'msvc':
+            for e in self.extensions:
+                e.define_macros = [('_USE_MATH_DEFINES', None)]
+        super(Build, self).build_extensions()
+
     def finalize_options(self):
         super(Build, self).finalize_options()
         import numpy
