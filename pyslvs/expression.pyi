@@ -4,14 +4,15 @@ from typing import (
     Tuple,
     List,
     Iterable,
+    Sequence,
     Callable,
     Optional,
 )
-from numpy import ndarray
 from enum import IntEnum
 
-# Color type must be a RGB data.
+# Color type must be a RGB data
 _Color = Tuple[int, int, int]
+_Coord = Tuple[float, float]
 
 
 def get_vlinks(vpoints: Iterable[VPoint]) -> List[VLink]:
@@ -51,8 +52,8 @@ class VPoint:
 
     """Symbol of joints."""
 
-    links: Tuple[str, ...]
-    c: ndarray
+    links: Sequence[str]
+    c: Tuple[_Coord, _Coord]
     type: VJoint
     color: Optional[_Color]
     color_str: str
@@ -189,7 +190,7 @@ class VLink:
     name: str
     color_str: str
     color: Optional[_Color]
-    points: Tuple[int, ...]
+    points: Sequence[int]
 
     def __init__(
         self,
