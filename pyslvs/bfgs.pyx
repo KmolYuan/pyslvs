@@ -34,7 +34,7 @@ from .expression cimport (
 
 
 cdef inline double *de_refer_post_inc(clist[double].iterator &it):
-    """Implement &(*it) in C++."""
+    """Implement &(*it++) in C++."""
     return &cython.operator.dereference(cython.operator.postincrement(it))
 
 
