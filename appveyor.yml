@@ -13,6 +13,8 @@ environment:
       COMPILER: msvc
 
 install:
+  # Clone submodules
+  - git submodule update --init --recursive
   # Environment variables
   - set Path=%MSYS_DIR%\mingw64\bin;%MSYS_DIR%\usr\bin;%Path%
   - set Path=%PYTHON_DIR%;%PYTHON_DIR%\Scripts;%Path%
@@ -28,10 +30,6 @@ install:
   # Show tool kits
   - gcc --version
   - mingw32-make --version
-
-before_build:
-  # Clone submodules
-  - git submodule update --init --recursive
 
 build_script:
   - python setup.py test
