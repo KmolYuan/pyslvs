@@ -12,6 +12,7 @@ from typing import (
 from .expression import VPoint, Coordinate
 
 _Coord = Tuple[float, float]
+_Inputs = Dict[Tuple[int, int], float]
 
 
 class SolverSystem:
@@ -42,7 +43,7 @@ class SolverSystem:
         """Set input pairs."""
         ...
 
-    def set_data(self, data_dict: Dict[Union[int, Tuple[int, int]], Union[Coordinate, float]]) -> None:
+    def set_data(self, data_dict: Union[_Inputs, Dict[int, Coordinate]]) -> None:
         """Set data."""
         ...
 
