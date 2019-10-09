@@ -95,7 +95,7 @@ setup(
     long_description_content_type='text/markdown',
     url="https://github.com/KmolYuan/pyslvs",
     packages=find_packages(exclude=('tests',)),
-    package_data={'': ["*.pyi", "*.pxd"]},
+    package_data={'': ["*.pyi", "*.pxd"], 'pyslvs': ['py.typed']},
     ext_modules=ext_modules,
     cmdclass={'build_ext': Build},
     zip_safe=False,

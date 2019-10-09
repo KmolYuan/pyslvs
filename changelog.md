@@ -2,6 +2,7 @@
 
 + Change the term "nodes" to "vertices".
 + Support MSVC compiler.
++ Support PEP 561.
 
 # Version 19.09
 
