@@ -7,6 +7,7 @@ from typing import (
     Sequence,
     Callable,
     Optional,
+    ClassVar,
 )
 from enum import IntEnum
 
@@ -61,6 +62,7 @@ class VPoint:
     x: float
     y: float
     angle: float
+    HOLDER: ClassVar[VPoint]
 
     def __init__(
         self,
@@ -191,6 +193,7 @@ class VLink:
     color_str: str
     color: Optional[_Color]
     points: Sequence[int]
+    HOLDER: ClassVar[VLink]
 
     def __init__(
         self,

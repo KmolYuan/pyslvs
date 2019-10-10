@@ -1,6 +1,7 @@
 # Version 19.10
 
 + Change the term "nodes" to "vertices".
++ Add placeholder "HOLDER" class variable for VPoint and VLink.
 + Support MSVC compiler.
 + Support PEP 561.
 

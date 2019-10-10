@@ -80,6 +80,8 @@ cdef class VPoint:
 
     """Symbol of joints."""
 
+    HOLDER = VPoint([], VJoint.R, 0., "", 0., 0.)
+
     def __cinit__(
         self,
         links: object,
@@ -362,6 +364,8 @@ cdef class VPoint:
 cdef class VLink:
 
     """Symbol of links."""
+
+    HOLDER = VLink("", "", [])
 
     def __cinit__(
         self,
