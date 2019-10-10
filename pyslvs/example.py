@@ -7,8 +7,9 @@ __copyright__ = "Copyright (C) 2016-2019"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
+from typing import Tuple, Sequence, Dict
 
-example_list = {
+example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
     "Arm": (
         "M["
         "J[R, color[Green], P[-34.25, -20.625], L[ground, L1, L2]], "
