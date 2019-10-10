@@ -12,7 +12,7 @@ email: pyslvs@gmail.com
 from typing import Sequence, Iterator
 cimport cython
 from libc.math cimport sin, cos, M_PI
-from .expression cimport VJoint, VPoint
+from .expression cimport VJoint, VPoint, VLink
 
 
 cdef inline str symbol_str(symbol p):
@@ -250,7 +250,7 @@ cpdef ExpressionStack vpoints_configure(
         if vpoint.links:
             for link in vpoint.links:
                 # Connect on the ground and it is not a slider.
-                if link == 'ground' and vpoint.type == VJoint.R:
+                if link == VLink.FRAME and vpoint.type == VJoint.R:
                     status[node] = True
                 # Add as vlink.
                 if link not in vlinks:

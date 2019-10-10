@@ -311,10 +311,12 @@ def graph2vpoints(
             for j in same_r[i]:
                 edge.update(set(ev[j]))
         x, y = pos[i]
-        links = [(f"L{link}" if link != grounded else 'ground') for link in edge]
+        links = [
+            f"L{link}" if link != grounded else VLink.FRAME for link in edge
+        ]
         tmp_list.append(VPoint.r_joint(links, x, y))
     for name in sorted(cus):
-        link = f"L{cus[name]}" if cus[name] != grounded else 'ground'
+        link = f"L{cus[name]}" if cus[name] != grounded else VLink.FRAME
         x, y = pos[name]
         tmp_list.append(VPoint.r_joint((link,), x, y))
     return tmp_list

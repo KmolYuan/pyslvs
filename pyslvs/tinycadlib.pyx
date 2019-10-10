@@ -17,7 +17,7 @@ from libc.math cimport (
     atan2,
     NAN,
 )
-from .expression cimport VJoint, VPoint
+from .expression cimport VJoint, VPoint, VLink
 from .triangulation cimport (
     symbol,
     symbol_str,
@@ -209,8 +209,8 @@ cpdef int vpoint_dof(object vpoints):
     cdef int j1 = 0
     # Joint with DOF 2
     cdef int j2 = 0
-    # First link 'ground'
-    cdef set vlinks = {'ground'}
+    # First link is frame
+    cdef set vlinks = {VLink.FRAME}
 
     cdef int link_count
     cdef VPoint vpoint

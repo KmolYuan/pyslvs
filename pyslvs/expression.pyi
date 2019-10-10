@@ -194,6 +194,7 @@ class VLink:
     color: Optional[_Color]
     points: Sequence[int]
     HOLDER: ClassVar[VLink]
+    FRAME: ClassVar[str]
 
     def __init__(
         self,

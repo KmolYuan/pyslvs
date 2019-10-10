@@ -261,16 +261,16 @@ cdef class VPoint:
     cpdef bint grounded(self):
         """Return True if the joint is connect with the ground."""
         if self.type == VJoint.R:
-            return 'ground' in self.links
+            return VLink.FRAME in self.links
         elif self.type in {VJoint.P, VJoint.RP}:
             if self.links:
-                return self.is_slot_link('ground')
+                return self.is_slot_link(VLink.FRAME)
             else:
                 return False
 
     cpdef bint pin_grounded(self):
         """Return True if the joint has any pin connect with the ground."""
-        return 'ground' in self.links[1:]
+        return VLink.FRAME in self.links[1:]
 
     cpdef bint same_link(self, VPoint p):
         """Return True if the point is at the same link."""
@@ -366,6 +366,7 @@ cdef class VLink:
     """Symbol of links."""
 
     HOLDER = VLink("", "", [])
+    FRAME = 'ground'
 
     def __cinit__(
         self,

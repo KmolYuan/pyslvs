@@ -210,7 +210,7 @@ cdef class SolverSystem:
         for vlink in self.vlinks.values():
             if len(vlink.points) < 2:
                 continue
-            if vlink.name == 'ground':
+            if vlink.name == VLink.FRAME:
                 continue
 
             a = vlink.points[0]
@@ -426,7 +426,7 @@ cdef class SolverSystem:
         for vlink in self.vlinks.values():
             if len(vlink.points) < 2:
                 continue
-            if vlink.name == 'ground':
+            if vlink.name == VLink.FRAME:
                 continue
 
             a = vlink.points[0]
