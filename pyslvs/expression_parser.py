@@ -17,24 +17,10 @@ from typing import (
 )
 from lark import Lark, Transformer, LexError
 from lark.lexer import Token
-try:
-    from .expression import (
-        get_vlinks,
-        VJoint,
-        VPoint,
-        VLink,
-    )
-    from .graph import Graph
-except ImportError:
-    from expression import (
-        get_vlinks,
-        VJoint,
-        VPoint,
-        VLink,
-    )
-    from graph import Graph
+from .expression import get_vlinks, VJoint, VPoint, VLink
+from .graph import Graph
 
-# Color dictionary.
+# Color dictionary
 _color_list: Dict[str, Tuple[int, int, int]] = {
     'Red': (172, 68, 68),
     'Green': (110, 190, 30),
@@ -65,21 +51,24 @@ color_names = tuple(sorted(_color_list.keys()))
 def color_rgb(name: str) -> Tuple[int, int, int]:
     """Get color by name.
 
-    + Invalid color
-    + Color key
-    + RGB string "(r, g, b)".
+    Usage:
+    >>> color_rgb("Black")
+    (0, 0, 0)
+    >>> color_rgb("(255, 255, 255)")
+    (255, 255, 255)
     """
     if name in _color_list:
         return _color_list[name]
     else:
         try:
-            # Input RGB as a "(255, 255, 255)" string.
-            color_text: Tuple[int, int, int] = tuple(int(i) for i in (
+            # Input RGB as a "(255, 255, 255)" string
+            rgb = (
                 name.replace('(', '')
                 .replace(')', '')
                 .replace(" ", '')
                 .split(',', maxsplit=3)
-            ))
+            )
+            color_text = (int(rgb[0]), int(rgb[1]), int(rgb[2]))
         except ValueError:
             return 0, 0, 0
         else:

@@ -39,7 +39,6 @@ from pyslvs import (
     collection_list,
 )
 
-
 _four_bar = deepcopy(collection_list["Four bar linkage mechanism"])
 _four_bar['Expression'] = parse_vpoints(_four_bar['Expression'])
 _four_bar.update({
