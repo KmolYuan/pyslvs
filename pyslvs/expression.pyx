@@ -17,12 +17,7 @@ from libc.math cimport (
     isnan,
 )
 from cpython.object cimport Py_EQ, Py_NE
-from typing import (
-    Tuple,
-    Iterable,
-    Callable,
-    Optional,
-)
+from typing import Iterable
 from numpy import array as np_array
 
 
