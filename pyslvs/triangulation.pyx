@@ -156,7 +156,7 @@ cdef inline bint _clockwise(tuple c1, tuple c2, tuple c3):
 
 
 def _get_reliable_friend(
-    node: cython.int,
+    node: int,
     vpoints: Sequence[VPoint],
     vlinks: dict,
     status: dict
@@ -175,7 +175,7 @@ def _get_reliable_friend(
 
 
 def _get_not_base_friend(
-    node: cython.int,
+    node: int,
     vpoints: Sequence[VPoint],
     vlinks: dict,
     status: dict
@@ -190,7 +190,7 @@ def _get_not_base_friend(
 
 
 def _get_base_friend(
-    node: cython.int,
+    node: int,
     vpoints: Sequence[VPoint],
     vlinks: dict,
     status: dict

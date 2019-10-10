@@ -366,7 +366,7 @@ cdef class GraphMatcher:
     cdef dict core_1, core_2, inout_1, inout_2, mapping
     cdef GMState state
 
-    def __cinit__(self, g1: Graph, g2: Graph):
+    def __cinit__(self, Graph g1, Graph g2):
         self.g1 = g1
         self.g2 = g2
         self.g1_nodes = set(g1.vertices)
@@ -570,9 +570,9 @@ cdef class GMState:
 
     def __cinit__(
         self,
-        gm: GraphMatcher,
-        g1_node: cython.int = -1,
-        g2_node: cython.int = -1
+        GraphMatcher gm,
+        int g1_node=-1,
+        int g2_node=-1
     ):
         """Initializes GMState object.
 

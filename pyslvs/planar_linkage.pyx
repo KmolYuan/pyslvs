@@ -59,7 +59,7 @@ cdef class Planar(Verification):
     cdef ndarray upper, lower
     cdef SolverSystem bfgs_solver
 
-    def __cinit__(self, mech_params: dict):
+    def __cinit__(self, dict mech_params):
         """mech_params = {
             'Expression': List[VPoint],
             'input': [(b0, d0), ...],

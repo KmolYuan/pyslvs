@@ -59,7 +59,7 @@ cdef class Coordinate:
 
     """A class to store the coordinate."""
 
-    def __cinit__(self, x: double, y: double):
+    def __cinit__(self, double x, double y):
         self.x = x
         self.y = y
 
@@ -84,13 +84,13 @@ cdef class VPoint:
 
     def __cinit__(
         self,
-        links: object,
-        j_type: VJoint,
-        angle: double,
-        color_str: str,
-        x: double,
-        y: double,
-        color_func: object = None
+        object links,
+        VJoint j_type,
+        double angle,
+        str color_str,
+        double x,
+        double y,
+        object color_func=None
     ):
         self.links = tuple(links)
         self.type = j_type
@@ -319,7 +319,7 @@ cdef class VPoint:
         vpoint.move(self.c[0], self.c[1])
         return vpoint
 
-    def __richcmp__(self, other: VPoint, op: cython.int) -> bint:
+    def __richcmp__(self, VPoint other, int op) -> bint:
         """Rich comparison."""
         if op == Py_EQ:
             return (
@@ -345,7 +345,7 @@ cdef class VPoint:
                 f"{type(self)} and {type(other)}"
             )
 
-    def __getitem__(self, i: cython.int) -> float:
+    def __getitem__(self, i: int) -> float:
         """Get coordinate like this:
 
         x, y = VPoint(10, 20)
@@ -370,10 +370,10 @@ cdef class VLink:
 
     def __cinit__(
         self,
-        name: str,
-        color_str: str,
-        points: Iterable[VPoint],
-        color_func: Optional[Callable[[str], Tuple[int, int, int]]] = None
+        str name,
+        str color_str,
+        object points,
+        object color_func=None
     ):
         self.name = name
         self.color_str = color_str
@@ -387,7 +387,7 @@ cdef class VLink:
         """Set points."""
         self.points = np_array(list(points), dtype=int)
 
-    def __contains__(self, point: cython.int) -> bint:
+    def __contains__(self, point: int) -> bint:
         """Check if point number is in the link."""
         return point in self.points
 

@@ -602,7 +602,7 @@ cdef class _OrderedSetIterator:
     cdef _Entry curr
     cdef ssize_t si_used
 
-    def __cinit__(self, oset: OrderedSet):
+    def __cinit__(self, OrderedSet oset):
         self.oset = oset
         self.curr = oset.end
         self.si_used = oset.os_used
@@ -633,7 +633,7 @@ cdef class _OrderedSetReverseIterator:
     cdef _Entry curr
     cdef ssize_t si_used
 
-    def __cinit__(self, oset: OrderedSet):
+    def __cinit__(self, OrderedSet oset):
         self.oset = oset
         self.curr = oset.end
         self.si_used = oset.os_used
