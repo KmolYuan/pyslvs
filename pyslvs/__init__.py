@@ -22,7 +22,6 @@ Modules:
 
 Dependents:
 + lark-parser
-+ pygments (optional: provide highlighting)
 """
 
 __author__ = "Yuan Chang"
@@ -76,12 +75,9 @@ from .expression_parser import (
     parse_vlinks,
     edges_view,
     graph2vpoints,
-    HAS_PYGMENTS,
 )
 from .example import example_list
 from .collection import collection_list
-if HAS_PYGMENTS:
-    from .expression_parser import PMKSLexer
 
 __all__ = [
     '__version__',
@@ -123,7 +119,6 @@ __all__ = [
     'parse_vlinks',
     'edges_view',
     'graph2vpoints',
-    'PMKSLexer',
     'example_list',
     'collection_list',
     'Verification',

@@ -320,34 +320,3 @@ def graph2vpoints(
         x, y = pos[name]
         tmp_list.append(VPoint.r_joint((link,), x, y))
     return tmp_list
-
-
-try:
-    from pygments.lexer import RegexLexer
-    from pygments.token import (
-        Comment,
-        Keyword,
-        Name,
-        Number,
-    )
-except ImportError:
-    HAS_PYGMENTS = False
-else:
-    HAS_PYGMENTS = True
-
-    class PMKSLexer(RegexLexer):
-
-        """Mechanism expression highlighter by Pygments."""
-
-        name = 'Mechanism Expression'
-
-        tokens = {
-            'root': [
-                (r'#[^\n]*', Comment.Single),
-                (r'#\[[\s\S]*#\][^\n]*', Comment.Multiple),
-                (r'M|J|L|P|A|color', Name.Function),
-                ('|'.join(f"{color}" for color in reversed(color_names)), Name.Variable),
-                (r'RP|R|P', Keyword.Constant),
-                (r'(\d+\.\d*|\.\d+)([eE][+-]?\d+)?', Number.Float),
-            ]
-        }
