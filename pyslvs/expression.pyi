@@ -82,7 +82,7 @@ class VPoint:
         ...
 
     @staticmethod
-    def slider_joint(links: Iterable[str], type_int: int, angle: float, x: float, y: float) -> VPoint:
+    def slider_joint(links: Iterable[str], type_int: VJoint, angle: float, x: float, y: float) -> VPoint:
         """Create by coordinate."""
         ...
 
@@ -93,12 +93,12 @@ class VPoint:
     @property
     def cx(self) -> float:
         """X value of first current coordinate."""
-        return ...
+        return 0.
 
     @property
     def cy(self) -> float:
         """Y value of first current coordinate."""
-        return ...
+        return 0.
 
     def set_links(self, links: Iterable[str]) -> None:
         """Set links."""

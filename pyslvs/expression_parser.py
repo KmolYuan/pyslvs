@@ -7,18 +7,27 @@ __copyright__ = "Copyright (C) 2016-2019"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
+from abc import abstractmethod
 from typing import (
+    cast,
     Tuple,
     List,
     Dict,
     Iterator,
     Optional,
+    Union,
+    TypeVar,
+    Generic,
 )
 from dataclasses import dataclass
 from lark import Lark, Transformer, LexError
-from lark.lexer import Token
 from .expression import get_vlinks, VJoint, VPoint, VLink
 from .graph import Graph
+
+_T1 = TypeVar('_T1')
+_T2 = TypeVar('_T2')
+_Coord = Tuple[float, float]
+_JointArgs = List[Union[str, VJoint, float, _Coord, Tuple[str, ...]]]
 
 # Color dictionary
 _color_list: Dict[str, Tuple[int, int, int]] = {
@@ -44,7 +53,6 @@ _color_list: Dict[str, Tuple[int, int, int]] = {
     'Dark-Orange': (225, 140, 0),
     'Dark-Pink': (225, 20, 147),
 }
-
 color_names = tuple(sorted(_color_list.keys()))
 
 
@@ -147,40 +155,61 @@ _GRAMMAR = Lark(r"""
 """, parser='lalr')
 
 
-class _ParamsTrans(Transformer):
+class _Transformer(Transformer, Generic[_T1, _T2]):
 
-    """Transformer will parse into a list of VPoint data."""
+    """Base transformer implementation."""
 
     @staticmethod
-    def type(n: List[Token]) -> str:
+    @abstractmethod
+    def type(n: List[str]) -> _T1:
+        ...
+
+    @staticmethod
+    def name(n: List[str]) -> str:
         return str(n[0])
 
-    name = type
-
     @staticmethod
-    def color(n: List[Token]) -> str:
+    def color(n: List[str]) -> str:
         return str(n[0]) if len(n) == 1 else str(tuple(n))
 
     @staticmethod
-    def color_value(n: List[Token]) -> int:
+    def color_value(n: List[str]) -> int:
         return int(n[0])
 
     @staticmethod
-    def number(n: List[Token]) -> float:
+    def number(n: List[str]) -> float:
         return float(n[0])
-
-    @staticmethod
-    def point(c: List[Token]) -> Tuple[Token]:
-        return tuple(c)
 
     angle = number
 
     @staticmethod
-    def link(a: List[Token]) -> Tuple[Token]:
+    def point(c: List[float]) -> _Coord:
+        return c[0], c[1]
+
+    @staticmethod
+    def link(a: List[str]) -> Tuple[str, ...]:
         return tuple(a)
 
     @staticmethod
-    def joint(args: List[Token]) -> PointArgs:
+    @abstractmethod
+    def joint(args: _JointArgs) -> _T2:
+        ...
+
+    @staticmethod
+    def mechanism(joints: List[_T2]) -> List[_T2]:
+        return joints
+
+
+class _ParamsTrans(_Transformer[str, PointArgs]):
+
+    """Transformer will parse into a list of VPoint data."""
+
+    @staticmethod
+    def type(n: List[str]) -> str:
+        return str(n[0])
+
+    @staticmethod
+    def joint(args: _JointArgs) -> PointArgs:
         """Sort the argument list.
 
         [0]: type
@@ -189,44 +218,47 @@ class _ParamsTrans(Transformer):
         [-2]: point (coordinate)
         [-1]: link
         """
-        type_str = args[0]
-        x, y = args[-2]
-        links = ','.join(args[-1])
+        type_str = cast(str, args[0])
+        x, y = cast(_Coord, args[-2])
+        links = ','.join(cast(Tuple[str, ...], args[-1]))
         if type_str == 'R':
             if len(args) == 3:
                 return PointArgs(links, 'R', 'Green', x, y)
             elif len(args) == 4:
-                return PointArgs(links, 'R', args[-3], x, y)
+                color = cast(str, args[-3])
+                return PointArgs(links, 'R', color, x, y)
         else:
-            type_angle = f'{args[0]}:{args[1]}'
+            angle = cast(float, args[1])
+            type_angle = f'{type_str}:{angle}'
             if len(args) == 4:
                 return PointArgs(links, type_angle, 'Green', x, y)
             elif len(args) == 5:
-                return PointArgs(links, type_angle, args[-3], x, y)
+                color = cast(str, args[-3])
+                return PointArgs(links, type_angle, color, x, y)
 
         raise LexError(f"invalid options: {args}")
 
-    @staticmethod
-    def mechanism(joints: List[Token]) -> List[Token]:
-        return joints
 
-
-class _PositionTrans(_ParamsTrans):
+class _PositionTrans(_Transformer[str, _Coord]):
 
     """Transformer will parse into a list of position data."""
 
     @staticmethod
-    def joint(args: List[Token]) -> Tuple[float, float]:
-        x, y = args[-2]
+    def type(n: List[str]) -> str:
+        return str(n[0])
+
+    @staticmethod
+    def joint(args: _JointArgs) -> _Coord:
+        x, y = cast(_Coord, args[-2])
         return x, y
 
 
-class _VPointsTrans(_ParamsTrans):
+class _VPointsTrans(_Transformer[VJoint, VPoint]):
 
     """Using same grammar return as VPoints."""
 
     @staticmethod
-    def type(n: List[Token]) -> VJoint:
+    def type(n: List[str]) -> VJoint:
         """Return as int type."""
         type_str = str(n[0])
         if type_str == 'R':
@@ -235,23 +267,35 @@ class _VPointsTrans(_ParamsTrans):
             return VJoint.P
         elif type_str == 'RP':
             return VJoint.RP
+        else:
+            raise ValueError(f"invalid joint type: {type_str}")
 
     @staticmethod
-    def joint(args: List[Token]) -> VPoint:
-        """Same as parent."""
-        type_int = args[0]
-        x, y = args[-2]
-        links: Tuple[str, ...] = args[-1]
+    def joint(args: _JointArgs) -> VPoint:
+        """Sort the argument list.
+
+        [0]: type
+        ([1]: angle)
+        ([2]: color)
+        [-2]: point (coordinate)
+        [-1]: link
+        """
+        type_int = cast(VJoint, args[0])
+        x, y = cast(_Coord, args[-2])
+        links = cast(Tuple[str, ...], args[-1])
         if type_int == VJoint.R:
             if len(args) == 3:
                 return VPoint.r_joint(links, x, y)
             elif len(args) == 4:
-                return VPoint(links, VJoint.R, 0., args[-3], x, y, color_rgb)
+                color = cast(str, args[-3])
+                return VPoint(links, VJoint.R, 0., color, x, y, color_rgb)
         else:
+            angle = cast(float, args[1])
             if len(args) == 4:
-                return VPoint.slider_joint(links, type_int, args[1], x, y)
+                return VPoint.slider_joint(links, type_int, angle, x, y)
             elif len(args) == 5:
-                return VPoint(links, type_int, args[1], args[-3], x, y, color_rgb)
+                color = cast(str, args[-3])
+                return VPoint(links, type_int, angle, color, x, y, color_rgb)
 
         raise LexError(f"invalid options: {args}")
 
@@ -266,7 +310,7 @@ def parse_params(expr: str) -> List[PointArgs]:
     return _params_translator.transform(_GRAMMAR.parse(expr))
 
 
-def parse_pos(expr: str) -> List[Tuple[float, float]]:
+def parse_pos(expr: str) -> List[_Coord]:
     """Using to parse the expression and return arguments."""
     return _pos_translator.transform(_GRAMMAR.parse(expr))
 
@@ -281,14 +325,18 @@ def parse_vlinks(expr: str) -> List[VLink]:
     return get_vlinks(parse_vpoints(expr))
 
 
+def _sorted_pair(a: int, b: int) -> Tuple[int, int]:
+    return (a, b) if a < b else (b, a)
+
+
 def edges_view(graph: Graph) -> Iterator[Tuple[int, Tuple[int, int]]]:
     """This generator can keep the numbering be consistent."""
-    yield from enumerate(sorted(tuple(sorted(e)) for e in graph.edges))
+    yield from enumerate(sorted(_sorted_pair(n1, n2) for n1, n2 in graph.edges))
 
 
 def graph2vpoints(
     graph: Graph,
-    pos: Dict[int, Tuple[float, float]],
+    pos: Dict[int, _Coord],
     cus: Optional[Dict[int, int]] = None,
     same: Optional[Dict[int, int]] = None,
     grounded: Optional[int] = None
@@ -301,11 +349,11 @@ def graph2vpoints(
         {n1: n2, n3: n2} => (n1 as n2) and (n3 as n2)
     """
     if cus is None:
-        cus: Dict[int, int] = {}
+        cus = {}
     if same is None:
-        same: Dict[int, int] = {}
+        same = {}
 
-    same_r = {}
+    same_r: Dict[int, List[int]] = {}
     for k, v in same.items():
         if v in same_r:
             same_r[v].append(k)
@@ -317,13 +365,13 @@ def graph2vpoints(
         if i in same:
             # Do not connect to anyone!
             continue
-        edge = set(edge)
+        edges = set(edge)
         if i in same_r:
             for j in same_r[i]:
-                edge.update(set(ev[j]))
+                edges.update(set(ev[j]))
         x, y = pos[i]
         links = [
-            f"L{link}" if link != grounded else VLink.FRAME for link in edge
+            f"L{link}" if link != grounded else VLink.FRAME for link in edges
         ]
         tmp_list.append(VPoint.r_joint(links, x, y))
     for name in sorted(cus):
