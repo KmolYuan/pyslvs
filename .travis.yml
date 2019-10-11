@@ -6,7 +6,7 @@ matrix:
     - &linux
       os: linux
       sudo: required
-      python: "3.6"
+      python: "3.7"
       dist: bionic
       deploy:
         provider: pypi
@@ -20,16 +20,13 @@ matrix:
           tags: true
 
     - <<: *linux
-      python: "3.7"
-
-    - <<: *linux
       python: "3.8-dev"
 
     - &osx
       os: osx
       osx_image: xcode10
       language: generic
-      env: PYTHON=3.6.0
+      env: PYTHON=3.7.0
       before_install:
         - brew update
         - brew upgrade pyenv
@@ -47,9 +44,6 @@ matrix:
           python3 setup.py bdist_wheel;
           python3 -m twine upload dist/*.whl --skip-existing;
           fi
-
-    - <<: *osx
-      env: PYTHON=3.7.0
 
     - <<: *osx
       env: PYTHON=3.8-dev

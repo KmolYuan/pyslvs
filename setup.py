@@ -99,11 +99,10 @@ setup(
     ext_modules=ext_modules,
     cmdclass={'build_ext': Build},
     zip_safe=False,
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     install_requires=read('requirements.txt').splitlines(),
     test_suite="tests",
     classifiers=[
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Cython",

@@ -12,9 +12,9 @@ from typing import (
     List,
     Dict,
     Iterator,
-    Union,
     Optional,
 )
+from dataclasses import dataclass
 from lark import Lark, Transformer, LexError
 from lark.lexer import Token
 from .expression import get_vlinks, VJoint, VPoint, VLink
@@ -73,6 +73,28 @@ def color_rgb(name: str) -> Tuple[int, int, int]:
             return 0, 0, 0
         else:
             return color_text
+
+
+@dataclass(repr=False, eq=False)
+class PointArgs:
+
+    """Point table argument."""
+
+    links: str
+    type: str
+    color: str
+    x: float
+    y: float
+
+
+@dataclass(repr=False, eq=False)
+class LinkArgs:
+
+    """Link table argument."""
+
+    name: str
+    color: str
+    points: str
 
 
 _GRAMMAR = Lark(r"""
@@ -158,7 +180,7 @@ class _ParamsTrans(Transformer):
         return tuple(a)
 
     @staticmethod
-    def joint(args: List[Token]) -> List[Union[str, int, float]]:
+    def joint(args: List[Token]) -> PointArgs:
         """Sort the argument list.
 
         [0]: type
@@ -172,15 +194,15 @@ class _ParamsTrans(Transformer):
         links = ','.join(args[-1])
         if type_str == 'R':
             if len(args) == 3:
-                return [links, 'R', 'Green', x, y]
+                return PointArgs(links, 'R', 'Green', x, y)
             elif len(args) == 4:
-                return [links, 'R', args[-3], x, y]
+                return PointArgs(links, 'R', args[-3], x, y)
         else:
             type_angle = f'{args[0]}:{args[1]}'
             if len(args) == 4:
-                return [links, type_angle, 'Green', x, y]
+                return PointArgs(links, type_angle, 'Green', x, y)
             elif len(args) == 5:
-                return [links, type_angle, args[-3], x, y]
+                return PointArgs(links, type_angle, args[-3], x, y)
 
         raise LexError(f"invalid options: {args}")
 
@@ -239,7 +261,7 @@ _pos_translator = _PositionTrans()
 _vpoint_translator = _VPointsTrans()
 
 
-def parse_params(expr: str) -> List[List[Union[str, float]]]:
+def parse_params(expr: str) -> List[PointArgs]:
     """Using to parse the expression and return arguments."""
     return _params_translator.transform(_GRAMMAR.parse(expr))
 

@@ -5,8 +5,6 @@ clone_depth: 1
 environment:
   MSYS_DIR: C:\msys64
   matrix:
-    - PYTHON_DIR: C:\Python36-x64
-      COMPILER: mingw32
     - PYTHON_DIR: C:\Python37-x64
       COMPILER: mingw32
     - PYTHON_DIR: C:\Python37-x64
