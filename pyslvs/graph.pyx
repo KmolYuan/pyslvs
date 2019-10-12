@@ -262,7 +262,7 @@ cdef class Graph:
         + Prue all multiple contracted links recursively.
         + Check the DOF of sub-graph if it is lower then zero.
         """
-        if self.has_triangles():
+        if self.has_triangle():
             return True
         cdef int n1, n2
         cdef Graph g = self.copy()
@@ -289,8 +289,8 @@ cdef class Graph:
         cdef GraphMatcher gm_gh = GraphMatcher.__new__(GraphMatcher, self, g)
         return gm_gh.is_isomorphic()
 
-    cdef bint has_triangles(self):
-        """Return True if the graph has triangles."""
+    cdef bint has_triangle(self):
+        """Return True if the graph has triangle."""
         cdef int n1, n2
         for neighbors in self.adj.values():
             for n1 in neighbors:

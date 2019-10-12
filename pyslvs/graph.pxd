@@ -41,7 +41,7 @@ cdef class Graph:
     cpdef bint has_cut_link(self)
     cpdef bint is_degenerate(self)
     cpdef bint is_isomorphic(self, Graph graph)
-    cdef bint has_triangles(self)
+    cdef bint has_triangle(self)
 
     cpdef Graph duplicate(self, object vertices, int times)
     cpdef Graph copy(self)
