@@ -14,11 +14,9 @@ email: pyslvs@gmail.com
 
 cimport cython
 from libcpp.pair cimport pair as cpair
-from numpy cimport uint8_t
 import sys
 from typing import Tuple, Dict, Iterator
 from operator import itemgetter
-from numpy import zeros, uint8
 
 ctypedef cpair[int, int] ipair
 
@@ -207,20 +205,18 @@ cdef class Graph:
             reverse=True
         )):
             m[n1] = i
-        # TODO: Available in Cython 0.29.14
-        # cdef bint[:, :] am = zeros((n, n), dtype=bool)
-        cdef uint8_t[:, :] am = zeros((n, n), dtype=uint8)
+        cdef cmap[ipair, bint] am
         for n1, n2 in self.edges:
             n1 = m[n1]
             n2 = m[n2]
             if n1 > n2:
                 n1, n2 = n2, n1
-            am[n1, n2] = 1
+            am[ipair(n1, n2)] = 1
         cdef ullong code = 0
         for n1 in range(n):
             for n2 in range(n1 + 1, n):
                 code <<= 1
-                code += am[n1, n2]
+                code += am[ipair(n1, n2)]
         return code
 
     cpdef bint is_connected(self, int without = -1):

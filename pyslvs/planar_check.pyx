@@ -464,7 +464,7 @@ cdef class _PlanarEmbedding(Graph):
 
     cdef void add_half_edge_cw(self, int start_node, int end_node, int reference_neighbor):
         """Adds a half-edge from start_node to end_node.
-        
+
         edge_label[:, :, :] 0: cw
         edge_label[:, :, :] 1: ccw
         node_label[:]: first_nbr
