@@ -43,12 +43,12 @@ ctypedef unsigned long long ullong
 ctypedef cpair[int, int] ipair
 ctypedef cmap[int, int] imap
 
-cdef object logger = getLogger()
+logger = getLogger()
 
 
 cdef inline int16_t[:] _nonzero_index(int16_t[:] array):
     """Return the number of nonzero numbers."""
-    cdef list counter = []
+    counter = []
     cdef int i, n
     for i, n in enumerate(array):
         if n != 0:
@@ -81,7 +81,7 @@ cdef inline int _gcd(int a, int b) nogil:
 cdef inline int16_t[:] _labels(int16_t[:] numbers, int index, int offset):
     """Generate labels from numbers."""
     cdef int i, num
-    cdef list labels = []
+    labels = []
     for num in numbers[offset:]:
         for i in range(num):
             labels.append(index)
@@ -91,7 +91,7 @@ cdef inline int16_t[:] _labels(int16_t[:] numbers, int index, int offset):
 
 cdef inline Graph _multigraph(int16_t[:] counter, int n):
     """Get multigraph from n x n matrix."""
-    cdef dict edges = {}
+    edges = {}
     cdef int c = 0
     cdef int i, j
     for i in range(n):
@@ -322,7 +322,7 @@ cdef inline void _dyad_insert(Graph g, frozenset edge, int amount):
     cdef int n1, n2
     n1, n2 = edge
 
-    cdef list path = [n1]
+    path = [n1]
     path.extend(range(last_num, last_num + amount))
     path.append(n2)
 
@@ -344,15 +344,11 @@ cdef inline void _permute_combine(
     cdef vector[int] indices = range(n)
     cdef int16_t[:] cycles = np_zeros(n, dtype=int16)
     cdef int16_t[:] pool = limit
-
-    cdef set permute_list = set()
-
+    permute_list = set()
     cdef int i, j
     for i, j in enumerate(range(n, 0, -1)):
         cycles[i] = j
-
     permute_list.add(tuple(pool[indices[i]] for i in range(n)))
-
     cdef vector[int].iterator it2 = indices.begin()
 
     cdef int tmp
@@ -376,8 +372,6 @@ cdef inline void _permute_combine(
                 break
         else:
             break
-
-    cdef tuple tmp_array
     for tmp_array in permute_list:
         combine_list.append(tuple(zip(pick_list, tmp_array)))
 
@@ -396,10 +390,10 @@ cdef inline list _contracted_links(tuple edges, int16_t[:] limit, object stop_fu
         return []
 
     # Check over picked
-    cdef tuple pool_list = tuple([frozenset(edge) for edge in edges])
-    cdef object pool = Counter(pool_list)
+    pool_list = tuple([frozenset(edge) for edge in edges])
+    pool = Counter(pool_list)
     # The list including required edge(s).
-    cdef object confirm_list = pool - Counter(set(pool_list))
+    confirm_list = pool - Counter(set(pool_list))
     # Simplified the pool
     pool_list = tuple((pool - confirm_list).elements())
     cdef int confirm_size = sum(confirm_list.values())
@@ -412,10 +406,8 @@ cdef inline list _contracted_links(tuple edges, int16_t[:] limit, object stop_fu
     cdef int i
     for i in range(pick_count):
         indices[i] = i
-
-    cdef object pick_list = Counter()
-    cdef set combine_set = set()
-
+    pick_list = Counter()
+    combine_set = set()
     # Combinations loop with number checking.
     cdef int n1, n2
     while True:
@@ -428,25 +420,20 @@ cdef inline list _contracted_links(tuple edges, int16_t[:] limit, object stop_fu
 
         # Collecting
         combine_set.add(tuple(pick_list.elements()))
-
         # Initialize
         pick_list.clear()
-
         # Check combination is over.
         for n1 in reversed(range(pick_count)):
             if indices[n1] != n1 + pool_size - pick_count:
                 break
         else:
             break
-
         # Next indicator
         indices[n1] += 1
         for n2 in range(n1 + 1, pick_count):
             indices[n2] = indices[n2 - 1] + 1
-
-    cdef list combine_list = []
+    combine_list = []
     pool_list = tuple(confirm_list.elements())
-    cdef tuple picked
     for picked in combine_set:
         _permute_combine(limit, combine_list, pool_list + picked, stop_func)
     return combine_list
@@ -462,8 +449,6 @@ cdef inline void _graph_atlas(
     """Synthesis of atlas."""
     cdef int n
     cdef Graph cg, g
-    cdef tuple combine
-    cdef frozenset edge
     for cg in contracted_graph:
         for combine in _contracted_links(cg.edges, limit, stop_func):
             g = Graph.__new__(Graph, cg.edges)
@@ -476,7 +461,7 @@ cdef inline list _loop_chain(int num):
     """Loop chain of num."""
     cdef int i
     cdef int b = 0
-    cdef list chain = []
+    chain = []
     for i in range(1, num):
         chain.append((b, i))
         b = i
@@ -506,9 +491,8 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
         i += 1
 
     # Synthesis of contracted graphs
-    cdef list cg_list = []
+    cg_list = []
     _contracted_graph(cg_list, m_link, stop_func)
-
     logger.debug(f"Contracted graph(s): {len(cg_list)}, time: {perf_counter() - t0}")
     return cg_list
 
@@ -536,8 +520,7 @@ cpdef list conventional_graph(
 
     # Synthesis of contracted link and multiple link combination.
     cdef int16_t[:] c_j = np_array(c_j_list, ndmin=1, dtype=int16)
-
-    cdef list result = []
+    result = []
     cdef int i, num
     if not cg_list:
         if 1 not in c_j_list:

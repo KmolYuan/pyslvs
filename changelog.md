@@ -1,5 +1,6 @@
 # Version 19.10
 
++ Remove the hints of Python objects in Cython sources.
 + Change the term "nodes" to "vertices".
 + Replace 'ground' string as "VLink.FRAME" class attribute.
 + Add placeholder "HOLDER" class variable for VPoint and VLink.

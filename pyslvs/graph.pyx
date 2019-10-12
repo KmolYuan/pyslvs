@@ -22,10 +22,9 @@ ctypedef cpair[int, int] ipair
 
 cpdef list link_assortment(Graph g):
     """Return link assortment of the graph."""
-    cdef list assortment = [0]
+    assortment = [0]
     if not g.edges:
         return assortment
-
     cdef int d, n
     for n in g.degrees().values():
         if n < 2:
@@ -41,10 +40,9 @@ cpdef list contracted_link_assortment(Graph g):
     """Return contracted link assortment of the graph."""
     if not g.edges:
         return [0]
-    cdef list assortment = [0] * link_assortment(g)[0]
+    assortment = [0] * link_assortment(g)[0]
     cdef int d
-    cdef tuple mcl
-    cdef set counted = set()
+    counted = set()
     for mcl in _multi_contracted_links(g, False):
         d = len(mcl) - 1
         counted.update(mcl)
@@ -62,9 +60,8 @@ cpdef list contracted_link_assortment(Graph g):
 cdef list _multi_contracted_links(Graph g, bint only_one):
     """Return a list of multiple contracted links."""
     cdef int n1, n2, index, neighbor
-    cdef list c_links
-    cdef list contracted_links = []
-    cdef set counted = set()
+    contracted_links = []
+    counted = set()
     for n1 in g.vertices:
         # Only for binary link.
         if len(g.adj[n1]) != 2:
@@ -92,7 +89,7 @@ cdef list _multi_contracted_links(Graph g, bint only_one):
 
 cpdef list labeled_enumerate(Graph g):
     """Enumerate each node with labeled except isomorphism."""
-    cdef list result = []
+    result = []
     cdef int n1, n2
     cdef Graph g1, g2
     for n1 in g.vertices:
@@ -115,7 +112,7 @@ cdef class Graph:
         self.edges = tuple(edges)
         # vertices
         cdef int p1, p2
-        cdef list vertices = []
+        vertices = []
         for p1, p2 in self.edges:
             if p1 not in vertices:
                 vertices.append(p1)
@@ -140,8 +137,8 @@ cdef class Graph:
 
     cpdef void add_path(self, object new_nodes):
         """Add path from a iterable."""
-        cdef list edges = list(self.edges)
-        cdef set vertices = set(self.vertices)
+        edges = list(self.edges)
+        vertices = set(self.vertices)
         cdef int n1 = -1
         cdef int n2
         for n2 in new_nodes:
@@ -156,10 +153,9 @@ cdef class Graph:
 
     cpdef void remove_edge(self, int n1, int n2):
         """Remove edge(s) {n1, n2} once if exist, otherwise do nothing."""
-        cdef set vertices = set()
-        cdef list edges = []
+        vertices = set()
+        edges = []
         cdef bint once = False
-        cdef tuple edge
         for edge in self.edges:
             if {n1, n2} != set(edge) or once:
                 vertices.update(edge)
@@ -182,7 +178,7 @@ cdef class Graph:
 
     cpdef inline tuple neighbors(self, int n):
         """Neighbors except the node."""
-        cdef list neighbors = []
+        neighbors = []
         cdef int l1, l2
         for l1, l2 in self.edges:
             if n == l1:
@@ -201,7 +197,7 @@ cdef class Graph:
             return True
         cdef int neighbors
         cdef int index = 0
-        cdef list vertices = []
+        vertices = []
         # Change start node if index zero has been excluded.
         if without == self.vertices[0]:
             vertices.append(self.vertices[1])
@@ -210,7 +206,7 @@ cdef class Graph:
         # Search node by node.
         while index < len(vertices):
             for neighbors in self.adj[vertices[index]]:
-                if (neighbors not in vertices) and (neighbors != without):
+                if (neighbors not in vertices) and neighbors != without:
                     vertices.append(neighbors)
             index += 1
         if without != -1:
@@ -237,9 +233,8 @@ cdef class Graph:
         if self.has_triangles():
             return True
         cdef int n1, n2
-        cdef list c_l
         cdef Graph g = self.copy()
-        cdef set mcl = set()
+        mcl = set()
         while True:
             mcl.update(_multi_contracted_links(g, True))
             if not mcl:
@@ -265,7 +260,6 @@ cdef class Graph:
     cdef bint has_triangles(self):
         """Return True if the graph has triangles."""
         cdef int n1, n2
-        cdef tuple neighbors
         for neighbors in self.adj.values():
             for n1 in neighbors:
                 for n2 in neighbors:
@@ -280,9 +274,9 @@ cdef class Graph:
         if times < 1:
             raise ValueError("please input a number larger than 1.")
         cdef int max_num = max(self.vertices) + 1
-        cdef dict mapping = {}
+        mapping = {}
         cdef int i, n1, n2
-        cdef set edges = set(self.edges)
+        edges = set(self.edges)
         for i in range(times):
             for n1 in sorted(set(vertices)):
                 mapping[n1] = max_num
@@ -355,7 +349,6 @@ cdef class GraphMatcher:
         #            provided m is in the mapping.
         self.core_1 = {}
         self.core_2 = {}
-
         # See the paper for definitions of M_x and T_x^{y}
         # inout_1[n]  is non-zero if n is in M_1 or in T_1^{inout}
         # inout_2[m]  is non-zero if m is in M_2 or in T_2^{inout}
@@ -365,19 +358,17 @@ cdef class GraphMatcher:
         self.inout_1 = {}
         self.inout_2 = {}
         # Practically, these sets simply store the nodes in the subgraph.
-
         self.state = GMState.__new__(GMState, self)
-
         # Provide a convenient way to access the isomorphism mapping.
         self.mapping = self.core_1.copy()
 
     def candidate_pairs_iter(self) -> Iterator[Tuple[int, int]]:
         """Iterator over candidate pairs of nodes in g1 and g2."""
         # First we compute the inout-terminal sets.
-        cdef set s1 = set(self.inout_1) - set(self.core_1)
-        cdef set s2 = set(self.inout_2) - set(self.core_2)
-        cdef list t1_inout = [node for node in self.g1_nodes if (node in s1)]
-        cdef list t2_inout = [node for node in self.g2_nodes if (node in s2)]
+        s1 = set(self.inout_1) - set(self.core_1)
+        s2 = set(self.inout_2) - set(self.core_2)
+        t1_inout = [node for node in self.g1_nodes if node in s1]
+        t2_inout = [node for node in self.g2_nodes if node in s2]
         # If t1_inout and t2_inout are both nonempty.
         # P(s) = t1_inout x {min t2_inout}
         cdef int node
@@ -401,19 +392,15 @@ cdef class GraphMatcher:
         # Let's do two very quick checks!
         # QUESTION: Should we call faster_graph_could_be_isomorphic(g1,g2)?
         # For now, graph3 just copy the code.
-
         # Check global properties
         if len(self.g1.vertices) != len(self.g2.vertices):
             return False
-
         # Check local properties
-        cdef tuple neighbor
         if (
             sorted([len(neighbor) for neighbor in self.g1.adj.values()])
             != sorted([len(neighbor) for neighbor in self.g2.adj.values()])
         ):
             return False
-
         self.initialize()
         try:
             next(self.match())
@@ -435,23 +422,21 @@ cdef class GraphMatcher:
                 if self.syntactic_feasibility(g1_node, g2_node):
                     # Recursive call, adding the feasible state.
                     new_state = type(self.state)(self, g1_node, g2_node)
-
                     yield from self.match()
-
                     # restore data structures
                     new_state.restore()
 
     cdef inline bint syntactic_feasibility(self, int g1_node, int g2_node):
         """Returns True if adding (g1_node, g2_node) is syntactically feasible.
-        
+
         The VF2 algorithm was designed to work with graphs having, at most,
         one edge connecting any two nodes.  This is not the case when
         dealing with an MultiGraphs.
-        
+
         Basically, when we test the look-ahead rules R_neighbor, we will
         make sure that the number of edges are checked. We also add
         a R_self check to verify that the number of self loops is acceptable.
-        
+
         Users might be comparing Graph instances with MultiGraph instances.
         So the generic GraphMatcher class must work with MultiGraphs.
         Care must be taken since the value in the innermost dictionary is a
@@ -560,7 +545,6 @@ cdef class GMState:
             gm.inout_2 = {}
 
         cdef int node
-        cdef set new_nodes
         # Watch out! g1_node == 0 should evaluate to True.
         if g1_node != -1 and g2_node != -1:
             # Add the node pair to the isomorphism mapping.
@@ -615,7 +599,6 @@ cdef class GMState:
 
         # Now we revert the other two vectors.
         # Thus, we delete all entries which have this depth level.
-        cdef dict vector
         cdef int node
         for vector in (self.gm.inout_1, self.gm.inout_2):
             for node in tuple(vector):

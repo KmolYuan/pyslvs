@@ -210,8 +210,7 @@ cpdef int vpoint_dof(object vpoints):
     # Joint with DOF 2
     cdef int j2 = 0
     # First link is frame
-    cdef set vlinks = {VLink.FRAME}
-
+    vlinks = {VLink.FRAME}
     cdef int link_count
     cdef VPoint vpoint
     for vpoint in vpoints:
@@ -253,17 +252,16 @@ cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_
         + Specify link length: {(a, b): 20.}
     + vpoints_: [VPoint0, VPoint1, VPoint2, ...]
     + pos: [(x0, y0), (x1, y1), (x2, y2), ...]
-    
+
     vpoints will make a copy that we don't want to modified origin data.
     """
-    cdef list vpoints = list(vpoints_)
-
+    vpoints = list(vpoints_)
     # First, we create a "VLinks" that can help us to
     # find a relationship just like adjacency matrix.
     cdef int node
     cdef str link
     cdef VPoint vpoint
-    cdef dict vlinks = {}
+    vlinks = {}
     for node, vpoint in enumerate(vpoints):
         for link in vpoint.links:
             # Add as vlink.
@@ -277,7 +275,7 @@ cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_
     cdef int base
     cdef double x, y
     cdef VPoint vpoint_
-    cdef set links = set()
+    links = set()
     for base in range(len(vpoints)):
         vpoint = vpoints[base]
         if vpoint.type != VJoint.P:
@@ -302,11 +300,9 @@ cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_
                 )
 
     # Reverse mapping, exclude specified link length.
-    cdef dict mapping_r = {}
-    cdef dict length = {}
-    cdef dict data_dict = {}
-
-    cdef object k, v
+    mapping_r = {}
+    length = {}
+    data_dict = {}
     for k, v in mapping.items():
         if type(k) is int:
             mapping_r[v] = k
@@ -316,7 +312,7 @@ cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_
         elif type(k) is tuple:
             length[frozenset(k)] = v
 
-    cdef list pos = []
+    pos = []
     for vpoint in vpoints:
         if vpoint.type == VJoint.R:
             pos.append(Coordinate.__new__(Coordinate, vpoint.c[0][0], vpoint.c[0][1]))
@@ -343,7 +339,6 @@ cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_
     cdef int dof = 0
     cdef int target
     cdef Expression expr
-    cdef frozenset pair
     cdef Coordinate coord1, coord2
     for expr in exprs.stack:
         node = mapping_r[symbol_str(expr.c1)]
@@ -443,26 +438,22 @@ cpdef list expr_solving(
     + vpoints: [VPoint]
     + angles: [[a0]: a0, [a1]: a1, ...]
     """
-    # Blank sequences.
+    # Blank sequences
     if angles is None:
         angles = []
 
-    cdef dict data_dict
-    cdef int dof_input
     data_dict, dof_input = data_collecting(exprs, mapping, vpoints)
-
-    # Check input number.
+    # Check input number
     cdef int dof = vpoint_dof(vpoints)
     if dof_input > dof:
         raise ValueError(
             f"wrong number of input parameters: {dof_input} / {dof}"
         )
 
-    # Reverse mapping, exclude specified link length.
-    cdef object k, v
-    cdef dict mapping_r = {v: k for k, v in mapping.items() if type(k) is int}
+    # Reverse mapping, exclude specified link length
+    mapping_r = {v: k for k, v in mapping.items() if type(k) is int}
 
-    # Check input pairs.
+    # Check input pairs
     cdef int target
     cdef Expression expr
     for expr in exprs.stack:
@@ -487,7 +478,7 @@ cpdef list expr_solving(
     if not exprs.stack.empty():
         expr_parser(exprs, data_dict)
 
-    cdef dict p_data_dict = {}
+    p_data_dict = {}
     cdef bint has_not_solved = False
 
     # Add coordinate of known points.
@@ -499,24 +490,20 @@ cpdef list expr_solving(
             has_not_solved = True
 
     # Calling Sketch Solve kernel and try to get the result.
-    cdef list solved_bfgs
     if has_not_solved:
-
         # Add specified link lengths.
         for k, v in mapping.items():
             if type(k) is tuple:
                 p_data_dict[k] = v
-
         # Solve
         try:
             solved_bfgs = SolverSystem(vpoints, {}, p_data_dict).solve()
         except ValueError:
             raise ValueError("result contains failure from sketch solve")
-
     # Format:
     # R joint: [[p0]: (p0_x, p0_y), [p1]: (p1_x, p1_y)]
     # P or RP joint: [[p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))]
-    cdef list solved_points = []
+    solved_points = []
     cdef VPoint vpoint
     cdef Coordinate coord
     for i in range(len(vpoints)):

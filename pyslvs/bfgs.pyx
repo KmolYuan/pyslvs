@@ -40,7 +40,6 @@ cdef inline double *de_refer_post_inc(clist[double].iterator &it):
 
 cdef inline void _sort_pairs(dict data_dict):
     """Sort the pairs in data_dict."""
-    cdef object k
     for k in data_dict:
         if isinstance(k, (Sequence, Set)) and len(k) == 2:
             data_dict[frozenset(k)] = data_dict.pop(k)
@@ -202,7 +201,6 @@ cdef class SolverSystem:
         # Link constraints
         # (automatic fill up the link length options of data keys)
         cdef int a, b, c, d
-        cdef frozenset frozen_pair
         cdef VPoint vp1, vp2
         cdef Point *p1
         cdef Point *p2
@@ -421,7 +419,6 @@ cdef class SolverSystem:
                 handle[0] = coord.y
 
         cdef int a, b, c, d
-        cdef frozenset frozen_pair
         cdef VLink vlink
         for vlink in self.vlinks.values():
             if len(vlink.points) < 2:
@@ -463,8 +460,6 @@ cdef class SolverSystem:
 
         # Solve
         cdef int flag = solve(params_ptr, params_count, cons, cons_count, Rough)
-
-        cdef list solved_points
         if flag == Success:
             solved_points = []
             for i, vpoint in enumerate(self.vpoints):

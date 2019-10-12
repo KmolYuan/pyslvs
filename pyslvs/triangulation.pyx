@@ -86,7 +86,7 @@ cdef class ExpressionStack:
         self.stack.push_back(e)
 
     cpdef list as_list(self):
-        cdef list stack = []
+        stack = []
         cdef Expression expr
         for expr in self.stack:
             if expr.func == PLA:
@@ -235,7 +235,7 @@ cpdef ExpressionStack vpoints_configure(
     if not inputs:
         return ExpressionStack.__new__(ExpressionStack)
 
-    cdef list vpoints = list(vpoints_)
+    vpoints = list(vpoints_)
     cdef int vpoints_count = len(vpoints)
 
     # First, we create a "VLinks" that can help us to
@@ -243,7 +243,7 @@ cpdef ExpressionStack vpoints_configure(
     cdef int node
     cdef str link
     cdef VPoint vpoint
-    cdef dict vlinks = {}
+    vlinks = {}
     for node, vpoint in enumerate(vpoints):
         status[node] = False
         if vpoint.links:
@@ -263,7 +263,6 @@ cpdef ExpressionStack vpoints_configure(
     # DOF must be same after properties changed.
     cdef int base
     cdef VPoint vpoint_
-    cdef set links
     for base in range(vpoints_count):
         vpoint = vpoints[base]
         if vpoint.type != VJoint.P or not vpoint.grounded():
@@ -287,7 +286,7 @@ cpdef ExpressionStack vpoints_configure(
                 )
 
     # Add positions parameters.
-    cdef list pos = []
+    pos = []
     for vpoint in vpoints:
         pos.append(vpoint.c[0 if vpoint.type == VJoint.R else 1])
 
@@ -309,32 +308,26 @@ cpdef ExpressionStack vpoints_configure(
             angle_symbol += 1
 
     # Now let we search around all of points, until find the solutions that we could.
-    cdef set input_targets = {node for base, node in inputs}
+    input_targets = {node for base, node in inputs}
     node = 0
     cdef int skip_times = 0
     cdef int around = len(status)
 
     cdef int friend_a, friend_b, friend_c, friend_d
     cdef double tmp_x, tmp_y, angle
-    # Friend iterator.
-    cdef object fi
+    # Friend iterator
     while not _is_all_lock(status):
-
         if node not in status:
             node = 0
             continue
-
         # Check and break the loop if it's re-scan again.
         if skip_times >= around:
             break
-
         if status[node]:
             node += 1
             skip_times += 1
             continue
-
         vpoint = vpoints[node]
-
         if vpoint.type == VJoint.R:
             # R joint
             # + Is input node?

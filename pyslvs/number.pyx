@@ -86,7 +86,7 @@ cdef inline int _sum_factors(int16_t[:] factors):
 
 cpdef list link_synthesis(int nl, int nj, object stop_func = None):
     """Number synthesis try and error function."""
-    cdef list result = []
+    result = []
     cdef int m_max_v = _m_max(nl, nj)
     if m_max_v == -1:
         raise ValueError("incorrect mechanism.")
@@ -154,7 +154,7 @@ cpdef list contracted_link_synthesis(object link_num_list, object stop_func = No
     cdef int count, factor, index
     cdef float last_factor
     cdef int16_t[:] m
-    cdef list cj_list = []
+    cj_list = []
     for m in _product(link_num[0] + 1, i_max - 1, stop_func):
         count = 0
         index = 1

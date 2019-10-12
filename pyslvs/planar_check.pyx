@@ -125,13 +125,9 @@ cdef class _LRPlanarity:
         self.S = None
         self.stack_bottom = None
         self.lowpt_edge = None
-
-        cdef tuple e
         for e in self.DG.edges:
             self.nesting_depth[e] = self.sign(e) * self.nesting_depth[e]
-
         self.embedding.add_vertices(self.DG.vertices)
-
         cdef int previous_node, w
         for v in self.DG.vertices:
             # sort the adjacency lists again
@@ -163,11 +159,9 @@ cdef class _LRPlanarity:
         # index of next edge to handle in adjacency list of each node
         cdef cmap[int, int] ind
         # bintean to indicate whether to skip the initial work for an edge
-        cdef object skip_init = defaultdict(lambda: False)
-
+        skip_init = defaultdict(lambda: False)
         cdef bint skip_final
         cdef int w
-        cdef tuple e, ei
         while not dfs_stack.empty():
             v = dfs_stack.back()
             dfs_stack.pop_back()
@@ -177,10 +171,8 @@ cdef class _LRPlanarity:
 
             for w in self.ordered_adjs[v][ind[v]:]:
                 ei = (v, w)
-
                 if not skip_init[ei]:
                     self.stack_bottom[ei] = _top_of_stack(self.S)
-
                     if ei == self.parent_edge[w]:  # tree edge
                         dfs_stack.push_back(v)  # revisit v after finishing w
                         dfs_stack.push_back(w)  # visit w next
@@ -247,43 +239,34 @@ cdef class _LRPlanarity:
         # index of next edge to handle in adjacency list of each node
         cdef cmap[int, int] ind
         # bintean to indicate whether to skip the initial work for an edge
-        cdef object skip_init = defaultdict(lambda: False)
-
+        skip_init = defaultdict(lambda: False)
         cdef int w
-        cdef tuple e, vw
         while not dfs_stack.empty():
             v = dfs_stack.back()
             dfs_stack.pop_back()
             e = self.parent_edge[v]
-
             for w in self.adjs[v][ind[v]:]:
                 vw = (v, w)
-
                 if not skip_init[vw]:
                     if (v, w) in self.DG.edges or (w, v) in self.DG.edges:
                         ind[v] += 1
                         continue  # the edge was already oriented
-
                     self.DG.add_edge(v, w)  # orient the edge
-
                     self.lowpt[vw] = self.height[v]
                     self.lowpt2[vw] = self.height[v]
                     if self.height[w] is None:  # (v, w) is a tree edge
                         self.parent_edge[w] = vw
                         self.height[w] = self.height[v] + 1
-
                         dfs_stack.push_back(v)  # revisit v after finishing w
                         dfs_stack.push_back(w)  # visit w next
                         skip_init[vw] = True  # don't redo this block
                         break  # handle next node in dfs_stack (i.e. w)
                     else:  # (v, w) is a back edge
                         self.lowpt[vw] = self.height[w]
-
                 # determine nesting graph
                 self.nesting_depth[vw] = 2 * self.lowpt[vw]
                 if self.lowpt2[vw] < self.height[v]:  # chordal
                     self.nesting_depth[vw] += 1
-
                 # update lowpoints of parent edge e
                 if e is not None:
                     if self.lowpt[vw] < self.lowpt[e]:
@@ -293,7 +276,6 @@ cdef class _LRPlanarity:
                         self.lowpt2[e] = min(self.lowpt2[e], self.lowpt[vw])
                     else:
                         self.lowpt2[e] = min(self.lowpt2[e], self.lowpt2[vw])
-
                 ind[v] += 1
 
     cdef bint add_constraints(self, tuple ei, tuple e):
@@ -377,7 +359,6 @@ cdef class _LRPlanarity:
             self.S.append(p)
 
         # side of e is side of a highest return edge
-        cdef tuple hl, hr
         if self.lowpt[e] < self.height[u]:  # e has return edge
             p = _top_of_stack(self.S)
             hl = p.left.high
@@ -391,13 +372,11 @@ cdef class _LRPlanarity:
     cdef int sign(self, tuple e):
         """Resolve the relative side of an edge to the absolute side."""
         # the recursion stack
-        cdef list dfs_stack = [e]
+        dfs_stack = [e]
         # dict to remember reference edges
-        cdef object old_ref = defaultdict(lambda: None)
-
+        old_ref = defaultdict(lambda: None)
         while dfs_stack:
             e = dfs_stack.pop()
-
             if self.ref[e] is not None:
                 dfs_stack.append(e)  # revisit e after finishing self.ref[e]
                 dfs_stack.append(self.ref[e])  # visit self.ref[e] next
@@ -405,7 +384,6 @@ cdef class _LRPlanarity:
                 self.ref[e] = None
             else:
                 self.side[e] *= self.side[old_ref[e]]
-
         return self.side[e]
 
 

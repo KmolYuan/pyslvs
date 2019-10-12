@@ -28,8 +28,7 @@ cdef inline double distance(double x1, double y1, double x2, double y2) nogil:
 
 cpdef list get_vlinks(object vpoints):
     """Get VLinks of a list of VPoint."""
-    cdef dict links = {}
-
+    links = {}
     cdef int i
     cdef str name
     cdef VPoint vpoint
@@ -39,13 +38,9 @@ cpdef list get_vlinks(object vpoints):
                 links[name] = {i}
             else:
                 links[name].add(i)
-
-    cdef list vlinks = []
-
-    cdef set points
+    vlinks = []
     for name, points in links.items():
         vlinks.append(VLink(name, "", points))
-
     return vlinks
 
 
@@ -191,13 +186,11 @@ cdef class VPoint:
 
     cpdef double distance(self, VPoint p):
         """Distance between two VPoint."""
-        cdef tuple on_links = tuple(set(self.links) & set(p.links))
-
+        on_links = tuple(set(self.links) & set(p.links))
         cdef double m_x = 0
         cdef double m_y = 0
         cdef double p_x = 0
         cdef double p_y = 0
-
         if on_links:
             if self.type == VJoint.R or self.links[0] == on_links[0]:
                 # self is R joint or at base link.

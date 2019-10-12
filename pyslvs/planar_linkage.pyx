@@ -71,25 +71,22 @@ cdef class Planar(Verification):
             'lower': List[float],
         }
         """
-        cdef dict placement = mech_params.get('Placement', {})
+        placement = mech_params.get('Placement', {})
         if len(placement) == 0:
             raise ValueError("no grounded joint")
-
-        cdef dict target = mech_params.get('Target', {})
+        target = mech_params.get('Target', {})
         if len(target) == 0:
             raise ValueError("no target joint")
-
-        cdef set check_set = set(map(len, target.values()))
+        check_set = set(map(len, target.values()))
         if len(check_set) != 1:
             raise ValueError("target paths should be in the same size")
         self.target_count = check_set.pop()
-
-        cdef list inputs = list(mech_params.get('input', []))
+        inputs = list(mech_params.get('input', []))
 
         # Change the target paths into memory view.
         self.target = {}
         self.inputs = []
-        cdef dict same = mech_params.get('same', {})
+        same = mech_params.get('same', {})
 
         cdef int i, j
         cdef Coordinate[:] path
@@ -112,26 +109,23 @@ cdef class Planar(Verification):
 
         # Options
         self.vpoints = list(mech_params.get('Expression', []))
-        cdef dict status = {}
+        status = {}
         self.exprs = vpoints_configure(self.vpoints, self.inputs, status).stack
         self.bfgs_mode = not all(status.values())
         # BFGS solver
         self.bfgs_solver = None
 
         # Bound
-        cdef list upper = list(mech_params.get('upper', []))
-        cdef list lower = list(mech_params.get('lower', []))
+        upper = list(mech_params.get('upper', []))
+        lower = list(mech_params.get('lower', []))
         if len(upper) != len(lower):
             raise ValueError("upper and lower should be in the same size")
-
-        cdef list upper_input = []
-        cdef list lower_input = []
-
+        upper_input = []
+        lower_input = []
         # Data mapping
         self.mapping = {i: f"P{i}" for i in range(len(self.vpoints))}
         self.mapping_r = {v: k for k, v in self.mapping.items()}
         self.mapping_list = []
-
         # Position
         cdef double x, y, r
         for i in sorted(placement):
@@ -142,7 +136,6 @@ cdef class Planar(Verification):
 
         # Length of links
         cdef int b, c, d
-        cdef frozenset pair
         cdef VLink vlink
         for vlink in get_vlinks(self.vpoints):
             if len(vlink.points) < 2:
@@ -273,8 +266,6 @@ cdef class Planar(Verification):
         if not self.bfgs_mode:
             return True
 
-        # Calling Sketch Solve kernel and try to get the result.
-        cdef dict p_data_dict
         # Add coordinate of known points.
         p_data_dict = {}
         for i in range(len(self.vpoints)):
@@ -293,7 +284,6 @@ cdef class Planar(Verification):
             self.bfgs_solver.set_data(p_data_dict)
 
         # Solve
-        cdef list solved_bfgs
         try:
             solved_bfgs = self.bfgs_solver.solve()
         except ValueError:
@@ -335,7 +325,6 @@ cdef class Planar(Verification):
         """
         cdef int target_index = 0
         cdef VPoint vpoint
-        cdef object m
         for m in self.mapping_list:
             if type(m) is int:
                 vpoint = self.vpoints[m]
@@ -365,7 +354,6 @@ cdef class Planar(Verification):
         """Return the last answer."""
         cdef int target_index = 0
         cdef VPoint vpoint
-        cdef object m
         for m in self.mapping_list:
             if type(m) is int:
                 vpoint = self.vpoints[m]
@@ -377,9 +365,7 @@ cdef class Planar(Verification):
 
         cdef double[:] input_list = np_sort(v[self.base_index:])
         self.solve(input_list[::self.target_count])
-
-        cdef list expressions = []
-
+        expressions = []
         cdef int i
         cdef double x1, y1, x2, y2
         cdef Coordinate coord1, coord2

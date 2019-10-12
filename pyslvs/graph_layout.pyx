@@ -22,13 +22,11 @@ from .graph cimport Graph, cmap
 
 cpdef dict external_loop_layout(Graph g, bint node_mode, double scale = 1.):
     """Layout position decided by external loop."""
-    cdef dict pos = _line_polygon_layout(g, scale)
+    pos = _line_polygon_layout(g, scale)
 
     # Node mode.
     cdef int i, n1, n2
     cdef double x1, y1, x2, y2
-    cdef list edges_view
-    cdef dict n_pos
     if not node_mode:
         n_pos = {}
         edges_view = sorted([((n2, n1) if n2 < n1 else (n1, n2)) for (n1, n2) in g.edges])
@@ -44,14 +42,13 @@ cpdef dict external_loop_layout(Graph g, bint node_mode, double scale = 1.):
 cdef inline dict _line_polygon_layout(Graph g, double scale):
     """Generate position of external loop and inner lines."""
     cdef OrderedSet o_loop = _external_loop(g)
-    cdef list lines = None
+    lines = None
     while lines is None:
         # Patch function of external cycle.
         lines = _inner_lines(g, o_loop)
 
     o_loop.roll(min(o_loop), 0)
-
-    cdef dict pos = {}
+    pos = {}
     _regular_polygon_layout(o_loop, scale, pos)
     cdef OrderedSet used_nodes = o_loop.copy()
 
@@ -192,10 +189,8 @@ cdef list _inner_lines(Graph g, OrderedSet o_loop):
     cdef OrderedSet vertices = set(g.vertices) - o_loop
     if not vertices:
         return []
-
-    cdef list lines = []
+    lines = []
     cdef OrderedSet used_nodes = o_loop.copy()
-
     cdef int n
     cdef OrderedSet line, inter
     while vertices:
@@ -251,9 +246,7 @@ cdef inline bint _split_loop(OrderedSet o_loop, OrderedSet line, int n1, int n2)
     """
     if n1 == n2:
         return False
-
-    cdef list loop_list = list(o_loop) * 2
-
+    loop_list = list(o_loop) * 2
     cdef int i, n
     cdef int s0 = -1
     cdef int s1 = -1
@@ -304,7 +297,7 @@ cdef inline bint _split_loop(OrderedSet o_loop, OrderedSet line, int n1, int n2)
 
 cdef inline OrderedSet _external_loop(Graph g):
     """Return vertices of external loop."""
-    cdef list cycles = _cycle_basis(g)
+    cycles = _cycle_basis(g)
     if not cycles:
         raise ValueError(f"invalid graph has no any cycle: {g.edges}")
 
@@ -345,11 +338,10 @@ cdef inline bint _merge_inter(
         cycles.remove(c2)
         cycles.append(c1)
         return True
-
-    cdef list inter_over = c1.ordered_intersections(c2, is_loop=True)
+    inter_over = c1.ordered_intersections(c2, is_loop=True)
     # Find the intersection with reversed cycle.
     c2.reverse()
-    cdef list inter_tmp = c1.ordered_intersections(c2, is_loop=True)
+    inter_tmp = c1.ordered_intersections(c2, is_loop=True)
     if len(inter_tmp) < len(inter_over):
         # Choose the longest continuous intersection.
         inter_over = inter_tmp
@@ -466,7 +458,7 @@ cdef inline void _compare_insert(
     cdef OrderedSet c2_slice = c2[replace_start:replace_end]
 
     cdef int i
-    cdef set other_nodes = set(c1_slice | c2_slice)
+    other_nodes = set(c1_slice | c2_slice)
     for i in c1_slice:
         c1_degrees += len(set(g.adj[i]) - other_nodes)
     for i in c2_slice:
@@ -484,15 +476,11 @@ cdef inline list _cycle_basis(Graph g):
     """Returns a list of cycles which form a basis for cycles of G.
     Reference from NetworkX.
     """
-    cdef set g_nodes = set(g.vertices)
-    cdef list cycles = []
+    g_nodes = set(g.vertices)
+    cycles = []
     cdef int root = -1
-
     cdef int z, nbr, p
-    cdef list stack
-    cdef set zused, pn
     cdef OrderedSet cycle
-    cdef dict pred, used
     while g_nodes:
         # loop over connected components
         if root == -1:
@@ -562,12 +550,10 @@ cdef inline bint _isorderedsubset(seq1, seq2, bint is_loop):
     if not seq1_len <= len(seq2):
         # 'seq1' is obviously not a subset.
         return False
-
-    cdef list seq1_list = list(seq1)
-    cdef list seq2_list = list(seq2)
+    seq1_list = list(seq1)
+    seq2_list = list(seq2)
     if is_loop:
         seq2_list *= 2
-
     cdef int matched = 0
     for self_elem in seq2_list:
         if self_elem == seq1_list[matched]:
@@ -672,9 +658,8 @@ cdef class OrderedSet:
     def __init__(self, iterable: Iterable[Any] = None):
         if iterable is None:
             return
-
+        map_d = self.map
         cdef _Entry next_e
-        cdef dict map_d = self.map
         cdef _Entry end = self.end
         for elem in iterable:
             if not PyDict_Contains(map_d, elem):
@@ -798,16 +783,13 @@ cdef class OrderedSet:
         if not isinstance(other, Iterable):
             raise TypeError("object must be iterable")
 
-        cdef list self_list = list(self)
-        cdef list other_list = list(other)
+        self_list = list(self)
+        other_list = list(other)
         if is_loop:
             self_list *= 2
-
-        # Result list.
-        cdef list subsets = []
-
+        # Result list
+        subsets = []
         cdef int matched_self
-        cdef set match_set
         cdef int matched_self_old = -2
         cdef int matched_other = -2
         cdef int matched_other_old = -2
@@ -922,8 +904,7 @@ cdef class OrderedSet:
     cdef list _get_slice_entry(self, slice item):
         cdef ssize_t start, stop, step, slicelength
         PySlice_GetIndicesEx(item, len(self), &start, &stop, &step, &slicelength)
-
-        cdef list result = []
+        result = []
         cdef ssize_t place = start
         cdef _Entry curr = self.end
 
@@ -985,7 +966,6 @@ cdef class OrderedSet:
         """Implement of 'self[index] = value' operator."""
         cdef int i
         cdef _Entry curr
-        cdef list value_list
         if isinstance(index, slice):
             if not isinstance(value, Iterable):
                 raise TypeError("must assign iterable to extended slice")
@@ -1014,7 +994,7 @@ cdef class OrderedSet:
 
     cpdef void reverse(self):
         """Reverse all elements."""
-        cdef list my_iter = list(_OrderedSetReverseIterator(self))
+        my_iter = list(_OrderedSetReverseIterator(self))
         self.clear()
         self.update(my_iter)
 
