@@ -100,33 +100,59 @@ class CoreTest(TestCase):
         self.assertAlmostEqual(120, coord.x)
         self.assertAlmostEqual(70, coord.y)
 
-    def test_graph_function(self):
+    def test_graph_basic(self):
         """Test 'graph' libraries."""
         g1 = Graph([(0, 1), (0, 4), (1, 5), (2, 3), (2, 4), (3, 5), (4, 5)])
         self.assertFalse(g1.is_degenerate())
         self.assertTrue(g1.is_connected())
         self.assertEqual(1, g1.dof())
+
+    def test_graph_isomorphic(self):
+        g1 = Graph([(0, 1), (0, 4), (1, 5), (2, 3), (2, 4), (3, 5), (4, 5)])
         g2 = Graph([(0, 2), (0, 4), (1, 3), (1, 4), (2, 5), (3, 5), (4, 5)])
         g3 = Graph([(0, 1), (0, 2), (1, 4), (2, 5), (3, 4), (3, 5), (4, 5)])
         self.assertTrue(g1.is_isomorphic(g2))
         self.assertFalse(g1.is_isomorphic(g3))
 
-        g1 = Graph([(0, 1), (2, 7), (1, 5), (1, 6), (3, 6), (0, 4), (3, 7), (2, 5), (3, 4), (0, 2)])
+    def test_graph_planar(self):
+        g1 = Graph([
+            (0, 1), (2, 7), (1, 5), (1, 6), (3, 6), (0, 4), (3, 7), (2, 5),
+            (3, 4), (0, 2),
+        ])
         self.assertTrue(is_planar(g1))
         self.assertEqual([4, 4], link_assortment(g1))
         self.assertEqual([4, 0, 0, 0], contracted_link_assortment(g1))
 
+    def test_graph_degenerate(self):
         g1 = Graph([(0, 1), (0, 2), (2, 1), (0, 3), (3, 4), (4, 5), (5, 1)])
         self.assertTrue(g1.is_degenerate())
 
+    def test_graph_duplicate(self):
         g1 = Graph([(0, 1), (1, 2), (2, 3), (0, 3)])
         g2 = g1.duplicate([2, 3], 1)
-        self.assertEqual(set(g2.edges), {(0, 1), (1, 2), (4, 5), (1, 4), (2, 3), (0, 5), (0, 3)})
+        self.assertEqual(set(g2.edges), {
+            (0, 1), (1, 2), (4, 5), (1, 4), (2, 3), (0, 5), (0, 3),
+        })
 
-        g1 = Graph([(0, 1), (4, 10), (1, 3), (2, 9), (5, 6), (4, 5), (5, 7), (8, 10),
-                    (1, 8), (9, 11), (3, 6), (0, 4), (3, 7), (2, 5), (0, 2), (4, 11)])
+    def test_graph_loop(self):
+        g1 = Graph([
+            (0, 1), (4, 10), (1, 3), (2, 9), (5, 6), (4, 5), (5, 7), (8, 10),
+            (1, 8), (9, 11), (3, 6), (0, 4), (3, 7), (2, 5), (0, 2), (4, 11),
+        ])
         pos = external_loop_layout(g1, True)
         self.assertEqual(set(g1.vertices), set(pos))
+
+    def test_graph_degree_code(self):
+        g1 = Graph([
+            (0, 1), (0, 2), (0, 3), (0, 5), (2, 3), (3, 4), (2, 5), (3, 5),
+            (4, 6), (3, 6),
+        ])
+        g2 = Graph([
+            (0, 1), (0, 4), (0, 2), (0, 6), (0, 3), (1, 4), (2, 6), (2, 5),
+            (3, 6), (2, 3),
+        ])
+        self.assertTrue(g1.is_isomorphic(g2))
+        self.assertEqual(g1.degree_code(), g2.degree_code())
 
     def test_atlas(self):
         """Test 'atlas' libraries."""

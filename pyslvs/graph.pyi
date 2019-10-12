@@ -47,6 +47,10 @@ class Graph:
         """Neighbors except the node."""
         ...
 
+    def degree_code(self) -> int:
+        """Return degree code of the graph."""
+        ...
+
     def is_connected(self, without: int = -1) -> bool:
         """Return True if the graph is not isolated."""
         ...

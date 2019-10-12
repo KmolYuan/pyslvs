@@ -1,5 +1,7 @@
 # Version 19.10
 
++ Make "Graph.degrees" public.
++ Implement degree code for Graph class.
 + Remove the hints of Python objects in Cython sources.
 + Change the term "nodes" to "vertices".
 + Replace 'ground' string as "VLink.FRAME" class attribute.

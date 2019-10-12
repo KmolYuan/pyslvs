@@ -11,6 +11,7 @@ email: pyslvs@gmail.com
 
 from libcpp.map cimport map as cmap
 
+ctypedef unsigned long long ullong
 ctypedef cmap[int, int] imap
 
 
@@ -34,6 +35,7 @@ cdef class Graph:
     cpdef int dof(self)
     cpdef tuple neighbors(self, int n)
     cpdef dict degrees(self)
+    cpdef ullong degree_code(self)
 
     cpdef bint is_connected(self, int without=*)
     cpdef bint has_cut_link(self)
