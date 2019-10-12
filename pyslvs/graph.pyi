@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import Tuple, List, Iterable
+from typing import Tuple, List, Iterable, Dict
 
 
 def link_assortment(g: Graph) -> List[int]:
@@ -40,6 +40,10 @@ class Graph:
         ...
 
     def neighbors(self, n: int) -> Tuple[int, ...]:
+        """Neighbors except the node."""
+        ...
+
+    def degrees(self) -> Dict[int, int]:
         """Neighbors except the node."""
         ...
 

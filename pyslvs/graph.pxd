@@ -33,7 +33,7 @@ cdef class Graph:
 
     cpdef int dof(self)
     cpdef tuple neighbors(self, int n)
-    cdef dict degrees(self)
+    cpdef dict degrees(self)
 
     cpdef bint is_connected(self, int without=*)
     cpdef bint has_cut_link(self)

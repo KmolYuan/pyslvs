@@ -15,12 +15,7 @@ email: pyslvs@gmail.com
 cimport cython
 from libcpp.pair cimport pair as cpair
 import sys
-from typing import (
-    Tuple,
-    Iterable,
-    Dict,
-    Iterator,
-)
+from typing import Tuple, Dict, Iterator
 
 ctypedef cpair[int, int] ipair
 
@@ -39,7 +34,6 @@ cpdef list link_assortment(Graph g):
         while d >= len(assortment):
             assortment.append(0)
         assortment[d] += 1
-
     return assortment
 
 
@@ -47,9 +41,7 @@ cpdef list contracted_link_assortment(Graph g):
     """Return contracted link assortment of the graph."""
     if not g.edges:
         return [0]
-
     cdef list assortment = [0] * link_assortment(g)[0]
-
     cdef int d
     cdef tuple mcl
     cdef set counted = set()
@@ -57,15 +49,13 @@ cpdef list contracted_link_assortment(Graph g):
         d = len(mcl) - 1
         counted.update(mcl)
         assortment[d] += 1
-
-    # For single contracted links.
+    # For single contracted links
     cdef int n
     for n, d in g.degrees().items():
         if d != 2:
             continue
         if n not in counted:
             assortment[0] += 1
-
     return assortment
 
 
@@ -79,26 +69,21 @@ cdef list _multi_contracted_links(Graph g, bint only_one):
         # Only for binary link.
         if len(g.adj[n1]) != 2:
             continue
-
         # n1 is not collected yet.
         if n1 in counted:
             continue
-
         index = 0
         c_links = [n1]
         while index < len(c_links):
             for neighbor in g.adj[c_links[index]]:
-                if len(g.adj[neighbor]) == 2:
-                    if neighbor not in c_links:
-                        c_links.append(neighbor)
+                if len(g.adj[neighbor]) == 2 and neighbor not in c_links:
+                    c_links.append(neighbor)
             index += 1
         if len(c_links) > 1:
             if only_one:
                 return c_links
-            else:
-                counted.update(c_links)
-                contracted_links.append(tuple(c_links))
-
+            counted.update(c_links)
+            contracted_links.append(tuple(c_links))
     if only_one:
         return []
     else:
@@ -108,7 +93,6 @@ cdef list _multi_contracted_links(Graph g, bint only_one):
 cpdef list labeled_enumerate(Graph g):
     """Enumerate each node with labeled except isomorphism."""
     cdef list result = []
-
     cdef int n1, n2
     cdef Graph g1, g2
     for n1 in g.vertices:
@@ -118,7 +102,6 @@ cpdef list labeled_enumerate(Graph g):
                 break
         else:
             result.append((n1, g1))
-
     return result
 
 
@@ -127,10 +110,9 @@ cdef class Graph:
 
     """NetworkX-like graph class."""
 
-    def __cinit__(self, edges: Iterable[Tuple[int, int]]):
+    def __cinit__(self, object edges):
         """edges: [(l1, l2), ...]"""
         self.edges = tuple(edges)
-
         # vertices
         cdef int p1, p2
         cdef list vertices = []
@@ -140,7 +122,6 @@ cdef class Graph:
             if p2 not in vertices:
                 vertices.append(p2)
         self.vertices = tuple(vertices)
-
         # adj
         cdef int n
         self.adj = {n: self.neighbors(n) for n in self.vertices}
@@ -161,7 +142,6 @@ cdef class Graph:
         """Add path from a iterable."""
         cdef list edges = list(self.edges)
         cdef set vertices = set(self.vertices)
-
         cdef int n1 = -1
         cdef int n2
         for n2 in new_nodes:
@@ -169,10 +149,8 @@ cdef class Graph:
                 edges.append((n1, n2))
                 vertices.update((n1, n2))
             n1 = n2
-
         self.edges = tuple(edges)
         self.vertices = tuple(vertices)
-
         for n1 in vertices:
             self.adj[n1] = self.neighbors(n1)
 
@@ -180,7 +158,6 @@ cdef class Graph:
         """Remove edge(s) {n1, n2} once if exist, otherwise do nothing."""
         cdef set vertices = set()
         cdef list edges = []
-
         cdef bint once = False
         cdef tuple edge
         for edge in self.edges:
@@ -189,10 +166,8 @@ cdef class Graph:
                 edges.append(edge)
             else:
                 once = True
-
         self.edges = tuple(edges)
         self.vertices = tuple(vertices)
-
         cdef int n
         for n in self.vertices:
             edge = self.neighbors(n)
@@ -216,7 +191,7 @@ cdef class Graph:
                 neighbors.append(l1)
         return tuple(neighbors)
 
-    cdef dict degrees(self):
+    cpdef dict degrees(self):
         """Return number of neighbors par node."""
         return {n: len(neighbors) for n, neighbors in self.adj.items()}
 
@@ -224,7 +199,6 @@ cdef class Graph:
         """Return True if the graph is not isolated."""
         if not self.vertices:
             return True
-
         cdef int neighbors
         cdef int index = 0
         cdef list vertices = []
@@ -233,14 +207,12 @@ cdef class Graph:
             vertices.append(self.vertices[1])
         else:
             vertices.append(self.vertices[0])
-
         # Search node by node.
         while index < len(vertices):
             for neighbors in self.adj[vertices[index]]:
                 if (neighbors not in vertices) and (neighbors != without):
                     vertices.append(neighbors)
             index += 1
-
         if without != -1:
             vertices.append(without)
         return len(vertices) == len(self.vertices)
@@ -258,13 +230,12 @@ cdef class Graph:
 
     cpdef bint is_degenerate(self):
         """Return True if this kinematic chain is degenerate.
-        
+
         + Prue all multiple contracted links recursively.
         + Check the DOF of sub-graph if it is lower then zero.
         """
         if self.has_triangles():
             return True
-
         cdef int n1, n2
         cdef list c_l
         cdef Graph g = self.copy()
@@ -273,19 +244,16 @@ cdef class Graph:
             mcl.update(_multi_contracted_links(g, True))
             if not mcl:
                 break
-
             c_l = []
             for n1, n2 in g.edges:
                 if not {n1, n2} & mcl:
                     c_l.append((n1, n2))
             mcl.clear()
-
             # Pruned graph
             g = Graph.__new__(Graph, c_l)
             if {n2 for n2 in g.degrees().values()} == {2}:
                 # The graph is a basic loop.
                 break
-
         # Check the DOF
         return g.dof() < 1
 
@@ -313,7 +281,6 @@ cdef class Graph:
             raise ValueError("please input a number larger than 1.")
         cdef int max_num = max(self.vertices) + 1
         cdef dict mapping = {}
-
         cdef int i, n1, n2
         cdef set edges = set(self.edges)
         for i in range(times):
@@ -371,14 +338,12 @@ cdef class GraphMatcher:
         self.g2 = g2
         self.g1_nodes = set(g1.vertices)
         self.g2_nodes = set(g2.vertices)
-
-        # Set recursion limit.
+        # Set recursion limit
         cdef int old_recursion_limit = sys.getrecursionlimit()
         cdef int expected_max_recursion_level = len(self.g2.vertices)
         if old_recursion_limit < 1.5 * expected_max_recursion_level:
-            # Give some breathing room.
+            # Give some breathing room
             sys.setrecursionlimit(int(1.5 * expected_max_recursion_level))
-
         # Initialize state
         self.initialize()
 
