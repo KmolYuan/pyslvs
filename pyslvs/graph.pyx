@@ -16,7 +16,7 @@ cimport cython
 from libcpp.pair cimport pair as cpair
 import sys
 from typing import Tuple, Dict, Iterator
-from operator import itemgetter
+from numpy import zeros, uint8
 
 ctypedef cpair[int, int] ipair
 
@@ -197,15 +197,13 @@ cdef class Graph:
         cdef int n = len(self.vertices)
         if n < 2:
             return 0
+        # Create new adjacency matrix
+        degrees = self.degrees()
         cdef imap m
         cdef int i, n1, n2
-        for i, (n1, _) in enumerate(sorted(
-            self.degrees().items(),
-            key=itemgetter(1),
-            reverse=True
-        )):
+        for i, n1 in enumerate(sorted(degrees, key=degrees.__getitem__, reverse=True)):
             m[n1] = i
-        cdef cmap[ipair, bint] am
+        cdef cmap[ipair, int] am
         for n1, n2 in self.edges:
             n1 = m[n1]
             n2 = m[n2]
@@ -218,6 +216,15 @@ cdef class Graph:
                 code <<= 1
                 code += am[ipair(n1, n2)]
         return code
+
+    cpdef ndarray adjacency_matrix(self):
+        """Represent as adjacency matrix."""
+        cdef int n = len(self.vertices)
+        cdef ndarray am = zeros((n, n), dtype=uint8)
+        for n1, n2 in self.edges:
+            am[n1, n2] += 1
+            am[n2, n1] += 1
+        return am
 
     cpdef bint is_connected(self, int without = -1):
         """Return True if the graph is not isolated."""

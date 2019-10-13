@@ -1,6 +1,7 @@
 # Version 19.10
 
 + Make "Graph.degrees" public.
++ Add "Graph.adjacency_matrix" method.
 + Implement degree code for Graph class.
 + Remove the hints of Python objects in Cython sources.
 + Change the term "nodes" to "vertices".

@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from typing import Tuple, List, Iterable, Dict
-
+from numpy import ndarray
 
 def link_assortment(g: Graph) -> List[int]:
     """Return link assortment of the graph."""
     ...
 
-
 def contracted_link_assortment(g: Graph) -> List[int]:
     """Return contracted link assortment of the graph."""
     ...
-
 
 def labeled_enumerate(g: Graph) -> List[Tuple[int, Graph]]:
     """Enumerate each node with labeled except isomorphism."""
@@ -49,6 +47,10 @@ class Graph:
 
     def degree_code(self) -> int:
         """Return degree code of the graph."""
+        ...
+
+    def adjacency_matrix(self) -> ndarray:
+        """Represent as adjacency matrix."""
         ...
 
     def is_connected(self, without: int = -1) -> bool:

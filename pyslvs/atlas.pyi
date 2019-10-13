@@ -8,7 +8,6 @@ from typing import (
 )
 from .graph import Graph
 
-
 def conventional_graph(
     cg_list: List[Graph],
     c_j_list: Sequence[int],
@@ -17,7 +16,6 @@ def conventional_graph(
 ) -> List[Graph]:
     """Linkage mechanism topological function."""
     ...
-
 
 def contracted_graph(
     link_num: Sequence[int],

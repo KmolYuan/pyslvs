@@ -15,7 +15,6 @@ from enum import IntEnum
 _Color = Tuple[int, int, int]
 _Coord = Tuple[float, float]
 
-
 def get_vlinks(vpoints: Iterable[VPoint]) -> List[VLink]:
     """Get VLinks of a list of VPoint."""
     ...

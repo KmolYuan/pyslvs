@@ -8,7 +8,6 @@ from typing import (
     Optional,
 )
 
-
 def link_synthesis(
     nl: int,
     nj: int,
@@ -16,7 +15,6 @@ def link_synthesis(
 ) -> List[Tuple[int, ...]]:
     """Generate the link assortment."""
     ...
-
 
 def contracted_link_synthesis(
     link_num_list: Sequence[int],

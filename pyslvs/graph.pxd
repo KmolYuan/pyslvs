@@ -10,10 +10,10 @@ email: pyslvs@gmail.com
 """
 
 from libcpp.map cimport map as cmap
+from numpy cimport ndarray
 
 ctypedef unsigned long long ullong
 ctypedef cmap[int, int] imap
-
 
 cpdef list link_assortment(Graph g)
 cpdef list contracted_link_assortment(Graph g)
@@ -36,6 +36,7 @@ cdef class Graph:
     cpdef tuple neighbors(self, int n)
     cpdef dict degrees(self)
     cpdef ullong degree_code(self)
+    cpdef ndarray adjacency_matrix(self)
 
     cpdef bint is_connected(self, int without=*)
     cpdef bint has_cut_link(self)

@@ -152,7 +152,15 @@ class CoreTest(TestCase):
             (3, 6), (2, 3),
         ])
         self.assertTrue(g1.is_isomorphic(g2))
+        self.assertEqual(2057732, g1.degree_code())
         self.assertEqual(g1.degree_code(), g2.degree_code())
+
+        g1 = Graph([(0, 1), (1, 2), (0, 2)])
+        self.assertEqual(7, g1.degree_code())
+        g1 = Graph([(0, 1), (1, 2), (2, 3), (0, 3)])
+        self.assertEqual(51, g1.degree_code())
+        g1 = Graph([(0, 1), (1, 3), (2, 3), (0, 2)])
+        self.assertEqual(51, g1.degree_code())
 
     def test_atlas(self):
         """Test 'atlas' libraries."""

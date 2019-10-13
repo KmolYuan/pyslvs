@@ -13,7 +13,6 @@ from .expression import VPoint, Coordinate
 
 TuplePoint = Tuple[float, float]
 
-
 def plap(
     c1: Coordinate,
     d0: float,
@@ -23,7 +22,6 @@ def plap(
 ) -> Coordinate:
     """Point on circle by angle."""
     ...
-
 
 def pllp(
     c1: Coordinate,
@@ -35,7 +33,6 @@ def pllp(
     """Two intersection points of two circles."""
     ...
 
-
 def plpp(
     c1: Coordinate,
     d0: float,
@@ -46,21 +43,17 @@ def plpp(
     """Two intersection points of a line and a circle."""
     ...
 
-
 def pxy(c1: Coordinate, x: float, y: float) -> Coordinate:
     """Using relative cartesian coordinate to get solution."""
     ...
-
 
 def vpoint_dof(vpoints: Sequence[VPoint]) -> int:
     """Degree of freedoms calculate from PMKS expressions."""
     ...
 
-
 def expr_parser(exprs: Sequence[Tuple[str, ...]], data_dict: Dict[str, float]) -> None:
     """Update data."""
     ...
-
 
 def data_collecting(
     exprs: ExpressionStack,
@@ -69,7 +62,6 @@ def data_collecting(
 ) -> Tuple[Dict[str, Union[Coordinate, float]], int]:
     """Data collecting process."""
     ...
-
 
 def expr_solving(
     exprs: ExpressionStack,
