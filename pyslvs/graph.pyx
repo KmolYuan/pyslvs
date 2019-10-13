@@ -16,6 +16,7 @@ cimport cython
 from libcpp.pair cimport pair as cpair
 import sys
 from typing import Tuple, Dict, Iterator
+from itertools import permutations, groupby
 from numpy import zeros, uint8
 
 ctypedef cpair[int, int] ipair
@@ -197,12 +198,35 @@ cdef class Graph:
         cdef int n = len(self.vertices)
         if n < 2:
             return 0
-        # Create new adjacency matrix
+        # Create a new mapping
         degrees = self.degrees()
+        per1 = sorted(degrees, key=degrees.__getitem__, reverse=True)
         cdef imap m
         cdef int i, n1, n2
-        for i, n1 in enumerate(sorted(degrees, key=degrees.__getitem__, reverse=True)):
+        for i, n1 in enumerate(per1):
             m[n1] = i
+        # Permute the group to find the max degree code
+        per2 = []
+        cdef ullong code, sub_code
+        for _, g in groupby(per1, key=degrees.__getitem__):
+            code = 0
+            for per in permutations(g):
+                if len(per) == 1:
+                    order = per
+                    break
+                sub_code = 0
+                for i, n1 in enumerate(per):
+                    for n2 in per[i + 1:]:
+                        sub_code <<= 1
+                        sub_code += n2 in self.adj[n1]
+                if sub_code >= code:
+                    code = sub_code
+                    order = per
+            per2.extend(order)
+        m.clear()
+        for i, n1 in enumerate(per2):
+            m[n1] = i
+        # Create a new adjacency matrix
         cdef cmap[ipair, int] am
         for n1, n2 in self.edges:
             n1 = m[n1]
@@ -210,7 +234,7 @@ cdef class Graph:
             if n1 > n2:
                 n1, n2 = n2, n1
             am[ipair(n1, n2)] = 1
-        cdef ullong code = 0
+        code = 0
         for n1 in range(n):
             for n2 in range(n1 + 1, n):
                 code <<= 1
