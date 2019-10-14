@@ -201,12 +201,9 @@ cdef class Graph:
         # Create a new mapping
         degrees = self.degrees()
         per1 = sorted(degrees, key=degrees.__getitem__, reverse=True)
-        cdef imap m
-        cdef int i, n1, n2
-        for i, n1 in enumerate(per1):
-            m[n1] = i
         # Permute the group to find the max degree code
         per2 = []
+        cdef int i, n1, n2
         cdef ullong code, sub_code
         for _, g in groupby(per1, key=degrees.__getitem__):
             code = 0
@@ -227,22 +224,11 @@ cdef class Graph:
                     code = sub_code
                     order = per
             per2.extend(order)
-        m.clear()
-        for i, n1 in enumerate(per2):
-            m[n1] = i
-        # Create a new adjacency matrix
-        cdef cmap[ipair, int] am
-        for n1, n2 in self.edges:
-            n1 = m[n1]
-            n2 = m[n2]
-            if n1 > n2:
-                n1, n2 = n2, n1
-            am[ipair(n1, n2)] = 1
         code = 0
-        for n1 in range(n):
-            for n2 in range(n1 + 1, n):
+        for i, n1 in enumerate(per2):
+            for n2 in per2[i + 1:]:
                 code <<= 1
-                code += am[ipair(n1, n2)]
+                code += n2 in self.adj[n1]
         return code
 
     cpdef ndarray adjacency_matrix(self):
