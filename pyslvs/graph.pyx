@@ -216,10 +216,13 @@ cdef class Graph:
                     order = per
                     break
                 sub_code = 0
-                for i, n1 in enumerate(per):
-                    for n2 in per[i + 1:]:
+                # Calculate sub code
+                per3 = tuple(per2) + per
+                for i, n1 in enumerate(per3):
+                    for n2 in per3[i + 1:]:
                         sub_code <<= 1
                         sub_code += n2 in self.adj[n1]
+                # Compare sub code
                 if sub_code > code or order is None:
                     code = sub_code
                     order = per
