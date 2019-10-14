@@ -210,6 +210,7 @@ cdef class Graph:
         cdef ullong code, sub_code
         for _, g in groupby(per1, key=degrees.__getitem__):
             code = 0
+            order = None
             for per in permutations(g):
                 if len(per) == 1:
                     order = per
@@ -219,7 +220,7 @@ cdef class Graph:
                     for n2 in per[i + 1:]:
                         sub_code <<= 1
                         sub_code += n2 in self.adj[n1]
-                if sub_code >= code:
+                if sub_code > code or order is None:
                     code = sub_code
                     order = per
             per2.extend(order)

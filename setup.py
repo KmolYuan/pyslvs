@@ -76,6 +76,7 @@ class Build(build_ext):
         elif compiler == 'msvc':
             for e in self.extensions:
                 e.define_macros = [('_USE_MATH_DEFINES', None)]
+                e.extra_compile_args = ['/O2']
         super(Build, self).build_extensions()
 
     def finalize_options(self):
