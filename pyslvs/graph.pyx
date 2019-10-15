@@ -200,21 +200,23 @@ cdef class Graph:
             return 0
         # Create a new mapping
         degrees = self.degrees()
-        per1 = sorted(degrees, key=degrees.__getitem__, reverse=True)
         # Permute the group to find the max degree code
-        per2 = []
+        per1 = []
         cdef int i, n1, n2
         cdef ullong code, sub_code
-        for _, g in groupby(per1, key=degrees.__getitem__):
+        for _, g in groupby(
+            sorted(degrees, key=degrees.__getitem__, reverse=True),
+            key=degrees.__getitem__
+        ):
             code = 0
             order = None
-            for per in permutations(g):
-                if len(per) == 1:
-                    order = per
+            for per2 in permutations(g):
+                if len(per2) == 1:
+                    order = per2
                     break
                 sub_code = 0
                 # Calculate sub code
-                per3 = tuple(per2) + per
+                per3 = tuple(per1) + per2
                 for i, n1 in enumerate(per3):
                     for n2 in per3[i + 1:]:
                         sub_code <<= 1
@@ -222,11 +224,13 @@ cdef class Graph:
                 # Compare sub code
                 if sub_code > code or order is None:
                     code = sub_code
-                    order = per
-            per2.extend(order)
+                    order = per2
+                elif sub_code == code:
+                    pass
+            per1.extend(order)
         code = 0
-        for i, n1 in enumerate(per2):
-            for n2 in per2[i + 1:]:
+        for i, n1 in enumerate(per1):
+            for n2 in per1[i + 1:]:
                 code <<= 1
                 code += n2 in self.adj[n1]
         return code
