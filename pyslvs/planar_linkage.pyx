@@ -207,7 +207,6 @@ cdef class Planar(Verification):
         i = 0
         cdef int t, params_count
         cdef Coordinate coord, coord3
-        cdef str target
         cdef Expression expr
         for expr in self.exprs:
             coord = Coordinate.__new__(Coordinate, NAN, NAN)

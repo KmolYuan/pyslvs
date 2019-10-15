@@ -259,7 +259,6 @@ cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_
     # First, we create a "VLinks" that can help us to
     # find a relationship just like adjacency matrix.
     cdef int node
-    cdef str link
     cdef VPoint vpoint
     vlinks = {}
     for node, vpoint in enumerate(vpoints):

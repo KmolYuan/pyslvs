@@ -30,7 +30,6 @@ cpdef list get_vlinks(object vpoints):
     """Get VLinks of a list of VPoint."""
     links = {}
     cdef int i
-    cdef str name
     cdef VPoint vpoint
     for i, vpoint in enumerate(vpoints):
         for name in vpoint.links:
@@ -279,7 +278,6 @@ cdef class VPoint:
 
     cpdef str expr(self):
         """Expression."""
-        cdef str type_text, color, links_text, x_text, y_text
         if self.type != VJoint.R:
             type_text = f"{self.type_str}, A[{self.angle}]"
         else:

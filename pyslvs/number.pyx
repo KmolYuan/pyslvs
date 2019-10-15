@@ -24,7 +24,7 @@ from numpy import (
 @cython.boundscheck(False)
 cdef int16_t[:, :] product(tuple pool, object stop_func):
     """Product function as same as iteration tools.
-    
+
     The pool is created by range(n).
     """
     if not pool:
@@ -34,13 +34,11 @@ cdef int16_t[:, :] product(tuple pool, object stop_func):
     cdef int16_t[:, :] tmp2
     cdef int16_t[:] array0 = arange(pool[0], dtype=int16)
 
-    cdef int repeat = len(pool)
     cdef int n = np_prod(pool)
-    cdef int16_t[:, :] out = np_zeros((n, repeat), dtype=int16)
+    cdef int16_t[:, :] out = np_zeros((n, len(pool)), dtype=int16)
 
     cdef int array0_size = len(array0)
     cdef int m = n / array0_size
-
     tmp1 = np_repeat(array0, m)
     out[:, 0] = tmp1
 

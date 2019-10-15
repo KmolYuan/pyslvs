@@ -43,14 +43,12 @@ cpdef list contracted_link_assortment(Graph g):
     if not g.edges:
         return [0]
     assortment = [0] * link_assortment(g)[0]
-    cdef int d
     counted = set()
     for mcl in _multi_contracted_links(g, False):
-        d = len(mcl) - 1
         counted.update(mcl)
-        assortment[d] += 1
+        assortment[len(mcl) - 1] += 1
     # For single contracted links
-    cdef int n
+    cdef int n, d
     for n, d in g.degrees().items():
         if d != 2:
             continue
@@ -122,7 +120,6 @@ cdef class Graph:
                 vertices.append(p2)
         self.vertices = tuple(vertices)
         # adj
-        cdef int n
         self.adj = {n: self.neighbors(n) for n in self.vertices}
 
     cpdef void add_vertices(self, object vertices):
@@ -226,6 +223,7 @@ cdef class Graph:
                     code = sub_code
                     order = per2
                 elif sub_code == code:
+                    # TODO: Will affect the subsequent arrangement
                     pass
             per1.extend(order)
         code = 0

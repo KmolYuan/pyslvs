@@ -264,7 +264,6 @@ cdef class SolverSystem:
                     self.cons_list.push_back(P2PDistanceConstraint(p1, p2, &self.data_values.back()))
 
         # Slider constraints
-        cdef str name
         cdef Line *slider_slot
         cdef pair[int, int] slider
         for slider in self.sliders:

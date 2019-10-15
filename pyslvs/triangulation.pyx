@@ -163,7 +163,6 @@ def _get_reliable_friend(
     """Return a generator yield the vertices
         that "has been solved" on the same link.
     """
-    cdef str link
     cdef int friend
     for link in vpoints[node].links:
         if len(vlinks[link]) < 2:
@@ -241,7 +240,6 @@ cpdef ExpressionStack vpoints_configure(
     # First, we create a "VLinks" that can help us to
     # find a relationship just like adjacency matrix.
     cdef int node
-    cdef str link
     cdef VPoint vpoint
     vlinks = {}
     for node, vpoint in enumerate(vpoints):

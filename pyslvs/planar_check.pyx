@@ -108,7 +108,6 @@ cdef class _LRPlanarity:
         self.adjs = None
 
         # testing
-        cdef int n1, n2
         for v in self.DG.vertices:  # sort the adjacency lists by nesting depth
             # note: this sorting leads to non linear time
             self.ordered_adjs[v] = sorted(
