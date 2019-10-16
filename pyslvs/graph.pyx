@@ -198,7 +198,10 @@ cdef class Graph:
         # Create a new mapping
         degrees = self.degrees()
         # Permute the group to find the max degree code
+        # "per1" is the mapping of the graph
+        # "prefix" is the last choose of the candidate (can be multiple)
         per1 = []
+        prefix = []
         cdef int i, n1, n2
         cdef ullong code, sub_code
         for _, g in groupby(
@@ -207,25 +210,36 @@ cdef class Graph:
         ):
             code = 0
             order = None
-            for per2 in permutations(g):
-                if len(per2) == 1:
-                    order = per2
-                    break
-                sub_code = 0
-                # Calculate sub code
-                per3 = tuple(per1) + per2
-                for i, n1 in enumerate(per3):
-                    for n2 in per3[i + 1:]:
-                        sub_code <<= 1
-                        sub_code += n2 in self.adj[n1]
-                # Compare sub code
-                if sub_code > code or order is None:
-                    code = sub_code
-                    order = per2
-                elif sub_code == code:
-                    # TODO: Will affect the subsequent arrangement
-                    pass
-            per1.extend(order)
+            g = tuple(g)
+            for pre in iter(prefix if len(prefix) > 1 else [()]):
+                for per2 in permutations(g):
+                    if len(per2) == 1:
+                        order = pre + per2
+                        prefix = [order]
+                        break
+                    sub_code = 0
+                    # Calculate sub code
+                    per3 = tuple(per1) + pre + per2
+                    print(tuple(per1), pre, per2)
+                    for i, n1 in enumerate(per3):
+                        for n2 in per3[i + 1:]:
+                            sub_code <<= 1
+                            sub_code += n2 in self.adj[n1]
+                    # Compare sub code
+                    if sub_code > code or order is None:
+                        code = sub_code
+                        order = pre + per2
+                        prefix = [order]
+                    elif sub_code == code:
+                        # Will affect the subsequent arrangement
+                        prefix.append(pre + per2)
+            if len(prefix) == 1:
+                per1.extend(order)
+        else:
+            # Check the last one prefix candidate
+            per2 = prefix.pop()
+            if not set(per2) <= set(per1):
+                per1.extend(per2)
         code = 0
         for i, n1 in enumerate(per1):
             for n2 in per1[i + 1:]:
