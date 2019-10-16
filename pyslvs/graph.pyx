@@ -220,7 +220,6 @@ cdef class Graph:
                     sub_code = 0
                     # Calculate sub code
                     per3 = tuple(per1) + pre + per2
-                    print(tuple(per1), pre, per2)
                     for i, n1 in enumerate(per3):
                         for n2 in per3[i + 1:]:
                             sub_code <<= 1
@@ -317,12 +316,7 @@ cdef class Graph:
         # Check the DOF
         return g.dof() < 1
 
-    cpdef bint is_isomorphic(self, Graph g):
-        """Return True if two graphs is isomorphic."""
-        cdef GraphMatcher gm_gh = GraphMatcher.__new__(GraphMatcher, self, g)
-        return gm_gh.is_isomorphic()
-
-    cdef bint has_triangle(self):
+    cpdef bint has_triangle(self):
         """Return True if the graph has triangle."""
         cdef int n1, n2
         for neighbors in self.adj.values():
@@ -333,6 +327,19 @@ cdef class Graph:
                     if n1 in self.adj[n2]:
                         return True
         return False
+
+    cpdef bint is_isomorphic(self, Graph g):
+        """Return True if two graphs is isomorphic."""
+        return self.is_isomorphic_vf2(g)
+
+    cpdef bint is_isomorphic_vf2(self, Graph g):
+        """Compare isomorphism by VF2 algorithm."""
+        cdef GraphMatcher gm_gh = GraphMatcher.__new__(GraphMatcher, self, g)
+        return gm_gh.is_isomorphic()
+
+    cpdef bint is_isomorphic_degree_code(self, Graph g):
+        """Compare isomorphism by degree code algorithm."""
+        return self.degree_code() == g.degree_code()
 
     cpdef Graph duplicate(self, object vertices, int times):
         """Make the graph duplicate specific nodes. Return a new graph."""

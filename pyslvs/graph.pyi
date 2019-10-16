@@ -69,8 +69,20 @@ class Graph:
         """
         ...
 
+    def has_triangle(self) -> bool:
+        """Return True if the graph has triangle."""
+        ...
+
     def is_isomorphic(self, graph: Graph) -> bool:
         """Return True if two graphs is isomorphic."""
+        ...
+
+    def is_isomorphic_vf2(self, graph: Graph) -> bool:
+        """Compare isomorphism by VF2 algorithm."""
+        ...
+
+    def is_isomorphic_degree_code(self, graph: Graph) -> bool:
+        """Compare isomorphism by degree code algorithm."""
         ...
 
     def duplicate(self, vertices: Iterable[int], times: int) -> Graph:

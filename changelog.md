@@ -2,7 +2,9 @@
 
 + Make "Graph.degrees" public.
 + Add "Graph.adjacency_matrix" method.
-+ Implement degree code for Graph class.
++ Isomorphism:
+    + More methods in "Graph" class.
+    + Implement degree code for Graph class.
 + Remove the hints of Python objects in Cython sources.
 + Change the term "nodes" to "vertices".
 + Replace 'ground' string as "VLink.FRAME" class attribute.
