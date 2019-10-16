@@ -234,11 +234,11 @@ cdef class Graph:
                         prefix.append(pre + per2)
             if len(prefix) == 1:
                 per1.extend(order)
-        else:
-            # Check the last one prefix candidate
-            per2 = prefix.pop()
-            if not set(per2) <= set(per1):
-                per1.extend(per2)
+        # Check the last one prefix candidate
+        per2 = prefix.pop()
+        if not set(per2) <= set(per1):
+            per1.extend(per2)
+        # Calculate the degree code
         code = 0
         for i, n1 in enumerate(per1):
             for n2 in per1[i + 1:]:
