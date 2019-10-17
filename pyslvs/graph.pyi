@@ -15,7 +15,6 @@ def labeled_enumerate(g: Graph) -> List[Tuple[int, Graph]]:
     """Enumerate each node with labeled except isomorphism."""
     ...
 
-
 class Graph:
 
     """NetworkX-like graph class."""

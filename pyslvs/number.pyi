@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import (
-    List,
-    Tuple,
-    Sequence,
-    Callable,
-    Optional,
-)
+from typing import List, Tuple, Sequence, Callable, Optional
 
 def link_synthesis(
     nl: int,

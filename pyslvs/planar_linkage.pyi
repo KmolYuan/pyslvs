@@ -4,7 +4,6 @@ from typing import Dict, Any
 from numpy import ndarray
 from .Adesign.verify import Verification
 
-
 class Planar(Verification):
 
     """This class is used to verified kinematics of the linkage mechanism."""

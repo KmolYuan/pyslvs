@@ -1,19 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from typing import (
-    Tuple,
-    List,
-    Sequence,
-    FrozenSet,
-    Dict,
-    Optional,
-    Union,
-)
+from typing import Tuple, List, Sequence, FrozenSet, Dict, Optional, Union
 from .expression import VPoint, Coordinate
 
 _Coord = Tuple[float, float]
 _Inputs = Dict[Tuple[int, int], float]
-
 
 class SolverSystem:
 

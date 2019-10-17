@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import (
-    List,
-    Sequence,
-    Callable,
-    Optional,
-)
+from typing import List, Sequence, Callable, Optional
 from .graph import Graph
 
 def conventional_graph(

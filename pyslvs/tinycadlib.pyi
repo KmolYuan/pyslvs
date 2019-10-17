@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import (
-    Tuple,
-    List,
-    Sequence,
-    Dict,
-    Union,
-    Optional,
-)
+from typing import Tuple, List, Sequence, Dict, Union, Optional
 from .triangulation import ExpressionStack
 from .expression import VPoint, Coordinate
 

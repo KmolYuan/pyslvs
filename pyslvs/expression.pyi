@@ -1,15 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from typing import (
-    Tuple,
-    List,
-    Iterable,
-    Sequence,
-    Callable,
-    Optional,
-    ClassVar,
-)
-from enum import IntEnum
+from typing import Tuple, List, Iterable, Sequence, Callable, Optional, ClassVar
+from enum import IntEnum, auto
 
 # Color type must be a RGB data
 _Color = Tuple[int, int, int]
@@ -18,7 +10,6 @@ _Coord = Tuple[float, float]
 def get_vlinks(vpoints: Iterable[VPoint]) -> List[VLink]:
     """Get VLinks of a list of VPoint."""
     ...
-
 
 class Coordinate:
 
@@ -41,12 +32,10 @@ class Coordinate:
     def __repr__(self) -> str:
         ...
 
-
 class VJoint(IntEnum):
-    R: int
-    P: int
-    RP: int
-
+    R = auto()
+    P = auto()
+    RP = auto()
 
 class VPoint:
 
@@ -182,7 +171,6 @@ class VPoint:
 
     def __repr__(self) -> str:
         ...
-
 
 class VLink:
 
