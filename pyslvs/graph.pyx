@@ -192,8 +192,7 @@ cdef class Graph:
 
     cpdef ullong degree_code(self):
         """Return degree code of the graph."""
-        cdef int n = len(self.vertices)
-        if n < 2:
+        if len(self.vertices) < 2:
             return 0
         # Create a new mapping
         degrees = self.degrees()
@@ -235,9 +234,8 @@ cdef class Graph:
             if len(prefix) == 1:
                 per1.extend(order)
         # Check the last one prefix candidate
-        per2 = prefix.pop()
-        if not set(per2) <= set(per1):
-            per1.extend(per2)
+        if not set(order) <= set(per1):
+            per1.extend(order)
         # Calculate the degree code
         code = 0
         for i, n1 in enumerate(per1):
