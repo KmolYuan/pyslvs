@@ -9,7 +9,13 @@ A no-GUI module of mechanism synthesis system and a 2D geometric constraint solv
 
 ## Install and Test
 
-Enter directory and execute the Makefile. Then, run the unit test script after compiling.
+Install from PyPI:
+
+```bash
+pip install pyslvs
+```
+
+Or install and test from source:
 
 ```bash
 python setup.py install
