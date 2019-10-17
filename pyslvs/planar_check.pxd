@@ -11,5 +11,4 @@ email: pyslvs@gmail.com
 
 from .graph cimport Graph
 
-
 cpdef bint is_planar(Graph g)

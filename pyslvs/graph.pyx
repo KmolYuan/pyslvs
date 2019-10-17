@@ -187,7 +187,7 @@ cdef class Graph:
         return tuple(neighbors)
 
     cpdef dict degrees(self):
-        """Return number of neighbors par node."""
+        """Return number of neighbors per node."""
         return {n: len(neighbors) for n, neighbors in self.adj.items()}
 
     cpdef ullong degree_code(self):

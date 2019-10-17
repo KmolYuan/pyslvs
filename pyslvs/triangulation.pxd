@@ -14,9 +14,8 @@ from libcpp.pair cimport pair
 
 ctypedef pair[int, int] symbol
 
-
 cdef str symbol_str(symbol p)
-
+cpdef ExpressionStack vpoints_configure(object vpoints_, object inputs, dict status=*)
 
 cdef enum Label:
     P_LABEL
@@ -24,14 +23,12 @@ cdef enum Label:
     A_LABEL
     S_LABEL
 
-
 cdef enum Func:
     PLA
     PLAP
     PLLP
     PLPP
     PXY
-
 
 cdef struct Expression:
     bint op
@@ -42,7 +39,6 @@ cdef struct Expression:
     symbol c2
     symbol c3
     symbol c4
-
 
 cdef class ExpressionStack:
 
@@ -55,6 +51,3 @@ cdef class ExpressionStack:
     cdef void add_pxy(self, symbol c1, symbol v1, symbol v2, symbol target)
 
     cpdef list as_list(self)
-
-
-cpdef ExpressionStack vpoints_configure(object vpoints_, object inputs, dict status = *)

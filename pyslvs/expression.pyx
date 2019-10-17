@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3, embedsignature=True, cdivision=True
 
-"""PMKS simbolics.
+"""PMKS symbolics.
 
 author: Yuan Chang
 copyright: Copyright (C) 2016-2019
@@ -10,12 +10,7 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
-from libc.math cimport (
-    M_PI,
-    atan2,
-    hypot,
-    isnan,
-)
+from libc.math cimport M_PI, atan2, hypot, isnan
 from cpython.object cimport Py_EQ, Py_NE
 from typing import Iterable
 from numpy import array as np_array

@@ -14,7 +14,6 @@ from libcpp.vector cimport vector
 from libcpp.map cimport map as cmap
 from .sketch_solve cimport Point, Line, Constraint
 
-
 cdef class SolverSystem:
 
     cdef list vpoints

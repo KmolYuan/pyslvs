@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3, embedsignature=True, cdivision=True
 
-"""Tiny CAD library of PMKS simbolic and position analysis.
+"""Tiny CAD library of PMKS symbolic and position analysis.
 
 author: Yuan Chang
 copyright: Copyright (C) 2016-2019
@@ -9,14 +9,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from libc.math cimport (
-    M_PI,
-    sqrt,
-    sin,
-    cos,
-    atan2,
-    NAN,
-)
+from libc.math cimport M_PI, sqrt, sin, cos, atan2, NAN
 from .expression cimport VJoint, VPoint, VLink
 from .triangulation cimport (
     symbol,
@@ -29,7 +22,6 @@ from .triangulation cimport (
     PXY,
 )
 from .bfgs cimport SolverSystem
-
 
 cdef Coordinate _NAN_COORD = Coordinate.__new__(Coordinate, NAN, NAN)
 

@@ -11,9 +11,7 @@ email: pyslvs@gmail.com
 
 from numpy cimport ndarray
 
-
 cpdef list get_vlinks(object vpoints)
-
 
 cdef class Coordinate:
 
@@ -22,14 +20,12 @@ cdef class Coordinate:
     cpdef double distance(self, Coordinate p)
     cpdef bint is_nan(self)
 
-
 cpdef enum VJoint:
     # Joint types.
     # Actually "class VJoint(IntEnum)" in Python but "enum" in C++.
     R  # Rotate pair
     P  # Prismatic pair
     RP  # Rotate and prismatic pair
-
 
 cdef class VPoint:
 
@@ -78,7 +74,6 @@ cdef class VPoint:
 
     # Expression
     cpdef str expr(self)
-
 
 cdef class VLink:
 

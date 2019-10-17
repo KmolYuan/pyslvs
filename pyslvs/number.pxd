@@ -11,5 +11,4 @@ email: pyslvs@gmail.com
 
 from numpy cimport int16_t
 
-
 cdef int16_t[:, :] product(tuple pool, object stop_func)
