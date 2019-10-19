@@ -30,13 +30,7 @@ __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 __version__ = "19.10.0.dev0"
 
-from .expression import (
-    get_vlinks,
-    VJoint,
-    VPoint,
-    VLink,
-    Coordinate,
-)
+from .expression import get_vlinks, VJoint, VPoint, VLink, Coordinate
 from .bfgs import SolverSystem
 from .triangulation import vpoints_configure, ExpressionStack
 from .tinycadlib import (
@@ -51,6 +45,7 @@ from .tinycadlib import (
 )
 from .Adesign import (
     Verification,
+    AlgorithmBase,
     Genetic,
     Firefly,
     Differential,
@@ -126,4 +121,5 @@ __all__ = [
     'example_list',
     'collection_list',
     'Verification',
+    'AlgorithmBase',
 ]
