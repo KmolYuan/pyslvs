@@ -25,9 +25,6 @@ install:
   - platform\set_pycompiler %PYTHON_DIR% %COMPILER%
   # Install modules
   - pip install -r requirements.txt
-  # Show tool kits
-  - gcc --version
-  - mingw32-make --version
 
 build_script:
   - python setup.py test

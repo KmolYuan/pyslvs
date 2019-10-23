@@ -30,8 +30,8 @@ def find_version(*file_paths):
 src_path = 'pyslvs'
 bfgs_path = pth_join(src_path, 'bfgs_solver')
 adesign_path = pth_join(src_path, 'Adesign')
-macros = [('_hypot', 'hypot'), ('M_PI', 'PI')]
-compile_args = ['-O3', '-Wno-cpp']
+macros = [('_USE_MATH_DEFINES', None), ('_hypot', 'hypot'), ('M_PI', 'PI')]
+compile_args = ['-O3', '-Wno-cpp', '-std=c++17']
 if system() == 'Windows':
     # Avoid compile error with CYTHON_USE_PYLONG_INTERNALS
     # https://github.com/cython/cython/issues/2670#issuecomment-432212671
@@ -75,7 +75,7 @@ class Build(build_ext):
                 e.extra_compile_args = compile_args
         elif compiler == 'msvc':
             for e in self.extensions:
-                e.define_macros = [('_USE_MATH_DEFINES', None)]
+                e.define_macros = macros[:1]
                 e.extra_compile_args = ['/O2']
         super(Build, self).build_extensions()
 

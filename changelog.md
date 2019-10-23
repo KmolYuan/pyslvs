@@ -1,6 +1,7 @@
 # Version 19.10
 
 + Manage Sketch Solve by CMake.
++ Use C++17 as default.
 + Make "Graph.degrees" public.
 + Add "Graph.adjacency_matrix" method.
 + Isomorphism:
