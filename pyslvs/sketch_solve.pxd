@@ -38,11 +38,8 @@ cdef extern from "bfgs_solver/solve.h" nogil:
         Point *center
         double *rad
 
-    enum ConstraintType:
-        pass
-
     struct Constraint:
-        ConstraintType type
+        int type
         Point *point1
         Point *point2
         Line *line1

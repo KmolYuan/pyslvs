@@ -10,16 +10,14 @@
 
 using namespace std;
 
-
-// Show coordinates.
-template<size_t N> inline void printpoints(Point (&points)[N]) {
+// Show coordinates
+void printpoints(Point *points, size_t N) {
     for (int i = 0; i < (int)N; i++)
         cout << "Point " << i << ": (" << *points[i].x << ", " << *points[i].y << ")" << endl;
 }
 
-
 int main() {
-    // Input a parameter list.
+    // Input a parameter list
     double parameters[] = {
         0, 0,
         5, 0,
@@ -28,11 +26,11 @@ int main() {
     };
     const int param_count = sizeof(parameters) / sizeof(*parameters);
     // Make a list of pointers of parameters.
-    double **pparameters = new double *[param_count];
+    auto pparameters = new double *[param_count];
     for (int i = 0; i < param_count; i++)
         pparameters[i] = &parameters[i];
     // Input a constant parameter list.
-    double constants[] = {30, 10, 24};
+    double constants[] = { 30, 10, 24 };
 
     // Create geometric objects and constraints with pointers.
     Point points[] = {
@@ -57,22 +55,21 @@ int main() {
     };
     const int cons_count = sizeof(cons) / sizeof(*cons);
 
-    printpoints<point_count>(points);
+    printpoints(points, point_count);
 
     // Solve
-    if (solve(pparameters, param_count, cons, cons_count, Rough) == Succsess)
+    if (solve(pparameters, param_count, cons, cons_count, Rough) == Success)
         cout << "A good Solution was found." << endl;
     else
         cout << "No valid Solutions were found from this start point." << endl;
 
-    printpoints<point_count>(points);
+    printpoints(points, point_count);
 
     double gradF[point_count] = {0};
     derivatives(pparameters, gradF, point_count, cons, cons_count);
     for (int i = 0; i < point_count; i++)
         cout << "GradF[" << i << "]: " << gradF[i] << endl;
 
-    delete [] pparameters;
-
+    delete[] pparameters;
     return 0;
 }

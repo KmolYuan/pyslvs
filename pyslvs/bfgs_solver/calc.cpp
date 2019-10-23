@@ -14,44 +14,44 @@ using namespace std;
 /// constraint defines (these make writing constraint equations easier)
 ///////////////////////////////////////////////////////////////////////
 
-#define P1           con.point1
+#define P1           con->point1
 #define P1_x         *P1->x
 #define P1_y         *P1->y
-#define P2           con.point2
+#define P2           con->point2
 #define P2_x         *P2->x
 #define P2_y         *P2->y
-#define L1           con.line1
+#define L1           con->line1
 #define L1_P1        L1->p1
 #define L1_P1_x      *L1_P1->x
 #define L1_P1_y      *L1_P1->y
 #define L1_P2        L1->p2
 #define L1_P2_x      *L1_P2->x
 #define L1_P2_y      *L1_P2->y
-#define L2           con.line2
+#define L2           con->line2
 #define L2_P1        L2->p1
 #define L2_P1_x      *L2_P1->x
 #define L2_P1_y      *L2_P1->y
 #define L2_P2        L2->p2
 #define L2_P2_x      *L2_P2->x
 #define L2_P2_y      *L2_P2->y
-#define C1           con.circle1
+#define C1           con->circle1
 #define C1_Center    C1->center
 #define C1_Center_x  *C1_Center->x
 #define C1_Center_y  *C1_Center->y
 #define C1_rad       *C1->rad
-#define C2           con.circle2
+#define C2           con->circle2
 #define C2_Center    C2->center
 #define C2_Center_x  *C2_Center->x
 #define C2_Center_y  *C2_Center->y
 #define C2_rad       *C2->rad
-#define A1           con.arc1
+#define A1           con->arc1
 #define A1_startA    *A1->startAngle
 #define A1_endA      *A1->endAngle
 #define A1_radius    *A1->rad
 #define A1_Center    A1->center
 #define A1_Center_x  *A1_Center->x
 #define A1_Center_y  *A1_Center->y
-#define A2           con.arc2
+#define A2           con->arc2
 #define A2_startA    *A2->startAngle
 #define A2_endA      *A2->endAngle
 #define A2_radius    *A2->rad
@@ -66,11 +66,11 @@ using namespace std;
 #define A2_Start_y   (A1_Center_y + A2_radius * sin(A2_startA))
 #define A2_End_x     (A1_Center_x + A2_radius * cos(A2_endA))
 #define A2_End_y     (A1_Center_y + A2_radius * sin(A2_endA))
-#define distance     fabs(*con.parameter)
-#define radius       *con.parameter
-#define angleP       *con.parameter
-#define quad_index   (int)(*con.parameter)
-#define Sym          con.SymLine
+#define DISTANCE     fabs(*con->parameter)
+#define radius       *con->parameter
+#define angleP       *con->parameter
+#define quad_index   (int)(*con->parameter)
+#define Sym          con->SymLine
 #define Sym_P1       Sym->p1
 #define Sym_P1_x     *Sym_P1->x
 #define Sym_P1_y     *Sym_P1->y
@@ -79,7 +79,7 @@ using namespace std;
 #define Sym_P2_y     *Sym_P2->y
 
 
-inline double point_on_point(Constraint &con) {
+double point_on_point(Constraint *con) {
     // Hopefully avoid this constraint,
     // make coincident points use the same parameters
     double dx = P2_x - P1_x;
@@ -88,25 +88,25 @@ inline double point_on_point(Constraint &con) {
 }
 
 
-inline double p2p_distance(Constraint &con) {
-    double temp = _hypot(P2_x - P1_x, P2_y - P1_y) - distance;
+double p2p_distance(Constraint *con) {
+    double temp = _hypot(P2_x - P1_x, P2_y - P1_y) - DISTANCE;
     return temp * temp * 100;
 }
 
 
-inline double p2p_distance_vert(Constraint &con) {
-    double temp = _hypot(0, P2_y - P1_y) - fabs(*con.parameter);
+double p2p_distance_vert(Constraint *con) {
+    double temp = _hypot(0, P2_y - P1_y) - DISTANCE;
     return temp * temp * 100;
 }
 
 
-inline double p2p_distance_horz(Constraint &con) {
-    double temp = _hypot(P2_x - P1_x, 0) - fabs(*con.parameter);
+double p2p_distance_horz(Constraint *con) {
+    double temp = _hypot(P2_x - P1_x, 0) - DISTANCE;
     return temp * temp * 100;
 }
 
 
-inline double point_on_line(Constraint &con) {
+double point_on_line(Constraint *con) {
     double dx = L1_P2_x - L1_P1_x;
     double dy = L1_P2_y - L1_P1_y;
 
@@ -116,62 +116,62 @@ inline double point_on_line(Constraint &con) {
 }
 
 
-inline double p2l_distance(Constraint &con) {
+double p2l_distance(Constraint *con) {
     double dx = L1_P2_x - L1_P1_x;
     double dy = L1_P2_y - L1_P1_y;
 
     double t = -(L1_P1_x * dx - P1_x * dx + L1_P1_y * dy - P1_y * dy) / (dx * dx + dy * dy);
-    double temp = _hypot(P1_x - (L1_P1_x + dx * t), P1_y - (L1_P1_y + dy * t)) - distance;
+    double temp = _hypot(P1_x - (L1_P1_x + dx * t), P1_y - (L1_P1_y + dy * t)) - DISTANCE;
     return temp * temp / 100;
 }
 
 
-inline double p2l_distance_vert(Constraint &con) {
+double p2l_distance_vert(Constraint *con) {
     double dx = L1_P2_x - L1_P1_x;
     double dy = L1_P2_y - L1_P1_y;
 
     double t = (P1_x - L1_P1_x) / dx;
-    double temp = fabs(P1_y - (L1_P1_y + dy * t)) - distance;
+    double temp = fabs(P1_y - (L1_P1_y + dy * t)) - DISTANCE;
     return temp * temp / 100;
 }
 
 
-inline double p2l_distance_horz(Constraint &con) {
+double p2l_distance_horz(Constraint *con) {
     double dx = L1_P2_x - L1_P1_x;
     double dy = L1_P2_y - L1_P1_y;
 
     double t = (P1_y - L1_P1_y) / dy;
-    double temp = fabs(P1_x - (L1_P1_x + dx * t)) - distance;
+    double temp = fabs(P1_x - (L1_P1_x + dx * t)) - DISTANCE;
     return temp * temp / 100;
 }
 
 
-inline double line_length(Constraint &con) {
-    double temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) - distance;
+double line_length(Constraint *con) {
+    double temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) - DISTANCE;
     return temp * temp * 100;
 }
 
 
-inline double equal_legnth(Constraint &con) {
+double equal_legnth(Constraint *con) {
     double temp = _hypot(L1_P2_x - L1_P1_x, L1_P2_y - L1_P1_y) -
            _hypot(L2_P2_x - L2_P1_x, L2_P2_y - L2_P1_y);
     return temp * temp * 100;
 }
 
 
-inline double vertical(Constraint &con) {
+double vertical(Constraint *con) {
     double dx = L1_P2_x - L1_P1_x;
     return dx * dx * 100;
 }
 
 
-inline double horizontal(Constraint &con) {
+double horizontal(Constraint *con) {
     double dy = L1_P2_y - L1_P1_y;
     return dy * dy * 100;
 }
 
 
-inline double tangent_to_circle(Constraint &con) {
+double tangent_to_circle(Constraint *con) {
     double dx = L1_P2_x - L1_P1_x;
     double dy = L1_P2_y - L1_P1_y;
     double hyp1 = _hypot(dx, dy);
@@ -186,7 +186,7 @@ inline double tangent_to_circle(Constraint &con) {
 }
 
 
-inline double tangent_to_arc(Constraint &con) {
+double tangent_to_arc(Constraint *con) {
     double dx = L1_P2_x - L1_P1_x;
     double dy = L1_P2_y - L1_P1_y;
     double t = -(L1_P1_x * dx -
@@ -202,7 +202,7 @@ inline double tangent_to_arc(Constraint &con) {
 }
 
 
-inline double arc_rules(Constraint &con) {
+double arc_rules(Constraint *con) {
     double dx = A1_End_x * A1_End_x;
     double dy = A1_End_y * A1_End_y;
     double rad1 = A1_Start_x * A1_Start_x;
@@ -217,7 +217,7 @@ inline double arc_rules(Constraint &con) {
 }
 
 
-inline double arc_radius(Constraint &con) {
+double arc_radius(Constraint *con) {
     double rad1 = _hypot(A1_Center_x - A1_Start_x, A1_Center_y - A1_Start_y);
     double rad2 = _hypot(A1_Center_x - A1_End_x, A1_Center_y - A1_End_y);
     double temp = rad1 - rad2 - radius;
@@ -225,75 +225,75 @@ inline double arc_radius(Constraint &con) {
 }
 
 
-inline double equal_radius_arcs(Constraint &con) {
+double equal_radius_arcs(Constraint *con) {
     double temp = _hypot(A1_Center_x - A1_Start_x, A1_Center_y - A1_Start_y) -
            _hypot(A2_Center_x - A2_Start_x, A2_Center_y - A2_Start_y);
     return temp * temp;
 }
 
 
-inline double equal_radius_circles(Constraint &con) {
+double equal_radius_circles(Constraint *con) {
     double temp = C1_rad - C2_rad;
     return temp * temp;
 }
 
 
-inline double equal_radius_circ_arc(Constraint &con) {
+double equal_radius_circ_arc(Constraint *con) {
     double rad1 = _hypot(A1_Center_x - A1_Start_x, A1_Center_y - A1_Start_y);
     double temp = rad1 - C1_rad;
     return temp * temp;
 }
 
 
-inline double concentric_arcs(Constraint &con) {
+double concentric_arcs(Constraint *con) {
     double temp = _hypot(A1_Center_x - A2_Center_x, A1_Center_y - A2_Center_y);
     return temp * temp;
 }
 
 
-inline double concentric_circles(Constraint &con) {
+double concentric_circles(Constraint *con) {
     double temp = _hypot(C1_Center_x - C2_Center_x, C1_Center_y - C2_Center_y);
     return temp * temp;
 }
 
 
-inline double concentric_circle_arc(Constraint &con) {
+double concentric_circle_arc(Constraint *con) {
     double temp = _hypot(A1_Center_x - C1_Center_x, A1_Center_y - C1_Center_y);
     return temp * temp;
 }
 
 
-inline double circle_radius(Constraint &con) {
+double circle_radius(Constraint *con) {
     return (C1_rad - radius) * (C1_rad - radius);
 }
 
-inline double internal_angle(Constraint &con) {
+double internal_angle(Constraint *con) {
     double temp = atan2(L2_P2_y - L2_P1_y, L2_P2_x - L2_P1_x) -
                   atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - angleP;
     return temp * temp;
 }
 
 
-inline double external_angle(Constraint &con) {
+double external_angle(Constraint *con) {
     double temp = atan2(L2_P2_y - L2_P1_y, L2_P2_x - L2_P1_x) -
                   atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - (M_PI - angleP);
     return temp * temp;
 }
 
 
-inline double line_internal_angle(Constraint &con) {
+double line_internal_angle(Constraint *con) {
     double temp = sin(atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - angleP);
     return temp * temp;
 }
 
 
-inline double line_external_angle(Constraint &con) {
+double line_external_angle(Constraint *con) {
     double temp = sin(atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - (M_PI - angleP));
     return temp * temp;
 }
 
 
-inline double perpendicular(Constraint &con) {
+double perpendicular(Constraint *con) {
     double dx = L1_P2_x - L1_P1_x;
     double dy = L1_P2_y - L1_P1_y;
     double dx2 = L2_P2_x - L2_P1_x;
@@ -312,7 +312,7 @@ inline double perpendicular(Constraint &con) {
 }
 
 
-inline double parallel(Constraint &con) {
+double parallel(Constraint *con) {
     double dx = L1_P2_x - L1_P1_x;
     double dy = L1_P2_y - L1_P1_y;
     double dx2 = L2_P2_x - L2_P1_x;
@@ -331,7 +331,7 @@ inline double parallel(Constraint &con) {
 }
 
 
-inline double colinear(Constraint &con) {
+double colinear(Constraint *con) {
     double dx = L1_P2_x - L1_P1_x;
     double dy = L1_P2_y - L1_P1_y;
 
@@ -354,7 +354,7 @@ inline double colinear(Constraint &con) {
 }
 
 
-inline double point_on_circle(Constraint &con) {
+double point_on_circle(Constraint *con) {
     // see what the current radius to the point is
     double rad1 = _hypot(C1_Center_x - P1_x, C1_Center_y - P1_y);
     // Compare this radius to the radius of the circle, return the error squared
@@ -363,7 +363,7 @@ inline double point_on_circle(Constraint &con) {
 }
 
 
-inline double point_on_arc(Constraint &con){
+double point_on_arc(Constraint *con){
     // see what the current radius to the point is
     double rad1 = _hypot(A1_Center_x - P1_x, A1_Center_y - P1_y);
     double rad2 = _hypot(A1_Center_x - A1_Start_x, A1_Center_y - A1_Start_y);
@@ -373,14 +373,14 @@ inline double point_on_arc(Constraint &con){
 }
 
 
-inline double point_on_line_midpoint(Constraint &con){
+double point_on_line_midpoint(Constraint *con){
     double Ex = (L1_P1_x + L1_P2_x) / 2 - P1_x;
     double Ey = (L1_P1_y + L1_P2_y) / 2 - P1_y;
     return Ex * Ex + Ey * Ey;
 }
 
 
-inline double point_on_arc_midpoint(Constraint &con){
+double point_on_arc_midpoint(Constraint *con){
     double rad1 = _hypot(A1_Center_x - A1_Start_x, A1_Center_y - A1_Start_y);
     double temp = atan2(A1_Start_y - A1_Center_y, A1_Start_x - A1_Center_x);
     double temp2 = atan2(A1_End_y - A1_Center_y, A1_End_x - A1_Center_x);
@@ -392,7 +392,7 @@ inline double point_on_arc_midpoint(Constraint &con){
 }
 
 
-inline double point_on_circle_quad(Constraint &con){
+double point_on_circle_quad(Constraint *con){
     double Ex = C1_Center_x;
     double Ey = C1_Center_y;
     switch(quad_index) {
@@ -416,7 +416,7 @@ inline double point_on_circle_quad(Constraint &con){
 }
 
 
-inline double symmetric_points(Constraint &con){
+double symmetric_points(Constraint *con){
     double dx = Sym_P2_x - Sym_P1_x;
     double dy = Sym_P2_y - Sym_P1_y;
     double t = -(dy * P1_x -
@@ -429,7 +429,7 @@ inline double symmetric_points(Constraint &con){
 }
 
 
-inline double symmetric_lines(Constraint &con){
+double symmetric_lines(Constraint *con){
     double dx = Sym_P2_x - Sym_P1_x;
     double dy = Sym_P2_y - Sym_P1_y;
     double hyp1 = dx * dx + dy * dy;
@@ -450,7 +450,7 @@ inline double symmetric_lines(Constraint &con){
 }
 
 
-inline double symmetric_circles(Constraint &con){
+double symmetric_circles(Constraint *con){
     double dx = Sym_P2_x - Sym_P1_x;
     double dy = Sym_P2_y - Sym_P1_y;
     double t = -(dy * C1_Center_x -
@@ -467,7 +467,7 @@ inline double symmetric_circles(Constraint &con){
 }
 
 
-inline double symmetric_arcs(Constraint &con){
+double symmetric_arcs(Constraint *con){
     double dx = Sym_P2_x - Sym_P1_x;
     double dy = Sym_P2_y - Sym_P1_y;
     double hyp1 = dx * dx + dy * dy;
@@ -497,9 +497,8 @@ inline double symmetric_arcs(Constraint &con){
 double calc(Constraint *cons, const size_t consLength) {
     double error = 0;
     for (size_t i = 0; i < consLength; i++) {
-        Constraint &con = cons[i];
-
-        switch((int)con.type) {
+        Constraint *con = cons + i;
+        switch(con->type) {
             case PointOnPoint:
             error += point_on_point(con);
             break;

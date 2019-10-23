@@ -24,7 +24,7 @@ int solve(
     const int isFine
 ) {
     // Save the original parameters for later.
-    double *origSolution = new double[xLength];
+    auto origSolution = new double[xLength];
     for (size_t i = 0; i < xLength; i++)
         origSolution[i] = *param_ptr[i];
 
@@ -41,7 +41,7 @@ int solve(
 
     // Calculate the gradient at the starting point:
     // The gradient vector (1xn)
-    double *grad = new double[xLength];
+    auto grad = new double[xLength];
     double f1, f2, f3, alpha1, alpha2, alpha3, alphaStar;
     double norm = 0;
     double pert = f0 * PertMag;
@@ -59,13 +59,12 @@ int solve(
         *param_ptr[j] = temper;
         norm = norm + grad[j] * grad[j];
     }
-    norm = sqrt(norm);
 
     // Estimate the norm of N
     // Initialize N and calculate s
     // The current search direction
-    double *s = new double[xLength];
-    double **N = new double *[xLength];
+    auto s = new double[xLength];
+    auto N = new double *[xLength];
     for (size_t i = 0; i < xLength; i++)
         // The estimate of the Hessian inverse
         N[i] = new double[xLength];
@@ -80,14 +79,11 @@ int solve(
             N[i][j] = 0;
         }
 
-    // make fnew greater than fold
-    double fnew = f0 + 1;
-
     // Initial search vector multiplier
     double alpha = 1;
 
     // Storage for the previous design variables
-    double *xold = new double[xLength];
+    auto xold = new double[xLength];
     for (size_t i = 0; i < xLength; i++)
         // Copy last values to xold
         xold[i] = *param_ptr[i];
@@ -158,21 +154,21 @@ int solve(
     for (size_t i = 0; i < xLength; i++)
         // calculate the new x
         *param_ptr[i] = xold[i] + alphaStar * s[i];
-    fnew = calc(cons, consLength);
+    double fnew = calc(cons, consLength);
     ftimes++;
 
     /////////////////////////////////////
     ///end of line search
     /////////////////////////////////////
 
-    double *deltaX = new double[xLength];
-    double *gradnew = new double[xLength];
-    double *gamma = new double[xLength];
-    double *gammatDotN = new double[xLength];
-    double **FirstSecond = new double *[xLength];
-    double **deltaXDotGammatDotN = new double *[xLength];
-    double **gammatDotDeltaXt = new double *[xLength];
-    double **NDotGammaDotDeltaXt = new double *[xLength];
+    auto deltaX = new double[xLength];
+    auto gradnew = new double[xLength];
+    auto gamma = new double[xLength];
+    auto gammatDotN = new double[xLength];
+    auto FirstSecond = new double *[xLength];
+    auto deltaXDotGammatDotN = new double *[xLength];
+    auto gammatDotDeltaXt = new double *[xLength];
+    auto NDotGammaDotDeltaXt = new double *[xLength];
     for (size_t i = 0; i < xLength; i++) {
         FirstSecond[i] = new double[xLength];
         deltaXDotGammatDotN[i] = new double[xLength];
@@ -233,7 +229,6 @@ int solve(
             gammatDotNDotGamma += gammatDotN[i] * gamma[i];
 
         // Calculate the first term
-        firstTerm = 0;
         firstTerm = 1 + gammatDotNDotGamma / bottom;
 
         // Calculate all (nx1).(1xn) matrices
@@ -264,9 +259,6 @@ int solve(
             for (size_t j = 0; j < xLength; j++)
                 s[i] += -N[i][j] * gradnew[j];
         }
-
-        // Initial search vector multiplier
-        alpha = 1;
 
         // copy newest values to the xold
         for (size_t i = 0; i < xLength; i++)

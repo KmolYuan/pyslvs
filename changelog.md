@@ -1,5 +1,6 @@
 # Version 19.10
 
++ Manage Sketch Solve by CMake.
 + Make "Graph.degrees" public.
 + Add "Graph.adjacency_matrix" method.
 + Isomorphism:

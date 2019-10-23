@@ -28,7 +28,7 @@
 /// Solve exit codes
 ///////////////////////////////////////
 
-#define Success   1
+#define Success    1
 #define NoSolution 0
 
 ///////////////////////////////////////
@@ -49,7 +49,7 @@ struct Circle {
     double *rad;
 };
 
-enum ConstraintTypes {
+enum {
     // Geometric Constraint types
     PointOnPoint,
     PointToLine,
@@ -95,7 +95,7 @@ enum ConstraintTypes {
 };
 
 struct Constraint {
-    ConstraintTypes type;
+    int type;
     Point *point1, *point2;
     Line *line1, *line2, *SymLine;
     Circle *circle1, *circle2;
@@ -153,5 +153,5 @@ Constraint LineExternalAngleConstraint(Line *, double *);
 /// Public Functions
 ///////////////////////////////////////
 
-int solve(double **, const size_t, Constraint *, const size_t, int);
+int solve(double **, size_t, Constraint *, size_t, int);
 void derivatives(double **, double *, int, Constraint *, int);
