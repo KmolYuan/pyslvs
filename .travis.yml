@@ -1,6 +1,9 @@
 # Travis-Ci for Pyslvs
 language: python
 
+git:
+  depth: 1
+
 matrix:
   include:
     - &linux
@@ -20,7 +23,7 @@ matrix:
           tags: true
 
     - <<: *linux
-      python: "3.8-dev"
+      python: "3.8"
 
     - &osx
       os: osx
@@ -46,7 +49,7 @@ matrix:
           fi
 
     - <<: *osx
-      env: PYTHON=3.8-dev
+      env: PYTHON=3.8.0
 
 script:
   - python3 setup.py test
