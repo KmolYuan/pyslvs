@@ -7,5 +7,4 @@
 
 #include "solve.h"
 
-
-double calc(Constraint *, const size_t);
+double calc(Constraint *, size_t);

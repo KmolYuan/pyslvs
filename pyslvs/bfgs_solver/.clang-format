@@ -1,3 +1,17 @@
 BasedOnStyle: Google
+Language: Cpp
 ColumnLimit: 80
 IndentWidth: 4
+PointerAlignment: Right
+UseTab: Never
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+ReflowComments: true
+AlwaysBreakTemplateDeclarations: Yes
+AllowAllParametersOfDeclarationOnNextLine: true
+IncludeBlocks: Merge
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline

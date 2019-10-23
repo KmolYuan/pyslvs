@@ -12,32 +12,36 @@
 /// BFGS Solver parameters
 ///////////////////////////////////////
 
-#define PertMag            1e-6
-#define PertMin            1e-10
-#define XConvergenceRough  1e-8
-#define XConvergenceFine   1e-10
-#define SmallF             1e-20
-#define ValidSolutionFine  1e-12
+#define PertMag 1e-6
+#define PertMin 1e-10
+#define XConvergenceRough 1e-8
+#define XConvergenceFine 1e-10
+#define SmallF 1e-20
+#define ValidSolutionFine 1e-12
 #define ValidSoltuionRough 1e-4
-#define Rough              0
-#define Fine               1
+#define Rough 0
+#define Fine 1
 // Note that the total number of iterations allowed is MaxIterations *xLength
-#define MaxIterations      50
+#define MaxIterations 50
 
 ///////////////////////////////////////
 /// Solve exit codes
 ///////////////////////////////////////
 
-#define Success    1
+#define Success 1
 #define NoSolution 0
 
 ///////////////////////////////////////
 /// Position Expression data
 ///////////////////////////////////////
 
-struct Point { double *x, *y; };
+struct Point {
+    double *x, *y;
+};
 
-struct Line { Point *p1, *p2; };
+struct Line {
+    Point *p1, *p2;
+};
 
 struct Arc {
     Point *center;
@@ -95,12 +99,12 @@ enum {
 };
 
 struct Constraint {
-    int type;
+    unsigned long type;
     Point *point1, *point2;
     Line *line1, *line2, *SymLine;
     Circle *circle1, *circle2;
     Arc *arc1, *arc2;
-    // radius, length, angle etc...
+    // RADIUS, length, angle etc...
     double *parameter;
 };
 
@@ -153,5 +157,5 @@ Constraint LineExternalAngleConstraint(Line *, double *);
 /// Public Functions
 ///////////////////////////////////////
 
-int solve(double **, size_t, Constraint *, size_t, int);
-void derivatives(double **, double *, int, Constraint *, int);
+int solve(double **, size_t, Constraint *, size_t, bool);
+void derivatives(double **, double *, size_t, Constraint *, size_t);

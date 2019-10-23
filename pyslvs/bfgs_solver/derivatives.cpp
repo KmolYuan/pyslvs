@@ -8,18 +8,12 @@
 
 using namespace std;
 
-
-void derivatives(
-    double **x,
-    double *gradF,
-    const int xLength,
-    Constraint *cons,
-    const int consLength
-) {
-    int position;
+void derivatives(double **x, double *gradF, const size_t xLength,
+                 Constraint *cons, const size_t consLength) {
     for (size_t i = 0; i < consLength; i++) {
+        size_t position;
         Constraint *con = cons + i;
-        switch(con->type) {
+        switch (con->type) {
             //////////////////////////////////////
             // Point on Point GeoConstraint derivative
             //////////////////////////////////////
@@ -41,10 +35,9 @@ void derivatives(
 
                 // Derivative with respect to p2y
                 position = con->point2->y - x[0];
-                if (position >=0 && position<xLength)
+                if (position >= 0 && position < xLength)
                     gradF[position] += -2 * (*con->point1->y - *con->point2->y);
                 break;
-
             //////////////////////////////////////
             // Point to Point Distance GeoConstraint derivative
             //////////////////////////////////////
@@ -66,7 +59,7 @@ void derivatives(
 
                 // Derivative with respect to p2y
                 position = con->point2->y - x[0];
-                if (position >=0 && position < xLength)
+                if (position >= 0 && position < xLength)
                     gradF[position] += -2 * (*con->point1->y - *con->point2->y);
 
                 // Derivative with respect to DISTANCE
@@ -74,9 +67,8 @@ void derivatives(
                 if (position >= 0 && position < xLength)
                     gradF[position] += -2 * *con->parameter;
                 break;
-
             //////////////////////////////////////
-            //Point to Point Distance Vert GeoConstraint derivative
+            // Point to Point Distance Vert GeoConstraint derivative
             //////////////////////////////////////
             case P2PDistanceVert:
                 // Derivative with respect to p1y
@@ -94,7 +86,6 @@ void derivatives(
                 if (position >= 0 && position < xLength)
                     gradF[position] += -2 * *con->parameter;
                 break;
-
             //////////////////////////////////////
             // Point to Point Horz Distance GeoConstraint derivative
             //////////////////////////////////////
@@ -114,7 +105,6 @@ void derivatives(
                 if (position >= 0 && position < xLength)
                     gradF[position] += -2 * *con->parameter;
                 break;
-
             //////////////////////////////////////
             // Point on line GeoConstraint derivatives
             //////////////////////////////////////
