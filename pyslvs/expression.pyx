@@ -10,7 +10,7 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
-from libc.math cimport M_PI, atan2, hypot, isnan
+from libc.math cimport M_PI, atan2, hypot
 from cpython.object cimport Py_EQ, Py_NE
 from typing import Iterable
 from numpy import array as np_array
@@ -53,7 +53,7 @@ cdef class Coordinate:
 
     cpdef bint is_nan(self):
         """Test this coordinate is a error-occurred answer."""
-        return isnan(self.x)
+        return self.x != self.x
 
     def __repr__(self):
         return f"Coordinate({self.x:.02f}, {self.y:.02f})"
