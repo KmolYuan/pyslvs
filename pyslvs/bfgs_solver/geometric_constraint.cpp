@@ -14,8 +14,8 @@ Constraint PointOnPointConstraint(Point *point1, Point *point2) {
     return con;
 }
 
-static Constraint _P2PDistanceConstraint(int type, Point *point1, Point *point2,
-                                         double *value) {
+static Constraint _P2PDistanceConstraint(unsigned long type, Point *point1,
+                                         Point *point2, double *value) {
     Constraint con{};
     con.type = type;
     con.point1 = point1;
@@ -38,7 +38,8 @@ Constraint P2PDistanceHorzConstraint(Point *point1, Point *point2,
     return _P2PDistanceConstraint(P2PDistanceHorz, point1, point2, value);
 }
 
-static Constraint _PointLineConstraint(int type, Point *point1, Line *line1) {
+static Constraint _PointLineConstraint(unsigned long type, Point *point1,
+                                       Line *line1) {
     Constraint con{};
     con.type = type;
     con.point1 = point1;
@@ -50,8 +51,8 @@ Constraint PointOnLineConstraint(Point *point1, Line *line1) {
     return _PointLineConstraint(PointOnLine, point1, line1);
 }
 
-static Constraint _P2LDistanceConstraint(int type, Point *point1, Line *line1,
-                                         double *value) {
+static Constraint _P2LDistanceConstraint(unsigned long type, Point *point1,
+                                         Line *line1, double *value) {
     Constraint con{};
     con.type = type;
     con.point1 = point1;
@@ -74,7 +75,8 @@ Constraint P2LDistanceHorzConstraint(Point *point1, Line *line1,
     return _P2LDistanceConstraint(P2LDistanceHorz, point1, line1, value);
 }
 
-static Constraint _VerticalHorizontalConstraint(int type, Line *line1) {
+static Constraint _VerticalHorizontalConstraint(unsigned long type,
+                                                Line *line1) {
     Constraint con{};
     con.type = type;
     con.line1 = line1;
@@ -112,7 +114,8 @@ Constraint ArcRulesConstraint(Arc *arc1) {
     return con;
 }
 
-static Constraint _LineConstraint(int type, Line *line1, double *value) {
+static Constraint _LineConstraint(unsigned long type, Line *line1,
+                                  double *value) {
     Constraint con{};
     con.type = type;
     con.line1 = line1;
@@ -124,7 +127,8 @@ Constraint LineLengthConstraint(Line *line1, double *value) {
     return _LineConstraint(LineLength, line1, value);
 }
 
-static Constraint _LinesConstraint(int type, Line *line1, Line *line2) {
+static Constraint _LinesConstraint(unsigned long type, Line *line1,
+                                   Line *line2) {
     Constraint con{};
     con.type = type;
     con.line1 = line1;
@@ -144,7 +148,7 @@ Constraint ArcRadiusConstraint(Arc *arc1, double *value) {
     return con;
 }
 
-static Constraint _ArcsConstraint(int type, Arc *arc1, Arc *arc2) {
+static Constraint _ArcsConstraint(unsigned long type, Arc *arc1, Arc *arc2) {
     Constraint con{};
     con.type = type;
     con.arc1 = arc1;
@@ -156,7 +160,7 @@ Constraint EqualRadiusArcsConstraint(Arc *arc1, Arc *arc2) {
     return _ArcsConstraint(EqualRadiusArcs, arc1, arc2);
 }
 
-static Constraint _CirclesConstraint(int type, Circle *circle1,
+static Constraint _CirclesConstraint(unsigned long type, Circle *circle1,
                                      Circle *circle2) {
     Constraint con{};
     con.type = type;
@@ -165,7 +169,8 @@ static Constraint _CirclesConstraint(int type, Circle *circle1,
     return con;
 }
 
-static Constraint _CircArcConstraint(int type, Circle *circle1, Arc *arc1) {
+static Constraint _CircArcConstraint(unsigned long type, Circle *circle1,
+                                     Arc *arc1) {
     Constraint con{};
     con.type = type;
     con.circle1 = circle1;
@@ -201,7 +206,7 @@ Constraint CircleRadiusConstraint(Circle *circle1, double *value) {
     return con;
 }
 
-static Constraint _AngleConstraint(int type, Line *line1, Line *line2,
+static Constraint _AngleConstraint(unsigned long type, Line *line1, Line *line2,
                                    double *value) {
     Constraint con{};
     con.type = type;
@@ -231,7 +236,7 @@ Constraint ColinearConstraint(Line *line1, Line *line2) {
     return _LinesConstraint(Colinear, line1, line2);
 }
 
-static Constraint _PointCircleConstraint(int type, Point *point1,
+static Constraint _PointCircleConstraint(unsigned long type, Point *point1,
                                          Circle *circle1) {
     Constraint con{};
     con.type = type;
@@ -244,7 +249,8 @@ Constraint PointOnCircleConstraint(Point *point1, Circle *circle1) {
     return _PointCircleConstraint(PointOnCircle, point1, circle1);
 }
 
-static Constraint _PointArcConstraint(int type, Point *point1, Arc *arc1) {
+static Constraint _PointArcConstraint(unsigned long type, Point *point1,
+                                      Arc *arc1) {
     Constraint con{};
     con.type = type;
     con.point1 = point1;
