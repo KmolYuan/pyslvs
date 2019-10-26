@@ -30,7 +30,7 @@ def find_version(*file_paths):
 src_path = 'pyslvs'
 bfgs_path = pth_join(src_path, 'bfgs_solver')
 adesign_path = pth_join(src_path, 'Adesign')
-macros = [('_USE_MATH_DEFINES', None), ('_hypot', 'hypot'), ('M_PI', 'PI')]
+macros = [('_USE_MATH_DEFINES', None), ('M_PI', 'PI')]
 compile_args = ['-O3', '-Wno-cpp', '-std=c++17']
 if system() == 'Windows':
     # Disable format warning
