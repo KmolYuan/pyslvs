@@ -7,21 +7,21 @@ __copyright__ = "Copyright (C) 2016-2019"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
+import re
 from os import listdir
 from os.path import sep, join as pth_join
-import re
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 from platform import system
 
 
-def read(*parts):
-    with open(pth_join(*parts), 'r', encoding='utf-8') as f:
+def read(*path):
+    with open(pth_join(*path), 'r', encoding='utf-8') as f:
         return f.read()
 
 
-def find_version(*file_paths):
-    m = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", read(*file_paths), re.M)
+def find_version(*path):
+    m = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", read(*path), re.M)
     if m:
         return m.group(1)
     raise RuntimeError("Unable to find version string.")
