@@ -75,6 +75,7 @@ from .expression_parser import (
 )
 from .example import example_list
 from .collection import collection_list
+from .efd import efd_fitting
 
 __all__ = [
     '__version__',
@@ -122,4 +123,5 @@ __all__ = [
     'collection_list',
     'Verification',
     'AlgorithmBase',
+    'efd_fitting',
 ]

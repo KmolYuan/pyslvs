@@ -11,6 +11,7 @@
 + Change the term "nodes" to "vertices".
 + Replace 'ground' string as "VLink.FRAME" class attribute.
 + Add placeholder "HOLDER" class variable for VPoint and VLink.
++ Add EFD algorithm.
 + Support MSVC compiler.
 + Support PEP 561.
 
