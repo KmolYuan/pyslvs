@@ -33,9 +33,6 @@ adesign_path = pth_join(src_path, 'Adesign')
 macros = [('_USE_MATH_DEFINES', None), ('_hypot', 'hypot'), ('M_PI', 'PI')]
 compile_args = ['-O3', '-Wno-cpp', '-std=c++17']
 if system() == 'Windows':
-    # Avoid compile error with CYTHON_USE_PYLONG_INTERNALS
-    # https://github.com/cython/cython/issues/2670#issuecomment-432212671
-    macros.append(('MS_WIN64', None))
     # Disable format warning
     compile_args.append('-Wno-format')
 # Disable NumPy warning
