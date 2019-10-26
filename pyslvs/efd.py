@@ -257,7 +257,7 @@ def _fourier_power(
     C. np_costa et al. / Postharvest Biology and Technology 54 (2009) 38-47
 
     Warning:
-        The number of coeffs must be >= the Nyquist Frequency.
+        The number of coefficients must be >= the Nyquist Frequency.
     Args:
         coeffs: A numpy array of shape (n, 4) representing the
             four coefficients for each harmonic computed.
