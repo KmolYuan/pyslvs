@@ -7,9 +7,10 @@ environment:
   matrix:
     - PYTHON_DIR: C:\Python37-x64
       COMPILER: mingw32
-    - PYTHON_DEV: 3.8.0
-      PYTHON_DIR: C:\Python38
-      COMPILER: mingw32
+    # Cython not yet support
+#    - PYTHON_DEV: 3.8.0
+#      PYTHON_DIR: C:\Python38
+#      COMPILER: mingw32
     - PYTHON_DEV: 3.8.0
       PYTHON_DIR: C:\Python38
       COMPILER: msvc
