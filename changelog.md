@@ -1,3 +1,7 @@
+# Version 19.11
+
++ None
+
 # Version 19.10
 
 + Manage Sketch Solve by CMake.
