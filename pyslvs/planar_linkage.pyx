@@ -49,15 +49,15 @@ cdef class Planar(Verification):
     cdef bint bfgs_mode
     cdef int target_count, base_index
     cdef clist[Expression] exprs
-    cdef list vpoints, inputs, mapping_list
-    cdef dict placement, target, mapping, mapping_r, data_dict
+    cdef list vpoints, mapping_list
+    cdef dict inputs, placement, target, mapping, mapping_r, data_dict
     cdef ndarray upper, lower
     cdef SolverSystem bfgs_solver
 
     def __cinit__(self, dict mech_params):
         """mech_params = {
             'Expression': List[VPoint],
-            'input': [(b0, d0), ...],
+            'input': {(b0, d0): (start, end), ...},
             'Placement': {pt: (x, y, r)},
             'Target': {pt: [(x0, y0), (x1, y1), ...]},
             'same': {pt: match_to_pt},
@@ -76,11 +76,11 @@ cdef class Planar(Verification):
         if len(check_set) != 1:
             raise ValueError("target paths should be in the same size")
         self.target_count = check_set.pop()
-        inputs = list(mech_params.get('input', []))
+        inputs = mech_params.get('input', {})
 
         # Change the target paths into memory view.
         self.target = {}
-        self.inputs = []
+        self.inputs = {}
         same = mech_params.get('same', {})
 
         cdef int i, j
@@ -93,19 +93,19 @@ cdef class Planar(Verification):
             self.target[i] = path
 
         cdef int a
-        for i, j in inputs:
+        for (i, j), (start, end) in inputs.items():
             for a in range(i):
                 if a in same:
                     i -= 1
             for a in range(j):
                 if a in same:
                     j -= 1
-            self.inputs.append((i, j))
+            self.inputs[i, j] = (start, end)
 
         # Options
         self.vpoints = list(mech_params.get('Expression', []))
         status = {}
-        self.exprs = vpoints_configure(self.vpoints, self.inputs, status).stack
+        self.exprs = vpoints_configure(self.vpoints, tuple(self.inputs), status).stack
         self.bfgs_mode = not all(status.values())
         # BFGS solver
         self.bfgs_solver = None

@@ -226,7 +226,7 @@ cpdef ExpressionStack vpoints_configure(
     vpoints will make a copy that we don't want to modified itself.
     """
     if inputs is None:
-        inputs = []
+        inputs = ()
     if status is None:
         status = {}
 
