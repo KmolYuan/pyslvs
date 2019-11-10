@@ -47,7 +47,7 @@ cdef class Planar(Verification):
     """This class is used to verified kinematics of the linkage mechanism."""
 
     cdef bint bfgs_mode
-    cdef int target_count, base_index
+    cdef int target_count
     cdef clist[Expression] exprs
     cdef list vpoints, mapping_list
     cdef dict inputs, placement, target, mapping, mapping_r, data_dict
@@ -146,16 +146,10 @@ cdef class Planar(Verification):
                     self.mapping[pair] = None
                     self.mapping_list.append(pair)
 
-        upper_input.extend(upper[:-len(self.inputs)])
-        lower_input.extend(lower[:-len(self.inputs)])
-
-        for i in range(1, len(self.inputs) + 1):
-            upper_input.extend([upper[-i]] * self.target_count)
-            lower_input.extend([lower[-i]] * self.target_count)
+        upper_input.extend(upper)
+        lower_input.extend(lower)
         self.upper = np_array(upper_input, dtype=np_float)
         self.lower = np_array(lower_input, dtype=np_float)
-        self.base_index = len(self.upper) - len(self.inputs) * self.target_count
-
         # Swap upper and lower bound if reversed.
         for i in range(len(self.upper)):
             if self.upper[i] < self.lower[i]:
@@ -187,7 +181,6 @@ cdef class Planar(Verification):
         for i, vpoint in enumerate(self.vpoints):
             if not vpoint.grounded():
                 continue
-
             coord1 = Coordinate.__new__(Coordinate, vpoint.c[0][0], vpoint.c[0][1])
             if vpoint.type == VJoint.R:
                 self.data_dict[self.mapping[i]] = coord1
@@ -289,7 +282,6 @@ cdef class Planar(Verification):
         for i in range(len(self.vpoints)):
             if self.mapping[i] in self.data_dict:
                 continue
-
             vpoint = self.vpoints[i]
             # These points solved by Sketch Solve.
             if vpoint.type == VJoint.R:
@@ -328,6 +320,7 @@ cdef class Planar(Verification):
                 self.mapping[m] = v[target_index]
                 target_index += 1
 
+        # TODO: Angle corrections
         cdef double[:] input_list = np_sort(v[self.base_index:])
         cdef double fitness = 0.
 
@@ -337,7 +330,6 @@ cdef class Planar(Verification):
         for target_index in range(self.target_count):
             if not self.solve(input_list[target_index::self.target_count]):
                 return HUGE_VAL
-
             for node, path in self.target.items():
                 coord = self.data_dict[node, -1]
                 fitness += coord.distance(path[target_index])
@@ -357,6 +349,7 @@ cdef class Planar(Verification):
                 self.mapping[m] = v[target_index]
                 target_index += 1
 
+        # TODO: Angle corrections
         cdef double[:] input_list = np_sort(v[self.base_index:])
         self.solve(input_list[::self.target_count])
         expressions = []
