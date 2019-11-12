@@ -11,7 +11,7 @@ class Planar(Verification):
     def __init__(self, mech_params: Dict[str, Any]) -> None:
         """mech_params = {
             'Expression': List[VPoint],
-            'input': [(b0, d0), ...],
+            'input': {(b0, d0): (start, end), ...},
             'Placement': {pt: (x, y, r)},
             'Target': {pt: [(x0, y0), (x1, y1), ...]},
             'same': {pt: match_to_pt},
