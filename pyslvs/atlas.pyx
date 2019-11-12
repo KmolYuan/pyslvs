@@ -22,9 +22,9 @@ cimport cython
 from libcpp.pair cimport pair as cpair
 from libcpp.vector cimport vector
 from libcpp.map cimport map as cmap
-from numpy cimport int16_t
+from numpy cimport int16_t as int_t
 from numpy import (
-    int16,
+    int16 as np_int,
     array as np_array,
     zeros as np_zeros,
     ones as np_ones,
@@ -46,14 +46,14 @@ ctypedef cmap[int, int] imap
 logger = getLogger()
 
 
-cdef inline int16_t[:] _nonzero_index(int16_t[:] array):
+cdef inline int_t[:] _nonzero_index(int_t[:] array):
     """Return the number of nonzero numbers."""
     counter = []
     cdef int i, n
     for i, n in enumerate(array):
         if n != 0:
             counter.append(i)
-    return np_array(counter, dtype=int16)
+    return np_array(counter, dtype=np_int)
 
 
 cdef inline ullong _factorial(int n):
@@ -78,7 +78,7 @@ cdef inline int _gcd(int a, int b) nogil:
     return a
 
 
-cdef inline int16_t[:] _labels(int16_t[:] numbers, int index, int offset):
+cdef inline int_t[:] _labels(int_t[:] numbers, int index, int offset):
     """Generate labels from numbers."""
     cdef int i, num
     labels = []
@@ -86,10 +86,10 @@ cdef inline int16_t[:] _labels(int16_t[:] numbers, int index, int offset):
         for i in range(num):
             labels.append(index)
         index += 1
-    return np_array(labels, dtype=int16)
+    return np_array(labels, dtype=np_int)
 
 
-cdef inline Graph _multigraph(int16_t[:] counter, int n):
+cdef inline Graph _multigraph(int_t[:] counter, int n):
     """Get multigraph from n x n matrix."""
     edges = {}
     cdef int c = 0
@@ -106,14 +106,14 @@ cdef inline Graph _multigraph(int16_t[:] counter, int n):
 @cython.boundscheck(False)
 cdef inline void _gauss_elimination(
     list result,
-    int16_t[:] limit,
-    int16_t[:, :] f_matrix,
+    int_t[:] limit,
+    int_t[:, :] f_matrix,
     int n,
     int var_count
 ):
     """Gauss elimination for (n, n + 1) matrix."""
     cdef int i, j, d
-    cdef int16_t[:] tmp1, tmp2
+    cdef int_t[:] tmp1, tmp2
     for j in range(var_count):
         # Remove all coefficients of index [i] to zero
         for i in range(n):
@@ -131,7 +131,7 @@ cdef inline void _gauss_elimination(
             f_matrix[i, :] = tmp1
 
     # Answer
-    cdef int16_t[:] answer = -np_ones(var_count, dtype=int16)
+    cdef int_t[:] answer = -np_ones(var_count, dtype=np_int)
 
     # Determined solution
     cdef int c, k
@@ -174,8 +174,8 @@ cdef inline void _gauss_elimination(
 @cython.boundscheck(False)
 cdef void _nest_do(
     list result,
-    int16_t[:] answer,
-    int16_t[:, :] f_matrix,
+    int_t[:] answer,
+    int_t[:, :] f_matrix,
     int i,
     int n,
     object stop_func
@@ -187,7 +187,7 @@ cdef void _nest_do(
             _test_contracted_graph(_multigraph(answer, n), result)
         return
 
-    cdef int16_t[:] coefficients = _nonzero_index(f_matrix[i, :-1])
+    cdef int_t[:] coefficients = _nonzero_index(f_matrix[i, :-1])
     cdef int c = 0
     cdef int j = -1
     cdef int d
@@ -209,7 +209,7 @@ cdef void _nest_do(
         _nest_do(result, answer, f_matrix, i + 1, n, stop_func)
         return
 
-    cdef int16_t[:] combine, answer_copy
+    cdef int_t[:] combine, answer_copy
     for combine in product((f_matrix[i, -1],) * c, stop_func):
         if stop_func is not None and stop_func():
             return
@@ -284,13 +284,13 @@ cdef inline void _test_graph(
 @cython.boundscheck(False)
 cdef inline void _contracted_graph(
     list result,
-    int16_t[:] limit,
+    int_t[:] limit,
     object stop_func
 ):
     """Synthesis of contracted graphs."""
     cdef int n = len(limit)
     cdef int var_count = n * (n - 1) / 2
-    cdef int16_t[:, :] f_matrix = np_zeros((n, var_count + 1), dtype=int16)
+    cdef int_t[:, :] f_matrix = np_zeros((n, var_count + 1), dtype=np_int)
     f_matrix[:, -1] = limit
 
     # Equations
@@ -310,7 +310,7 @@ cdef inline void _contracted_graph(
         _gauss_elimination(result, limit, f_matrix, n, var_count)
     else:
         # Nest do loop method.
-        _nest_do(result, -np_ones(var_count, dtype=int16), f_matrix, 0, n, stop_func)
+        _nest_do(result, -np_ones(var_count, dtype=np_int), f_matrix, 0, n, stop_func)
 
 
 cdef inline void _dyad_insert(Graph g, frozenset edge, int amount):
@@ -331,7 +331,7 @@ cdef inline void _dyad_insert(Graph g, frozenset edge, int amount):
 
 
 cdef inline void _permute_combine(
-    int16_t[:] limit,
+    int_t[:] limit,
     list combine_list,
     tuple pick_list,
     object stop_func
@@ -342,8 +342,8 @@ cdef inline void _permute_combine(
         return
 
     cdef vector[int] indices = range(n)
-    cdef int16_t[:] cycles = np_zeros(n, dtype=int16)
-    cdef int16_t[:] pool = limit
+    cdef int_t[:] cycles = np_zeros(n, dtype=np_int)
+    cdef int_t[:] pool = limit
     permute_list = set()
     cdef int i, j
     for i, j in enumerate(range(n, 0, -1)):
@@ -376,7 +376,7 @@ cdef inline void _permute_combine(
         combine_list.append(tuple(zip(pick_list, tmp_array)))
 
 
-cdef inline list _contracted_links(tuple edges, int16_t[:] limit, object stop_func):
+cdef inline list _contracted_links(tuple edges, int_t[:] limit, object stop_func):
     """Combination of contracted links.
 
     pool: edges
@@ -402,7 +402,7 @@ cdef inline list _contracted_links(tuple edges, int16_t[:] limit, object stop_fu
 
     pick_count -= confirm_size
     cdef int pool_size = len(pool_list)
-    cdef int16_t[:] indices = np_zeros(pick_count, dtype=int16)
+    cdef int_t[:] indices = np_zeros(pick_count, dtype=np_int)
     cdef int i
     for i in range(pick_count):
         indices[i] = i
@@ -442,7 +442,7 @@ cdef inline list _contracted_links(tuple edges, int16_t[:] limit, object stop_fu
 cdef inline void _graph_atlas(
     list result,
     list contracted_graph,
-    int16_t[:] limit,
+    int_t[:] limit,
     uint no_degenerate,
     object stop_func
 ):
@@ -476,11 +476,11 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
 
     # Initial time
     cdef double t0 = perf_counter()
-    cdef int16_t[:] link_num = np_array(link_num_list, ndmin=1, dtype=int16)
+    cdef int_t[:] link_num = np_array(link_num_list, ndmin=1, dtype=np_int)
     logger.debug(f"Link assortment: {list(link_num)}")
 
     # Multiple links
-    cdef int16_t[:] m_link = _labels(link_num, 3, 1)
+    cdef int_t[:] m_link = _labels(link_num, 3, 1)
 
     cdef imap m_limit, count
     cdef int num
@@ -519,7 +519,7 @@ cpdef list conventional_graph(
     logger.debug(f"Contracted link assortment: {list(c_j_list)}")
 
     # Synthesis of contracted link and multiple link combination.
-    cdef int16_t[:] c_j = np_array(c_j_list, ndmin=1, dtype=int16)
+    cdef int_t[:] c_j = np_array(c_j_list, ndmin=1, dtype=np_int)
     result = []
     cdef int i, num
     if not cg_list:
@@ -538,7 +538,7 @@ cpdef list conventional_graph(
         return result
 
     # Multiple links
-    cdef int16_t[:] m_link = np_array(link_assortment(cg_list[0]), ndmin=1, dtype=int16)
+    cdef int_t[:] m_link = np_array(link_assortment(cg_list[0]), ndmin=1, dtype=np_int)
     m_link = _labels(m_link, 3, 1)
 
     # Synthesis of multiple links

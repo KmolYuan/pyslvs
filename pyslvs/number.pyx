@@ -11,7 +11,7 @@ email: pyslvs@gmail.com
 
 cimport cython
 from numpy import (
-    int16,
+    int16 as np_int,
     array as np_array,
     zeros as np_zeros,
     sum as np_sum,
@@ -28,14 +28,14 @@ cdef int16_t[:, :] product(tuple pool, object stop_func):
     The pool is created by range(n).
     """
     if not pool:
-        return np_array([], dtype=int16)
+        return np_array([], dtype=np_int)
 
     cdef int16_t[:] tmp1
     cdef int16_t[:, :] tmp2
-    cdef int16_t[:] array0 = arange(pool[0], dtype=int16)
+    cdef int16_t[:] array0 = arange(pool[0], dtype=np_int)
 
     cdef int n = np_prod(pool)
-    cdef int16_t[:, :] out = np_zeros((n, len(pool)), dtype=int16)
+    cdef int16_t[:, :] out = np_zeros((n, len(pool)), dtype=np_int)
 
     cdef int array0_size = len(array0)
     cdef int m = n / array0_size
@@ -134,11 +134,11 @@ cpdef list contracted_link_synthesis(object link_num_list, object stop_func = No
     """Generate the contracted link assortment."""
     cdef int16_t[:] link_num
     if len(link_num_list) == 1:
-        link_num = np_zeros(link_num_list[0], dtype=int16)
+        link_num = np_zeros(link_num_list[0], dtype=np_int)
         link_num[-1] = 1
         return [tuple(link_num)]
 
-    link_num = np_array(link_num_list, dtype=int16)
+    link_num = np_array(link_num_list, dtype=np_int)
 
     # Contracted link
     cdef int j_m_v = _j_m(link_num)

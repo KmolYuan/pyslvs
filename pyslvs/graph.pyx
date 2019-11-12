@@ -17,7 +17,7 @@ from libcpp.pair cimport pair as cpair
 import sys
 from typing import Tuple, Dict, Iterator
 from itertools import permutations, groupby
-from numpy import zeros, uint8
+from numpy import zeros, uint8 as np_uint
 
 ctypedef cpair[int, int] ipair
 
@@ -247,7 +247,7 @@ cdef class Graph:
     cpdef ndarray adjacency_matrix(self):
         """Represent as adjacency matrix."""
         cdef int n = len(self.vertices)
-        cdef ndarray am = zeros((n, n), dtype=uint8)
+        cdef ndarray am = zeros((n, n), dtype=np_uint)
         for n1, n2 in self.edges:
             am[n1, n2] += 1
             am[n2, n1] += 1
