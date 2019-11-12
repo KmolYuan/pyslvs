@@ -10,12 +10,8 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
-from numpy import (
-    array as np_array,
-    float64 as np_float,
-    zeros,
-    linspace,
-)
+from collections import OrderedDict
+from numpy import array as np_array, float64 as np_float
 # Not a number and a large fitness. Infinity cannot be used for a chart.
 from libc.math cimport HUGE_VAL, NAN
 from libcpp.list cimport list as clist
@@ -48,11 +44,12 @@ cdef class Planar(Verification):
     """This class is used to verified kinematics of the linkage mechanism."""
 
     cdef bint bfgs_mode
-    cdef int target_count
+    cdef int target_count, v_base
     cdef clist[Expression] exprs
     cdef list vpoints, mapping_list
-    cdef dict inputs, placement, target, mapping, mapping_r, data_dict
-    cdef ndarray upper, lower, input_range
+    cdef dict placement, target, mapping, mapping_r, data_dict
+    cdef object inputs
+    cdef ndarray upper, lower
     cdef SolverSystem bfgs_solver
 
     def __cinit__(self, dict mech_params):
@@ -80,9 +77,7 @@ cdef class Planar(Verification):
 
         # Change the target paths into memory view.
         self.target = {}
-        self.inputs = {}
         same = mech_params.get('same', {})
-
         cdef int i, j
         cdef Coordinate[:] path
         for i in target:
@@ -92,27 +87,19 @@ cdef class Planar(Verification):
                     i -= 1
             self.target[i] = path
 
-        # Input nodes and angle range
-        inputs = mech_params.get('input', {})
-        self.input_range = zeros((len(inputs), self.target_count), dtype=np_float)
-        cdef int a
-        for a, ((i, j), (start, end)) in enumerate(inputs.items()):
-            self.input_range[a, :] = linspace(start, end, self.target_count)
-            for a in range(i):
-                if a in same:
-                    i -= 1
-            for a in range(j):
-                if a in same:
-                    j -= 1
-            self.inputs[i, j] = (start, end)
-
         # Expressions
         self.vpoints = list(mech_params.get('Expression', []))
+        self.inputs = OrderedDict(mech_params.get('input', {}))
         status = {}
-        self.exprs = vpoints_configure(self.vpoints, tuple(self.inputs), status).stack
+        self.exprs = vpoints_configure(self.vpoints, tuple(self.inputs.keys()), status).stack
         self.bfgs_mode = not all(status.values())
         # BFGS solver mode
         self.bfgs_solver = None
+
+        # Data mapping
+        self.mapping = {i: f"P{i}" for i in range(len(self.vpoints))}
+        self.mapping_r = {v: k for k, v in self.mapping.items()}
+        self.mapping_list = []
 
         # Bounds
         upper = list(mech_params.get('upper', []))
@@ -120,10 +107,6 @@ cdef class Planar(Verification):
         if len(upper) != len(lower):
             raise ValueError("upper and lower should be in the same size")
 
-        # Data mapping
-        self.mapping = {i: f"P{i}" for i in range(len(self.vpoints))}
-        self.mapping_r = {v: k for k, v in self.mapping.items()}
-        self.mapping_list = []
         # Position
         j = 0
         cdef double x, y, r
@@ -133,9 +116,10 @@ cdef class Planar(Verification):
             lower[j:j] = (x - r, y - r)
             self.mapping_list.append(i)
             j += 2
+        self.v_base = len(upper)
 
         # Length of links
-        cdef int b, c, d
+        cdef int a, b, c, d
         cdef VLink vlink
         for vlink in get_vlinks(self.vpoints):
             if len(vlink.points) < 2:
@@ -152,6 +136,19 @@ cdef class Planar(Verification):
                     pair = frozenset({c, d})
                     self.mapping[pair] = None
                     self.mapping_list.append(pair)
+
+        # Input nodes and angle range
+        for a, ((i, j), (start, end)) in enumerate(self.inputs.items()):
+            upper.append(start)
+            lower.append(end)
+            for a in range(i):
+                if a in same:
+                    i -= 1
+            for a in range(j):
+                if a in same:
+                    j -= 1
+        upper[self.v_base:] *= self.target_count
+        lower[self.v_base:] *= self.target_count
 
         self.upper = np_array(upper, dtype=np_float)
         self.lower = np_array(lower, dtype=np_float)
@@ -327,11 +324,12 @@ cdef class Planar(Verification):
 
         cdef double fitness = 0.
 
-        cdef int node
+        cdef int index, node
         cdef Coordinate coord
         cdef Coordinate[:] path
         for target_index in range(self.target_count):
-            if not self.solve(self.input_range[:, target_index]):
+            index = self.v_base + target_index
+            if not self.solve(v[index:index + self.target_count]):
                 return HUGE_VAL
             for node, path in self.target.items():
                 coord = self.data_dict[node, -1]
@@ -352,7 +350,7 @@ cdef class Planar(Verification):
                 self.mapping[m] = v[target_index]
                 target_index += 1
 
-        self.solve(self.input_range[:, self.target_count - 1])
+        self.solve(v[self.v_base:self.v_base + self.target_count])
         expressions = []
         cdef int i
         cdef double x1, y1, x2, y2
