@@ -11,7 +11,7 @@ class Planar(Verification):
     def __init__(self, mech: Dict[str, Any]) -> None:
         """mech = {
             'expression': List[VPoint],
-            'input': {(b0, d0): (start, end), ...},
+            'input': OrderedDict([((b0, d0), [start, end]), ...]),
             'placement': {pt: (x, y, r)},
             'target': {pt: [(x0, y0), (x1, y1), ...]},
             'same': {pt: match_to_pt},
