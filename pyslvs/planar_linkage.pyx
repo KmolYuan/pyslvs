@@ -54,20 +54,20 @@ cdef class Planar(Verification):
 
     def __cinit__(self, dict mech):
         """mech = {
-            'Expression': List[VPoint],
+            'expression': List[VPoint],
             'input': {(b0, d0): (start, end), ...},
-            'Placement': {pt: (x, y, r)},
-            'Target': {pt: [(x0, y0), (x1, y1), ...]},
+            'placement': {pt: (x, y, r)},
+            'target': {pt: [(x0, y0), (x1, y1), ...]},
             'same': {pt: match_to_pt},
             # Bound has no position data.
             'upper': List[float],
             'lower': List[float],
         }
         """
-        placement = mech.get('Placement', {})
+        placement = mech.get('placement', {})
         if len(placement) == 0:
             raise ValueError("no grounded joint")
-        target = mech.get('Target', {})
+        target = mech.get('target', {})
         if len(target) == 0:
             raise ValueError("no target joint")
         check_set = set(map(len, target.values()))
@@ -88,7 +88,7 @@ cdef class Planar(Verification):
             self.target[i] = path
 
         # Expressions
-        self.vpoints = list(mech.get('Expression', []))
+        self.vpoints = list(mech.get('expression', []))
         self.inputs = OrderedDict(mech.get('input', {}))
         status = {}
         self.exprs = vpoints_configure(self.vpoints, tuple(self.inputs.keys()), status).stack

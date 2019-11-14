@@ -10,7 +10,7 @@ __email__ = "pyslvs@gmail.com"
 
 collection_list = {
     "Four bar linkage mechanism": {
-        'Expression':
+        'expression':
             "M["
             "J[R, P[-70, -70], L[ground, L1]],"
             "J[R, P[70, -70], L[ground, L2]],"
@@ -19,15 +19,15 @@ collection_list = {
             "J[R, P[0, 63.5], L[L3]]"
             "]",
         'input': {(0, 2): (0, 360)},
-        'Graph': ((0, 1), (0, 2), (1, 3), (2, 3)),
-        'Placement': {0: None, 1: None},
-        'Target': {4: None},
+        'graph': ((0, 1), (0, 2), (1, 3), (2, 3)),
+        'placement': {0: None, 1: None},
+        'target': {4: None},
         'cus': {4: 3},
         'same': {},
     },
 
     "Six bar linkage mechanism": {
-        'Expression':
+        'expression':
             "M["
             "J[R, P[5.8511, -103.2831], L[ground, L2]], "
             "J[R, P[-71.3292, -109.7644], L[ground, L3]], "
@@ -37,16 +37,16 @@ collection_list = {
             "J[R, P[112.2951, 18.3663], L[L1, L5]], "
             "J[R, P[-117.0519, -18.5671], L[L3, L4]]"
             "]",
-        'Graph': ((0, 2), (2, 1), (0, 3), (3, 4), (4, 1), (0, 5), (5, 1)),
-        'Placement': {0: None, 1: None, 2: None},
-        'Target': {4: None},
+        'graph': ((0, 2), (2, 1), (0, 3), (3, 4), (4, 1), (0, 5), (5, 1)),
+        'placement': {0: None, 1: None, 2: None},
+        'target': {4: None},
         'cus': {},
         'input': {(1, 6): (0, 360)},
         'same': {},
     },
 
     "Eight bar linkage mechanism": {
-        'Expression':
+        'expression':
             "M["
             "J[R, P[30.5, 10.5], L[ground, L1]],"
             "J[R, P[-14.5, 10.5], L[ground, L4, L5]],"
@@ -58,7 +58,7 @@ collection_list = {
             "J[R, P[35.5, -107.5], L[L7]]"
             "]",
         'input': {(0, 3): (0, 360)},
-        'Graph': (
+        'graph': (
             (0, 1),
             (0, 4),
             (0, 5),
@@ -70,14 +70,14 @@ collection_list = {
             (4, 6),
             (6, 7),
         ),
-        'Placement': {0: None, 1: None},
-        'Target': {10: None},
+        'placement': {0: None, 1: None},
+        'target': {10: None},
         'cus': {10: 7},
         'same': {2: 1, 4: 3, 7: 6},
     },
 
     "Ball lifter linkage mechanism": {
-        'Expression':
+        'expression':
             "M["
             "J[R, P[36.5, -59.5], L[ground, L1]],"
             "J[R, P[10, -94.12], L[ground, L4]],"
@@ -95,7 +95,7 @@ collection_list = {
             "J[R, P[44.12, 107.65], L[L8]]"
             "]",
         'input': {(0, 5): (0, 360)},
-        'Graph': (
+        'graph': (
             (0, 1),
             (0, 4),
             (0, 6),
@@ -110,8 +110,8 @@ collection_list = {
             (5, 6),
             (8, 9),
         ),
-        'Placement': {0: None, 1: None, 2: None, 3: None, 4: None},
-        'Target': {13: None, 14: None},
+        'placement': {0: None, 1: None, 2: None, 3: None, 4: None},
+        'target': {13: None, 14: None},
         'cus': {13: 5, 14: 8},
         'same': {6: 5},
     },

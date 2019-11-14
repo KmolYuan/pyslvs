@@ -1,6 +1,6 @@
 # Version 19.11
 
-+ None
++ All setting keys turn into lowercase.
 
 # Version 19.10
 
