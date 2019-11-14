@@ -52,8 +52,8 @@ cdef class Planar(Verification):
     cdef ndarray upper, lower
     cdef SolverSystem bfgs_solver
 
-    def __cinit__(self, dict mech_params):
-        """mech_params = {
+    def __cinit__(self, dict mech):
+        """mech = {
             'Expression': List[VPoint],
             'input': {(b0, d0): (start, end), ...},
             'Placement': {pt: (x, y, r)},
@@ -64,10 +64,10 @@ cdef class Planar(Verification):
             'lower': List[float],
         }
         """
-        placement = mech_params.get('Placement', {})
+        placement = mech.get('Placement', {})
         if len(placement) == 0:
             raise ValueError("no grounded joint")
-        target = mech_params.get('Target', {})
+        target = mech.get('Target', {})
         if len(target) == 0:
             raise ValueError("no target joint")
         check_set = set(map(len, target.values()))
@@ -77,7 +77,7 @@ cdef class Planar(Verification):
 
         # Change the target paths into memory view.
         self.target = {}
-        same = mech_params.get('same', {})
+        same = mech.get('same', {})
         cdef int i, j
         cdef Coordinate[:] path
         for i in target:
@@ -88,8 +88,8 @@ cdef class Planar(Verification):
             self.target[i] = path
 
         # Expressions
-        self.vpoints = list(mech_params.get('Expression', []))
-        self.inputs = OrderedDict(mech_params.get('input', {}))
+        self.vpoints = list(mech.get('Expression', []))
+        self.inputs = OrderedDict(mech.get('input', {}))
         status = {}
         self.exprs = vpoints_configure(self.vpoints, tuple(self.inputs.keys()), status).stack
         self.bfgs_mode = not all(status.values())
@@ -102,8 +102,8 @@ cdef class Planar(Verification):
         self.mapping_list = []
 
         # Bounds
-        upper = list(mech_params.get('upper', []))
-        lower = list(mech_params.get('lower', []))
+        upper = list(mech.get('upper', []))
+        lower = list(mech.get('lower', []))
         if len(upper) != len(lower):
             raise ValueError("upper and lower should be in the same size")
 
