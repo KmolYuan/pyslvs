@@ -121,7 +121,7 @@
 
 # Version 18.10
 
-+ Improvements of "Adesign" kernel.
++ Improvements of "metaheuristics" kernel.
 + Three types of degenerate filter for 'topo' function.
 + High performance improvements of atlas algorithm.
 

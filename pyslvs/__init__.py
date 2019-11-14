@@ -43,13 +43,7 @@ from .tinycadlib import (
     expr_solving,
     data_collecting,
 )
-from .Adesign import (
-    Verification,
-    AlgorithmBase,
-    Genetic,
-    Firefly,
-    Differential,
-)
+from . import metaheuristics as _  # Preload module
 from .planar_linkage import Planar
 from .number import link_synthesis, contracted_link_synthesis
 from .graph import (
@@ -79,9 +73,6 @@ from .efd import efd_fitting
 
 __all__ = [
     '__version__',
-    'Genetic',
-    'Firefly',
-    'Differential',
     'Coordinate',
     'plap',
     'pllp',
@@ -121,7 +112,5 @@ __all__ = [
     'LinkArgs',
     'example_list',
     'collection_list',
-    'Verification',
-    'AlgorithmBase',
     'efd_fitting',
 ]

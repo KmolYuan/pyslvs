@@ -16,7 +16,7 @@ from numpy import array as np_array, float64 as np_float
 from libc.math cimport HUGE_VAL, NAN
 from libcpp.list cimport list as clist
 from numpy cimport ndarray
-from .Adesign.verify cimport Verification
+from .metaheuristics.verify cimport Verification
 from .expression cimport get_vlinks, VJoint, VPoint, VLink
 from .triangulation cimport (
     vpoints_configure,

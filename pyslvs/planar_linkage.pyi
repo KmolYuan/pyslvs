@@ -2,7 +2,7 @@
 
 from typing import Dict, Any
 from numpy import ndarray
-from .Adesign.verify import Verification
+from .metaheuristics.verify import Verification
 
 class Planar(Verification):
 

@@ -29,7 +29,7 @@ def find_version(*path):
 
 src_path = 'pyslvs'
 bfgs_path = pth_join(src_path, 'bfgs_solver')
-adesign_path = pth_join(src_path, 'Adesign')
+metaheuristics_path = pth_join(src_path, 'metaheuristics')
 macros = [('_USE_MATH_DEFINES', None), ('M_PI', 'PI')]
 compile_args = ['-O3', '-Wno-cpp', '-std=c++17']
 if system() == 'Windows':
@@ -50,7 +50,7 @@ ext_modules = [Extension(
     language="c++",
     include_dirs=[bfgs_path]
 )]
-for place in [src_path, adesign_path]:
+for place in [src_path, metaheuristics_path]:
     for source in listdir(place):
         if not source.endswith('.pyx'):
             continue
