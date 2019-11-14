@@ -1,6 +1,7 @@
 # Version 19.11
 
 + All setting keys turn into lowercase.
++ Rename submodule "Adesign" to "metaheuristics".
 
 # Version 19.10
 
