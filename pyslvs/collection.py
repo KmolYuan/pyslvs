@@ -18,7 +18,7 @@ collection_list = {
             "J[R, P[70, 12.5], L[L2, L3]],"
             "J[R, P[0, 63.5], L[L3]]"
             "]",
-        'input': {(0, 2): {0, 360}},
+        'input': {(0, 2): (0, 360)},
         'Graph': ((0, 1), (0, 2), (1, 3), (2, 3)),
         'Placement': {0: None, 1: None},
         'Target': {4: None},
@@ -41,7 +41,7 @@ collection_list = {
         'Placement': {0: None, 1: None, 2: None},
         'Target': {4: None},
         'cus': {},
-        'input': {(1, 6): {0, 360}},
+        'input': {(1, 6): (0, 360)},
         'same': {},
     },
 
@@ -57,7 +57,7 @@ collection_list = {
             "J[R, P[-37.5, -48.5], L[L6, L7]],"
             "J[R, P[35.5, -107.5], L[L7]]"
             "]",
-        'input': {(0, 3): {0, 360}},
+        'input': {(0, 3): (0, 360)},
         'Graph': (
             (0, 1),
             (0, 4),
