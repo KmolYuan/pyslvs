@@ -2,6 +2,7 @@
 
 + All setting keys turn into lowercase.
 + Rename submodule "Adesign" to "metaheuristics".
++ Replace "time.perf_counter()" to "time.process_time()".
 
 # Version 19.10
 

@@ -15,7 +15,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from time import perf_counter
+from time import process_time
 from logging import getLogger
 from collections import Counter
 cimport cython
@@ -475,7 +475,7 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
         return []
 
     # Initial time
-    cdef double t0 = perf_counter()
+    cdef double t0 = process_time()
     cdef int_t[:] link_num = np_array(link_num_list, ndmin=1, dtype=np_int)
     logger.debug(f"Link assortment: {list(link_num)}")
 
@@ -493,7 +493,7 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
     # Synthesis of contracted graphs
     cg_list = []
     _contracted_graph(cg_list, m_link, stop_func)
-    logger.debug(f"Contracted graph(s): {len(cg_list)}, time: {perf_counter() - t0}")
+    logger.debug(f"Contracted graph(s): {len(cg_list)}, time: {process_time() - t0}")
     return cg_list
 
 
@@ -515,7 +515,7 @@ cpdef list conventional_graph(
         stop function can check the break point and send response.
     """
     # Initial time
-    cdef double t0 = perf_counter()
+    cdef double t0 = process_time()
     logger.debug(f"Contracted link assortment: {list(c_j_list)}")
 
     # Synthesis of contracted link and multiple link combination.
@@ -545,5 +545,5 @@ cpdef list conventional_graph(
     _graph_atlas(result, cg_list, _labels(c_j, 1, 0), no_degenerate, stop_func)
 
     # Return graph list and time
-    logger.debug(f"Count: {len(result)}, time: {perf_counter() - t0}")
+    logger.debug(f"Count: {len(result)}, time: {process_time() - t0}")
     return result
