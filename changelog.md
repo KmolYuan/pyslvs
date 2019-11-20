@@ -3,6 +3,7 @@
 + All setting keys turn into lowercase.
 + Rename submodule "Adesign" to "metaheuristics".
 + Replace "time.perf_counter()" to "time.process_time()".
++ Correction of the random seed in Cython module.
 
 # Version 19.10
 
