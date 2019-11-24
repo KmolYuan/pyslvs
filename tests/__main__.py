@@ -21,9 +21,6 @@ from pyslvs import (
     expr_solving,
     data_collecting,
     Planar,
-    Genetic,
-    Firefly,
-    Differential,
     link_synthesis,
     contracted_link_synthesis,
     conventional_graph,
@@ -37,6 +34,12 @@ from pyslvs import (
     parse_vpoints,
     example_list,
     collection_list,
+)
+from pyslvs.metaheuristics import (
+    Genetic,
+    Firefly,
+    Differential,
+    TeachingLearning,
 )
 
 _four_bar = deepcopy(collection_list["Four bar linkage mechanism"])
@@ -321,6 +324,16 @@ class CoreTest(TestCase):
             'NP': 400,
             'F': 0.6,
             'CR': 0.9,
+        }).run()
+        self.assertTrue(10 >= t_f[1][0] - t_f[0][0])
+
+    def test_algorithm_tlbo(self):
+        """Teaching learning based optimization."""
+        _, t_f = TeachingLearning(_planar_object, {
+            'max_time': 1,
+            'report': 10,
+            # TLBO
+            'class_size': 50,
         }).run()
         self.assertTrue(10 >= t_f[1][0] - t_f[0][0])
 

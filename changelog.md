@@ -4,6 +4,7 @@
 + Rename submodule "Adesign" to "metaheuristics".
 + Replace "time.perf_counter()" to "time.process_time()".
 + Correction of the random seed in Cython module.
++ Implement TLBO.
 
 # Version 19.10
 
