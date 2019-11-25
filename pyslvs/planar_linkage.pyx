@@ -15,7 +15,6 @@ from numpy import array as np_array, float64 as np_float
 # Not a number and a large fitness. Infinity cannot be used for a chart.
 from libc.math cimport HUGE_VAL, NAN
 from libcpp.list cimport list as clist
-from numpy cimport ndarray
 from .metaheuristics.verify cimport Verification
 from .expression cimport get_vlinks, VJoint, VPoint, VLink
 from .triangulation cimport (
@@ -49,7 +48,7 @@ cdef class Planar(Verification):
     cdef list vpoints, mapping_list
     cdef dict placement, target, mapping, mapping_r, data_dict
     cdef object inputs
-    cdef ndarray upper, lower
+    cdef double[:] upper, lower
     cdef SolverSystem bfgs_solver
 
     def __cinit__(self, dict mech):
@@ -160,10 +159,10 @@ cdef class Planar(Verification):
         # Result list
         self.data_dict = {}
 
-    cdef ndarray[double, ndim=1] get_upper(self):
+    cdef double[:] get_upper(self):
         return self.upper
 
-    cdef ndarray[double, ndim=1] get_lower(self):
+    cdef double[:] get_lower(self):
         return self.lower
 
     cpdef bint is_two_kernel(self):
@@ -306,7 +305,7 @@ cdef class Planar(Verification):
 
         return True
 
-    cdef double fitness(self, ndarray[double, ndim=1] v):
+    cdef double fitness(self, double[:] v):
         """Chromosome format: (decided by upper and lower)
 
         v: [Ax, Ay, Dx, Dy, ..., L0, L1, ..., A00, A01, ..., A10, A11, ...]
@@ -337,7 +336,7 @@ cdef class Planar(Verification):
 
         return fitness
 
-    cpdef object result(self, ndarray[double, ndim=1] v):
+    cpdef object result(self, double[:] v):
         """Return the last answer."""
         cdef int target_index = 0
         cdef VPoint vpoint
