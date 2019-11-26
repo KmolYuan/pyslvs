@@ -11,6 +11,7 @@ import unittest
 from unittest import TestCase
 from math import sqrt, radians
 from copy import deepcopy
+from .obj_func import TestObj
 from pyslvs import (
     Coordinate,
     SolverSystem,
@@ -40,6 +41,8 @@ from pyslvs.metaheuristics import (
     Firefly,
     Differential,
     TeachingLearning,
+    AlgorithmType,
+    PARAMS,
 )
 
 _four_bar = deepcopy(collection_list["Four bar linkage mechanism"])
@@ -288,54 +291,47 @@ class CoreTest(TestCase):
 
     def test_algorithm_rga(self):
         """Real-coded genetic algorithm."""
-        _, t_f = Genetic(_planar_object, {
-            'max_time': 1,
-            'report': 10,
-            # Genetic
-            'nPop': 500,
-            'pCross': 0.95,
-            'pMute': 0.05,
-            'pWin': 0.95,
-            'bDelta': 5.,
-        }).run()
+        settings = {'max_time': 1, 'report': 10}
+        settings.update(PARAMS[AlgorithmType.RGA])
+        _, t_f = Genetic(_planar_object, settings).run()
         self.assertTrue(10 >= t_f[1][0] - t_f[0][0])
 
     def test_algorithm_firefly(self):
         """Firefly algorithm."""
-        _, t_f = Firefly(_planar_object, {
-            'max_time': 1,
-            'report': 10,
-            # Firefly
-            'n': 80,
-            'alpha': 0.01,
-            'beta_min': 0.2,
-            'gamma': 1.,
-            'beta0': 1.,
-        }).run()
+        settings = {'max_time': 1, 'report': 10}
+        settings.update(PARAMS[AlgorithmType.Firefly])
+        _, t_f = Firefly(_planar_object, settings).run()
         self.assertTrue(10 >= t_f[1][0] - t_f[0][0])
 
     def test_algorithm_de(self):
         """Differential evolution."""
-        _, t_f = Differential(_planar_object, {
-            'max_time': 1,
-            'report': 10,
-            # DE
-            'strategy': 1,
-            'NP': 400,
-            'F': 0.6,
-            'CR': 0.9,
-        }).run()
+        settings = {'max_time': 1, 'report': 10}
+        settings.update(PARAMS[AlgorithmType.DE])
+        _, t_f = Differential(_planar_object, settings).run()
         self.assertTrue(10 >= t_f[1][0] - t_f[0][0])
 
     def test_algorithm_tlbo(self):
         """Teaching learning based optimization."""
-        _, t_f = TeachingLearning(_planar_object, {
-            'max_time': 1,
-            'report': 10,
-            # TLBO
-            'class_size': 50,
-        }).run()
+        settings = {'max_time': 1, 'report': 10}
+        settings.update(PARAMS[AlgorithmType.TLBO])
+        _, t_f = TeachingLearning(_planar_object, settings).run()
         self.assertTrue(10 >= t_f[1][0] - t_f[0][0])
+
+    def test_obj_func(self):
+        """Test with a objective function."""
+        settings = {'max_time': 1, 'report': 10}
+        obj = TestObj()
+        for option, Algorithm in [
+            (AlgorithmType.RGA, Genetic),
+            (AlgorithmType.Firefly, Firefly),
+            (AlgorithmType.DE, Differential),
+            (AlgorithmType.TLBO, TeachingLearning),
+        ]:
+            settings.update(PARAMS[option])
+            (x, fval), _ = Algorithm(obj, settings).run()
+            self.assertAlmostEqual(0., round(x[0]))
+            self.assertAlmostEqual(0., round(x[1]))
+            self.assertAlmostEqual(0., round(fval))
 
 
 if __name__ == '__main__':

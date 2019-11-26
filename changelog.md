@@ -5,6 +5,7 @@
 + Replace "time.perf_counter()" to "time.process_time()".
 + Correction of the random seed in Cython module.
 + Implement TLBO.
++ Add a simple test objective function.
 
 # Version 19.10
 

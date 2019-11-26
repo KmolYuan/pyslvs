@@ -104,8 +104,8 @@ venv.bak/
 .mypy_cache/
 
 #Cython source
-pyslvs/*.c
 pyslvs/*.cpp
+tests/*.cpp
 
 #Qt project
 *.pro.user

@@ -8,6 +8,7 @@ __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
 import re
+from sys import argv
 from os import listdir
 from os.path import sep, join as pth_join
 from setuptools import setup, Extension, find_packages
@@ -50,7 +51,10 @@ ext_modules = [Extension(
     language="c++",
     include_dirs=[bfgs_path]
 )]
-for place in [src_path, metaheuristics_path]:
+paths = [src_path, metaheuristics_path]
+if 'test' in argv:
+    paths.append('tests')
+for place in paths:
     for source in listdir(place):
         if not source.endswith('.pyx'):
             continue
@@ -93,7 +97,7 @@ setup(
     long_description_content_type='text/markdown',
     url="https://github.com/KmolYuan/pyslvs",
     packages=find_packages(exclude=('tests',)),
-    package_data={'': ["*.pyi", "*.pxd"], 'pyslvs': ['py.typed']},
+    package_data={'': ['*.pyi', '*.pxd', '*.pxy'], 'pyslvs': ['py.typed']},
     ext_modules=ext_modules,
     cmdclass={'build_ext': Build},
     zip_safe=False,
