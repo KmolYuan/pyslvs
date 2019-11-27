@@ -2,9 +2,9 @@
 
 from typing import Dict, Any
 from numpy import ndarray
-from .metaheuristics.verify import Verification
+from .metaheuristics.utility import Objective
 
-class Planar(Verification):
+class Planar(Objective[str]):
 
     """This class is used to verified kinematics of the linkage mechanism."""
 
@@ -20,6 +20,12 @@ class Planar(Verification):
             'lower': List[float],
         }
         """
+        ...
+
+    def get_upper(self) -> ndarray:
+        ...
+
+    def get_lower(self) -> ndarray:
         ...
 
     def is_two_kernel(self) -> bool:

@@ -9,9 +9,9 @@ __email__ = "pyslvs@gmail.com"
 
 import unittest
 from unittest import TestCase
+from typing import Type
 from math import sqrt, radians
 from copy import deepcopy
-from .obj_func import TestObj
 from pyslvs import (
     Coordinate,
     SolverSystem,
@@ -37,6 +37,7 @@ from pyslvs import (
     collection_list,
 )
 from pyslvs.metaheuristics import (
+    AlgorithmBase,
     Genetic,
     Firefly,
     Differential,
@@ -44,6 +45,7 @@ from pyslvs.metaheuristics import (
     AlgorithmType,
     PARAMS,
 )
+from .obj_func import TestObj
 
 _four_bar = deepcopy(collection_list["Four bar linkage mechanism"])
 _four_bar.update({
@@ -289,33 +291,30 @@ class CoreTest(TestCase):
                     count += factor * (i + 2)
                 self.assertEqual(nj, int(count / 2))
 
+    def algorithm_generic(self, t: AlgorithmType, cls: Type[AlgorithmBase]):
+        """Generic algorithm setup."""
+        settings = {'max_time': 1, 'report': 10}
+        settings.update(PARAMS[t])
+        algorithm = cls(_planar_object, settings)
+        algorithm.run()
+        t_f = algorithm.history()
+        self.assertTrue(10 >= t_f[1][0] - t_f[0][0])
+
     def test_algorithm_rga(self):
         """Real-coded genetic algorithm."""
-        settings = {'max_time': 1, 'report': 10}
-        settings.update(PARAMS[AlgorithmType.RGA])
-        _, t_f = Genetic(_planar_object, settings).run()
-        self.assertTrue(10 >= t_f[1][0] - t_f[0][0])
+        self.algorithm_generic(AlgorithmType.RGA, Genetic)
 
     def test_algorithm_firefly(self):
         """Firefly algorithm."""
-        settings = {'max_time': 1, 'report': 10}
-        settings.update(PARAMS[AlgorithmType.Firefly])
-        _, t_f = Firefly(_planar_object, settings).run()
-        self.assertTrue(10 >= t_f[1][0] - t_f[0][0])
+        self.algorithm_generic(AlgorithmType.Firefly, Firefly)
 
     def test_algorithm_de(self):
         """Differential evolution."""
-        settings = {'max_time': 1, 'report': 10}
-        settings.update(PARAMS[AlgorithmType.DE])
-        _, t_f = Differential(_planar_object, settings).run()
-        self.assertTrue(10 >= t_f[1][0] - t_f[0][0])
+        self.algorithm_generic(AlgorithmType.DE, Differential)
 
     def test_algorithm_tlbo(self):
         """Teaching learning based optimization."""
-        settings = {'max_time': 1, 'report': 10}
-        settings.update(PARAMS[AlgorithmType.TLBO])
-        _, t_f = TeachingLearning(_planar_object, settings).run()
-        self.assertTrue(10 >= t_f[1][0] - t_f[0][0])
+        self.algorithm_generic(AlgorithmType.TLBO, TeachingLearning)
 
     def test_obj_func(self):
         """Test with a objective function."""
@@ -328,7 +327,7 @@ class CoreTest(TestCase):
             (AlgorithmType.TLBO, TeachingLearning),
         ]:
             settings.update(PARAMS[option])
-            (x, fval), _ = Algorithm(obj, settings).run()
+            x, fval = Algorithm(obj, settings).run()
             self.assertAlmostEqual(0., round(x[0]))
             self.assertAlmostEqual(0., round(x[1]))
             self.assertAlmostEqual(0., round(fval))

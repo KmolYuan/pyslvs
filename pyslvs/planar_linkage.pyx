@@ -12,10 +12,9 @@ email: pyslvs@gmail.com
 cimport cython
 from collections import OrderedDict
 from numpy import array as np_array, float64 as np_float
-# Not a number and a large fitness. Infinity cannot be used for a chart.
 from libc.math cimport HUGE_VAL, NAN
 from libcpp.list cimport list as clist
-from .metaheuristics.verify cimport Verification
+from .metaheuristics.utility cimport Objective
 from .expression cimport get_vlinks, VJoint, VPoint, VLink
 from .triangulation cimport (
     vpoints_configure,
@@ -38,7 +37,7 @@ from .tinycadlib cimport (
 
 
 @cython.final
-cdef class Planar(Verification):
+cdef class Planar(Objective):
 
     """This class is used to verified kinematics of the linkage mechanism."""
 
@@ -73,7 +72,6 @@ cdef class Planar(Verification):
         if len(check_set) != 1:
             raise ValueError("target paths should be in the same size")
         self.target_count = check_set.pop()
-
         # Change the target paths into memory view.
         self.target = {}
         same = mech.get('same', {})
@@ -85,7 +83,6 @@ cdef class Planar(Verification):
                 if j in same:
                     i -= 1
             self.target[i] = path
-
         # Expressions
         self.vpoints = list(mech.get('expression', []))
         self.inputs = OrderedDict(mech.get('input', {}))
@@ -94,18 +91,15 @@ cdef class Planar(Verification):
         self.bfgs_mode = not all(status.values())
         # BFGS solver mode
         self.bfgs_solver = None
-
         # Data mapping
         self.mapping = {i: f"P{i}" for i in range(len(self.vpoints))}
         self.mapping_r = {v: k for k, v in self.mapping.items()}
         self.mapping_list = []
-
         # Bounds
         upper = list(mech.get('upper', []))
         lower = list(mech.get('lower', []))
         if len(upper) != len(lower):
             raise ValueError("upper and lower should be in the same size")
-
         # Position
         j = 0
         cdef double x, y, r
@@ -116,7 +110,6 @@ cdef class Planar(Verification):
             self.mapping_list.append(i)
             j += 2
         self.v_base = len(upper)
-
         # Length of links
         cdef int a, b, c, d
         cdef VLink vlink
@@ -135,7 +128,6 @@ cdef class Planar(Verification):
                     pair = frozenset({c, d})
                     self.mapping[pair] = None
                     self.mapping_list.append(pair)
-
         # Input nodes and angle range
         for a, ((i, j), (start, end)) in enumerate(self.inputs.items()):
             upper.append(start)
@@ -148,21 +140,19 @@ cdef class Planar(Verification):
                     j -= 1
         upper[self.v_base:] *= self.target_count
         lower[self.v_base:] *= self.target_count
-
         self.upper = np_array(upper, dtype=np_float)
         self.lower = np_array(lower, dtype=np_float)
         # Swap upper and lower bound if reversed.
         for i in range(len(self.upper)):
             if self.upper[i] < self.lower[i]:
                 self.upper[i], self.lower[i] = self.lower[i], self.upper[i]
-
         # Result list
         self.data_dict = {}
 
-    cdef double[:] get_upper(self):
+    cpdef double[:] get_upper(self):
         return self.upper
 
-    cdef double[:] get_lower(self):
+    cpdef double[:] get_lower(self):
         return self.lower
 
     cpdef bint is_two_kernel(self):
