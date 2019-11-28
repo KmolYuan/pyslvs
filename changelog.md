@@ -6,6 +6,7 @@
 + Correction of the random seed in Cython module.
 + Implement TLBO.
 + Add a simple test objective function.
++ Remove the entry point of unit test.
 
 # Version 19.10
 
