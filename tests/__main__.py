@@ -7,9 +7,7 @@ __copyright__ = "Copyright (C) 2016-2019"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
-import unittest
 from unittest import TestCase
-from typing import Type
 from math import sqrt, radians
 from copy import deepcopy
 from pyslvs import (
@@ -36,15 +34,7 @@ from pyslvs import (
     example_list,
     collection_list,
 )
-from pyslvs.metaheuristics import (
-    AlgorithmBase,
-    Genetic,
-    Firefly,
-    Differential,
-    TeachingLearning,
-    AlgorithmType,
-    PARAMS,
-)
+from pyslvs.metaheuristics import ALGORITHM, AlgorithmType, PARAMS
 from .obj_func import TestObj
 
 _four_bar = deepcopy(collection_list["Four bar linkage mechanism"])
@@ -291,47 +281,38 @@ class CoreTest(TestCase):
                     count += factor * (i + 2)
                 self.assertEqual(nj, int(count / 2))
 
-    def algorithm_generic(self, t: AlgorithmType, cls: Type[AlgorithmBase]):
+    def algorithm_generic(self, t: AlgorithmType):
         """Generic algorithm setup."""
         settings = {'max_time': 1, 'report': 10}
         settings.update(PARAMS[t])
-        algorithm = cls(_planar_object, settings)
+        algorithm = ALGORITHM[t](_planar_object, settings)
         algorithm.run()
         t_f = algorithm.history()
         self.assertTrue(10 >= t_f[1][0] - t_f[0][0])
 
     def test_algorithm_rga(self):
         """Real-coded genetic algorithm."""
-        self.algorithm_generic(AlgorithmType.RGA, Genetic)
+        self.algorithm_generic(AlgorithmType.RGA)
 
     def test_algorithm_firefly(self):
         """Firefly algorithm."""
-        self.algorithm_generic(AlgorithmType.Firefly, Firefly)
+        self.algorithm_generic(AlgorithmType.Firefly)
 
     def test_algorithm_de(self):
         """Differential evolution."""
-        self.algorithm_generic(AlgorithmType.DE, Differential)
+        self.algorithm_generic(AlgorithmType.DE)
 
     def test_algorithm_tlbo(self):
         """Teaching learning based optimization."""
-        self.algorithm_generic(AlgorithmType.TLBO, TeachingLearning)
+        self.algorithm_generic(AlgorithmType.TLBO)
 
     def test_obj_func(self):
         """Test with a objective function."""
         settings = {'max_time': 1, 'report': 10}
         obj = TestObj()
-        for option, Algorithm in [
-            (AlgorithmType.RGA, Genetic),
-            (AlgorithmType.Firefly, Firefly),
-            (AlgorithmType.DE, Differential),
-            (AlgorithmType.TLBO, TeachingLearning),
-        ]:
-            settings.update(PARAMS[option])
-            x, fval = Algorithm(obj, settings).run()
+        for t in PARAMS:
+            settings.update(PARAMS[t])
+            x, fval = ALGORITHM[t](obj, settings).run()
             self.assertAlmostEqual(0., round(x[0]))
             self.assertAlmostEqual(0., round(x[1]))
             self.assertAlmostEqual(0., round(fval))
-
-
-if __name__ == '__main__':
-    unittest.main()
