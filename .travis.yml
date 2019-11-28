@@ -32,8 +32,7 @@ matrix:
       env: PYTHON=3.7.0
       before_install:
         - brew update
-        - brew install pyenv || brew link --overwrite pyenv
-        - brew upgrade pyenv
+        - brew upgrade pyenv || true
         - export PATH="/Users/travis/.pyenv/shims:${PATH}"
         - pyenv install ${PYTHON}
         - pyenv global ${PYTHON}
