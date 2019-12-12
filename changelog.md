@@ -1,3 +1,7 @@
+# Version 19.12
+
++ None
+
 # Version 19.11
 
 + All setting keys turn into lowercase.
