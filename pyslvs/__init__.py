@@ -1,34 +1,12 @@
 # -*- coding: utf-8 -*-
 
-"""Kernel of Pyslvs.
-
-This kernel can work without GUI.
-
-Modules:
-+ Solver:
-    + parser
-    + tinycadlib
-        + Sketch Solve solver
-    + triangulation
-+ Number synthesis:
-    + number
-+ Structure Synthesis:
-    + atlas
-+ Dimensional synthesis:
-    + planarlinkage
-    + rga
-    + firefly
-    + de
-
-Dependents:
-+ lark-parser
-"""
+"""Kernel of Pyslvs."""
 
 __author__ = "Yuan Chang"
 __copyright__ = "Copyright (C) 2016-2019"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
-__version__ = "19.12.0"
+__version__ = "20.01.0.dev0"
 
 from .expression import get_vlinks, VJoint, VPoint, VLink, Coordinate
 from .bfgs import SolverSystem
