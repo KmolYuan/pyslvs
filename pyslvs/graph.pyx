@@ -3,7 +3,7 @@
 
 """Graph class.
 
-The algorithms references:
+The algorithm reference:
 + NetworkX
 
 author: Yuan Chang

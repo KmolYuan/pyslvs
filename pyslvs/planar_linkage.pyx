@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3, embedsignature=True, cdivision=True
 
-"""The callable classes of the validation in algorithm.
+"""The callable classes of the validation in the algorithm.
 
 author: Yuan Chang
 copyright: Copyright (C) 2016-2019

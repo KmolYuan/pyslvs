@@ -3,7 +3,7 @@
 
 """Structure synthesis.
 
-The algorithms references:
+The algorithm reference:
 + On the Number Synthesis of Kinematic Chains
     + author: Hong-Sen Yan, Yu-Ting Chiu
     + Mechanism and Machine Theory, Volume 89, 2015, Pages 128-144, ISSN 0094-114X
