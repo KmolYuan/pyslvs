@@ -10,7 +10,7 @@ The algorithm reference:
     + https://doi.org/10.1016/j.mechmachtheory.2014.08.012
 
 author: Yuan Chang
-copyright: Copyright (C) 2016-2019
+copyright: Copyright (C) 2016-2020
 license: AGPL
 email: pyslvs@gmail.com
 """

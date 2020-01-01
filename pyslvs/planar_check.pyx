@@ -7,7 +7,7 @@ The algorithms references:
 + NetworkX
 
 author: Yuan Chang
-copyright: Copyright (C) 2016-2019
+copyright: Copyright (C) 2016-2020
 license: AGPL
 email: pyslvs@gmail.com
 """
