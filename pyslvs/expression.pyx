@@ -76,7 +76,7 @@ cdef class VPoint:
         double y,
         object color_func=None
     ):
-        self.links = tuple(links)
+        self.set_links(links)
         self.type = j_type
         self.type_str = ('R', 'P', 'RP')[j_type]
         self.angle = angle
@@ -105,7 +105,7 @@ cdef class VPoint:
 
     @staticmethod
     def r_joint(links: Iterable[str], x: double, y: double) -> VPoint:
-        """Create by coordinate."""
+        """Create by a coordinate."""
         return VPoint.c_r_joint(links, x, y)
 
     @staticmethod
@@ -114,7 +114,7 @@ cdef class VPoint:
 
     @staticmethod
     def slider_joint(links: Iterable[str], type_int: VJoint, angle: double, x: double, y: double) -> VPoint:
-        """Create by coordinate."""
+        """Create by a coordinate."""
         return VPoint.c_slider_joint(links, type_int, angle, x, y)
 
     @staticmethod
@@ -127,7 +127,7 @@ cdef class VPoint:
 
     @property
     def cx(self) -> float:
-        """X value of first current coordinate."""
+        """X value of the first current coordinate."""
         if self.type == VJoint.R:
             return self.c[0][0]
         else:
@@ -135,7 +135,7 @@ cdef class VPoint:
 
     @property
     def cy(self) -> float:
-        """Y value of first current coordinate."""
+        """Y value of the first current coordinate."""
         if self.type == VJoint.R:
             return self.c[0][1]
         else:
@@ -143,11 +143,11 @@ cdef class VPoint:
 
     cpdef void set_links(self, object links) except *:
         """Set links."""
-        self.links = tuple(links)
+        self.links = tuple([s for s in links if s])
 
     cpdef void replace_link(self, str link1, str link2) except *:
         """Replace link1 as link2."""
-        self.links = tuple([link2 if link == link1 else link for link in self.links])
+        self.set_links([link2 if link == link1 else link for link in self.links])
 
     cpdef void move(self, tuple c1, tuple c2 = None) except *:
         """Change the coordinates of this point."""

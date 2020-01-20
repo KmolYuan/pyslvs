@@ -1,6 +1,6 @@
 # Version 20.01
 
-+ None
++ Remove commas of link expression.
 
 # Version 19.12
 
