@@ -1,6 +1,7 @@
 # Version 20.01
 
 + Remove commas of link expression.
++ Turn on Cython "binding" option.
 
 # Version 19.12
 
