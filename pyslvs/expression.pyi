@@ -50,7 +50,7 @@ class VPoint:
     x: float
     y: float
     angle: float
-    HOLDER: ClassVar[VPoint]
+    HOLDER: ClassVar[VPoint] = ...
 
     def __init__(
         self,
@@ -180,8 +180,8 @@ class VLink:
     color_str: str
     color: Optional[_Color]
     points: Sequence[int]
-    HOLDER: ClassVar[VLink]
-    FRAME: ClassVar[str]
+    HOLDER: ClassVar[VLink] = ...
+    FRAME: ClassVar[str] = ...
 
     def __init__(
         self,
