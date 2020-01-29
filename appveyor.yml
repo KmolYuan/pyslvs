@@ -38,8 +38,7 @@ build_script:
 after_build:
   # PyPI deployment
   - IF "%APPVEYOR_REPO_TAG%"=="true"
-    IF "%APPVEYOR_REPO_NAME%"=="KmolYuan/pyslvs"
-    IF "%COMPILER%"=="mingw32" (
+    IF "%APPVEYOR_REPO_NAME%"=="KmolYuan/pyslvs" (
     pip install twine &&
     python setup.py bdist_wheel &&
     twine upload dist\*.whl --skip-existing
