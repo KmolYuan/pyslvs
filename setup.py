@@ -38,7 +38,7 @@ if system() == 'Windows':
     compile_args.append('-Wno-format')
 # Disable NumPy warning
 macros.append(('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION'))
-compiler_directives = {'binding': True}
+compiler_directives = {'binding': True, 'cdivision': True}
 
 ext_modules = [Extension(
     src_path.replace(sep, '.') + '.bfgs',
