@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from typing import Dict, Any
-from numpy import ndarray
+from numpy import ndarray, double
 from .metaheuristics import Objective
 
 class Planar(Objective[str]):
@@ -44,6 +44,10 @@ class Planar(Objective[str]):
 
     def get_lower(self) -> ndarray:
         """Return lower bound."""
+        ...
+
+    def fitness(self, v: ndarray) -> double:
+        """The fitness is the error between target path and self."""
         ...
 
     def is_two_kernel(self) -> bool:

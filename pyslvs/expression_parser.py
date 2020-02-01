@@ -60,14 +60,7 @@ def color_rgb(name: str) -> Tuple[int, int, int]:
     """Get color by name.
 
     Get RGB color data by name, return `(0, 0, 0)` if it is invalid.
-    Also support `"(R, G, B)"` string format. Usage:
-
-    ```python
-    >>> color_rgb("Black")
-    (0, 0, 0)
-    >>> color_rgb("(255, 255, 255)")
-    (255, 255, 255)
-    ```
+    Also support `"(R, G, B)"` string format.
     """
     if name in _color_list:
         return _color_list[name]
