@@ -38,7 +38,6 @@ cpdef Coordinate plap(
     Coordinate c2 = None,
     bint inverse = False
 ):
-    """Point on circle by angle."""
     cdef double a1 = atan2(c2.y - c1.y, c2.x - c1.x) if c2 is not None else 0
     if inverse:
         a1 -= a0
@@ -54,7 +53,6 @@ cpdef Coordinate pllp(
     Coordinate c2,
     bint inverse = False
 ):
-    """Two intersection points of two circles."""
     cdef double dx = c2.x - c1.x
     cdef double dy = c2.y - c1.y
     cdef double d = c1.distance(c2)
@@ -88,7 +86,6 @@ cpdef Coordinate plpp(
     Coordinate c3,
     bint inverse = False
 ):
-    """Two intersection points of a line and a circle."""
     cdef double line_mag = c2.distance(c3)
     cdef double dx = c3.x - c2.x
     cdef double dy = c3.y - c2.y
@@ -130,11 +127,9 @@ cdef inline str str_before(str s, str front):
 
 
 cpdef void expr_parser(ExpressionStack exprs, dict data_dict):
-    """Update data.
-
-    + exprs: [("PLAP", "P0", "L0", "a0", "P1", "P2"), ..."]
-    + data_dict: {'a0':0., 'L1':10., 'A':(30., 40.), ...}
-    """
+    # Update data
+    # + exprs: [("PLAP", "P0", "L0", "a0", "P1", "P2"), ..."]
+    # + data_dict: {'a0':0., 'L1':10., 'A':(30., 40.), ...}
     cdef symbol target
     cdef Coordinate coord, coord1, coord2, coord3
     cdef Expression expr
@@ -196,7 +191,6 @@ cpdef void expr_parser(ExpressionStack exprs, dict data_dict):
 
 
 cpdef int vpoint_dof(object vpoints):
-    """Degree of freedoms calculate from PMKS expressions."""
     # Joint with DOF 1
     cdef int j1 = 0
     # Joint with DOF 2
@@ -235,18 +229,6 @@ cdef inline int base_friend(int node, object vpoints):
 
 
 cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_):
-    """Data collecting process.
-
-    Input data:
-    + exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1', 'P2'), ...]
-    + mapping: {0: 'P0', 1: 'P2', 2: 'P3', 3: 'P4', ...}
-        + Specify position: {'P0': (10., 20.)}
-        + Specify link length: {(a, b): 20.}
-    + vpoints_: [VPoint0, VPoint1, VPoint2, ...]
-    + pos: [(x0, y0), (x1, y1), (x2, y2), ...]
-
-    vpoints will make a copy that we don't want to modified origin data.
-    """
     vpoints = list(vpoints_)
     # First, we create a "VLinks" that can help us to
     # find a relationship just like adjacency matrix.
@@ -422,13 +404,6 @@ cpdef list expr_solving(
     object vpoints,
     object angles = None
 ):
-    """Solving function.
-    
-    + exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1'), ...]
-    + mapping: {0: 'P0', ..., (0, 1): 20.0, ...}
-    + vpoints: [VPoint]
-    + angles: [[a0]: a0, [a1]: a1, ...]
-    """
     # Blank sequences
     if angles is None:
         angles = []

@@ -108,7 +108,6 @@ cdef class Graph:
     """NetworkX-like graph class."""
 
     def __cinit__(self, object edges):
-        """edges: [(l1, l2), ...]"""
         self.edges = tuple(edges)
         # vertices
         cdef int p1, p2
@@ -123,11 +122,9 @@ cdef class Graph:
         self.adj = {n: self.neighbors(n) for n in self.vertices}
 
     cpdef void add_vertices(self, object vertices):
-        """Add vertices from a iterable."""
         self.vertices = tuple(set(self.vertices) | set(vertices))
 
     cpdef void add_edge(self, int n1, int n2):
-        """Add two vertices for an edge."""
         self.edges += ((n1, n2),)
         self.vertices = tuple(set(self.vertices) | {n1, n2})
         cdef int n
@@ -135,7 +132,6 @@ cdef class Graph:
             self.adj[n] = self.neighbors(n)
 
     cpdef void add_path(self, object new_nodes):
-        """Add path from a iterable."""
         edges = list(self.edges)
         vertices = set(self.vertices)
         cdef int n1 = -1
@@ -172,11 +168,9 @@ cdef class Graph:
                 self.adj.pop(n, None)
 
     cpdef int dof(self):
-        """Return degrees of freedom."""
         return 3 * (len(self.vertices) - 1) - (2 * len(self.edges))
 
     cpdef inline tuple neighbors(self, int n):
-        """Neighbors except the node."""
         neighbors = []
         cdef int l1, l2
         for l1, l2 in self.edges:
@@ -187,11 +181,9 @@ cdef class Graph:
         return tuple(neighbors)
 
     cpdef dict degrees(self):
-        """Return number of neighbors per node."""
         return {n: len(neighbors) for n, neighbors in self.adj.items()}
 
     cpdef ullong degree_code(self):
-        """Return degree code of the graph."""
         if len(self.vertices) < 2:
             return 0
         # Create a new mapping
@@ -245,7 +237,6 @@ cdef class Graph:
         return code
 
     cpdef ndarray adjacency_matrix(self):
-        """Represent as adjacency matrix."""
         cdef int n = len(self.vertices)
         cdef ndarray am = zeros((n, n), dtype=np_uint)
         for n1, n2 in self.edges:
@@ -276,7 +267,6 @@ cdef class Graph:
         return len(vertices) == len(self.vertices)
 
     cpdef bint has_cut_link(self):
-        """Return True if the graph has any cut links."""
         cdef int n, d
         for n, d in self.degrees().items():
             # Only for multiple links.
@@ -287,11 +277,6 @@ cdef class Graph:
         return False
 
     cpdef bint is_degenerate(self):
-        """Return True if this kinematic chain is degenerate.
-
-        + Prue all multiple contracted links recursively.
-        + Check the DOF of sub-graph if it is lower then zero.
-        """
         if self.has_triangle():
             return True
         cdef int n1, n2
@@ -315,7 +300,6 @@ cdef class Graph:
         return g.dof() < 1
 
     cpdef bint has_triangle(self):
-        """Return True if the graph has triangle."""
         cdef int n1, n2
         for neighbors in self.adj.values():
             for n1 in neighbors:
@@ -327,20 +311,16 @@ cdef class Graph:
         return False
 
     cpdef bint is_isomorphic(self, Graph g):
-        """Return True if two graphs is isomorphic."""
         return self.is_isomorphic_vf2(g)
 
     cpdef bint is_isomorphic_vf2(self, Graph g):
-        """Compare isomorphism by VF2 algorithm."""
         cdef GraphMatcher gm_gh = GraphMatcher.__new__(GraphMatcher, self, g)
         return gm_gh.is_isomorphic()
 
     cpdef bint is_isomorphic_degree_code(self, Graph g):
-        """Compare isomorphism by degree code algorithm."""
         return self.degree_code() == g.degree_code()
 
     cpdef Graph duplicate(self, object vertices, int times):
-        """Make the graph duplicate specific nodes. Return a new graph."""
         if times < 1:
             raise ValueError("please input a number larger than 1.")
         cdef int max_num = max(self.vertices) + 1
@@ -362,11 +342,9 @@ cdef class Graph:
         return Graph.__new__(Graph, edges)
 
     cpdef Graph copy(self):
-        """Copy the graph."""
         return Graph.__new__(Graph, self.edges)
 
     def __repr__(self) -> str:
-        """Print the edges."""
         return f"{type(self).__name__}({list(self.edges)})"
 
 

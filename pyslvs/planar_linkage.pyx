@@ -39,8 +39,6 @@ from .tinycadlib cimport (
 @cython.final
 cdef class Planar(Objective):
 
-    """This class is used to verified kinematics of the linkage mechanism."""
-
     cdef bint bfgs_mode
     cdef int target_count, v_base
     cdef clist[Expression] exprs
@@ -51,17 +49,16 @@ cdef class Planar(Objective):
     cdef SolverSystem bfgs_solver
 
     def __cinit__(self, dict mech):
-        """mech = {
-            'expression': List[VPoint],
-            'input': OrderedDict([((b0, d0), [start, end]), ...]),
-            'placement': {pt: (x, y, r)},
-            'target': {pt: [(x0, y0), (x1, y1), ...]},
-            'same': {pt: match_to_pt},
-            # Bound has no position data.
-            'upper': List[float],
-            'lower': List[float],
-        }
-        """
+        # mech = {
+        #     'expression': List[VPoint],
+        #     'input': OrderedDict([((b0, d0), [start, end]), ...]),
+        #     'placement': {pt: (x, y, r)},
+        #     'target': {pt: [(x0, y0), (x1, y1), ...]},
+        #     'same': {pt: match_to_pt},
+        #     # Bound has no position data.
+        #     'upper': List[float],
+        #     'lower': List[float],
+        # }
         placement = mech.get('placement', {})
         if len(placement) == 0:
             raise ValueError("no grounded joint")
@@ -159,13 +156,10 @@ cdef class Planar(Objective):
         return self.bfgs_mode
 
     cdef inline double get_len(self, str expr1, str expr2):
-        """Get the link length."""
         return self.mapping[frozenset({self.mapping_r[expr1], self.mapping_r[expr2]})]
 
     cdef inline bint solve(self, double[:] input_list):
-        """Start solver function."""
         self.data_dict.clear()
-
         cdef int i
         cdef VPoint vpoint
         cdef Coordinate coord1, coord2
@@ -181,7 +175,6 @@ cdef class Planar(Objective):
                 self.data_dict[self.mapping[i]] = coord2
                 self.data_dict[i, -1] = coord1
                 self.data_dict[i, -2] = coord2
-
         # Solve
         i = 0
         cdef int t, params_count
@@ -240,17 +233,14 @@ cdef class Planar(Objective):
             else:
                 self.data_dict[t, -1] = vpoint.c[0]
                 self.data_dict[t, -2] = coord
-
         if not self.bfgs_mode:
             return True
-
         # Add coordinate of known points.
         p_data_dict = {}
         for i in range(len(self.vpoints)):
             # {1: 'A'} vs {'A': (10., 20.)}
             if self.mapping[i] in self.data_dict:
                 p_data_dict[i] = self.data_dict[self.mapping[i]]
-
         # Add specified link lengths.
         for k, v in self.mapping.items():
             if type(k) is frozenset:
@@ -260,13 +250,11 @@ cdef class Planar(Objective):
             self.bfgs_solver = SolverSystem(self.vpoints, {}, p_data_dict)
         else:
             self.bfgs_solver.set_data(p_data_dict)
-
         # Solve
         try:
             solved_bfgs = self.bfgs_solver.solve()
         except ValueError:
             return False
-
         # Format:
         # R joint: [[p0]: (p0_x, p0_y), [p1]: (p1_x, p1_y)]
         # P or RP joint: [[p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))]
@@ -292,7 +280,6 @@ cdef class Planar(Objective):
                     solved_bfgs[i][1][0],
                     solved_bfgs[i][1][1]
                 )
-
         return True
 
     cdef double fitness(self, double[:] v):
@@ -310,9 +297,7 @@ cdef class Planar(Objective):
             else:
                 self.mapping[m] = v[target_index]
                 target_index += 1
-
         cdef double fitness = 0.
-
         cdef int index, node
         cdef Coordinate coord
         cdef Coordinate[:] path
@@ -323,11 +308,9 @@ cdef class Planar(Objective):
             for node, path in self.target.items():
                 coord = self.data_dict[node, -1]
                 fitness += coord.distance(path[target_index])
-
         return fitness
 
     cpdef object result(self, double[:] v):
-        """Return the last answer."""
         cdef int target_index = 0
         cdef VPoint vpoint
         for m in self.mapping_list:
@@ -338,7 +321,6 @@ cdef class Planar(Objective):
             else:
                 self.mapping[m] = v[target_index]
                 target_index += 1
-
         self.solve(v[self.v_base:self.v_base + self.target_count])
         expressions = []
         cdef int i
@@ -352,5 +334,4 @@ cdef class Planar(Objective):
                 coord2 = self.data_dict[i, -2]
                 vpoint.move((coord1.x, coord1.y), (coord2.x, coord2.y))
             expressions.append(vpoint.expr())
-
         return "M[" + ", ".join(expressions) + "]"

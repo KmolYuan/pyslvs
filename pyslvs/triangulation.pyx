@@ -86,7 +86,6 @@ cdef class ExpressionStack:
         self.stack.push_back(e)
 
     cpdef list as_list(self):
-        """Turn into normal list."""
         stack = []
         cdef Expression expr
         for expr in self.stack:

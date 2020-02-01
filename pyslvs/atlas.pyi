@@ -9,12 +9,27 @@ def conventional_graph(
     no_degenerate: int = 1,
     stop_func: Optional[Callable[[], bool]] = None
 ) -> List[Graph]:
-    """Linkage mechanism topological function."""
+    """Generate conventional graphs by contracted graphs `cg_list` and
+    contracted link assortment `c_j_list`.
+
+    The degenerate setting `no_degenerate` has following option:
+
+    + `0`: No degenerate.
+    + `1`: Only degenerate.
+    + Else: All graphs.
+
+    The check stop function `stop_func` object for GUI or subprocess,
+    return `True` to terminate this function.
+    """
     ...
 
 def contracted_graph(
     link_num: Sequence[int],
     stop_func: Optional[Callable[[], bool]] = None
 ) -> List[Graph]:
-    """Get contracted graph by link assortment."""
+    """Generate contracted graphs by link assortment `link_num`.
+
+    The check stop function `stop_func` object for GUI or subprocess,
+    return `True` to terminate this function.
+    """
     ...

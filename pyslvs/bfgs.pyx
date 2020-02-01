@@ -55,14 +55,6 @@ cdef class SolverSystem:
     """Sketch Solve solver."""
 
     def __cinit__(self, object vpoints_, dict inputs = None, dict data_dict = None):
-        """Solving function from vpoint list.
-
-        + vpoints: Sequence[VPoint]
-        + inputs: {(b0, d0): a0, (b1, d1): a1, ...}
-
-        Known coordinates import from data_dict.
-        + data_dict: {0: Coordinate(10.0, 20.0), ..., (0, 2): 30.0, ...}
-        """
         self.vpoints = list(vpoints_)
         self.vlinks = {vlink.name: vlink for vlink in get_vlinks(self.vpoints)}
         self.inputs = inputs
@@ -76,7 +68,6 @@ cdef class SolverSystem:
         self.build_expression()
 
     cpdef bint same_points(self, object vpoints_):
-        """Return True if two expressions are same."""
         cdef int i
         cdef VPoint p1, p2
         for i, p1 in enumerate(vpoints_):
@@ -86,11 +77,9 @@ cdef class SolverSystem:
         return True
 
     cpdef frozenset show_inputs(self):
-        """Show the current inputs keys."""
         return frozenset(self.inputs)
 
     cpdef frozenset show_data(self):
-        """Show the current data keys."""
         return frozenset(self.data_dict)
 
     cdef void build_expression(self):
@@ -364,7 +353,6 @@ cdef class SolverSystem:
             ))
 
     cpdef void set_inputs(self, dict inputs):
-        """Set input pairs."""
         if self.inputs is None or inputs is None:
             raise ValueError(f"do not accept modifications")
         if not self.show_inputs() >= set(inputs):
@@ -384,7 +372,6 @@ cdef class SolverSystem:
             handle[0] = _radians(angle)
 
     cpdef void set_data(self, dict data_dict):
-        """Set data."""
         if self.data_dict is None or data_dict is None:
             raise ValueError(f"do not accept modifications")
         _sort_pairs(data_dict)
@@ -439,7 +426,6 @@ cdef class SolverSystem:
                     handle[0] = self.data_dict[frozenset({c, d})]
 
     cpdef list solve(self):
-        """Solve the expression."""
         # Pointer of parameters
         cdef size_t params_count = <int>self.params.size()
         cdef double **params_ptr = <double **>PyMem_Malloc(sizeof(double *) * params_count)
