@@ -45,8 +45,8 @@ from .expression_parser import (
     PointArgs,
     LinkArgs,
 )
-from .example import example_list
-from .collection import collection_list
+from .example import example_list, all_examples
+from .collection import collection_list, all_collections
 from .efd import efd_fitting
 
 __all__ = [
@@ -89,6 +89,8 @@ __all__ = [
     'PointArgs',
     'LinkArgs',
     'example_list',
+    'all_examples',
     'collection_list',
+    'all_collections',
     'efd_fitting',
 ]

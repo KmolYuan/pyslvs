@@ -7,8 +7,10 @@ __copyright__ = "Copyright (C) 2016-2020"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
+from typing import Dict, Iterator, Any
+from copy import deepcopy
 
-collection_list = {
+_collection_list = {
     "Four bar linkage mechanism": {
         'expression':
             "M["
@@ -116,3 +118,31 @@ collection_list = {
         'same': {6: 5},
     },
 }
+
+
+def collection_list(key: str) -> Dict[str, Any]:
+    """The example data of collections.
+
+    The format of each configuration is:
+
+    + `Expression`: Mechanism expression of the structure.
+        + type: str
+    + `input`: [Input pairs].
+        + type: Sequence[Tuple[int, int]]
+    + `Graph`: The generalized chain graph in edge set.
+        + type: Sequence[Tuple[int, int]]
+    + `Placement`: The grounded joints setting. (`x`, `y`, `r`)
+        + type: Dict[int, Optional[Tuple[float, float, float]]]
+    + `Target`: The target joints settings.
+        + type: Dict[int, Optional[Sequence[Tuple[float, float]]]]
+    + `cus`: The custom joints on specific link. (link number correspond to the graph expression.)
+        + type: Dict[int, int]
+    + `same`: The multiple joints setting.
+        + type: Dict[int, int]
+    """
+    return deepcopy(_collection_list[key])
+
+
+def all_collections() -> Iterator[str]:
+    """Get all collection names."""
+    yield from sorted(_collection_list)

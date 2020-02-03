@@ -7,9 +7,9 @@ __copyright__ = "Copyright (C) 2016-2020"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
-from typing import Tuple, Sequence, Dict
+from typing import Tuple, Sequence, Dict, Iterator
 
-example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
+_example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
     "Arm": (
         "M["
         "J[R, color[Green], P[-34.25, -20.625], L[ground, L1, L2]],"
@@ -248,3 +248,21 @@ example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[87.0, -17.0], L[ground, L5]],"
         "]", ((0, 1),)),
 }
+
+
+def example_list(key: str) -> Tuple[str, Sequence[Tuple[int, int]]]:
+    """The example data of mechanisms.
+
+    The format of each mechanism is:
+
+    + `[0]`: Mechanism expression.
+        + type: str
+    + `[1]`: Input pairs.
+        + type: Tuple[Tuple[int, int], ...]]
+    """
+    return _example_list[key]
+
+
+def all_examples() -> Iterator[str]:
+    """Get all example names."""
+    yield from sorted(_example_list)

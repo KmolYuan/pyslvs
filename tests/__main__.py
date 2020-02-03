@@ -9,7 +9,6 @@ __email__ = "pyslvs@gmail.com"
 
 from unittest import TestCase
 from math import sqrt, radians
-from copy import deepcopy
 from pyslvs import (
     Coordinate,
     SolverSystem,
@@ -37,7 +36,7 @@ from pyslvs import (
 from pyslvs.metaheuristics import ALGORITHM, AlgorithmType, PARAMS
 from .obj_func import TestObj
 
-_four_bar = deepcopy(collection_list["Four bar linkage mechanism"])
+_four_bar = collection_list("Four bar linkage mechanism")
 _four_bar.update({
     'expression': parse_vpoints(_four_bar['expression']),
     'placement': {0: (-70, -70, 50), 1: (70, -70, 50)},
@@ -217,7 +216,7 @@ class CoreTest(TestCase):
         + Test data collecting function.
         + Test expression solving function.
         """
-        expr, inputs = example_list["Jansen's linkage (Single)"]
+        expr, inputs = example_list("Jansen's linkage (Single)")
         vpoints = parse_vpoints(expr)
         self.assertEqual(8, len(vpoints))
         exprs = vpoints_configure(vpoints, inputs)
@@ -253,7 +252,7 @@ class CoreTest(TestCase):
 
     def test_solving_bfgs(self):
         """Test Sketch Solve kernel."""
-        expr, _ = example_list["Jansen's linkage (Single)"]
+        expr, _ = example_list("Jansen's linkage (Single)")
         system = SolverSystem(parse_vpoints(expr), {(0, 1): 0.})
         result = system.solve()
         x, y = result[7]
