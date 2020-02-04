@@ -7,7 +7,7 @@ __copyright__ = "Copyright (C) 2016-2020"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
-import re
+from re import MULTILINE, search
 from sys import argv
 from os import listdir
 from os.path import sep, join as pth_join
@@ -16,13 +16,13 @@ from setuptools.command.build_ext import build_ext
 from platform import system
 
 
-def read(*path):
-    with open(pth_join(*path), 'r', encoding='utf-8') as f:
+def read(path: str):
+    with open(path, 'r', encoding='utf-8') as f:
         return f.read()
 
 
-def find_version(*path):
-    m = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", read(*path), re.M)
+def find_version(path: str):
+    m = search(r"^__version__ = ['\"]([^'\"]*)['\"]", read(path), MULTILINE)
     if m:
         return m.group(1)
     raise RuntimeError("Unable to find version string.")
@@ -91,7 +91,7 @@ class Build(build_ext):
 
 setup(
     name='pyslvs',
-    version=find_version('pyslvs', '__init__.py'),
+    version=find_version(pth_join('pyslvs', '__init__.py')),
     author=__author__,
     author_email=__email__,
     license=__license__,
@@ -114,5 +114,6 @@ setup(
         "Topic :: Scientific/Engineering",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Operating System :: OS Independent",
+        "Typing :: Typed",
     ]
 )
