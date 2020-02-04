@@ -127,7 +127,7 @@ def collection_list(key: str) -> Dict[str, Any]:
 
     + `Expression`: Mechanism expression of the structure.
         + type: str
-    + `input`: [Input pairs].
+    + `input`: Input pairs.
         + type: Sequence[Tuple[int, int]]
     + `Graph`: The generalized chain graph in edge set.
         + type: Sequence[Tuple[int, int]]
