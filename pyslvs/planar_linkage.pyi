@@ -15,7 +15,7 @@ class Planar(Objective[str]):
 
         + `Expression`: The mechanism expression of the structure.
             + type: List\[[VPoint]]
-        + `input`: [Input pairs].
+        + `input`: Input pairs.
             + type: List[Tuple[int, int]]
         + `Placement`: The grounded joints setting. (`x`, `y`, `r`)
             + type: Dict[int, Tuple[float, float, float]]
