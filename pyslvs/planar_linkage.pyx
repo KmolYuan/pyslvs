@@ -288,26 +288,22 @@ cdef class Planar(Objective):
         v: [Ax, Ay, Dx, Dy, ..., L0, L1, ..., A00, A01, ..., A10, A11, ...]
         """
         cdef int target_index = 0
-        cdef VPoint vpoint
         for m in self.mapping_list:
             if type(m) is int:
-                vpoint = self.vpoints[m]
-                vpoint.locate(v[target_index], v[target_index + 1])
+                (<VPoint>self.vpoints[m]).locate(v[target_index], v[target_index + 1])
                 target_index += 2
             else:
                 self.mapping[m] = v[target_index]
                 target_index += 1
         cdef double fitness = 0.
         cdef int index, node
-        cdef Coordinate coord
         cdef Coordinate[:] path
         for target_index in range(self.target_count):
             index = self.v_base + target_index
             if not self.solve(v[index:index + self.target_count]):
                 return HUGE_VAL
             for node, path in self.target.items():
-                coord = self.data_dict[node, -1]
-                fitness += coord.distance(path[target_index])
+                fitness += (<Coordinate>self.data_dict[node, -1]).distance(path[target_index])
         return fitness
 
     cpdef object result(self, double[:] v):
