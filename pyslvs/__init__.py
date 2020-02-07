@@ -21,7 +21,6 @@ from .tinycadlib import (
     expr_solving,
     data_collecting,
 )
-from . import metaheuristics as _  # Preload module
 from .planar_linkage import Planar
 from .number import link_synthesis, contracted_link_synthesis
 from .graph import (
