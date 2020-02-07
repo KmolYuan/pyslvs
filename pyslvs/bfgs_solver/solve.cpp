@@ -7,26 +7,22 @@
  */
 
 #include <cmath>
-#ifdef DEBUG
-#include <iostream>
-#endif
+#include <vector>
 #include "calc.h"
 #include "solve.h"
 
-using namespace std;
+typedef std::vector<double> array1d;
+typedef std::vector<array1d> array2d;
 
 int solve(double **param_ptr, const size_t xLength, Constraint *cons,
           const size_t consLength, const bool isFine) {
     // Save the original parameters for later.
-    auto origSolution = new double[xLength];
+    array1d origSolution(xLength);
     for (size_t i = 0; i < xLength; i++)
         origSolution[i] = *param_ptr[i];
-
     double convergence = isFine ? XConvergenceFine : XConvergenceRough;
-
     // integer to keep track of how many times calc is called
     int ftimes = 0;
-
     // Calculate Function at the starting point:
     double f0 = calc(cons, consLength);
     if (f0 < SmallF)
@@ -35,7 +31,7 @@ int solve(double **param_ptr, const size_t xLength, Constraint *cons,
 
     // Calculate the gradient at the starting point:
     // The gradient vector (1xn)
-    auto grad = new double[xLength];
+    array1d grad(xLength);
     double f1, f2, f3, alpha1, alpha2, alpha3, alphaStar;
     double pert = f0 * PertMag;
 
@@ -54,11 +50,9 @@ int solve(double **param_ptr, const size_t xLength, Constraint *cons,
     // Estimate the norm of N
     // Initialize N and calculate s
     // The current search direction
-    auto s = new double[xLength];
-    auto N = new double *[xLength];
-    for (size_t i = 0; i < xLength; i++)
-        // The estimate of the Hessian inverse
-        N[i] = new double[xLength];
+    array1d s(xLength);
+    // The estimate of the Hessian inverse
+    array2d N(xLength, array1d(xLength));
     for (size_t i = 0; i < xLength; i++)
         for (size_t j = 0; j < xLength; j++) {
             if (i == j) {
@@ -74,7 +68,7 @@ int solve(double **param_ptr, const size_t xLength, Constraint *cons,
     double alpha = 1;
 
     // Storage for the previous design variables
-    auto xold = new double[xLength];
+    array1d xold(xLength);
     for (size_t i = 0; i < xLength; i++)
         // Copy last values to xold
         xold[i] = *param_ptr[i];
@@ -153,21 +147,14 @@ int solve(double **param_ptr, const size_t xLength, Constraint *cons,
     /// end of line search
     /////////////////////////////////////
 
-    auto deltaX = new double[xLength];
-    auto gradnew = new double[xLength];
-    auto gamma = new double[xLength];
-    auto gammatDotN = new double[xLength];
-    auto FirstSecond = new double *[xLength];
-    auto deltaXDotGammatDotN = new double *[xLength];
-    auto gammatDotDeltaXt = new double *[xLength];
-    auto NDotGammaDotDeltaXt = new double *[xLength];
-    for (size_t i = 0; i < xLength; i++) {
-        FirstSecond[i] = new double[xLength];
-        deltaXDotGammatDotN[i] = new double[xLength];
-        gammatDotDeltaXt[i] = new double[xLength];
-        NDotGammaDotDeltaXt[i] = new double[xLength];
-    }
-
+    array1d deltaX(xLength);
+    array1d gradnew(xLength);
+    array1d gamma(xLength);
+    array1d gammatDotN(xLength);
+    array2d FirstSecond(xLength, array1d(xLength));
+    array2d deltaXDotGammatDotN(xLength, array1d(xLength));
+    array2d gammatDotDeltaXt(xLength, array1d(xLength));
+    array2d NDotGammaDotDeltaXt(xLength, array1d(xLength));
     // Calculate deltaX
     for (size_t i = 0; i < xLength; i++)
         // Calculate the difference in x for the Hessian update
@@ -348,41 +335,11 @@ int solve(double **param_ptr, const size_t xLength, Constraint *cons,
         /// End of Main loop
         /////////////////////////////////////////////////////////////
     }
-
-#ifdef DEBUG
-    cout << "Fnew: " << fnew << endl;
-    cout << "Number of Iterations: " << iterations << endl;
-    cout << "Number of function calls: " << ftimes << endl;
-#endif
-
-    delete[] grad;
-    delete[] s;
-    for (size_t i = 0; i < xLength; i++) {
-        delete[] N[i];
-        delete[] FirstSecond[i];
-        delete[] deltaXDotGammatDotN[i];
-        delete[] gammatDotDeltaXt[i];
-        delete[] NDotGammaDotDeltaXt[i];
-    }
-    delete[] N;
-    delete[] xold;
-    delete[] deltaX;
-    delete[] gradnew;
-    delete[] gamma;
-    delete[] gammatDotN;
-    delete[] FirstSecond;
-    delete[] deltaXDotGammatDotN;
-    delete[] gammatDotDeltaXt;
-    delete[] NDotGammaDotDeltaXt;
-
     // End of function
-    if (fnew < (isFine ? ValidSolutionFine : ValidSoltuionRough)) {
-        delete[] origSolution;
+    if (fnew < (isFine ? ValidSolutionFine : ValidSoltuionRough))
         return Success;
-    }
-    // Replace the bad numbers with the last result.
+    // Replace the bad numbers with the last result
     for (size_t i = 0; i < xLength; i++)
         *param_ptr[i] = origSolution[i];
-    delete[] origSolution;
     return NoSolution;
 }
