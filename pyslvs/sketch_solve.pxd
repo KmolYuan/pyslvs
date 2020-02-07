@@ -78,7 +78,7 @@ cdef extern from "bfgs_solver/solve.h" nogil:
     Constraint ExternalAngleConstraint(Line *, Line *, double *)
     Constraint PerpendicularConstraint(Line *, Line *)
     Constraint ParallelConstraint(Line *, Line *)
-    Constraint ColinearConstraint(Line *, Line *)
+    Constraint CollinearConstraint(Line *, Line *)
     Constraint PointOnCircleConstraint(Point *, Circle *)
     Constraint PointOnArcConstraint(Point *, Arc *)
     Constraint PointOnLineMidpointConstraint(Point *, Line *)
@@ -91,5 +91,5 @@ cdef extern from "bfgs_solver/solve.h" nogil:
     Constraint LineInternalAngleConstraint(Line *, double *)
     Constraint LineExternalAngleConstraint(Line *, double *)
 
-    int solve(double **, const size_t, Constraint *, const size_t, int)
+    int solve(double **, size_t, Constraint *, size_t, int)
     void derivatives(double **, double *, int, Constraint *, int)

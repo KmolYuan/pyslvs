@@ -21,14 +21,14 @@ int main() {
     // Input a parameter list
     double parameters[] = {0, 0, 5, 0, 6, 5, 6, 5};
     const size_t param_count = sizeof(parameters) / sizeof(*parameters);
-    // Make a list of pointers of parameters.
+    // Make a list of pointers of parameters
     auto pparameters = new double *[param_count];
     for (int i = 0; i < param_count; i++)
         pparameters[i] = &parameters[i];
-    // Input a constant parameter list.
+    // Input a constant parameter list
     double constants[] = {30, 10, 24};
 
-    // Create geometric objects and constraints with pointers.
+    // Create geometric objects and constraints with pointers
     Point points[] = {
         {pparameters[0], pparameters[1]}, {pparameters[2], pparameters[3]},
         {pparameters[4], pparameters[5]}, {pparameters[6], pparameters[7]},
