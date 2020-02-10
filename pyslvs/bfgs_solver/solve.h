@@ -97,7 +97,7 @@ Constraint InternalAngleConstraint(Line *, Line *, double *);
 Constraint ExternalAngleConstraint(Line *, Line *, double *);
 Constraint PerpendicularConstraint(Line *, Line *);
 Constraint ParallelConstraint(Line *, Line *);
-Constraint ColinearConstraint(Line *, Line *);
+Constraint CollinearConstraint(Line *line1, Line *line2);
 Constraint PointOnCircleConstraint(Point *, Circle *);
 Constraint PointOnArcConstraint(Point *, Arc *);
 Constraint PointOnLineMidpointConstraint(Point *, Line *);

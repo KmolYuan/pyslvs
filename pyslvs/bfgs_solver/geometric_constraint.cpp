@@ -245,8 +245,8 @@ Constraint ParallelConstraint(Line *line1, Line *line2) {
     return LinesConstraint(Parallel, line1, line2);
 }
 
-Constraint ColinearConstraint(Line *line1, Line *line2) {
-    return LinesConstraint(Colinear, line1, line2);
+Constraint CollinearConstraint(Line *line1, Line *line2) {
+    return LinesConstraint(Collinear, line1, line2);
 }
 
 Constraint PointOnCircleConstraint(Point *point1, Circle *circle1) {
@@ -271,7 +271,7 @@ Constraint PointOnCircleQuadConstraint(Point *point1, Circle *circle1,
     con.type = PointOnCircleQuad;
     con.point1 = point1;
     con.circle1 = circle1;
-    con.parameter = value;  // value only can be 0, 1, 2, 3, default 0.
+    con.parameter = value;  // value only can be 0, 1, 2, 3, default 0
     return con;
 }
 

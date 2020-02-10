@@ -39,7 +39,7 @@ enum {
     ExternalAngle,
     Parallel,
     Perpendicular,
-    Colinear,
+    Collinear,
     PointOnCircle,
     PointOnArc,
     PointOnLineMidpoint,

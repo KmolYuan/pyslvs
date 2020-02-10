@@ -460,9 +460,9 @@ double symmetric_arcs(Constraint *con) {
 }
 }  // namespace
 
-double calc(Constraint *cons, const size_t consLength) {
+double calc(Constraint *cons, size_t cons_len) {
     double error = 0;
-    for (size_t i = 0; i < consLength; i++) {
+    for (size_t i = 0; i < cons_len; i++) {
         Constraint *con = cons + i;
         switch (con->type) {
             case PointOnPoint:
@@ -552,7 +552,7 @@ double calc(Constraint *cons, const size_t consLength) {
             case Parallel:
                 error += parallel(con);
                 break;
-            case Colinear:
+            case Collinear:
                 error += colinear(con);
                 break;
             case PointOnCircle:
