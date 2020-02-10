@@ -61,37 +61,37 @@ struct Constraint {
     Line *line1, *line2, *SymLine;
     Circle *circle1, *circle2;
     Arc *arc1, *arc2;
-    // RADIUS, length, angle etc...
+    // Radius, length, angle etc...
     double *parameter;
 };
 
 ///////////////////////////////////////
-/// Constraint Functions (for safe access of mebers)
+/// Constraint Functions (for safe access of members)
 ///////////////////////////////////////
 
-// Geometric Constrants
+// Geometric Constraints
 Constraint PointOnPointConstraint(Point *, Point *);
 Constraint P2PDistanceConstraint(Point *, Point *, double *);
 Constraint P2PDistanceVertConstraint(Point *, Point *, double *);
-Constraint P2PDistanceHorzConstraint(Point *, Point *, double *);
+Constraint P2PDistanceHConstraint(Point *point1, Point *point2, double *value);
 Constraint PointOnLineConstraint(Point *, Line *);
 Constraint P2LDistanceConstraint(Point *, Line *, double *);
 Constraint P2LDistanceVertConstraint(Point *, Line *, double *);
-Constraint P2LDistanceHorzConstraint(Point *, Line *, double *);
+Constraint P2LDistanceHConstraint(Point *point1, Line *line1, double *value);
 Constraint VerticalConstraint(Line *);
 Constraint HorizontalConstraint(Line *);
 Constraint TangentToCircleConstraint(Line *, Circle *);
 Constraint TangentToArcConstraint(Line *, Arc *);
 Constraint ArcRulesConstraint(Arc *);
 Constraint LineLengthConstraint(Line *, double *);
-Constraint EqualLegnthConstraint(Line *, Line *);
+Constraint EqualLengthConstraint(Line *line1, Line *line2);
 Constraint ArcRadiusConstraint(Arc *, double *);
 Constraint EqualRadiusArcsConstraint(Arc *, Arc *);
 Constraint EqualRadiusCirclesConstraint(Circle *, Circle *);
-Constraint EqualRadiusCircArcConstraint(Circle *, Arc *);
+Constraint EqualRadiusCircleArcConstraint(Circle *circle1, Arc *arc1);
 Constraint ConcentricArcsConstraint(Arc *, Arc *);
 Constraint ConcentricCirclesConstraint(Circle *, Circle *);
-Constraint ConcentricCircArcConstraint(Circle *, Arc *);
+Constraint ConcentricCircleArcConstraint(Circle *circle1, Arc *arc1);
 Constraint CircleRadiusConstraint(Circle *, double *);
 Constraint InternalAngleConstraint(Line *, Line *, double *);
 Constraint ExternalAngleConstraint(Line *, Line *, double *);

@@ -127,7 +127,7 @@ Constraint P2PDistanceVertConstraint(Point *point1, Point *point2,
     return P2PDistanceConstraint(P2PDistanceVert, point1, point2, value);
 }
 
-Constraint P2PDistanceHorzConstraint(Point *point1, Point *point2,
+Constraint P2PDistanceHConstraint(Point *point1, Point *point2,
                                      double *value) {
     return P2PDistanceConstraint(P2PDistanceHorz, point1, point2, value);
 }
@@ -145,7 +145,7 @@ Constraint P2LDistanceVertConstraint(Point *point1, Line *line1,
     return P2LDistanceConstraint(P2LDistanceVert, point1, line1, value);
 }
 
-Constraint P2LDistanceHorzConstraint(Point *point1, Line *line1,
+Constraint P2LDistanceHConstraint(Point *point1, Line *line1,
                                      double *value) {
     return P2LDistanceConstraint(P2LDistanceHorz, point1, line1, value);
 }
@@ -185,7 +185,7 @@ Constraint LineLengthConstraint(Line *line1, double *value) {
     return LineConstraint(LineLength, line1, value);
 }
 
-Constraint EqualLegnthConstraint(Line *line1, Line *line2) {
+Constraint EqualLengthConstraint(Line *line1, Line *line2) {
     return LinesConstraint(EqualLegnth, line1, line2);
 }
 
@@ -205,7 +205,7 @@ Constraint EqualRadiusCirclesConstraint(Circle *circle1, Circle *circle2) {
     return CirclesConstraint(EqualRadiusCircles, circle1, circle2);
 }
 
-Constraint EqualRadiusCircArcConstraint(Circle *circle1, Arc *arc1) {
+Constraint EqualRadiusCircleArcConstraint(Circle *circle1, Arc *arc1) {
     return CircleArcConstraint(EqualRadiusCircles, circle1, arc1);
 }
 
@@ -217,7 +217,7 @@ Constraint ConcentricCirclesConstraint(Circle *circle1, Circle *circle2) {
     return CirclesConstraint(ConcentricCircles, circle1, circle2);
 }
 
-Constraint ConcentricCircArcConstraint(Circle *circle1, Arc *arc1) {
+Constraint ConcentricCircleArcConstraint(Circle *circle1, Arc *arc1) {
     return CircleArcConstraint(ConcentricCircArc, circle1, arc1);
 }
 
