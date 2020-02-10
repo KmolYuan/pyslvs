@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SOLVE_H
+#define SOLVE_H
 
 /*
  *  Created on: May 4, 2009
@@ -9,7 +10,7 @@
 #include <cstddef>
 
 ///////////////////////////////////////
-/// BFGS Solver parameters
+/// Solver parameters
 ///////////////////////////////////////
 
 #define PertMag 1e-6
@@ -24,12 +25,13 @@
 // Note that the total number of iterations allowed is MaxIterations *xLength
 #define MaxIterations 50
 
-///////////////////////////////////////
-/// Solve exit codes
-///////////////////////////////////////
-
+// Solve exit codes
 #define Success 1
 #define NoSolution 0
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 ///////////////////////////////////////
 /// Position Expression data
@@ -53,53 +55,8 @@ struct Circle {
     double *rad;
 };
 
-enum {
-    // Geometric Constraint types
-    PointOnPoint,
-    PointToLine,
-    PointOnLine,
-    Horizontal,
-    Vertical,
-    InternalAngle,
-    RadiusValue,
-    TangentToArc,
-    TangentToCircle,
-    ArcRules,
-    P2PDistance,
-    P2PDistanceVert,
-    P2PDistanceHorz,
-    P2LDistance,
-    P2LDistanceVert,
-    P2LDistanceHorz,
-    LineLength,
-    EqualLegnth,
-    ArcRadius,
-    EqualRadiusArcs,
-    EqualRadiusCircles,
-    EqualRadiusCircArc,
-    ConcentricArcs,
-    ConcentricCircles,
-    ConcentricCircArc,
-    CircleRadius,
-    ExternalAngle,
-    Parallel,
-    Perpendicular,
-    Colinear,
-    PointOnCircle,
-    PointOnArc,
-    PointOnLineMidpoint,
-    PointOnArcMidpoint,
-    PointOnCircleQuad,
-    SymmetricPoints,
-    SymmetricLines,
-    SymmetricCircles,
-    SymmetricArcs,
-    LineInternalAngle,
-    LineExternalAngle,
-};
-
 struct Constraint {
-    unsigned long type;
+    unsigned type;
     Point *point1, *point2;
     Line *line1, *line2, *SymLine;
     Circle *circle1, *circle2;
@@ -159,3 +116,9 @@ Constraint LineExternalAngleConstraint(Line *, double *);
 
 int solve(double **, size_t, Constraint *, size_t, bool);
 void derivatives(double **, double *, size_t, Constraint *, size_t);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // SOLVE_H

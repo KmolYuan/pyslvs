@@ -39,7 +39,7 @@ cdef extern from "bfgs_solver/solve.h" nogil:
         double *rad
 
     struct Constraint:
-        int type
+        unsigned type
         Point *point1
         Point *point2
         Line *line1
