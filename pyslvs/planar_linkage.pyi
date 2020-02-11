@@ -27,6 +27,8 @@ class Planar(Objective[str]):
             + type: List[float]
         + `lower`: The lower setting of variables, the length must same as variable array.
             + type: List[float]
+        + `shape_only`: Compare paths by shape only.
+            + type: bool
 
         Variable array:
 

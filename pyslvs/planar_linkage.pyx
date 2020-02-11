@@ -11,8 +11,11 @@ email: pyslvs@gmail.com
 
 cimport cython
 from collections import OrderedDict
-from numpy import array as np_array, float64 as np_float
-from libc.math cimport HUGE_VAL, NAN
+from numpy import (
+    array as np_array,
+    float64 as np_float,
+)
+from libc.math cimport HUGE_VAL, NAN, sqrt, cos, sin, atan2
 from libcpp.list cimport list as clist
 from .metaheuristics.utility cimport Objective
 from .expression cimport get_vlinks, VJoint, VPoint, VLink
@@ -36,10 +39,76 @@ from .tinycadlib cimport (
 )
 
 
+cdef void normalization(Coordinate[:] path):
+    """Path normalization."""
+    inf = float('inf')
+    cdef double length = 0
+    cdef double area = 0  # Unused
+    cdef double[:] bound = np_array([inf, -inf, inf, -inf], dtype=np_float)
+    cdef int i
+    cdef Coordinate c1, c2
+    for i in len(path):
+        c1 = path[i]
+        if c1.x < bound[0]:
+            bound[0] = c1.x
+        if c1.x > bound[1]:
+            bound[1] = c1.x
+        if c1.y < bound[2]:
+            bound[2] = c1.y
+        if c1.y > bound[3]:
+            bound[3] = c1.y
+        if i - 1 < 0:
+            continue
+        c2 = path[i - 1]
+        length += c1.distance(c2)
+        area += c2.x * c1.y - c1.x * c2.y
+    cdef double w = bound[1] - bound[0]
+    cdef double h = bound[2] - bound[3]  # Unused
+    cdef Coordinate centre = Coordinate.__new__(Coordinate, 0, 0)
+    cdef double tmp
+    for i in len(path):
+        if i - 1 < 0:
+            continue
+        c1 = path[i]
+        c2 = path[i - 1]
+        tmp = sqrt((c2.x - c1.x) ** 2 + (c2.y - c1.y) ** 2)
+        centre.x += (c2.x + c1.x) * tmp
+        centre.y += (c2.y + c1.y) * tmp
+    centre.x /= 2 * length
+    centre.y /= 2 * length
+    cdef double[:] inertia = np_array([0, 0, 0], dtype=np_float)
+    for i in len(path):
+        if i - 1 < 0:
+            continue
+        c1 = path[i]
+        c2 = path[i - 1]
+        length = c1.distance(c2)
+        inertia[0] += length * (
+            (c2.y - centre.y) ** 2
+            + (c1.y - centre.y) ** 2
+            + (c2.y - centre.y) * (c1.y - centre.y))
+        inertia[1] += length * (
+            (c2.x - centre.x) ** 2
+            + (c1.x - centre.x) ** 2
+            + (c2.x - centre.x) * (c1.x - centre.x))
+        inertia[2] += length * (
+            (c2.x - centre.x) * (c1.y - centre.y)
+            + (c1.x - centre.x) * (c2.y - centre.y)
+        ) + 2 * ((c2.x - centre.x) * (c2.y - centre.y)
+            + (c1.x - centre.x) * (c1.y - centre.y))
+    inertia[0] /= 3  # Ixx
+    inertia[1] /= 3  # Iyy
+    inertia[2] /= 6  # Ixy
+    cdef double alpha = 0.5 * atan2(2 * inertia[2], inertia[1] - inertia[0])
+    for c1 in path:
+        c1.x *= (cos(alpha) + sin(alpha) - bound[0]) / w
+        c1.y *= (-sin(alpha) + cos(alpha) - bound[3]) / w
+
+
 @cython.final
 cdef class Planar(Objective):
 
-    cdef bint bfgs_mode
+    cdef bint bfgs_mode, shape_only
     cdef int target_count, v_base
     cdef clist[Expression] exprs
     cdef list vpoints, mapping_list
@@ -58,6 +127,7 @@ cdef class Planar(Objective):
         #     # Bound has no position data.
         #     'upper': List[float],
         #     'lower': List[float],
+        #     'shape_only': bool,
         # }
         placement = mech.get('placement', {})
         if len(placement) == 0:
@@ -72,6 +142,7 @@ cdef class Planar(Objective):
         # Change the target paths into memory view.
         self.target = {}
         same = mech.get('same', {})
+        self.shape_only = mech.get('shape_only', False)
         cdef int i, j
         cdef Coordinate[:] path
         for i in target:
@@ -79,6 +150,8 @@ cdef class Planar(Objective):
             for j in range(i):
                 if j in same:
                     i -= 1
+            if self.shape_only:
+                normalization(path)
             self.target[i] = path
         # Expressions
         self.vpoints = list(mech.get('expression', []))
