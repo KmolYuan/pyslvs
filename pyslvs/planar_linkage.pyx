@@ -16,7 +16,7 @@ from numpy import (
     array as np_array,
     float64 as np_float,
 )
-from libc.math cimport HUGE_VAL, NAN, sqrt, cos, sin, atan2
+from libc.math cimport HUGE_VAL, NAN, cos, sin, atan2
 from libcpp.list cimport list as clist
 from .metaheuristics.utility cimport Objective
 from .expression cimport get_vlinks, VJoint, VPoint, VLink
@@ -80,7 +80,7 @@ cdef void _normalization(Coordinate[:] path):
             continue
         c1 = path[i]
         c2 = path[i - 1]
-        tmp = sqrt((c2.x - c1.x) ** 2 + (c2.y - c1.y) ** 2)
+        tmp = c1.distance(c2)
         centre.x += (c2.x + c1.x) * tmp
         centre.y += (c2.y + c1.y) * tmp
     centre.x /= 2 * length
