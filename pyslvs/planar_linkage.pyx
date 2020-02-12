@@ -101,6 +101,8 @@ cdef void _normalization(Coordinate[:] path):
     cdef double alpha = 0.5 * atan2(2 * inertia[2], inertia[1] - inertia[0])
     if inertia[0] > inertia[1]:
         alpha += pi / 2
+    elif inertia[0] == inertia[1]:
+        alpha = 0
     cdef double w = bound[1] - bound[0]
     cdef ndarray[double, ndim=2] tm = np_array([
         [cos(alpha) / w, sin(alpha) / w, -bound[0] / w],
