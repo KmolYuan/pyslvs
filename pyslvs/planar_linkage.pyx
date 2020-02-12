@@ -11,6 +11,7 @@ email: pyslvs@gmail.com
 
 cimport cython
 from collections import OrderedDict
+from numpy cimport ndarray
 from numpy import (
     array as np_array,
     float64 as np_float,
@@ -39,7 +40,15 @@ from .tinycadlib cimport (
 )
 
 
-cdef void normalization(Coordinate[:] path):
+def norm_path(path):
+    """Python wrapper of normalization function."""
+    cdef ndarray[object, ndim=1] path_m = np_array([
+        Coordinate.__new__(Coordinate, x, y) for x, y in path], dtype=object)
+    _normalization(path_m)
+    return [(c.x, c.y) for c in path_m]
+
+
+cdef void _normalization(Coordinate[:] path):
     """Path normalization."""
     inf = float('inf')
     cdef double length = 0
@@ -151,7 +160,7 @@ cdef class Planar(Objective):
                 if j in same:
                     i -= 1
             if self.shape_only:
-                normalization(path)
+                _normalization(path)
             self.target[i] = path
         # Expressions
         self.vpoints = list(mech.get('expression', []))

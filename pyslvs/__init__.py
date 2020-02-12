@@ -21,7 +21,7 @@ from .tinycadlib import (
     expr_solving,
     data_collecting,
 )
-from .planar_linkage import Planar
+from .planar_linkage import norm_path, Planar
 from .number import link_synthesis, contracted_link_synthesis
 from .graph import (
     Graph,
@@ -63,6 +63,7 @@ __all__ = [
     'VPoint',
     'VLink',
     'SolverSystem',
+    'norm_path',
     'Planar',
     'link_synthesis',
     'contracted_link_synthesis',

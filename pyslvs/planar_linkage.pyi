@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from typing import Dict, Any
+from typing import Tuple, List, Dict, Iterable, Any
 from numpy import ndarray, double
 from .metaheuristics import Objective
+
+
+def norm_path(path: Iterable[Tuple[float, float]]) -> List[Tuple[float, float]]:
+    """Python wrapper of normalization function."""
+    ...
+
 
 class Planar(Objective[str]):
 
