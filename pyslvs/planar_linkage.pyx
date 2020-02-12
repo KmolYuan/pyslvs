@@ -13,10 +13,12 @@ cimport cython
 from collections import OrderedDict
 from numpy cimport ndarray
 from numpy import (
+    zeros,
     array as np_array,
     float64 as np_float,
+    sum as np_sum,
 )
-from libc.math cimport HUGE_VAL, NAN, cos, sin, atan2
+from libc.math cimport HUGE_VAL, pi, NAN, cos, sin, atan2
 from libcpp.list cimport list as clist
 from .metaheuristics.utility cimport Objective
 from .expression cimport get_vlinks, VJoint, VPoint, VLink
@@ -41,7 +43,6 @@ from .tinycadlib cimport (
 
 
 def norm_path(path):
-    """Python wrapper of normalization function."""
     cdef ndarray[object, ndim=1] path_m = np_array([
         Coordinate.__new__(Coordinate, x, y) for x, y in path], dtype=object)
     _normalization(path_m)
@@ -50,13 +51,13 @@ def norm_path(path):
 
 cdef void _normalization(Coordinate[:] path):
     """Path normalization."""
-    inf = float('inf')
-    cdef double length = 0
-    cdef double area = 0  # Unused
+    cdef double inf = float('inf')
+    cdef double[:] length = zeros(len(path) + 1, dtype=np_float)
     cdef double[:] bound = np_array([inf, -inf, inf, -inf], dtype=np_float)
+    cdef Coordinate centre = Coordinate.__new__(Coordinate, 0, 0)
     cdef int i
     cdef Coordinate c1, c2
-    for i in len(path):
+    for i in range(len(path)):
         c1 = path[i]
         if c1.x < bound[0]:
             bound[0] = c1.x
@@ -69,38 +70,27 @@ cdef void _normalization(Coordinate[:] path):
         if i - 1 < 0:
             continue
         c2 = path[i - 1]
-        length += c1.distance(c2)
-        area += c2.x * c1.y - c1.x * c2.y
-    cdef double w = bound[1] - bound[0]
-    cdef double h = bound[2] - bound[3]  # Unused
-    cdef Coordinate centre = Coordinate.__new__(Coordinate, 0, 0)
-    cdef double tmp
-    for i in len(path):
-        if i - 1 < 0:
-            continue
-        c1 = path[i]
-        c2 = path[i - 1]
-        tmp = c1.distance(c2)
-        centre.x += (c2.x + c1.x) * tmp
-        centre.y += (c2.y + c1.y) * tmp
-    centre.x /= 2 * length
-    centre.y /= 2 * length
+        length[i] = c1.distance(c2)
+        centre.x += (c2.x + c1.x) * length[i]
+        centre.y += (c2.y + c1.y) * length[i]
+    length[-1] = np_sum(length)
+    centre.x /= 2 * length[-1]
+    centre.y /= 2 * length[-1]
     cdef double[:] inertia = np_array([0, 0, 0], dtype=np_float)
-    for i in len(path):
+    for i in range(len(path)):
         if i - 1 < 0:
             continue
         c1 = path[i]
         c2 = path[i - 1]
-        length = c1.distance(c2)
-        inertia[0] += length * (
+        inertia[0] += length[i] * (
             (c2.y - centre.y) ** 2
             + (c1.y - centre.y) ** 2
             + (c2.y - centre.y) * (c1.y - centre.y))
-        inertia[1] += length * (
+        inertia[1] += length[i] * (
             (c2.x - centre.x) ** 2
             + (c1.x - centre.x) ** 2
             + (c2.x - centre.x) * (c1.x - centre.x))
-        inertia[2] += length * (
+        inertia[2] += length[i] * (
             (c2.x - centre.x) * (c1.y - centre.y)
             + (c1.x - centre.x) * (c2.y - centre.y)
         ) + 2 * ((c2.x - centre.x) * (c2.y - centre.y)
@@ -109,9 +99,19 @@ cdef void _normalization(Coordinate[:] path):
     inertia[1] /= 3  # Iyy
     inertia[2] /= 6  # Ixy
     cdef double alpha = 0.5 * atan2(2 * inertia[2], inertia[1] - inertia[0])
+    if inertia[0] > inertia[1]:
+        alpha += pi / 2
+    cdef double w = bound[1] - bound[0]
+    cdef ndarray[double, ndim=2] tm = np_array([
+        [cos(alpha) / w, sin(alpha) / w, -bound[0] / w],
+        [-sin(alpha) / w, cos(alpha) / w, -bound[2] / w],
+        [0, 0, 1],
+    ], dtype=np_float)
+    cdef double[:, :] t
     for c1 in path:
-        c1.x *= (cos(alpha) + sin(alpha) - bound[0]) / w
-        c1.y *= (-sin(alpha) + cos(alpha) - bound[3]) / w
+        t = tm @ np_array([[c1.x], [c1.y], [1]])
+        c1.x = t[0, 0]
+        c1.y = t[1, 0]
 
 
 @cython.final
