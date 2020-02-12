@@ -59,14 +59,7 @@ cdef void _normalization(Coordinate[:] path):
     cdef Coordinate c1, c2
     for i in range(len(path)):
         c1 = path[i]
-        if c1.x < bound[0]:
-            bound[0] = c1.x
-        if c1.x > bound[1]:
-            bound[1] = c1.x
-        if c1.y < bound[2]:
-            bound[2] = c1.y
-        if c1.y > bound[3]:
-            bound[3] = c1.y
+        _set_bound(c1, bound)
         if i - 1 < 0:
             continue
         c2 = path[i - 1]
@@ -104,9 +97,10 @@ cdef void _normalization(Coordinate[:] path):
     elif inertia[0] == inertia[1]:
         alpha = 0
     cdef double w = bound[1] - bound[0]
+    bound = np_array([inf, -inf, inf, -inf], dtype=np_float)
     cdef ndarray[double, ndim=2] tm = np_array([
-        [cos(alpha) / w, sin(alpha) / w, -bound[0] / w],
-        [-sin(alpha) / w, cos(alpha) / w, -bound[2] / w],
+        [cos(alpha) / w, sin(alpha) / w, 0],
+        [-sin(alpha) / w, cos(alpha) / w, 0],
         [0, 0, 1],
     ], dtype=np_float)
     cdef double[:, :] t
@@ -114,6 +108,22 @@ cdef void _normalization(Coordinate[:] path):
         t = tm @ np_array([[c1.x], [c1.y], [1]])
         c1.x = t[0, 0]
         c1.y = t[1, 0]
+        _set_bound(c1, bound)
+    for c1 in path:
+        c1.x -= bound[0]
+        c1.y -= bound[2]
+
+
+cdef void _set_bound(Coordinate c, double[:] bound):
+    """Set boundary of the path."""
+    if c.x < bound[0]:
+        bound[0] = c.x
+    if c.x > bound[1]:
+        bound[1] = c.x
+    if c.y < bound[2]:
+        bound[2] = c.y
+    if c.y > bound[3]:
+        bound[3] = c.y
 
 
 @cython.final
