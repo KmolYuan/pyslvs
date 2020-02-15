@@ -60,8 +60,6 @@ cdef void _normalization(Coordinate[:] path):
     for i in range(len(path)):
         c1 = path[i]
         _set_bound(c1, bound)
-        if i - 1 < 0:
-            continue
         c2 = path[i - 1]
         length[i] = c1.distance(c2)
         centre.x += (c2.x + c1.x) * length[i]
@@ -71,8 +69,6 @@ cdef void _normalization(Coordinate[:] path):
     centre.y /= 2 * length[-1]
     cdef double[:] inertia = np_array([0, 0, 0], dtype=np_float)
     for i in range(len(path)):
-        if i - 1 < 0:
-            continue
         c1 = path[i]
         c2 = path[i - 1]
         inertia[0] += length[i] * (
