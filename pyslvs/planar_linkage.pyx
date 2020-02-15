@@ -50,7 +50,7 @@ def norm_path(path):
 
 
 cdef void _normalization(Coordinate[:] path):
-    """Path normalization."""
+    """Path normalization inplace."""
     cdef double inf = float('inf')
     cdef double[:] length = zeros(len(path) + 1, dtype=np_float)
     cdef double[:] bound = np_array([inf, -inf, inf, -inf], dtype=np_float)
@@ -64,6 +64,9 @@ cdef void _normalization(Coordinate[:] path):
         length[i] = c1.distance(c2)
         centre.x += (c2.x + c1.x) * length[i]
         centre.y += (c2.y + c1.y) * length[i]
+    cdef double w = bound[1] - bound[0]
+    if abs(w - 1) < 1e-1:
+        return
     length[-1] = np_sum(length)
     centre.x /= 2 * length[-1]
     centre.y /= 2 * length[-1]
@@ -92,7 +95,7 @@ cdef void _normalization(Coordinate[:] path):
         alpha += pi / 2
     elif inertia[0] == inertia[1]:
         alpha = 0
-    cdef double w = bound[1] - bound[0]
+    w = bound[1] - bound[0]
     bound = np_array([inf, -inf, inf, -inf], dtype=np_float)
     cdef ndarray[double, ndim=2] tm = np_array([
         [cos(alpha) / w, sin(alpha) / w, 0],
@@ -108,6 +111,8 @@ cdef void _normalization(Coordinate[:] path):
     for c1 in path:
         c1.x -= bound[0]
         c1.y -= bound[2]
+    # Check bounding box width again
+    _normalization(path)
 
 
 cdef void _set_bound(Coordinate c, double[:] bound):
