@@ -40,14 +40,14 @@ from .tinycadlib cimport (
 )
 
 
-def norm_path(path):
+def norm_path(path, scale=1):
     cdef Coordinate[:] path_m = np_array([
         Coordinate.__new__(Coordinate, x, y) for x, y in path], dtype=object)
-    _normalization(path_m)
+    _normalization(path_m, scale)
     return [(c.x, c.y) for c in path_m]
 
 
-cdef void _normalization(Coordinate[:] path):
+cdef void _normalization(Coordinate[:] path, double scale):
     cdef Coordinate centre = Coordinate.__new__(Coordinate, 0, 0)
     cdef Coordinate c
     for c in path:
@@ -74,10 +74,10 @@ cdef void _normalization(Coordinate[:] path):
         c.x = length[i] * cos(a)
         c.y = length[i] * sin(a)
         _set_width(c, bound)
-    cdef double w = bound[1] - bound[0]
+    scale /= (bound[1] - bound[0])
     for c in path:
-        c.x /= w
-        c.y /= w
+        c.x *= scale
+        c.y *= scale
 
 
 cdef void _set_width(Coordinate c, double[:] bound):
@@ -134,7 +134,7 @@ cdef class Planar(Objective):
                 if j in same:
                     i -= 1
             if self.shape_only:
-                _normalization(path)
+                _normalization(path, 1)
             self.target[i] = path
         # Expressions
         self.vpoints = list(mech.get('expression', []))
