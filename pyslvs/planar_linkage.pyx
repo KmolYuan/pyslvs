@@ -11,14 +11,12 @@ email: pyslvs@gmail.com
 
 cimport cython
 from collections import OrderedDict
-from numpy cimport ndarray
 from numpy import (
     zeros,
     array as np_array,
     float64 as np_float,
-    sum as np_sum,
 )
-from libc.math cimport HUGE_VAL, pi, NAN, cos, sin, atan2
+from libc.math cimport HUGE_VAL, NAN, cos, sin, atan2, INFINITY as INF
 from libcpp.list cimport list as clist
 from .metaheuristics.utility cimport Objective
 from .expression cimport get_vlinks, VJoint, VPoint, VLink
@@ -43,88 +41,51 @@ from .tinycadlib cimport (
 
 
 def norm_path(path):
-    cdef ndarray[object, ndim=1] path_m = np_array([
+    cdef Coordinate[:] path_m = np_array([
         Coordinate.__new__(Coordinate, x, y) for x, y in path], dtype=object)
     _normalization(path_m)
     return [(c.x, c.y) for c in path_m]
 
 
 cdef void _normalization(Coordinate[:] path):
-    """Path normalization inplace."""
-    cdef double inf = float('inf')
-    cdef double[:] length = zeros(len(path) + 1, dtype=np_float)
-    cdef double[:] bound = np_array([inf, -inf, inf, -inf], dtype=np_float)
     cdef Coordinate centre = Coordinate.__new__(Coordinate, 0, 0)
+    cdef Coordinate c
+    for c in path:
+        centre.x += c.x
+        centre.y += c.y
+    centre.x /= len(path)
+    centre.y /= len(path)
+    cdef double max_h = 0
+    cdef double[:] angle = zeros(len(path) + 1, dtype=np_float)
+    cdef double[:] length = zeros(len(path), dtype=np_float)
     cdef int i
-    cdef Coordinate c1, c2
     for i in range(len(path)):
-        c1 = path[i]
-        _set_bound(c1, bound)
-        c2 = path[i - 1]
-        length[i] = c1.distance(c2)
-        centre.x += (c2.x + c1.x) * length[i]
-        centre.y += (c2.y + c1.y) * length[i]
+        c = path[i]
+        angle[i] = atan2(c.y - centre.y, c.x - centre.x)
+        length[i] = centre.distance(c)
+        if length[i] > max_h:
+            max_h = length[i]
+            angle[-1] = angle[i]
+    cdef double[:] bound = np_array([INF, -INF], dtype=np_float)
+    cdef double a
+    for i in range(len(path)):
+        c = path[i]
+        a = angle[i] - angle[-1]
+        c.x = length[i] * cos(a)
+        c.y = length[i] * sin(a)
+        _set_width(c, bound)
     cdef double w = bound[1] - bound[0]
-    if abs(w - 1) < 1e-1:
-        return
-    length[-1] = np_sum(length)
-    centre.x /= 2 * length[-1]
-    centre.y /= 2 * length[-1]
-    cdef double[:] inertia = np_array([0, 0, 0], dtype=np_float)
-    for i in range(len(path)):
-        c1 = path[i]
-        c2 = path[i - 1]
-        inertia[0] += length[i] * (
-            (c2.y - centre.y) ** 2
-            + (c1.y - centre.y) ** 2
-            + (c2.y - centre.y) * (c1.y - centre.y))
-        inertia[1] += length[i] * (
-            (c2.x - centre.x) ** 2
-            + (c1.x - centre.x) ** 2
-            + (c2.x - centre.x) * (c1.x - centre.x))
-        inertia[2] += length[i] * (
-            (c2.x - centre.x) * (c1.y - centre.y)
-            + (c1.x - centre.x) * (c2.y - centre.y)
-        ) + 2 * ((c2.x - centre.x) * (c2.y - centre.y)
-            + (c1.x - centre.x) * (c1.y - centre.y))
-    inertia[0] /= 3  # Ixx
-    inertia[1] /= 3  # Iyy
-    inertia[2] /= 6  # Ixy
-    cdef double alpha = 0.5 * atan2(2 * inertia[2], inertia[1] - inertia[0])
-    if inertia[0] > inertia[1]:
-        alpha += pi / 2
-    elif inertia[0] == inertia[1]:
-        alpha = 0
-    w = bound[1] - bound[0]
-    bound = np_array([inf, -inf, inf, -inf], dtype=np_float)
-    cdef ndarray[double, ndim=2] tm = np_array([
-        [cos(alpha) / w, sin(alpha) / w, 0],
-        [-sin(alpha) / w, cos(alpha) / w, 0],
-        [0, 0, 1],
-    ], dtype=np_float)
-    cdef double[:, :] t
-    for c1 in path:
-        t = tm @ np_array([[c1.x], [c1.y], [1]])
-        c1.x = t[0, 0]
-        c1.y = t[1, 0]
-        _set_bound(c1, bound)
-    for c1 in path:
-        c1.x -= bound[0]
-        c1.y -= bound[2]
-    # Check bounding box width again
-    _normalization(path)
+    for c in path:
+        c.x /= w
+        c.y /= w
 
 
-cdef void _set_bound(Coordinate c, double[:] bound):
+cdef void _set_width(Coordinate c, double[:] bound):
     """Set boundary of the path."""
     if c.x < bound[0]:
         bound[0] = c.x
     if c.x > bound[1]:
         bound[1] = c.x
-    if c.y < bound[2]:
-        bound[2] = c.y
-    if c.y > bound[3]:
-        bound[3] = c.y
 
 
 @cython.final
