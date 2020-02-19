@@ -343,23 +343,31 @@ cdef class Planar(Objective):
 
         v: [Ax, Ay, Dx, Dy, ..., L0, L1, ..., A00, A01, ..., A10, A11, ...]
         """
-        cdef int target_index = 0
+        cdef int index = 0
         for m in self.mapping_list:
             if type(m) is int:
-                (<VPoint>self.vpoints[m]).locate(v[target_index], v[target_index + 1])
-                target_index += 2
+                (<VPoint>self.vpoints[m]).locate(v[index], v[index + 1])
+                index += 2
             else:
-                self.mapping[m] = v[target_index]
-                target_index += 1
-        cdef double fitness = 0.
-        cdef int index, node
-        cdef Coordinate[:] path
-        for target_index in range(self.target_count):
-            index = self.v_base + target_index
+                self.mapping[m] = v[index]
+                index += 1
+        cdef double fitness = 0
+        cdef int node
+        target = {n: [] for n in self.target}
+        for index in range(self.target_count):
+            index += self.v_base
             if not self.solve(v[index:index + self.target_count]):
                 return HUGE_VAL
-            for node, path in self.target.items():
-                fitness += (<Coordinate>self.data_dict[node, -1]).distance(path[target_index])
+            for node in self.target:
+                target[node].append(self.data_dict[node, -1])
+        cdef Coordinate[:] path1, path2
+        for node in self.target:
+            path1 = np_array(target[node], dtype=object)
+            if self.shape_only:
+                _normalization(path1, 1)
+            path2 = self.target[node]
+            for index in range(self.target_count):
+                fitness += (<Coordinate>path1[index]).distance(path2[index])
         return fitness
 
     cpdef object result(self, double[:] v):
