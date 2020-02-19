@@ -47,45 +47,64 @@ def norm_path(path, scale=1):
     return [(c.x, c.y) for c in path_m]
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef void _normalization(Coordinate[:] path, double scale):
     cdef Coordinate centre = Coordinate.__new__(Coordinate, 0, 0)
     cdef Coordinate c
     for c in path:
         centre.x += c.x
         centre.y += c.y
-    centre.x /= len(path)
-    centre.y /= len(path)
-    cdef double max_h = 0
-    cdef double[:] angle = zeros(len(path) + 1, dtype=np_float)
-    cdef double[:] length = zeros(len(path), dtype=np_float)
-    cdef int i
+    cdef size_t end = len(path)
+    centre.x /= end
+    centre.y /= end
+    cdef double[:] angle = zeros(end + 1, dtype=np_float)
+    cdef double[:] length = zeros(end + 1, dtype=np_float)
+    cdef size_t sp = 0
+    cdef size_t i
     for i in range(len(path)):
         c = path[i]
         angle[i] = atan2(c.y - centre.y, c.x - centre.x)
         length[i] = centre.distance(c)
-        if length[i] > max_h:
-            max_h = length[i]
-            angle[-1] = angle[i]
+        if length[i] > length[end]:
+            length[end] = length[i]
+            angle[end] = angle[i]
+            sp = end
+    _aligned(path, sp)
     cdef double[:] bound = np_array([INF, -INF], dtype=np_float)
     cdef double a
     for i in range(len(path)):
         c = path[i]
-        a = angle[i] - angle[-1]
+        a = angle[i] - angle[end]
         c.x = length[i] * cos(a)
         c.y = length[i] * sin(a)
-        _set_width(c, bound)
+        if c.x < bound[0]:
+            bound[0] = c.x
+        if c.x > bound[1]:
+            bound[1] = c.x
     scale /= (bound[1] - bound[0])
     for c in path:
         c.x *= scale
         c.y *= scale
 
 
-cdef void _set_width(Coordinate c, double[:] bound):
-    """Set boundary of the path."""
-    if c.x < bound[0]:
-        bound[0] = c.x
-    if c.x > bound[1]:
-        bound[1] = c.x
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef void _aligned(Coordinate[:] path, size_t sp):
+    """Split 1D path from sp, concatenate to end."""
+    if sp == 0:
+        return
+    cdef double[:, :] tmp = zeros((sp, 2), dtype=np_float)
+    cdef size_t i
+    for i in range(sp):
+        tmp[i, 0] = path[i].x
+        tmp[i, 1] = path[i].y
+    for i in range(sp, len(path)):
+        path[i - sp].x = path[i].x
+        path[i - sp].y = path[i].y
+    for i in range(sp):
+        path[len(path) - sp + i].x = tmp[i, 0]
+        path[len(path) - sp + i].y = tmp[i, 1]
 
 
 @cython.final
