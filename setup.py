@@ -85,8 +85,8 @@ class Build(build_ext):
 
     def finalize_options(self):
         super(Build, self).finalize_options()
-        import numpy
-        self.include_dirs.append(numpy.get_include())
+        from numpy import get_include
+        self.include_dirs.append(get_include())
 
 
 setup(

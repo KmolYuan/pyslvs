@@ -92,4 +92,11 @@ __all__ = [
     'collection_list',
     'all_collections',
     'efd_fitting',
+    'get_include',
 ]
+
+
+def get_include() -> str:
+    """Get include directory."""
+    from os.path import dirname
+    return dirname(__file__)
