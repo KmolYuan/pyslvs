@@ -32,6 +32,7 @@ from pyslvs import (
     parse_vpoints,
     example_list,
     collection_list,
+    norm_path,
 )
 from pyslvs.metaheuristics import ALGORITHM, AlgorithmType, PARAMS
 from .obj_func import TestObj
@@ -289,20 +290,15 @@ class CoreTest(TestCase):
         t_f = algorithm.history()
         self.assertTrue(10 >= t_f[1][0] - t_f[0][0])
 
-    def test_algorithm_rga(self):
-        """Real-coded genetic algorithm."""
+    def test_algorithms(self):
+        """Test algorithms."""
+        # Real-coded genetic algorithm
         self.algorithm_generic(AlgorithmType.RGA)
-
-    def test_algorithm_firefly(self):
-        """Firefly algorithm."""
+        # Firefly algorithm
         self.algorithm_generic(AlgorithmType.Firefly)
-
-    def test_algorithm_de(self):
-        """Differential evolution."""
+        # Differential evolution
         self.algorithm_generic(AlgorithmType.DE)
-
-    def test_algorithm_tlbo(self):
-        """Teaching learning based optimization."""
+        # Teaching learning based optimization
         self.algorithm_generic(AlgorithmType.TLBO)
 
     def test_obj_func(self):
