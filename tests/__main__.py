@@ -8,7 +8,7 @@ __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
 from unittest import TestCase
-from math import sqrt, radians
+from math import sqrt, radians, hypot, sin, cos, atan2
 from pyslvs import (
     Coordinate,
     SolverSystem,
@@ -18,7 +18,6 @@ from pyslvs import (
     pxy,
     expr_solving,
     data_collecting,
-    Planar,
     link_synthesis,
     contracted_link_synthesis,
     conventional_graph,
@@ -31,69 +30,19 @@ from pyslvs import (
     vpoints_configure,
     parse_vpoints,
     example_list,
-    collection_list,
     norm_path,
 )
 from pyslvs.metaheuristics import ALGORITHM, AlgorithmType, PARAMS
 from .obj_func import TestObj
-
-_four_bar = collection_list("Four bar linkage mechanism")
-_four_bar.update({
-    'expression': parse_vpoints(_four_bar['expression']),
-    'placement': {0: (-70, -70, 50), 1: (70, -70, 50)},
-    'target': {4: [
-        (60.3, 118.12),
-        (31.02, 115.62),
-        (3.52, 110.62),
-        (-25.77, 104.91),
-        (-81.49, 69.19),
-        (-96.47, 54.906),
-        (-109.34, 35.98),
-        (-121.84, 13.83),
-        (-127.56, -20.09),
-        (-128.63, -49.74),
-        (-117.56, -65.45),
-    ]},
-    'upper': [100., 100., 100., 100., 100.],
-    'lower': [0., 0., 0., 0., 0.],
-})
-_planar_object = Planar(_four_bar)
-_degree_code_table = [
-    (7, [(0, 1), (1, 2), (0, 2)]),
-    (51, [(0, 1), (1, 2), (2, 3), (0, 3)]),
-    (62, [(0, 1), (1, 2), (2, 3), (0, 3), (0, 2)]),
-    (63, [(0, 1), (1, 2), (2, 3), (0, 3), (0, 2), (1, 3)]),
-    (787, [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4)]),
-    (937, [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4), (0, 2)]),
-    (504, [(0, 1), (1, 2), (2, 3), (0, 3), (0, 4), (4, 2)]),
-    (947, [(0, 1), (1, 2), (2, 3), (0, 3), (0, 4), (4, 2), (1, 4)]),
-    (1010, [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4), (0, 2), (0, 3)]),
-    (1016, [(0, 1), (1, 2), (2, 3), (0, 3), (0, 4), (4, 2), (0, 2)]),
-    (1011, [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4), (0, 2), (0, 3), (1, 4)]),
-    (1020, [(0, 1), (1, 2), (2, 3), (0, 3), (0, 4), (4, 2), (0, 2), (1, 4)]),
-    (1022, [(0, 1), (1, 2), (2, 3), (0, 3), (0, 4), (4, 2), (0, 2), (1, 4), (1, 3)]),
-    (24851, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5)]),
-    (15169, [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4), (0, 5), (3, 5)]),
-    (27050, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 2), (3, 5)]),
-    (29459, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 2), (1, 3)]),
-    (29326, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 3), (1, 5)]),
-    (31497, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 3), (0, 4)]),
-    (31064, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 2), (0, 4)]),
-    (24344, [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4), (0, 3), (0, 5), (2, 5)]),
-    (31553, [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4), (0, 2), (0, 5), (2, 5)]),
-    (16320, [(0, 1), (1, 2), (2, 3), (0, 3), (0, 4), (2, 4), (0, 5), (2, 5)]),
-    (29327, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 3), (1, 5), (2, 4)]),
-    (30358, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 4), (1, 5), (2, 4)]),
-    (31507, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 4), (1, 5), (3, 5)]),
-    (30485, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 3), (2, 5), (2, 4)]),
-]
+from .utility import PLANAR_OBJECT, DEGREE_CODE_TABLE, PATH
 
 
 class CoreTest(TestCase):
 
     def test_plap(self):
         """Test for plap function."""
-        coord = plap(Coordinate(0, 0), 50 * sqrt(2), radians(45), Coordinate(50, 0))
+        coord = plap(
+            Coordinate(0, 0), 50 * sqrt(2), radians(45), Coordinate(50, 0))
         self.assertAlmostEqual(50, coord.x)
         self.assertAlmostEqual(50, coord.y)
 
@@ -113,7 +62,8 @@ class CoreTest(TestCase):
 
     def test_plpp(self):
         """Test for plpp function."""
-        coord = plpp(Coordinate(0, 0), sqrt(5), Coordinate(0, -3), Coordinate(3 / 2, 0))
+        coord = plpp(
+            Coordinate(0, 0), sqrt(5), Coordinate(0, -3), Coordinate(3 / 2, 0))
         self.assertAlmostEqual(2, coord.x)
         self.assertAlmostEqual(1, coord.y)
 
@@ -176,13 +126,13 @@ class CoreTest(TestCase):
         self.assertTrue(g1.is_isomorphic(g2))
         self.assertEqual(2057732, g1.degree_code())
         self.assertEqual(g1.degree_code(), g2.degree_code())
-        for code, edges in _degree_code_table:
+        for code, edges in DEGREE_CODE_TABLE:
             self.assertEqual(code, Graph(edges).degree_code())
 
     def test_atlas(self):
         """Test 'atlas' libraries."""
         answers = []
-
+        # Test assortment [4]
         type_0 = [4]
         cg_list = contracted_graph(type_0)
         for c_j in contracted_link_synthesis(type_0):
@@ -190,7 +140,7 @@ class CoreTest(TestCase):
             answers.extend(answer)
         self.assertEqual(1, len(answers))
         answers.clear()
-
+        # Test assortment [4, 2]
         type_1 = [4, 2]
         cg_list = contracted_graph(type_1)
         for c_j in contracted_link_synthesis(type_1):
@@ -198,7 +148,7 @@ class CoreTest(TestCase):
             answers.extend(answer)
         self.assertEqual(2, len(answers))
         answers.clear()
-
+        # Test assortment [4, 4, 0], [5, 2, 1], [6, 0, 2]
         answers_degenerated = []
         for type_2 in ([4, 4, 0], [5, 2, 1], [6, 0, 2]):
             cg_list = contracted_graph(type_2)
@@ -281,11 +231,24 @@ class CoreTest(TestCase):
                     count += factor * (i + 2)
                 self.assertEqual(nj, int(count / 2))
 
+    def test_path_normalization(self):
+        """Test path normalization function."""
+        path1 = norm_path(PATH)
+        new_path = []
+        for x, y in PATH:
+            h = hypot(x, y)
+            a = atan2(y, x) + radians(50)
+            new_path.append((h * cos(a), h * sin(a)))
+        path2 = norm_path(new_path)
+        for i in range(len(PATH)):
+            h = hypot(path1[i][0] - path2[i][0], path1[i][1] - path2[i][1])
+            self.assertAlmostEqual(0, h)
+
     def algorithm_generic(self, t: AlgorithmType):
         """Generic algorithm setup."""
         settings = {'max_time': 1, 'report': 10}
         settings.update(PARAMS[t])
-        algorithm = ALGORITHM[t](_planar_object, settings)
+        algorithm = ALGORITHM[t](PLANAR_OBJECT, settings)
         algorithm.run()
         t_f = algorithm.history()
         self.assertTrue(10 >= t_f[1][0] - t_f[0][0])
