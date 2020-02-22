@@ -83,7 +83,11 @@ cdef inline int _sum_factors(int16_t[:] factors):
 
 
 cpdef list link_synthesis(int nl, int nj, object stop_func = None):
-    """Number synthesis try and error function."""
+    """Return link assortment by number of links `nl` and number of joints `nj`.
+
+    The check stop function `stop_func` object for GUI or subprocess,
+    return `True` to terminate this function.
+    """
     result = []
     cdef int m_max_v = _m_max(nl, nj)
     if m_max_v == -1:
@@ -131,7 +135,11 @@ cdef inline int _j_m_p(int n_m) nogil:
 
 
 cpdef list contracted_link_synthesis(object link_num_list, object stop_func = None):
-    """Generate the contracted link assortment."""
+    """Return contracted link assortment by link assortment `link_num_list`.
+
+    The check stop function `stop_func` object for GUI or subprocess,
+    return `True` to terminate this function.
+    """
     cdef int16_t[:] link_num
     if len(link_num_list) == 1:
         link_num = np_zeros(link_num_list[0], dtype=np_int)

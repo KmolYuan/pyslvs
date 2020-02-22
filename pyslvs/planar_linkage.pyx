@@ -39,6 +39,8 @@ from .tinycadlib cimport (
 @cython.final
 cdef class Planar(Objective):
 
+    """This class is used to verified kinematics of the linkage mechanism."""
+
     cdef bint bfgs_mode
     cdef int target_count, v_base
     cdef clist[Expression] exprs
@@ -147,12 +149,17 @@ cdef class Planar(Objective):
         self.data_dict = {}
 
     cpdef double[:] get_upper(self):
+        """Return upper bound."""
         return self.upper
 
     cpdef double[:] get_lower(self):
+        """Return lower bound."""
         return self.lower
 
     cpdef bint is_two_kernel(self):
+        """Input a generic data (variable array), return the mechanism 
+        expression.
+        """
         return self.bfgs_mode
 
     cdef inline double get_len(self, str expr1, str expr2):
@@ -283,10 +290,6 @@ cdef class Planar(Objective):
         return True
 
     cdef double fitness(self, double[:] v):
-        """Chromosome format: (decided by upper and lower)
-
-        v: [Ax, Ay, Dx, Dy, ..., L0, L1, ..., A00, A01, ..., A10, A11, ...]
-        """
         cdef int target_index = 0
         for m in self.mapping_list:
             if type(m) is int:
@@ -307,6 +310,9 @@ cdef class Planar(Objective):
         return fitness
 
     cpdef object result(self, double[:] v):
+        """Input a generic data (variable array), return the mechanism 
+        expression.
+        """
         cdef int target_index = 0
         cdef VPoint vpoint
         for m in self.mapping_list:

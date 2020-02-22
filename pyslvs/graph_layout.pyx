@@ -21,9 +21,13 @@ from .graph cimport Graph, cmap
 
 
 cpdef dict external_loop_layout(Graph g, bint node_mode, double scale = 1.):
-    """Layout position decided by external loop."""
-    pos = _line_polygon_layout(g, scale)
+    """Layout position decided by outer loop (max cycle).
 
+    Return the layout position decided by external loop.
+    Argument `node_mode` will transform edges into vertices.
+    Argument `scale` will resize the position by scale factor.
+    """
+    pos = _line_polygon_layout(g, scale)
     # Node mode.
     cdef int i, n1, n2
     cdef double x1, y1, x2, y2
