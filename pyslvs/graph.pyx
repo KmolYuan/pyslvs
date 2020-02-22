@@ -105,7 +105,7 @@ cpdef list labeled_enumerate(Graph g):
 @cython.final
 cdef class Graph:
 
-    """NetworkX-like graph class."""
+    """The undirected graph class, support multigraph."""
 
     def __cinit__(self, object edges):
         self.edges = tuple(edges)
@@ -122,9 +122,11 @@ cdef class Graph:
         self.adj = {n: self.neighbors(n) for n in self.vertices}
 
     cpdef void add_vertices(self, object vertices):
+        """Add vertices from iterable object `vertices`."""
         self.vertices = tuple(set(self.vertices) | set(vertices))
 
     cpdef void add_edge(self, int n1, int n2):
+        """Add edge `n1` to `n2`."""
         self.edges += ((n1, n2),)
         self.vertices = tuple(set(self.vertices) | {n1, n2})
         cdef int n
@@ -168,9 +170,22 @@ cdef class Graph:
                 self.adj.pop(n, None)
 
     cpdef int dof(self):
+        """Return DOF of the graph.
+
+        !!! note
+            DOF is the Degree of Freedoms to a mechanism.
+
+            In the [Graph] objects, all vertices will assumed as revolute 
+            joints (1 DOF).
+
+            $$
+            F = 3(N_L - 1) - 2N_J
+            $$
+        """
         return 3 * (len(self.vertices) - 1) - (2 * len(self.edges))
 
     cpdef inline tuple neighbors(self, int n):
+        """Return the neighbors of the vertex `n`."""
         neighbors = []
         cdef int l1, l2
         for l1, l2 in self.edges:
@@ -181,9 +196,17 @@ cdef class Graph:
         return tuple(neighbors)
 
     cpdef dict degrees(self):
+        """Return the degrees of each vertex."""
         return {n: len(neighbors) for n, neighbors in self.adj.items()}
 
     cpdef ullong degree_code(self):
+        """Generate a degree code.
+
+        With a sorted vertices mapping by the degrees of each vertex,
+        regenerate a new adjacency matrix.
+        A binary code can be found by concatenating the upper right elements.
+        The degree code is the maximum value of the permutation.
+        """
         if len(self.vertices) < 2:
             return 0
         # Create a new mapping
@@ -237,6 +260,11 @@ cdef class Graph:
         return code
 
     cpdef ndarray adjacency_matrix(self):
+        """Generate a adjacency matrix.
+
+        Assume the matrix $A[i, j] = A[j, i]$.
+        Where $A[i, j] = 1$ if edge `(i, j)` exist.
+        """
         cdef int n = len(self.vertices)
         cdef ndarray am = zeros((n, n), dtype=np_uint)
         for n1, n2 in self.edges:
@@ -245,7 +273,9 @@ cdef class Graph:
         return am
 
     cpdef bint is_connected(self, int without = -1):
-        """Return True if the graph is not isolated."""
+        """Return `True` if the graph is connected.
+        Set the argument `without` to ignore one vertex.
+        """
         if not self.vertices:
             return True
         cdef int neighbors
@@ -267,6 +297,7 @@ cdef class Graph:
         return len(vertices) == len(self.vertices)
 
     cpdef bint has_cut_link(self):
+        """Return True if the graph has any cut links."""
         cdef int n, d
         for n, d in self.degrees().items():
             # Only for multiple links.
@@ -277,6 +308,11 @@ cdef class Graph:
         return False
 
     cpdef bint is_degenerate(self):
+        """Return True if this kinematic chain is degenerate.
+
+        + Prue all multiple contracted links recursively.
+        + Check the DOF of sub-graph if it is lower then zero.
+        """
         if self.has_triangle():
             return True
         cdef int n1, n2
@@ -300,6 +336,7 @@ cdef class Graph:
         return g.dof() < 1
 
     cpdef bint has_triangle(self):
+        """Return True if the graph has triangle."""
         cdef int n1, n2
         for neighbors in self.adj.values():
             for n1 in neighbors:
@@ -311,16 +348,28 @@ cdef class Graph:
         return False
 
     cpdef bint is_isomorphic(self, Graph g):
+        """Return True if two graphs is isomorphic.
+
+        Default is using VF2 algorithm.
+        """
         return self.is_isomorphic_vf2(g)
 
     cpdef bint is_isomorphic_vf2(self, Graph g):
+        """Compare isomorphism by VF2 algorithm,
+        one of the high performance isomorphic algorithms.
+        """
         cdef GraphMatcher gm_gh = GraphMatcher.__new__(GraphMatcher, self, g)
         return gm_gh.is_isomorphic()
 
     cpdef bint is_isomorphic_degree_code(self, Graph g):
+        """Compare isomorphism by degree code algorithm.
+
+        + <https://doi.org/10.1115/1.2919236>
+        """
         return self.degree_code() == g.degree_code()
 
     cpdef Graph duplicate(self, object vertices, int times):
+        """Make graph duplicate by specific `vertices`. Return a new graph."""
         if times < 1:
             raise ValueError("please input a number larger than 1.")
         cdef int max_num = max(self.vertices) + 1
@@ -342,6 +391,7 @@ cdef class Graph:
         return Graph.__new__(Graph, edges)
 
     cpdef Graph copy(self):
+        """The copy method of the Graph object."""
         return Graph.__new__(Graph, self.edges)
 
     def __repr__(self) -> str:

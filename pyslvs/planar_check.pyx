@@ -21,10 +21,7 @@ ctypedef cpair[int, int] ipair
 
 
 cpdef inline bint is_planar(Graph g):
-    """Return True if the graph is planar.
-    
-    Only this function well be shown as public.
-    """
+    """Return True if the graph is a planar graph."""
     cdef _LRPlanarity planarity_state = _LRPlanarity.__new__(_LRPlanarity, g)
     return planarity_state.lr_planarity() is not None
 

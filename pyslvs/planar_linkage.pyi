@@ -12,8 +12,6 @@ def norm_path(path: Iterable[Tuple[float, float]], scale: float = 1) -> List[Tup
 
 class Planar(Objective[str]):
 
-    """This class is used to verified kinematics of the linkage mechanism."""
-
     def __init__(self, mech: Dict[str, Any]) -> None:
         """The constructor of objective object.
 
@@ -47,21 +45,22 @@ class Planar(Objective[str]):
         ...
 
     def get_upper(self) -> ndarray:
-        """Return upper bound."""
         ...
 
     def get_lower(self) -> ndarray:
-        """Return lower bound."""
         ...
 
     def fitness(self, v: ndarray) -> double:
-        """The fitness is the error between target path and self."""
+        """The fitness is the error between target path and self.
+
+        Chromosome format: (decided by upper and lower)
+
+        v: `[Ax, Ay, Dx, Dy, ..., L0, L1, ..., A00, A01, ..., A10, A11, ...]`
+        """
         ...
 
     def is_two_kernel(self) -> bool:
-        """Input a generic data (variable array), return the mechanism expression."""
         ...
 
     def result(self, v: ndarray) -> str:
-        """Input a generic data (variable array), return the mechanism expression."""
         ...

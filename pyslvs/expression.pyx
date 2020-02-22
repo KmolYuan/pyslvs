@@ -12,7 +12,6 @@ email: pyslvs@gmail.com
 cimport cython
 from libc.math cimport M_PI, atan2, hypot
 from cpython.object cimport Py_EQ, Py_NE
-from typing import Iterable
 from numpy import array as np_array
 
 
@@ -22,7 +21,7 @@ cdef inline double distance(double x1, double y1, double x2, double y2) nogil:
 
 
 cpdef list get_vlinks(object vpoints):
-    """Get VLinks of a list of VPoint."""
+    """Get VLinks from a list of VPoint `vpoints`."""
     links = {}
     cdef int i
     cdef VPoint vpoint
@@ -41,18 +40,18 @@ cpdef list get_vlinks(object vpoints):
 @cython.final
 cdef class Coordinate:
 
-    """A class to store the coordinate."""
+    """A data class used to store coordinates."""
 
     def __cinit__(self, double x, double y):
         self.x = x
         self.y = y
 
     cpdef double distance(self, Coordinate p):
-        """Distance."""
+        """Return the distance between two coordinates."""
         return distance(self.x, self.y, p.x, p.y)
 
     cpdef bint is_nan(self):
-        """Test this coordinate is a error-occurred answer."""
+        """Return True if the coordinate value is not a number."""
         return self.x != self.x
 
     def __repr__(self):
@@ -61,6 +60,8 @@ cdef class Coordinate:
 
 @cython.final
 cdef class VPoint:
+
+    """Mechanism expression class."""
 
     HOLDER = VPoint([], VJoint.R, 0., "", 0., 0.)
 
@@ -78,31 +79,27 @@ cdef class VPoint:
         self.type = j_type
         self.type_str = ('R', 'P', 'RP')[j_type]
         self.angle = angle
-
         self.color_str = color_str
         if color_func is None:
             self.color = None
         else:
             self.color = color_func(color_str)
-
         self.x = x
         self.y = y
         self.c = ndarray(2, dtype=object)
-
         if self.type in {VJoint.P, VJoint.RP}:
             # Slider current coordinates.
             # [0]: Current node on slot.
             # [1]: Pin.
-            self.c[0] = (self.x, self.y)
-            self.c[1] = (self.x, self.y)
+            self.c[0] = self.c[1] = (self.x, self.y)
         else:
             self.c[0] = (self.x, self.y)
-
         self.__has_offset = False
         self.__offset = 0
 
     @staticmethod
-    def r_joint(links: Iterable[str], x: double, y: double) -> VPoint:
+    def r_joint(links, x, y) -> VPoint:
+        """A fast constructor of revolute joints."""
         return VPoint.c_r_joint(links, x, y)
 
     @staticmethod
@@ -110,7 +107,8 @@ cdef class VPoint:
         return VPoint.__new__(VPoint, links, VJoint.R, 0., '', x, y)
 
     @staticmethod
-    def slider_joint(links: Iterable[str], type_int: VJoint, angle: double, x: double, y: double) -> VPoint:
+    def slider_joint(links, type_int, angle, x, y) -> VPoint:
+        """A fast constructor of slider joints."""
         return VPoint.c_slider_joint(links, type_int, angle, x, y)
 
     @staticmethod
@@ -118,10 +116,14 @@ cdef class VPoint:
         return VPoint.__new__(VPoint, links, type_int, angle, '', x, y)
 
     cpdef VPoint copy(self):
+        """The copy method of the VPoint object."""
         return self.__copy__()
 
     @property
     def cx(self) -> float:
+        """X value of current coordinate.
+        If it's slider, the pin coordinate will be returned.
+        """
         if self.type == VJoint.R:
             return self.c[0][0]
         else:
@@ -129,18 +131,29 @@ cdef class VPoint:
 
     @property
     def cy(self) -> float:
+        """Y value of current coordinate.
+        If it's slider, the pin coordinate will be returned.
+        """
         if self.type == VJoint.R:
             return self.c[0][1]
         else:
             return self.c[1][1]
 
     cpdef void set_links(self, object links) except *:
+        """The update function of links attribute."""
         self.links = tuple([s for s in links if s])
 
     cpdef void replace_link(self, str link1, str link2) except *:
+        """Replace the value in links attribute."""
         self.set_links([link2 if link == link1 else link for link in self.links])
 
     cpdef void move(self, tuple c1, tuple c2 = None) except *:
+        """The update function of current coordinate(s).
+        The 2nd placement is the pin coordinate of slider joints.
+
+        If there is only one argument for a slider joint,
+        the slot and pin coordinates will be set to the same position.
+        """
         cdef double x, y
         x, y = c1
         self.c[0] = (x, y)
@@ -150,21 +163,32 @@ cdef class VPoint:
             self.c[1] = (x, y)
 
     cpdef void locate(self, double x, double y) except *:
+        """The update function of original coordinate.
+        It will call `self.move((x, y))` after set the position.
+        """
         self.x = x
         self.y = y
         self.move((x, y))
 
     cpdef void rotate(self, double angle):
+        """The update function of angle attribute."""
         self.angle = angle % 180
 
     cpdef void set_offset(self, double offset):
+        """The update function of slider offset.
+        It will also enable offset value after called.
+        """
         self.__has_offset = True
         self.__offset = offset
 
     cpdef void disable_offset(self):
+        """Disable offset setting of the joint."""
         self.__has_offset = False
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     cpdef double distance(self, VPoint p):
+        """Return the distance between two VPoint objects."""
         on_links = tuple(set(self.links) & set(p.links))
         cdef double m_x = 0
         cdef double m_y = 0
@@ -195,15 +219,27 @@ cdef class VPoint:
         return hypot(p_x - m_x, p_y - m_y)
 
     cpdef bint has_offset(self):
+        """Return True if the offset setting is enabled."""
         return self.__has_offset
 
     cpdef double offset(self):
+        """Return the offset constraint value of the joint."""
         return self.__offset
 
     cpdef double true_offset(self):
+        """Return the current offset value of the joint."""
         return hypot(self.c[1][0] - self.c[0][0], self.c[1][1] - self.c[0][1])
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     cpdef double slope_angle(self, VPoint p, int num1 = 2, int num2 = 2):
+        """Return the value `hypot(p_x - m_x, p_y - m_y)`,
+        where `m_x`, `m_y` is the value of the joint,
+        and `p_x`, `p_y` is the value of `p`.
+
+        The option `num1` and `num2` is the position of current coordinate 
+        attribute.
+        """
         cdef double x1, y1, x2, y2
         if num1 > 1:
             x2, y2 = self.x, self.y
@@ -216,6 +252,7 @@ cdef class VPoint:
         return atan2(y1 - y2, x1 - x2) / M_PI * 180
 
     cpdef bint grounded(self):
+        """Return True if the joint pin is connected to ground link."""
         if self.type == VJoint.R:
             return VLink.FRAME in self.links
         elif self.type in {VJoint.P, VJoint.RP}:
@@ -225,15 +262,19 @@ cdef class VPoint:
                 return False
 
     cpdef bint pin_grounded(self):
+        """Return True if the point is at the same link."""
         return VLink.FRAME in self.links[1:]
 
     cpdef bint same_link(self, VPoint p):
-        return set(self.links) & set(p.links)
+        """Return True if the point is at the same link."""
+        return bool(set(self.links) & set(p.links))
 
     cpdef bint no_link(self):
+        """Return True if there is no any link in links attribute."""
         return not self.links
 
     cpdef bint is_slot_link(self, str link_name):
+        """Return True if the slot is on the link `link_name`."""
         if self.type == VJoint.R:
             return False
         if self.links:
@@ -242,6 +283,7 @@ cdef class VPoint:
             return False
 
     cpdef str expr(self):
+        """Return the literal mechanism expression of the joint."""
         if self.type != VJoint.R:
             type_text = f"{self.type_str}, A[{self.angle}]"
         else:
@@ -306,6 +348,8 @@ cdef class VPoint:
 @cython.final
 cdef class VLink:
 
+    """Mechanism expression class in link's view."""
+
     HOLDER = VLink("", "", [])
     FRAME = 'ground'
 
@@ -325,6 +369,7 @@ cdef class VLink:
         self.points = np_array(list(points), dtype=int)
 
     cpdef void set_points(self, object points) except *:
+        """The update function of points attribute."""
         self.points = np_array(list(points), dtype=int)
 
     def __contains__(self, point: int) -> bint:
