@@ -143,8 +143,8 @@ cdef double _cmp_wavelet(double[:, :] wave1, double[:, :] wave2):
         fitness += (
             abs(wave1[0, i] - wave2[0, i])
             + abs(wave1[1, i] - wave2[1, i])
-            + abs(wave1[2, i] - wave2[2, i]) ** 2
-            + abs(wave1[3, i] - wave2[3, i]) ** 2
+            + abs(wave1[2, i] - wave2[2, i]) * 1e3
+            + abs(wave1[3, i] - wave2[3, i]) * 1e3
         )
     return fitness
 
