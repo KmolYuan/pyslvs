@@ -55,6 +55,7 @@ __copyright__ = "Copyright (C) 2016-2020"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
+import pywt as _
 from .expression import get_vlinks, VJoint, VPoint, VLink, Coordinate
 from .bfgs import SolverSystem
 from .triangulation import vpoints_configure, ExpressionStack
