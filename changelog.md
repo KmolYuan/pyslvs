@@ -4,6 +4,8 @@
 + Add an iterator for grabbing examples and collections names.
 + Function name typo corrections.
 + Add "get_include" function for setup.
++ "Shape only" synthesis mode.
++ DWT synthesis mode. (alpha)
 
 # Version 20.01
 
