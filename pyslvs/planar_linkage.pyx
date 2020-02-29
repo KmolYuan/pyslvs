@@ -15,6 +15,7 @@ from numpy import (
     zeros,
     array as np_array,
     float64 as np_float,
+    sort,
 )
 from pywt import dwt
 from libc.math cimport HUGE_VAL, NAN, cos, sin, atan2, INFINITY as INF
@@ -422,11 +423,15 @@ cdef class Planar(Objective):
                 self.mapping[m] = v[index]
                 index += 1
         cdef double fitness = 0
+        cdef double[:] angles
         cdef int node
         target = {n: [] for n in self.target}
         for index in range(self.target_count):
             index += self.v_base
-            if not self.solve(v[index:index + self.target_count]):
+            angles = v[index:index + self.target_count]
+            if self.wavelet_mode:
+                angles = sort(angles)
+            if not self.solve(angles):
                 return HUGE_VAL
             for node in self.target:
                 target[node].append(self.data_dict[node, -1])
