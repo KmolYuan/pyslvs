@@ -413,6 +413,8 @@ cdef class Planar(Objective):
                 )
         return True
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     cdef double fitness(self, double[:] v):
         cdef int index = 0
         for m in self.mapping_list:
