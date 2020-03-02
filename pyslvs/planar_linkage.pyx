@@ -45,6 +45,7 @@ DEF WAVELET = "db3"
 
 
 def norm_path(path, scale=1):
+    """Python wrapper of normalization function."""
     cdef Coordinate[:] path_m = np_array([
         Coordinate.__new__(Coordinate, x, y) for x, y in path], dtype=object)
     _normalization(path_m, scale)
@@ -54,6 +55,7 @@ def norm_path(path, scale=1):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef void _normalization(Coordinate[:] path, double scale):
+    """Normalization implementation."""
     cdef Coordinate centre = Coordinate.__new__(Coordinate, 0, 0)
     cdef Coordinate c
     for c in path:

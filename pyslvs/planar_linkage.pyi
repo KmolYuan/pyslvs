@@ -6,7 +6,6 @@ from .metaheuristics import Objective
 
 
 def norm_path(path: Iterable[Tuple[float, float]], scale: float = 1) -> List[Tuple[float, float]]:
-    """Python wrapper of normalization function."""
     ...
 
 
