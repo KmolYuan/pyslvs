@@ -1,6 +1,6 @@
 # Version 20.03
 
-+ None
++ Allow case insensitive color name.
 
 # Version 20.02
 

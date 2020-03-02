@@ -31,27 +31,27 @@ _JointArgs = List[Union[str, VJoint, float, _Coord, Tuple[str, ...]]]
 
 # Color dictionary
 _color_list: Dict[str, Tuple[int, int, int]] = {
-    'Red': (172, 68, 68),
-    'Green': (110, 190, 30),
-    'Blue': (68, 120, 172),
-    'Cyan': (0, 255, 255),
-    'Magenta': (255, 0, 255),
-    'Brick-Red': (255, 130, 130),
-    'Yellow': (255, 255, 0),
-    'Gray': (160, 160, 160),
-    'Orange': (225, 165, 0),
-    'Pink': (225, 192, 230),
-    'Black': (0, 0, 0),
-    'White': (255, 255, 255),
-    'Dark-Red': (128, 0, 0),
-    'Dark-Green': (0, 128, 0),
-    'Dark-Blue': (0, 0, 128),
-    'Dark-Cyan': (128, 0, 128),
-    'Dark-Magenta': (255, 0, 255),
-    'Dark-Yellow': (128, 128, 0),
-    'Dark-Gray': (128, 128, 128),
-    'Dark-Orange': (225, 140, 0),
-    'Dark-Pink': (225, 20, 147),
+    'red': (172, 68, 68),
+    'green': (110, 190, 30),
+    'blue': (68, 120, 172),
+    'cyan': (0, 255, 255),
+    'magenta': (255, 0, 255),
+    'brick-red': (255, 130, 130),
+    'yellow': (255, 255, 0),
+    'gray': (160, 160, 160),
+    'orange': (225, 165, 0),
+    'pink': (225, 192, 230),
+    'black': (0, 0, 0),
+    'white': (255, 255, 255),
+    'dark-red': (128, 0, 0),
+    'dark-green': (0, 128, 0),
+    'dark-blue': (0, 0, 128),
+    'dark-cyan': (128, 0, 128),
+    'dark-magenta': (255, 0, 255),
+    'dark-yellow': (128, 128, 0),
+    'dark-gray': (128, 128, 128),
+    'dark-orange': (225, 140, 0),
+    'dark-pink': (225, 20, 147),
 }
 color_names = tuple(sorted(_color_list.keys()))
 
@@ -62,6 +62,7 @@ def color_rgb(name: str) -> Tuple[int, int, int]:
     Get RGB color data by name, return `(0, 0, 0)` if it is invalid.
     Also support `"(R, G, B)"` string format.
     """
+    name = name.lower()
     if name in _color_list:
         return _color_list[name]
     else:
@@ -135,7 +136,7 @@ MULTILINE_COMMENT: /#\[[\s\S]*#\][^\n]*/
 
 // Custom data type
 JOINT_TYPE: "RP" | "R" | "P"
-COLOR: """ + "|".join(f'"{color}"' for color in color_names) + r"""
+COLOR: """ + "|".join(f'"{color}"i' for color in color_names) + r"""
 type: JOINT_TYPE
 name: CNAME
 number: SIGNED_NUMBER
