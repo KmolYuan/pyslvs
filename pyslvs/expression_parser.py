@@ -150,7 +150,6 @@ mechanism: "M[" [joint ("," joint)* ","?] "]"
 
 
 class _Transformer(Transformer, Generic[_T1, _T2]):
-
     """Base transformer implementation."""
 
     @staticmethod
@@ -195,7 +194,6 @@ class _Transformer(Transformer, Generic[_T1, _T2]):
 
 
 class _ParamsTrans(_Transformer[str, PointArgs]):
-
     """Transformer will parse into a list of VPoint data."""
 
     @staticmethod
@@ -234,7 +232,6 @@ class _ParamsTrans(_Transformer[str, PointArgs]):
 
 
 class _PositionTrans(_Transformer[str, _Coord]):
-
     """Transformer will parse into a list of position data."""
 
     @staticmethod
@@ -248,7 +245,6 @@ class _PositionTrans(_Transformer[str, _Coord]):
 
 
 class _VPointsTrans(_Transformer[VJoint, VPoint]):
-
     """Using same grammar return as VPoints."""
 
     @staticmethod

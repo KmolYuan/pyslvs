@@ -51,7 +51,6 @@ cdef inline double _radians(double degree):
 
 
 cdef class SolverSystem:
-
     """Sketch Solve solver.
 
     !!! note

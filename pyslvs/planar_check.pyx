@@ -34,9 +34,7 @@ cdef inline _ConflictPair _top_of_stack(list l):
 
 
 cdef class _LRPlanarity:
-
     """A class to maintain the state during planarity check."""
-
     cdef Graph g, DG
     cdef _PlanarEmbedding embedding
     cdef list S
@@ -384,13 +382,11 @@ cdef class _LRPlanarity:
 
 
 cdef class _ConflictPair:
-
     """Represents a different constraint between two intervals.
 
     The edges in the left interval must have a different orientation than
     the one in the right interval.
     """
-
     cdef _Interval left, right
 
     def __cinit__(
@@ -424,14 +420,12 @@ cdef class _ConflictPair:
 
 
 cdef class _Interval:
-
     """Represents a set of return edges.
 
     All return edges in an interval induce a same constraint on the contained
     edges, which means that all edges must either have a left orientation or
     all edges must have a right orientation.
     """
-
     cdef tuple low, high
 
     def __cinit__(self, tuple low=None, tuple high=None):
@@ -452,9 +446,7 @@ cdef class _Interval:
 
 
 cdef class _PlanarEmbedding(Graph):
-
     """Represents a planar graph with its planar embedding."""
-
     cdef cmap[int, int] node_label
     cdef cmap[ipair, ipair] edge_label
 
