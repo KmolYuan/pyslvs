@@ -39,7 +39,6 @@ cpdef list get_vlinks(object vpoints):
 
 @cython.final
 cdef class Coordinate:
-
     """A data class used to store coordinates."""
 
     def __cinit__(self, double x, double y):
@@ -60,9 +59,7 @@ cdef class Coordinate:
 
 @cython.final
 cdef class VPoint:
-
     """Mechanism expression class."""
-
     HOLDER = VPoint([], VJoint.R, 0., "", 0., 0.)
 
     def __cinit__(
@@ -347,9 +344,7 @@ cdef class VPoint:
 
 @cython.final
 cdef class VLink:
-
     """Mechanism expression class in link's view."""
-
     HOLDER = VLink("", "", [])
     FRAME = 'ground'
 

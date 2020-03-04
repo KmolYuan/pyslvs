@@ -154,9 +154,7 @@ cdef double _cmp_wavelet(double[:, :] wave1, double[:, :] wave2):
 
 @cython.final
 cdef class Planar(Objective):
-
     """This class is used to verified kinematics of the linkage mechanism."""
-
     cdef bint bfgs_mode, shape_only, wavelet_mode
     cdef int target_count, v_base
     cdef clist[Expression] exprs

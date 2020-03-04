@@ -83,9 +83,7 @@ def color_rgb(name: str) -> Tuple[int, int, int]:
 
 @dataclass(repr=False, eq=False)
 class PointArgs:
-
     """Point table argument."""
-
     links: str
     type: str
     color: str
@@ -95,9 +93,7 @@ class PointArgs:
 
 @dataclass(repr=False, eq=False)
 class LinkArgs:
-
     """Link table argument."""
-
     name: str
     color: str
     points: str

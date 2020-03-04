@@ -15,7 +15,6 @@ from pyslvs.metaheuristics.utility cimport Objective
 
 @cython.final
 cdef class TestObj(Objective):
-
     """Test objective function."""
 
     cpdef double[:] get_upper(self):

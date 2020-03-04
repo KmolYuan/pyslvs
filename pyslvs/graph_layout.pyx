@@ -585,9 +585,7 @@ cdef inline bint _not_subset(OrderedSet o_set, list members):
 
 
 cdef class _OrderedSetIterator:
-
     """Ordered set iterator."""
-
     cdef OrderedSet oset
     cdef _Entry curr
     cdef ssize_t si_used
@@ -616,9 +614,7 @@ cdef class _OrderedSetIterator:
 
 
 cdef class _OrderedSetReverseIterator:
-
     """Ordered set iterator with reversed order."""
-
     cdef OrderedSet oset
     cdef _Entry curr
     cdef ssize_t si_used
@@ -646,9 +642,7 @@ cdef class _OrderedSetReverseIterator:
 
 @cython.final
 cdef class OrderedSet:
-
     """Ordered set container."""
-
     cdef dict map
     cdef _Entry end
     cdef ssize_t os_used

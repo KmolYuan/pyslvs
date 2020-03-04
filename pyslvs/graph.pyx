@@ -104,7 +104,6 @@ cpdef list labeled_enumerate(Graph g):
 
 @cython.final
 cdef class Graph:
-
     """The undirected graph class, support multigraph."""
 
     def __cinit__(self, object edges):
@@ -407,7 +406,6 @@ cdef bint _is_adjacent(Graph g, int u, int v):
 
 @cython.final
 cdef class GraphMatcher:
-
     """GraphMatcher and GMState class from NetworkX.
 
     Copyright (C) 2007-2009 by the NetworkX maintainers
@@ -419,7 +417,6 @@ cdef class GraphMatcher:
     James P. Crutchfield, principal investigator.
     Complexity Sciences Center and Physics Department, UC Davis.
     """
-
     cdef Graph g1, g2
     cdef set g1_nodes, g2_nodes
     cdef dict core_1, core_2, inout_1, inout_2, mapping
@@ -612,7 +609,7 @@ cdef class GraphMatcher:
 
 @cython.final
 cdef class GMState:
-
+    """Graph matcher state."""
     cdef GraphMatcher gm
     cdef int g1_node, g2_node, depth
 

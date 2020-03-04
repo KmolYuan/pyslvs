@@ -29,7 +29,6 @@ cdef inline str symbol_str(symbol p):
 
 
 cdef class ExpressionStack:
-
     """Triangle solution stack, generated from
     [`vpoints_configure`](#vpoints_configure).
     It is pointless to call the constructor.
