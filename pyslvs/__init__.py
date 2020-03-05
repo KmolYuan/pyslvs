@@ -70,7 +70,6 @@ from .tinycadlib import (
     data_collecting,
 )
 from .planar_linkage import Planar, norm_path
-from .number import link_synthesis, contracted_link_synthesis
 from .graph import (
     Graph,
     link_assortment,
@@ -79,7 +78,12 @@ from .graph import (
 )
 from .planar_check import is_planar
 from .graph_layout import external_loop_layout
-from .atlas import conventional_graph, contracted_graph
+from .structural import (
+    conventional_graph,
+    contracted_graph,
+    link_synthesis,
+    contracted_link_synthesis,
+)
 from .expression_parser import (
     color_names,
     color_rgb,

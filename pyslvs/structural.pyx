@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3
 
-"""Structure synthesis.
+"""Structural synthesis.
 
 The algorithm reference:
 + On the Number Synthesis of Kinematic Chains
@@ -22,7 +22,6 @@ cimport cython
 from libcpp.pair cimport pair as cpair
 from libcpp.vector cimport vector
 from libcpp.map cimport map as cmap
-from numpy cimport int16_t as int_t
 from numpy import (
     int16 as np_int,
     array as np_array,
@@ -33,8 +32,10 @@ from numpy import (
     multiply as np_mul,
     floor_divide as np_div,
     any as np_any,
+    prod as np_prod,
+    repeat as np_repeat,
+    arange,
 )
-from .number cimport product
 from .graph cimport Graph, link_assortment
 from .planar_check cimport is_planar
 
@@ -46,7 +47,164 @@ ctypedef cmap[int, int] imap
 logger = getLogger()
 
 
-cdef inline int_t[:] _nonzero_index(int_t[:] array):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef short[:, :] _product(tuple pool, object stop_func):
+    """Product function as same as iteration tools.
+
+    The pool is created by range(n).
+    """
+    if not pool:
+        return np_array([], dtype=np_int)
+    cdef short[:] tmp1
+    cdef short[:, :] tmp2
+    cdef short[:] array0 = arange(pool[0], dtype=np_int)
+    cdef int n = np_prod(pool)
+    cdef short[:, :] out = np_zeros((n, len(pool)), dtype=np_int)
+    cdef int array0_size = len(array0)
+    cdef int m = n / array0_size
+    tmp1 = np_repeat(array0, m)
+    out[:, 0] = tmp1
+    cdef int j
+    if pool[1:]:
+        tmp2 = _product(pool[1:], stop_func)
+        out[0:m, 1:] = tmp2
+        for j in range(1, array0_size):
+            if stop_func is not None and stop_func():
+                return out
+            out[j * m:(j + 1) * m, 1:] = out[0:m, 1:]
+    return out
+
+
+cdef short[:, :] _simple_product(int pool_size, int repeat, object stop_func):
+    return _product((pool_size,) * repeat + (1,), stop_func)
+
+
+cdef inline int _m_max(int nl, int nj) nogil:
+    """Find max number of joint on each link.
+
+    + nl <= nj and nj <= (2 * nl - 3)
+    + (2 * nl - 3) <= nj and nj <= (nl * (nl - 1) / 2)
+    + other exceptions (return -1).
+    """
+    if nl <= nj <= (2 * nl - 3):
+        return nj - nl + 2
+    if nl == nj == 0:
+        return -1
+    if 2 * nl - 3 <= nj <= <double>(nl * (nl - 1)) / 2:
+        return nl - 1
+    return -1
+
+
+cdef inline int _sum_factors(short[:] factors):
+    """F0*N2 + F1*N3 + F2*N4 + ... + Fn*N(n+2)"""
+    cdef int factor = 0
+    cdef int i
+    for i in range(len(factors)):
+        factor += factors[i] * (i + 2)
+    return factor
+
+
+cpdef list link_synthesis(int nl, int nj, object stop_func = None):
+    """Return link assortment by number of links `nl` and number of joints `nj`.
+
+    The check stop function `stop_func` object for GUI or subprocess,
+    return `True` to terminate this function.
+    """
+    result = []
+    cdef int m_max_v = _m_max(nl, nj)
+    if m_max_v == -1:
+        raise ValueError("incorrect mechanism.")
+
+    cdef int i, p
+    cdef short[:] symbols
+    for symbols in _simple_product(nl + 1, m_max_v - 2, stop_func):
+        nl_m_max = nl - np_sum(symbols)
+        if nl_m_max < 0:
+            continue
+        symbols[-1] = nl_m_max
+        if _sum_factors(symbols) == nj * 2:
+            result.append(tuple(symbols))
+    return result
+
+
+cdef inline int _j_m(short[:] link_num):
+    """Return value of JM."""
+    cdef int num
+    cdef int i = 3
+    cdef float c = 0
+    for num in link_num[1:]:
+        c += <double>i / 2 * num
+        i += 1
+    return <int>c
+
+
+cdef inline int _j_m_p(int n_m) nogil:
+    """Return value of J'M. This is improved function.
+
+    + Origin equation:
+    if n_m % 2 == 0:
+        return <int>((3 * (n_m - 1) - 1) / 2)
+    else:
+        return <int>((3 * (n_m - 1) - 2) / 2)
+    """
+    # Number of multiple links.
+    if n_m <= 1:
+        return 0
+    elif n_m == 2:
+        return 1
+    else:
+        return 3 * (n_m - 2)
+
+
+cpdef list contracted_link_synthesis(object link_num_list, object stop_func = None):
+    """Return contracted link assortment by link assortment `link_num_list`.
+
+    The check stop function `stop_func` object for GUI or subprocess,
+    return `True` to terminate this function.
+    """
+    cdef short[:] link_num
+    if len(link_num_list) == 1:
+        link_num = np_zeros(link_num_list[0], dtype=np_int)
+        link_num[-1] = 1
+        return [tuple(link_num)]
+
+    link_num = np_array(link_num_list, dtype=np_int)
+
+    # Contracted link
+    cdef int j_m_v = _j_m(link_num)
+    cdef int n_c_min = max(1, j_m_v - _j_m_p(sum(link_num[1:])))
+    cdef int n_c_max = min(link_num[0], j_m_v)
+
+    # i = NL2 - NC + 2
+    cdef int i_max = min(link_num[0], link_num[0] - n_c_min + 2)
+
+    # Matching formula
+    cdef int count, factor, index
+    cdef float last_factor
+    cdef short[:] m
+    cj_list = []
+    for m in _simple_product(link_num[0] + 1, i_max - 1, stop_func):
+        count = 0
+        index = 1
+        for factor in m[:-1]:
+            count +=  factor * index
+            index += 1
+
+        # Check if the last factor is a natural number.
+        last_factor = <double>(link_num[0] - count) / index
+        factor = <int>last_factor
+        if last_factor < 0 or last_factor != factor:
+            continue
+
+        m[-1] = factor
+        if n_c_min <= np_sum(m) <= n_c_max:
+            cj_list.append(tuple(m))
+
+    return cj_list
+
+
+cdef inline short[:] _nonzero_index(short[:] array):
     """Return the number of nonzero numbers."""
     counter = []
     cdef int i, n
@@ -78,7 +236,7 @@ cdef inline int _gcd(int a, int b) nogil:
     return a
 
 
-cdef inline int_t[:] _labels(int_t[:] numbers, int index, int offset):
+cdef inline short[:] _labels(short[:] numbers, int index, int offset):
     """Generate labels from numbers."""
     cdef int i, num
     labels = []
@@ -89,7 +247,7 @@ cdef inline int_t[:] _labels(int_t[:] numbers, int index, int offset):
     return np_array(labels, dtype=np_int)
 
 
-cdef inline Graph _multigraph(int_t[:] counter, int n):
+cdef inline Graph _multigraph(short[:] counter, int n):
     """Get multigraph from n x n matrix."""
     edges = {}
     cdef int c = 0
@@ -106,14 +264,14 @@ cdef inline Graph _multigraph(int_t[:] counter, int n):
 @cython.boundscheck(False)
 cdef inline void _gauss_elimination(
     list result,
-    int_t[:] limit,
-    int_t[:, :] f_matrix,
+    short[:] limit,
+    short[:, :] f_matrix,
     int n,
     int var_count
 ):
     """Gauss elimination for (n, n + 1) matrix."""
     cdef int i, j, d
-    cdef int_t[:] tmp1, tmp2
+    cdef short[:] tmp1, tmp2
     for j in range(var_count):
         # Remove all coefficients of index [i] to zero
         for i in range(n):
@@ -131,7 +289,7 @@ cdef inline void _gauss_elimination(
             f_matrix[i, :] = tmp1
 
     # Answer
-    cdef int_t[:] answer = -np_ones(var_count, dtype=np_int)
+    cdef short[:] answer = -np_ones(var_count, dtype=np_int)
 
     # Determined solution
     cdef int c, k
@@ -174,8 +332,8 @@ cdef inline void _gauss_elimination(
 @cython.boundscheck(False)
 cdef void _nest_do(
     list result,
-    int_t[:] answer,
-    int_t[:, :] f_matrix,
+    short[:] answer,
+    short[:, :] f_matrix,
     int i,
     int n,
     object stop_func
@@ -187,7 +345,7 @@ cdef void _nest_do(
             _test_contracted_graph(_multigraph(answer, n), result)
         return
 
-    cdef int_t[:] coefficients = _nonzero_index(f_matrix[i, :-1])
+    cdef short[:] coefficients = _nonzero_index(f_matrix[i, :-1])
     cdef int c = 0
     cdef int j = -1
     cdef int d
@@ -209,8 +367,8 @@ cdef void _nest_do(
         _nest_do(result, answer, f_matrix, i + 1, n, stop_func)
         return
 
-    cdef int_t[:] combine, answer_copy
-    for combine in product((f_matrix[i, -1],) * c, stop_func):
+    cdef short[:] combine, answer_copy
+    for combine in _product((f_matrix[i, -1],) * c, stop_func):
         if stop_func is not None and stop_func():
             return
 
@@ -284,13 +442,13 @@ cdef inline void _test_graph(
 @cython.boundscheck(False)
 cdef inline void _contracted_graph(
     list result,
-    int_t[:] limit,
+    short[:] limit,
     object stop_func
 ):
     """Synthesis of contracted graphs."""
     cdef int n = len(limit)
     cdef int var_count = n * (n - 1) / 2
-    cdef int_t[:, :] f_matrix = np_zeros((n, var_count + 1), dtype=np_int)
+    cdef short[:, :] f_matrix = np_zeros((n, var_count + 1), dtype=np_int)
     f_matrix[:, -1] = limit
 
     # Equations
@@ -331,7 +489,7 @@ cdef inline void _dyad_insert(Graph g, frozenset edge, int amount):
 
 
 cdef inline void _permute_combine(
-    int_t[:] limit,
+    short[:] limit,
     list combine_list,
     tuple pick_list,
     object stop_func
@@ -342,8 +500,8 @@ cdef inline void _permute_combine(
         return
 
     cdef vector[int] indices = range(n)
-    cdef int_t[:] cycles = np_zeros(n, dtype=np_int)
-    cdef int_t[:] pool = limit
+    cdef short[:] cycles = np_zeros(n, dtype=np_int)
+    cdef short[:] pool = limit
     permute_list = set()
     cdef int i, j
     for i, j in enumerate(range(n, 0, -1)):
@@ -376,7 +534,7 @@ cdef inline void _permute_combine(
         combine_list.append(tuple(zip(pick_list, tmp_array)))
 
 
-cdef inline list _contracted_links(tuple edges, int_t[:] limit, object stop_func):
+cdef inline list _contracted_links(tuple edges, short[:] limit, object stop_func):
     """Combination of contracted links.
 
     pool: edges
@@ -402,7 +560,7 @@ cdef inline list _contracted_links(tuple edges, int_t[:] limit, object stop_func
 
     pick_count -= confirm_size
     cdef int pool_size = len(pool_list)
-    cdef int_t[:] indices = np_zeros(pick_count, dtype=np_int)
+    cdef short[:] indices = np_zeros(pick_count, dtype=np_int)
     cdef int i
     for i in range(pick_count):
         indices[i] = i
@@ -442,7 +600,7 @@ cdef inline list _contracted_links(tuple edges, int_t[:] limit, object stop_func
 cdef inline void _graph_atlas(
     list result,
     list contracted_graph,
-    int_t[:] limit,
+    short[:] limit,
     uint no_degenerate,
     object stop_func
 ):
@@ -480,11 +638,11 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
 
     # Initial time
     cdef double t0 = process_time()
-    cdef int_t[:] link_num = np_array(link_num_list, ndmin=1, dtype=np_int)
+    cdef short[:] link_num = np_array(link_num_list, ndmin=1, dtype=np_int)
     logger.debug(f"Link assortment: {list(link_num)}")
 
     # Multiple links
-    cdef int_t[:] m_link = _labels(link_num, 3, 1)
+    cdef short[:] m_link = _labels(link_num, 3, 1)
 
     cdef imap m_limit, count
     cdef int num
@@ -524,7 +682,7 @@ cpdef list conventional_graph(
     logger.debug(f"Contracted link assortment: {list(c_j_list)}")
 
     # Synthesis of contracted link and multiple link combination.
-    cdef int_t[:] c_j = np_array(c_j_list, ndmin=1, dtype=np_int)
+    cdef short[:] c_j = np_array(c_j_list, ndmin=1, dtype=np_int)
     result = []
     cdef int i, num
     if not cg_list:
@@ -543,7 +701,7 @@ cpdef list conventional_graph(
         return result
 
     # Multiple links
-    cdef int_t[:] m_link = np_array(link_assortment(cg_list[0]), ndmin=1, dtype=np_int)
+    cdef short[:] m_link = np_array(link_assortment(cg_list[0]), ndmin=1, dtype=np_int)
     m_link = _labels(m_link, 3, 1)
 
     # Synthesis of multiple links

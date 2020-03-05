@@ -1,6 +1,7 @@
 # Version 20.03
 
 + Allow case insensitive color name.
++ Merge `altas` and `number` module as `structural`.
 
 # Version 20.02
 
