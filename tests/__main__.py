@@ -8,7 +8,8 @@ __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
 from unittest import TestCase
-from math import sqrt, radians, hypot, sin, cos, atan2
+from math import sqrt, radians, hypot, sin, cos
+from numpy import array
 from pyslvs import (
     Coordinate,
     SolverSystem,
@@ -234,15 +235,13 @@ class CoreTest(TestCase):
     def test_path_normalization(self):
         """Test path normalization function."""
         path1 = norm_path(PATH)
-        new_path = []
-        for x, y in PATH:
-            h = hypot(x, y)
-            a = atan2(y, x) + radians(50)
-            new_path.append((h * cos(a), h * sin(a)))
-        path2 = norm_path(new_path)
+        alpha = radians(50)
+        c = cos(alpha)
+        s = sin(alpha)
+        path2 = norm_path(array(path1) @ array([[c, -s], [s, c]]))
         for i in range(len(PATH)):
             h = hypot(path1[i][0] - path2[i][0], path1[i][1] - path2[i][1])
-            self.assertAlmostEqual(0, h)
+            self.assertAlmostEqual(0, h, 6)
 
     def algorithm_generic(self, t: AlgorithmType):
         """Generic algorithm setup."""
