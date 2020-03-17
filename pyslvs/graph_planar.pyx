@@ -20,13 +20,13 @@ from libcpp.map cimport map as cmap
 ctypedef cpair[int, int] ipair
 
 
-cpdef inline bint is_planar(Graph g):
+cpdef bint is_planar(Graph g):
     """Return True if the graph is a planar graph."""
     cdef _LRPlanarity planarity_state = _LRPlanarity.__new__(_LRPlanarity, g)
     return planarity_state.lr_planarity() is not None
 
 
-cdef inline _ConflictPair _top_of_stack(list l):
+cdef inline _ConflictPair _stack_top(list l):
     """Returns the conflict pair element on top of the stack."""
     if not l:
         return None
@@ -37,45 +37,35 @@ cdef class _LRPlanarity:
     """A class to maintain the state during planarity check."""
     cdef Graph g, DG
     cdef _PlanarEmbedding embedding
-    cdef list S
+    cdef list s
     cdef dict lowpt, lowpt2, nesting_depth, adjs
     cdef dict ordered_adjs, stack_bottom, lowpt_edge, left_ref, right_ref
-
     # default dict
     cdef object height, parent_edge, ref, side
 
     def __cinit__(self, Graph g):
         # copy G without adding self-loops
         self.g = Graph.__new__(Graph, set(g.edges))
-
         # distance from tree root
         self.height = defaultdict(lambda: None)
-
         self.lowpt = {}  # height of lowest return point of an edge
         self.lowpt2 = {}  # height of second lowest return point
         self.nesting_depth = {}  # for nesting order
-
         # None -> missing edge
         self.parent_edge = defaultdict(lambda: None)
-
         # oriented DFS graph
         self.DG = Graph.__new__(Graph, [])
         self.DG.add_vertices(g.vertices)
-
         self.adjs = {}
         self.ordered_adjs = {}
-
         self.ref = defaultdict(lambda: None)
         self.side = defaultdict(lambda: 1)
-
         # stack of conflict pairs
-        self.S = []
+        self.s = []
         self.stack_bottom = {}
         self.lowpt_edge = {}
-
         self.left_ref = {}
         self.right_ref = {}
-
         self.embedding = _PlanarEmbedding.__new__(_PlanarEmbedding, [])
 
     cdef _PlanarEmbedding lr_planarity(self):
@@ -83,12 +73,10 @@ cdef class _LRPlanarity:
         if len(self.g.vertices) > 2 and len(self.g.edges) > 3 * len(self.g.vertices) - 6:
             # graph is not planar
             return None
-
         # make adjacency lists for dfs
         cdef int v
         for v in self.g.vertices:
             self.adjs[v] = list(self.g.adj[v])
-
         # orientation of the graph by depth first search traversal
         cdef clist[int] roots
         for v in self.g.vertices:
@@ -96,12 +84,10 @@ cdef class _LRPlanarity:
                 self.height[v] = 0
                 roots.push_back(v)
                 self.dfs_orientation(v)
-
         # Free no longer used variables
         self.g = None
         self.lowpt2 = None
         self.adjs = None
-
         # testing
         for v in self.DG.vertices:  # sort the adjacency lists by nesting depth
             # note: this sorting leads to non linear time
@@ -112,11 +98,10 @@ cdef class _LRPlanarity:
         for v in roots:
             if not self.dfs_testing(v):
                 return None
-
         # Free no longer used variables
         self.height = None
         self.lowpt = None
-        self.S = None
+        self.s = None
         self.stack_bottom = None
         self.lowpt_edge = None
         for e in self.DG.edges:
@@ -134,16 +119,13 @@ cdef class _LRPlanarity:
             for w in self.ordered_adjs[v]:
                 self.embedding.add_half_edge_cw(v, w, previous_node)
                 previous_node = w
-
         # Free no longer used variables
         self.DG = None
         self.nesting_depth = None
         self.ref = None
-
         # compute the complete embedding
         for v in roots:
             self.dfs_embedding(v)
-
         return self.embedding
 
     cdef bint dfs_testing(self, int v):
@@ -162,11 +144,10 @@ cdef class _LRPlanarity:
             e = self.parent_edge[v]
             # to indicate whether to skip the final block after the for loop
             skip_final = False
-
             for w in self.ordered_adjs[v][ind[v]:]:
                 ei = (v, w)
                 if not skip_init[ei]:
-                    self.stack_bottom[ei] = _top_of_stack(self.S)
+                    self.stack_bottom[ei] = _stack_top(self.s)
                     if ei == self.parent_edge[w]:  # tree edge
                         dfs_stack.push_back(v)  # revisit v after finishing w
                         dfs_stack.push_back(w)  # visit w next
@@ -175,8 +156,8 @@ cdef class _LRPlanarity:
                         break  # handle next node in dfs_stack (i.e. w)
                     else:  # back edge
                         self.lowpt_edge[ei] = ei
-                        self.S.append(_ConflictPair.__new__(_ConflictPair, right=_Interval(ei, ei)))
-
+                        self.s.append(_ConflictPair.__new__(_ConflictPair, None,
+                            _Interval.__new__(_Interval, ei, ei)))
                 # integrate new return edges
                 if self.lowpt[ei] < self.height[v]:
                     if w == self.ordered_adjs[v][0]:  # e_i has return edge
@@ -185,14 +166,11 @@ cdef class _LRPlanarity:
                         if not self.add_constraints(ei, e):
                             # graph is not planar
                             return False
-
                 ind[v] += 1
-
             if not skip_final:
                 # remove back edges returning to parent
                 if e is not None:  # v isn't root
                     self.remove_back_edges(e)
-
         return True
 
     cdef void dfs_embedding(self, int v):
@@ -201,21 +179,17 @@ cdef class _LRPlanarity:
         cdef clist[int] dfs_stack = [v]
         # index of next edge to handle in adjacency list of each node
         cdef cmap[int, int] ind
-
         cdef int w
         while not dfs_stack.empty():
             v = dfs_stack.back()
             dfs_stack.pop_back()
-
             for w in self.ordered_adjs[v][ind[v]:]:
                 ind[v] += 1
                 ei = (v, w)
-
                 if ei == self.parent_edge[w]:  # tree edge
                     self.embedding.add_half_edge_first(w, v)
                     self.left_ref[v] = w
                     self.right_ref[v] = w
-
                     dfs_stack.push_back(v)  # revisit v after finishing w
                     dfs_stack.push_back(w)  # visit w next
                     break  # handle next node in dfs_stack (i.e. w)
@@ -273,91 +247,80 @@ cdef class _LRPlanarity:
                 ind[v] += 1
 
     cdef bint add_constraints(self, tuple ei, tuple e):
-        cdef _ConflictPair P = _ConflictPair.__new__(_ConflictPair)
-
+        cdef _ConflictPair p = _ConflictPair.__new__(_ConflictPair, None, None)
         # merge return edges of e_i into P.right
-        cdef _ConflictPair Q
+        cdef _ConflictPair q
         while True:
-            Q = self.S.pop()
-            if not Q.left.empty():
-                Q.swap()
-            if not Q.left.empty():  # not planar
+            q = self.s.pop()
+            if not q.left.empty():
+                q.swap()
+            if not q.left.empty():  # not planar
                 return False
-            if self.lowpt[Q.right.low] > self.lowpt[e]:
+            if self.lowpt[q.right.low] > self.lowpt[e]:
                 # merge intervals
-                if P.right.empty():  # topmost interval
-                    P.right = Q.right.copy()
+                if p.right.empty():  # topmost interval
+                    p.right = q.right.copy()
                 else:
-                    self.ref[P.right.low] = Q.right.high
-                P.right.low = Q.right.low
+                    self.ref[p.right.low] = q.right.high
+                p.right.low = q.right.low
             else:  # align
-                self.ref[Q.right.low] = self.lowpt_edge[e]
-            if _top_of_stack(self.S) == self.stack_bottom[ei]:
+                self.ref[q.right.low] = self.lowpt_edge[e]
+            if _stack_top(self.s) == self.stack_bottom[ei]:
                 break
-
         # merge conflicting return edges of e_1,...,e_i-1 into P.L
         while (
-                _top_of_stack(self.S).left.conflicting(ei, self) or
-                _top_of_stack(self.S).right.conflicting(ei, self)
+            _stack_top(self.s).left.conflicting(ei, self) or
+            _stack_top(self.s).right.conflicting(ei, self)
         ):
-            Q = self.S.pop()
-            if Q.right.conflicting(ei, self):
-                Q.swap()
-            if Q.right.conflicting(ei, self):  # not planar
+            q = self.s.pop()
+            if q.right.conflicting(ei, self):
+                q.swap()
+            if q.right.conflicting(ei, self):  # not planar
                 return False
             # merge interval below lowpt(e_i) into P.R
-            self.ref[P.right.low] = Q.right.high
-            if Q.right.low is not None:
-                P.right.low = Q.right.low
-
-            if P.left.empty():  # topmost interval
-                P.left = Q.left.copy()
+            self.ref[p.right.low] = q.right.high
+            if q.right.low is not None:
+                p.right.low = q.right.low
+            if p.left.empty():  # topmost interval
+                p.left = q.left.copy()
             else:
-                self.ref[P.left.low] = Q.left.high
-            P.left.low = Q.left.low
-
-        if not (P.left.empty() and P.right.empty()):
-            self.S.append(P)
-
+                self.ref[p.left.low] = q.left.high
+            p.left.low = q.left.low
+        if not (p.left.empty() and p.right.empty()):
+            self.s.append(p)
         return True
+
+    cdef void _trim_interval(self, _Interval inter1, _Interval inter2, int u):
+        """Trim left or right interval."""
+        while inter1.high is not None and inter1.high[1] == u:
+            inter1.high = self.ref[inter1.high]
+        if inter1.high is None and inter1.low is not None:
+            # just emptied
+            self.ref[inter1.low] = inter2.low
+            self.side[inter1.low] = -1
+            inter1.low = None
 
     cdef void remove_back_edges(self, tuple e):
         cdef int u = e[0]
-
         # trim back edges ending at parent u
         # drop entire conflict pairs
         cdef _ConflictPair p
-        while self.S and _top_of_stack(self.S).lowest(self) == self.height[u]:
-            p = self.S.pop()
+        while self.s and _stack_top(self.s).lowest(self) == self.height[u]:
+            p = self.s.pop()
             if p.left.low is not None:
                 self.side[p.left.low] = -1
-
-        if self.S:  # one more conflict pair to consider
-            p = self.S.pop()
+        if self.s:  # one more conflict pair to consider
+            p = self.s.pop()
             # trim left interval
-            while p.left.high is not None and p.left.high[1] == u:
-                p.left.high = self.ref[p.left.high]
-            if p.left.high is None and p.left.low is not None:
-                # just emptied
-                self.ref[p.left.low] = p.right.low
-                self.side[p.left.low] = -1
-                p.left.low = None
+            self._trim_interval(p.left, p.right, u)
             # trim right interval
-            while p.right.high is not None and p.right.high[1] == u:
-                p.right.high = self.ref[p.right.high]
-            if p.right.high is None and p.right.low is not None:
-                # just emptied
-                self.ref[p.right.low] = p.left.low
-                self.side[p.right.low] = -1
-                p.right.low = None
-            self.S.append(p)
-
+            self._trim_interval(p.right, p.left, u)
+            self.s.append(p)
         # side of e is side of a highest return edge
         if self.lowpt[e] < self.height[u]:  # e has return edge
-            p = _top_of_stack(self.S)
+            p = _stack_top(self.s)
             hl = p.left.high
             hr = p.right.high
-
             if (hl is not None) and (hr is None or self.lowpt[hl] > self.lowpt[hr]):
                 self.ref[e] = hl
             else:
@@ -389,17 +352,13 @@ cdef class _ConflictPair:
     """
     cdef _Interval left, right
 
-    def __cinit__(
-        self,
-        _Interval left=None,
-        _Interval right=None
-    ):
+    def __cinit__(self, _Interval left, _Interval right):
         if left is None:
-            self.left = _Interval.__new__(_Interval)
+            self.left = _Interval.__new__(_Interval, None, None)
         else:
             self.left = left
         if right is None:
-            self.right = _Interval.__new__(_Interval)
+            self.right = _Interval.__new__(_Interval, None, None)
         else:
             self.right = right
 
@@ -428,7 +387,7 @@ cdef class _Interval:
     """
     cdef tuple low, high
 
-    def __cinit__(self, tuple low=None, tuple high=None):
+    def __cinit__(self, tuple low, tuple high):
         self.low = low
         self.high = high
 
@@ -458,14 +417,12 @@ cdef class _PlanarEmbedding(Graph):
         node_label[:]: first_nbr
         """
         self.add_edge(start_node, end_node)  # Add edge to graph
-
         if reference_neighbor == -1:
             # The start node has no neighbors
             self.edge_label[ipair(start_node, end_node)].first = end_node
             self.edge_label[ipair(start_node, end_node)].second = end_node
             self.node_label[start_node] = end_node
             return
-
         # Get half-edge at the other side
         cdef int cw_reference = self.edge_label[ipair(start_node, reference_neighbor)].first
         # Alter half-edge data structures

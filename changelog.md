@@ -2,6 +2,7 @@
 
 + Allow case insensitive color name.
 + Merge `altas` and `number` module as `structural`.
++ Rename `planar_check` module to `graph_planar`.
 
 # Version 20.02
 

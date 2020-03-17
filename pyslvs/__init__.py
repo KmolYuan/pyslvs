@@ -76,7 +76,7 @@ from .graph import (
     contracted_link_assortment,
     labeled_enumerate,
 )
-from .planar_check import is_planar
+from .graph_planar import is_planar
 from .graph_layout import external_loop_layout
 from .structural import (
     conventional_graph,
