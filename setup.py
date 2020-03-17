@@ -33,6 +33,10 @@ bfgs_path = pth_join(src_path, 'bfgs_solver')
 metaheuristics_path = pth_join(src_path, 'metaheuristics')
 macros = [('_USE_MATH_DEFINES', None), ('M_PI', 'PI')]
 compile_args = ['-O3', '-Wno-cpp', '-std=c++17']
+link_args = ['-static-libgcc', '-static-libstdc++',
+             '-Wl,-Bstatic,--whole-archive',
+             '-lwinpthread',
+             '-Wl,--no-whole-archive']
 if system() == 'Windows':
     # Disable format warning
     compile_args.append('-Wno-format')
@@ -77,6 +81,8 @@ class Build(build_ext):
             for e in self.extensions:
                 e.define_macros = macros
                 e.extra_compile_args = compile_args
+                if compiler == 'mingw32':
+                    e.extra_link_args = link_args
         elif compiler == 'msvc':
             for e in self.extensions:
                 e.define_macros = macros[:1]
