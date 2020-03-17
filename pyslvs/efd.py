@@ -27,13 +27,15 @@ from numpy import (
 )
 
 
-def efd_fitting(path: Sequence[Tuple[float, float]], n: int) -> ndarray:
+def efd_fitting(path: Sequence[Tuple[float, float]], n: int = 0) -> ndarray:
     """Curve fitting using Elliptical Fourier Descriptor.
 
     The path `path` will be translate to Fourier descriptor coefficients,
     then regenerate a new paths as a `n` x 4 NumPy array.
     """
     contour = array(path, dtype=float)
+    if n < 3:
+        n = len(contour)
     harmonic = _fourier_power(
         _calculate_efd(contour, _nyquist(contour)),
         _nyquist(contour)
