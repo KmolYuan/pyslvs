@@ -3,6 +3,7 @@
 + Allow case insensitive color name.
 + Merge `altas` and `number` module as `structural`.
 + Rename `planar_check` module to `graph_planar`.
++ Add ordered simples option of planar linkage synthesis.
 
 # Version 20.02
 

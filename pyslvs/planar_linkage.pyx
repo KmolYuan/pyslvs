@@ -155,7 +155,7 @@ cdef double _cmp_wavelet(double[:, :] wave1, double[:, :] wave2):
 @cython.final
 cdef class Planar(Objective):
     """This class is used to verified kinematics of the linkage mechanism."""
-    cdef bint bfgs_mode, shape_only, wavelet_mode
+    cdef bint bfgs_mode, shape_only, wavelet_mode, ordered
     cdef int target_count, v_base
     cdef clist[Expression] exprs
     cdef list vpoints, mapping_list
@@ -176,6 +176,7 @@ cdef class Planar(Objective):
         #     'lower': List[float],
         #     'shape_only': bool,
         #     'wavelet_mode': bool,
+        #     'ordered': bool,
         # }
         placement = mech.get('placement', {})
         if len(placement) == 0:
@@ -192,6 +193,7 @@ cdef class Planar(Objective):
         same = mech.get('same', {})
         self.shape_only = mech.get('shape_only', False)
         self.wavelet_mode = mech.get('wavelet_mode', False)
+        self.ordered = mech.get('ordered', True)
         cdef int i, j
         cdef double[:, :] wave
         cdef Coordinate[:] path
@@ -442,7 +444,7 @@ cdef class Planar(Objective):
             path1 = np_array(target[node], dtype=object)
             if self.shape_only or self.wavelet_mode:
                 _normalization(path1, 1)
-                if self.wavelet_mode:
+                if self.ordered or self.wavelet_mode:
                     fitness += _cmp_wavelet(_wavelet(path1), self.target[node])
                     continue
             path2 = self.target[node]
