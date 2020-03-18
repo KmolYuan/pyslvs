@@ -433,7 +433,7 @@ cdef class Planar(Objective):
         for index in range(self.target_count):
             index += self.v_base
             angles = v[index:index + self.target_count]
-            if self.wavelet_mode:
+            if self.ordered or self.wavelet_mode:
                 angles = sort(angles)
             if not self.solve(angles):
                 return HUGE_VAL
@@ -444,7 +444,7 @@ cdef class Planar(Objective):
             path1 = np_array(target[node], dtype=object)
             if self.shape_only or self.wavelet_mode:
                 _normalization(path1, 1)
-                if self.ordered or self.wavelet_mode:
+                if self.wavelet_mode:
                     fitness += _cmp_wavelet(_wavelet(path1), self.target[node])
                     continue
             path2 = self.target[node]
