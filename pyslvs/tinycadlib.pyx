@@ -12,9 +12,9 @@ email: pyslvs@gmail.com
 from libc.math cimport M_PI, sqrt, sin, cos, atan2, NAN
 from .expression cimport VJoint, VPoint, VLink
 from .triangulation cimport (
-    symbol,
+    sym,
     symbol_str,
-    Expression,
+    Expr,
     PLA,
     PLAP,
     PLLP,
@@ -162,12 +162,12 @@ cdef inline str str_before(str s, str front):
     return s[:s.find(front)]
 
 
-cpdef void expr_parser(ExpressionStack exprs, dict data_dict):
+cpdef void expr_parser(EStack exprs, dict data_dict):
     """Solve and update information of the triangle expression `exprs` to 
     `data_dict`.
     The argument `exprs` can be obtained by
-    [`vpoints_configure`](#vpoints_configure)
-    and [`ExpressionStack.as_list()`](#expressionstackas_list) method.
+    [`t_config`](#t_config)
+    and [`EStack.as_list()`](#expressionstackas_list) method.
 
     This function is already included in [`expr_solving`](#expr_solving),
     not recommended for direct use.
@@ -175,9 +175,9 @@ cpdef void expr_parser(ExpressionStack exprs, dict data_dict):
     # Update data
     # + exprs: [("PLAP", "P0", "L0", "a0", "P1", "P2"), ..."]
     # + data_dict: {'a0':0., 'L1':10., 'A':(30., 40.), ...}
-    cdef symbol target
+    cdef sym target
     cdef Coordinate coord, coord1, coord2, coord3
-    cdef Expression expr
+    cdef Expr expr
     for expr in exprs.stack:
         coord = _NAN_COORD
         if expr.func in {PLA, PLAP}:
@@ -274,10 +274,10 @@ cdef inline int base_friend(int node, object vpoints):
             return i
 
 
-cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_):
+cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
     """Data transform function of Triangular method.
     The triangle expression stack `expr` is generated from
-    [`vpoints_configure`](#vpoints_configure).
+    [`t_config`](#t_config).
     The information data `mapping` map the symbols to the indicator of 
     `vpoints_`.
 
@@ -366,7 +366,7 @@ cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_
     # Add data to 'data_dict' and counting DOF.
     cdef int dof = 0
     cdef int target
-    cdef Expression expr
+    cdef Expr expr
     cdef Coordinate coord1, coord2
     for expr in exprs.stack:
         node = mapping_r[symbol_str(expr.c1)]
@@ -454,7 +454,7 @@ cpdef tuple data_collecting(ExpressionStack exprs, dict mapping, object vpoints_
 
 
 cpdef list expr_solving(
-    ExpressionStack exprs,
+    EStack exprs,
     dict mapping,
     object vpoints,
     object angles = None
@@ -463,7 +463,7 @@ cpdef list expr_solving(
     expression `vpoints`.
 
     The triangle expression stack `expr` is generated from
-    [`vpoints_configure`](#vpoints_configure).
+    [`t_config`](#t_config).
 
     The information data `mapping` map the symbols to the indicator of 
     `vpoints`,
@@ -488,7 +488,7 @@ cpdef list expr_solving(
     mapping_r = {v: k for k, v in mapping.items() if type(k) is int}
     # Check input pairs
     cdef int target
-    cdef Expression expr
+    cdef Expr expr
     for expr in exprs.stack:
         if expr.func in {PLA, PLAP}:
             if expr.func == PLA:

@@ -3,14 +3,14 @@
 from typing import Tuple, List, Sequence, Dict, Optional
 from .expression import VPoint
 
-class ExpressionStack:
+class EStack:
 
     def as_list(self) -> List[Tuple[str, ...]]:
         ...
 
-def vpoints_configure(
+def t_config(
     vpoints_: Sequence[VPoint],
     inputs: Sequence[Tuple[int, int]],
     status: Optional[Dict[int, bool]] = None
-) -> ExpressionStack:
+) -> EStack:
     ...

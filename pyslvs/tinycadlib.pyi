@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from typing import Tuple, List, Sequence, Dict, Union, Optional
-from .triangulation import ExpressionStack
+from .triangulation import EStack
 from .expression import VPoint, Coordinate
 
 TuplePoint = Tuple[float, float]
@@ -43,14 +43,14 @@ def expr_parser(exprs: Sequence[Tuple[str, ...]], data_dict: Dict[str, float]) -
     ...
 
 def data_collecting(
-    exprs: ExpressionStack,
+    exprs: EStack,
     mapping: Dict[int, str],
     vpoints_: Sequence[VPoint],
 ) -> Tuple[Dict[str, Union[Coordinate, float]], int]:
     ...
 
 def expr_solving(
-    exprs: ExpressionStack,
+    exprs: EStack,
     mapping: Dict[Union[int, Tuple[int, int]], Union[str, float]],
     vpoints: Sequence[VPoint],
     angles: Optional[Sequence[float]] = None

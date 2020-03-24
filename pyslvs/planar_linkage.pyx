@@ -19,27 +19,12 @@ from numpy import (
 )
 from pywt import dwt
 from libc.math cimport HUGE_VAL, NAN, cos, sin, atan2, INFINITY as INF
-from libcpp.list cimport list as clist
+from libcpp.vector cimport vector
 from .metaheuristics.utility cimport Objective
 from .expression cimport get_vlinks, VJoint, VPoint, VLink
-from .triangulation cimport (
-    vpoints_configure,
-    symbol_str,
-    Expression,
-    PLA,
-    PLLP,
-    PLPP,
-    PXY,
-)
+from .triangulation cimport t_config, symbol_str, Expr, PLA, PLLP, PLPP, PXY
 from .bfgs cimport SolverSystem
-from .tinycadlib cimport (
-    radians,
-    Coordinate,
-    plap,
-    pllp,
-    plpp,
-    pxy,
-)
+from .tinycadlib cimport radians, Coordinate, plap, pllp, plpp, pxy
 
 DEF WAVELET = "db3"
 
@@ -157,7 +142,7 @@ cdef class Planar(Objective):
     """This class is used to verified kinematics of the linkage mechanism."""
     cdef bint bfgs_mode, shape_only, wavelet_mode, ordered
     cdef int target_count, v_base
-    cdef clist[Expression] exprs
+    cdef vector[Expr] exprs
     cdef list vpoints, mapping_list
     cdef dict placement, target, mapping, mapping_r, data_dict
     cdef object inputs
@@ -212,7 +197,7 @@ cdef class Planar(Objective):
         self.vpoints = list(mech.get('expression', []))
         self.inputs = OrderedDict(mech.get('input', {}))
         status = {}
-        self.exprs = vpoints_configure(self.vpoints, tuple(self.inputs.keys()), status).stack
+        self.exprs = t_config(self.vpoints, tuple(self.inputs.keys()), status).stack
         self.bfgs_mode = not all(status.values())
         # BFGS solver mode
         self.bfgs_solver = None
@@ -312,7 +297,7 @@ cdef class Planar(Objective):
         i = 0
         cdef int t, params_count
         cdef Coordinate coord, coord3
-        cdef Expression expr
+        cdef Expr expr
         for expr in self.exprs:
             coord = Coordinate.__new__(Coordinate, NAN, NAN)
             if expr.func == PLA:

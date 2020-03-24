@@ -14,7 +14,7 @@ from libc.math cimport sin, cos, M_PI
 from .expression cimport VJoint, VPoint, VLink
 
 
-cdef inline str symbol_str(symbol p):
+cdef inline str symbol_str(sym p):
     """Pair to string."""
     if p.first == P_LABEL:
         return f"P{p.second}"
@@ -28,14 +28,14 @@ cdef inline str symbol_str(symbol p):
         return ""
 
 
-cdef class ExpressionStack:
+cdef class EStack:
     """Triangle solution stack, generated from
-    [`vpoints_configure`](#vpoints_configure).
+    [`t_config`](#t_config).
     It is pointless to call the constructor.
     """
 
-    cdef void add_pla(self, symbol c1, symbol v1, symbol v2, symbol target):
-        cdef Expression e
+    cdef void add_pla(self, sym c1, sym v1, sym v2, sym target):
+        cdef Expr e
         e.func = PLA
         e.c1 = c1
         e.v1 = v1
@@ -44,8 +44,8 @@ cdef class ExpressionStack:
         e.op = False
         self.stack.push_back(e)
 
-    cdef void add_plap(self, symbol c1, symbol v1, symbol v2, symbol c2, symbol target):
-        cdef Expression e
+    cdef void add_plap(self, sym c1, sym v1, sym v2, sym c2, sym target):
+        cdef Expr e
         e.func = PLAP
         e.c1 = c1
         e.v1 = v1
@@ -55,8 +55,8 @@ cdef class ExpressionStack:
         e.op = False
         self.stack.push_back(e)
 
-    cdef void add_pllp(self, symbol c1, symbol v1, symbol v2, symbol c2, symbol target):
-        cdef Expression e
+    cdef void add_pllp(self, sym c1, sym v1, sym v2, sym c2, sym target):
+        cdef Expr e
         e.func = PLLP
         e.c1 = c1
         e.v1 = v1
@@ -66,8 +66,8 @@ cdef class ExpressionStack:
         e.op = False
         self.stack.push_back(e)
 
-    cdef void add_plpp(self, symbol c1, symbol v1, symbol c2, symbol c3, symbol target, bint op):
-        cdef Expression e
+    cdef void add_plpp(self, sym c1, sym v1, sym c2, sym c3, sym target, bint op):
+        cdef Expr e
         e.func = PLPP
         e.c1 = c1
         e.v1 = v1
@@ -77,8 +77,8 @@ cdef class ExpressionStack:
         e.op = op
         self.stack.push_back(e)
 
-    cdef void add_pxy(self, symbol c1, symbol v1, symbol v2, symbol target):
-        cdef Expression e
+    cdef void add_pxy(self, sym c1, sym v1, sym v2, sym target):
+        cdef Expr e
         e.func = PXY
         e.c1 = c1
         e.v1 = v1
@@ -90,7 +90,7 @@ cdef class ExpressionStack:
     cpdef list as_list(self):
         """Copy the dataset as list object."""
         stack = []
-        cdef Expression expr
+        cdef Expr expr
         for expr in self.stack:
             if expr.func == PLA:
                 stack.append((
@@ -213,7 +213,7 @@ cdef inline int _get_input_base(int node, object inputs):
     return -1
 
 
-cpdef ExpressionStack vpoints_configure(
+cpdef EStack t_config(
     object vpoints_,
     object inputs,
     dict status = None
@@ -235,9 +235,9 @@ cpdef ExpressionStack vpoints_configure(
         status = {}
 
     if not vpoints_:
-        return ExpressionStack.__new__(ExpressionStack)
+        return EStack.__new__(EStack)
     if not inputs:
-        return ExpressionStack.__new__(ExpressionStack)
+        return EStack.__new__(EStack)
 
     vpoints = list(vpoints_)
     cdef int vpoints_count = len(vpoints)
@@ -293,7 +293,7 @@ cpdef ExpressionStack vpoints_configure(
     for vpoint in vpoints:
         pos.append(vpoint.c[0 if vpoint.type == VJoint.R else 1])
 
-    cdef ExpressionStack exprs = ExpressionStack.__new__(ExpressionStack)
+    cdef EStack exprs = EStack.__new__(EStack)
     cdef int link_symbol = 0
     cdef int angle_symbol = 0
 
@@ -316,7 +316,7 @@ cpdef ExpressionStack vpoints_configure(
     cdef int skip_times = 0
     cdef int around = len(status)
 
-    cdef int friend_a, friend_b, friend_c, friend_d
+    cdef int fa, fb, fc, fd
     cdef double tmp_x, tmp_y, angle
     # Friend iterator
     while not _is_all_lock(status):
@@ -339,10 +339,10 @@ cpdef ExpressionStack vpoints_configure(
                 base = _get_input_base(node, inputs)
                 if status[base]:
                     exprs.add_pla(
-                        [P_LABEL, base],
-                        [L_LABEL, link_symbol],
-                        [A_LABEL, angle_symbol],
-                        [P_LABEL, node]
+                        sym(P_LABEL, base),
+                        sym(L_LABEL, link_symbol),
+                        sym(A_LABEL, angle_symbol),
+                        sym(P_LABEL, node)
                     )
                     status[node] = True
                     link_symbol += 1
@@ -352,19 +352,19 @@ cpdef ExpressionStack vpoints_configure(
             else:
                 fi = _get_reliable_friend(node, vpoints, vlinks, status)
                 try:
-                    friend_a = next(fi)
-                    friend_b = next(fi)
+                    fa = next(fi)
+                    fb = next(fi)
                 except StopIteration:
                     skip_times += 1
                 else:
-                    if not _clockwise(pos[friend_a], pos[node], pos[friend_b]):
-                        friend_a, friend_b = friend_b, friend_a
+                    if not _clockwise(pos[fa], pos[node], pos[fb]):
+                        fa, fb = fb, fa
                     exprs.add_pllp(
-                        [P_LABEL, friend_a],
-                        [L_LABEL, link_symbol],
-                        [L_LABEL, link_symbol + 1],
-                        [P_LABEL, friend_b],
-                        [P_LABEL, node]
+                        sym(P_LABEL, fa),
+                        sym(L_LABEL, link_symbol),
+                        sym(L_LABEL, link_symbol + 1),
+                        sym(P_LABEL, fb),
+                        sym(P_LABEL, node)
                     )
                     status[node] = True
                     link_symbol += 2
@@ -380,38 +380,38 @@ cpdef ExpressionStack vpoints_configure(
                     raise StopIteration
                 if vpoints[node].has_offset():
                     raise StopIteration
-                friend_a = next(fi)
+                fa = next(fi)
             except StopIteration:
                 skip_times += 1
             else:
                 exprs.add_pxy(
-                    [P_LABEL, friend_a],
-                    [L_LABEL, link_symbol],
-                    [L_LABEL, link_symbol + 1],
-                    [P_LABEL, node]
+                    sym(P_LABEL, fa),
+                    sym(L_LABEL, link_symbol),
+                    sym(L_LABEL, link_symbol + 1),
+                    sym(P_LABEL, node)
                 )
                 status[node] = True
                 link_symbol += 2
                 # Solution for all friends.
                 for link in vpoints[node].links[1:]:
-                    for friend_b in vlinks[link]:
-                        if status[friend_b]:
+                    for fb in vlinks[link]:
+                        if status[fb]:
                             continue
                         exprs.add_pxy(
-                            [P_LABEL, node],
-                            [L_LABEL, link_symbol],
-                            [L_LABEL, link_symbol + 1],
-                            [P_LABEL, friend_b]
+                            sym(P_LABEL, node),
+                            sym(L_LABEL, link_symbol),
+                            sym(L_LABEL, link_symbol + 1),
+                            sym(P_LABEL, fb)
                         )
-                        status[friend_b] = True
+                        status[fb] = True
                         link_symbol += 2
                 skip_times = 0
 
         elif vpoint.type == VJoint.RP:
             # RP joint
             fi = _get_base_friend(node, vpoints, vlinks, status)
-            # Copy as 'friend_c'.
-            friend_c = node
+            # Copy as 'fc'.
+            fc = node
             # 'S' point.
             tmp_x, tmp_y = pos[node]
             angle = vpoints[node].angle / 180 * M_PI
@@ -424,19 +424,19 @@ cpdef ExpressionStack vpoints_configure(
                     raise StopIteration
                 if vpoints[node].has_offset():
                     raise StopIteration
-                friend_a = next(_get_not_base_friend(node, vpoints, vlinks, status))
-                friend_b = next(fi)
+                fa = next(_get_not_base_friend(node, vpoints, vlinks, status))
+                fb = next(fi)
                 # Slot is not grounded.
                 if not vpoints[node].grounded():
-                    friend_d = next(fi)
-                    if not _clockwise(pos[friend_b], (tmp_x, tmp_y), pos[friend_d]):
-                        friend_b, friend_d = friend_d, friend_b
+                    fd = next(fi)
+                    if not _clockwise(pos[fb], (tmp_x, tmp_y), pos[fd]):
+                        fb, fd = fd, fb
                     exprs.add_pllp(
-                        [P_LABEL, friend_b],
-                        [L_LABEL, link_symbol],
-                        [L_LABEL, link_symbol + 1],
-                        [P_LABEL, friend_d],
-                        [P_LABEL, node]
+                        sym(P_LABEL, fb),
+                        sym(L_LABEL, link_symbol),
+                        sym(L_LABEL, link_symbol + 1),
+                        sym(P_LABEL, fd),
+                        sym(P_LABEL, node)
                     )
                     link_symbol += 2
             except StopIteration:
@@ -451,23 +451,23 @@ cpdef ExpressionStack vpoints_configure(
                 # Re-define coordinate of target point by self and 'S' point.
                 # + A 'friend' from other link.
                 # + Solve.
-                if not _clockwise(pos[friend_b], (tmp_x, tmp_y), pos[friend_c]):
-                    friend_b, friend_c = friend_c, friend_b
+                if not _clockwise(pos[fb], (tmp_x, tmp_y), pos[fc]):
+                    fb, fc = fc, fb
                 exprs.add_pllp(
-                    [P_LABEL, friend_b],
-                    [L_LABEL, link_symbol],
-                    [L_LABEL, link_symbol + 1],
-                    [P_LABEL, friend_c],
-                    [S_LABEL, node]
+                    sym(P_LABEL, fb),
+                    sym(L_LABEL, link_symbol),
+                    sym(L_LABEL, link_symbol + 1),
+                    sym(P_LABEL, fc),
+                    sym(S_LABEL, node)
                 )
                 # Two conditions.
                 exprs.add_plpp(
-                    [P_LABEL, friend_a],
-                    [L_LABEL, link_symbol + 2],
-                    [P_LABEL, node],
-                    [S_LABEL, node],
-                    [P_LABEL, node],
-                    (pos[friend_a][0] - pos[node][0] > 0) != (vpoints[node].angle > 90)
+                    sym(P_LABEL, fa),
+                    sym(L_LABEL, link_symbol + 2),
+                    sym(P_LABEL, node),
+                    sym(S_LABEL, node),
+                    sym(P_LABEL, node),
+                    (pos[fa][0] - pos[node][0] > 0) != (vpoints[node].angle > 90)
                 )
                 status[node] = True
                 link_symbol += 3

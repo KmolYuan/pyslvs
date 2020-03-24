@@ -29,8 +29,8 @@ __all__ = [
     'link_assortment',
     'contracted_link_assortment',
     'labeled_enumerate',
-    'vpoints_configure',
-    'ExpressionStack',
+    't_config',
+    'EStack',
     'vpoint_dof',
     'color_names',
     'color_rgb',
@@ -58,7 +58,7 @@ __email__ = "pyslvs@gmail.com"
 import pywt as _
 from .expression import get_vlinks, VJoint, VPoint, VLink, Coordinate
 from .bfgs import SolverSystem
-from .triangulation import vpoints_configure, ExpressionStack
+from .triangulation import t_config, EStack
 from .tinycadlib import (
     plap,
     pllp,

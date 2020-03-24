@@ -28,7 +28,7 @@ from pyslvs import (
     contracted_link_assortment,
     is_planar,
     external_loop_layout,
-    vpoints_configure,
+    t_config,
     parse_vpoints,
     example_list,
     norm_path,
@@ -171,7 +171,7 @@ class CoreTest(TestCase):
         expr, inputs = example_list("Jansen's linkage (Single)")
         vpoints = parse_vpoints(expr)
         self.assertEqual(8, len(vpoints))
-        exprs = vpoints_configure(vpoints, inputs)
+        exprs = t_config(vpoints, inputs)
         self.assertEqual([
             ('PLAP', 'P0', 'L0', 'a0', 'P1'),
             ('PLLP', 'P2', 'L1', 'L2', 'P1', 'P3'),

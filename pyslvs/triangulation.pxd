@@ -9,13 +9,13 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from libcpp.list cimport list as clist
+from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
-ctypedef pair[int, int] symbol
+ctypedef pair[int, int] sym
 
-cdef str symbol_str(symbol p)
-cpdef ExpressionStack vpoints_configure(object vpoints_, object inputs, dict status=*)
+cdef str symbol_str(sym p)
+cpdef EStack t_config(object vpoints_, object inputs, dict status=*)
 
 cdef enum Label:
     P_LABEL
@@ -30,24 +30,23 @@ cdef enum Func:
     PLPP
     PXY
 
-cdef struct Expression:
+cdef struct Expr:
     bint op
     Func func
-    symbol v1
-    symbol v2
-    symbol c1
-    symbol c2
-    symbol c3
-    symbol c4
+    sym v1
+    sym v2
+    sym c1
+    sym c2
+    sym c3
+    sym c4
 
-cdef class ExpressionStack:
+cdef class EStack:
 
-    cdef clist[Expression] stack
+    cdef vector[Expr] stack
 
-    cdef void add_pla(self, symbol c1, symbol v1, symbol v2, symbol target)
-    cdef void add_plap(self, symbol c1, symbol v1, symbol v2, symbol c2, symbol target)
-    cdef void add_pllp(self, symbol c1, symbol v1, symbol v2, symbol c2, symbol target)
-    cdef void add_plpp(self, symbol c1, symbol v1, symbol c2, symbol c3, symbol target, bint op)
-    cdef void add_pxy(self, symbol c1, symbol v1, symbol v2, symbol target)
-
+    cdef void add_pla(self, sym c1, sym v1, sym v2, sym target)
+    cdef void add_plap(self, sym c1, sym v1, sym v2, sym c2, sym target)
+    cdef void add_pllp(self, sym c1, sym v1, sym v2, sym c2, sym target)
+    cdef void add_plpp(self, sym c1, sym v1, sym c2, sym c3, sym target, bint op)
+    cdef void add_pxy(self, sym c1, sym v1, sym v2, sym target)
     cpdef list as_list(self)

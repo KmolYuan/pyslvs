@@ -4,6 +4,7 @@
 + Merge `altas` and `number` module as `structural`.
 + Rename `planar_check` module to `graph_planar`.
 + Add ordered simples option of planar linkage synthesis.
++ Change several variable names of backend.
 
 # Version 20.02
 
