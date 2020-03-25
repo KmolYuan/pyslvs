@@ -161,7 +161,7 @@ cdef bint _clockwise(double[:] c1, double[:] c2, double[:] c3):
 
 cdef (bint, int, int) _get_reliable_friend(
     int node,
-    object vpoints,
+    VPoint vpoint,
     object vlinks,
     object status
 ):
@@ -171,7 +171,7 @@ cdef (bint, int, int) _get_reliable_friend(
     cdef int fa = -1
     cdef int fb = -1
     cdef int f
-    for link in vpoints[node].links:
+    for link in vpoint.links:
         if len(vlinks[link]) < 2:
             continue
         for f in vlinks[link]:
@@ -184,39 +184,39 @@ cdef (bint, int, int) _get_reliable_friend(
     return False, fa, fb
 
 
-cdef (bint, int) _get_not_base_friend(
+cdef int _get_not_base_friend(
     int node,
-    object vpoints,
+    VPoint vpoint,
     object vlinks,
     object status
 ):
     """Get a friend from constrained nodes."""
-    if (vpoints[node].pin_grounded()
-        or not vpoints[node].grounded()
-        or vpoints[node].has_offset()
-        or len(vpoints[node].links) < 2
+    if (vpoint.pin_grounded()
+        or not vpoint.grounded()
+        or vpoint.has_offset()
+        or len(vpoint.links) < 2
     ):
-        return False, -1
+        return -1
     cdef int f
-    for f in vlinks[vpoints[node].links[1]]:
+    for f in vlinks[vpoint.links[1]]:
         if status[f]:
-            return True, f
-    return False, -1
+            return f
+    return -1
 
 
 cdef (bint, int, int) _get_base_friend(
     int node,
-    object vpoints,
+    VPoint vpoint,
     object vlinks,
     object status
 ):
     """Get the constrained node of same links."""
-    if len(vpoints[node].links) < 1:
+    if len(vpoint.links) < 1:
         return False, -1, -1
     cdef int fa = -1
     cdef int fb = -1
     cdef int f
-    for f in vlinks[vpoints[node].links[0]]:
+    for f in vlinks[vpoint.links[0]]:
         if fa == -1:
             fa = f
         elif fb == -1:
@@ -256,13 +256,12 @@ cpdef EStack t_config(
         inputs = ()
     if status is None:
         status = {}
-    if not vpoints_:
-        return EStack.__new__(EStack)
-    if not inputs:
-        return EStack.__new__(EStack)
+    cdef EStack exprs = EStack.__new__(EStack)
+    if not vpoints_ or not inputs:
+        return exprs
     vpoints = list(vpoints_)
     # First, we create a "VLinks" that can help us to
-    # find a relationship just like adjacency matrix.
+    # find a relationship just like adjacency matrix
     cdef int node
     cdef VPoint vpoint
     vlinks = {}
@@ -270,7 +269,7 @@ cpdef EStack t_config(
         status[node] = False
         if vpoint.links:
             for link in vpoint.links:
-                # Connect on the ground and it is not a slider.
+                # Connect on the ground and it is not a slider
                 if link == VLink.FRAME and vpoint.type == VJoint.R:
                     status[node] = True
                 # Add as vlink.
@@ -280,8 +279,8 @@ cpdef EStack t_config(
                     vlinks[link].add(node)
         else:
             status[node] = True
-    # Replace the P joints and their friends with RP joint.
-    # DOF must be same after properties changed.
+    # Replace the P joints and their friends with RP joint
+    # DOF must be same after properties changed
     cdef int base
     cdef VPoint vpoint_
     for base in range(len(vpoints)):
@@ -298,23 +297,22 @@ cpdef EStack t_config(
                 vpoints[node] = VPoint.c_slider_joint(
                     [vpoint.links[0]] + [
                         link_ for link_ in vpoint_.links
-                        if (link_ not in vpoint.links)
+                        if link_ not in vpoint.links
                     ],
                     VJoint.RP,
                     vpoint.angle,
                     vpoint_.x,
                     vpoint_.y
                 )
-    # Add positions parameters.
+    # Add positions parameters
     cdef double[:, :] pos = zeros((len(vpoints), 2), dtype=np_float)
     for i, vpoint in enumerate(vpoints):
         node = 0 if vpoint.type == VJoint.R else 1
         pos[i, 0] = vpoint.c[node][0]
         pos[i, 1] = vpoint.c[node][1]
-    cdef EStack exprs = EStack.__new__(EStack)
     cdef int link_symbol = 0
     cdef int angle_symbol = 0
-    # Input joints (R) that was connect with ground.
+    # Input joints (R) that was connect with ground
     for base, node in inputs:
         if status[base]:
             exprs.add_pla(
@@ -326,10 +324,11 @@ cpdef EStack t_config(
             status[node] = True
             link_symbol += 1
             angle_symbol += 1
-    # Now let we search around all of points, until find the solutions that we could.
-    input_targets = {node for base, node in inputs}
+    # Now let we search around all of points,
+    # until find the solutions that we could
+    input_targets = {node for _, node in inputs}
     node = 0
-    cdef bint ok, ok2
+    cdef bint ok
     cdef int skip_times = 0
     cdef int around = len(status)
     cdef int fa, fb, fc, fd
@@ -340,7 +339,7 @@ cpdef EStack t_config(
         if node not in status:
             node = 0
             continue
-        # Check and break the loop if it's re-scan again.
+        # Check and break the loop if it's re-scan again
         if skip_times >= around:
             break
         if status[node]:
@@ -351,7 +350,7 @@ cpdef EStack t_config(
         if vpoint.type == VJoint.R:
             # R joint
             # + Is input node?
-            # + Normal revolute joint.
+            # + Normal revolute joint
             if node in input_targets:
                 base = _get_input_base(node, inputs)
                 if status[base]:
@@ -367,7 +366,7 @@ cpdef EStack t_config(
                 else:
                     skip_times += 1
             else:
-                ok, fa, fb = _get_reliable_friend(node, vpoints, vlinks, status)
+                ok, fa, fb = _get_reliable_friend(node, vpoint, vlinks, status)
                 if not ok:
                     skip_times += 1
                 else:
@@ -385,8 +384,8 @@ cpdef EStack t_config(
                     skip_times = 0
         elif vpoint.type == VJoint.P:
             # Need to solve P joint itself here (only grounded)
-            ok, fa = _get_not_base_friend(node, vpoints, vlinks, status)
-            if not ok:
+            fa = _get_not_base_friend(node, vpoint, vlinks, status)
+            if fa == -1:
                 skip_times += 1
             else:
                 exprs.add_pxy(
@@ -397,8 +396,8 @@ cpdef EStack t_config(
                 )
                 status[node] = True
                 link_symbol += 2
-                # Solution for all friends.
-                for link in vpoints[node].links[1:]:
+                # Solution for all friends
+                for link in vpoint.links[1:]:
                     for fb in vlinks[link]:
                         if status[fb]:
                             continue
@@ -412,20 +411,20 @@ cpdef EStack t_config(
                         link_symbol += 2
                 skip_times = 0
         elif vpoint.type == VJoint.RP:
-            # Copy as 'fc'.
+            # Copy as 'fc'
             fc = node
-            # 'S' point.
+            # 'S' point
             tmp[:] = pos[node, :]
-            angle = vpoints[node].angle / 180 * M_PI
+            angle = vpoint.angle / 180 * M_PI
             tmp[0] += cos(angle)
             tmp[1] += sin(angle)
-            ok, fa = _get_not_base_friend(node, vpoints, vlinks, status)
-            ok2, fb, fd = _get_base_friend(node, vpoints, vlinks, status)
-            if not ok or not ok2:
+            fa = _get_not_base_friend(node, vpoint, vlinks, status)
+            ok, fb, fd = _get_base_friend(node, vpoint, vlinks, status)
+            if fa == -1 or not ok:
                 skip_times += 1
             else:
-                # Slot is not grounded.
-                if not vpoints[node].grounded():
+                # Slot is not grounded
+                if not vpoint.grounded():
                     if not _clockwise(pos[fb], tmp, pos[fd]):
                         fb, fd = fd, fb
                     exprs.add_pllp(
@@ -438,13 +437,13 @@ cpdef EStack t_config(
                     link_symbol += 2
                 # PLPP
                 # [PLLP]
-                # Set 'S' (slider) point to define second point of slider.
-                # + A 'friend' from base link.
-                # + Get distance from me and friend.
+                # Set 'S' (slider) point to define second point of slider
+                # + A 'friend' from base link
+                # + Get distance from me and friend
                 # [PLPP]
-                # Re-define coordinate of target point by self and 'S' point.
-                # + A 'friend' from other link.
-                # + Solve.
+                # Re-define coordinate of target point by self and 'S' point
+                # + A 'friend' from other link
+                # + Solve
                 if not _clockwise(pos[fb], tmp, pos[fc]):
                     fb, fc = fc, fb
                 exprs.add_pllp(
@@ -461,8 +460,7 @@ cpdef EStack t_config(
                     sym(P_LABEL, node),
                     sym(S_LABEL, node),
                     sym(P_LABEL, node),
-                    (pos[fa, 0] - pos[node, 0] > 0)
-                    != (vpoints[node].angle > 90)
+                    (pos[fa, 0] - pos[node, 0] > 0) != (vpoint.angle > 90)
                 )
                 status[node] = True
                 link_symbol += 3
