@@ -12,7 +12,7 @@ email: pyslvs@gmail.com
 cimport cython
 from libc.math cimport M_PI, atan2, hypot
 from cpython.object cimport Py_EQ, Py_NE
-from numpy import array as np_array
+from numpy import array, zeros, float64 as np_float
 
 
 cdef inline double distance(double x1, double y1, double x2, double y2) nogil:
@@ -83,12 +83,13 @@ cdef class VPoint:
             self.color = color_func(color_str)
         self.x = x
         self.y = y
-        self.c = ndarray(2, dtype=object)
+        self.c = zeros((2, 2), dtype=np_float)
         if self.type in {VJoint.P, VJoint.RP}:
-            # Slider current coordinates.
-            # [0]: Current node on slot.
-            # [1]: Pin.
-            self.c[0] = self.c[1] = (self.x, self.y)
+            # Slider current coordinates
+            # [0]: Current node on slot
+            # [1]: Pin
+            self.c[0, 0] = self.c[1, 0] = self.x
+            self.c[0, 1] = self.c[1, 1] = self.y
         else:
             self.c[0] = (self.x, self.y)
         self.__has_offset = False
@@ -122,9 +123,9 @@ cdef class VPoint:
         If it's slider, the pin coordinate will be returned.
         """
         if self.type == VJoint.R:
-            return self.c[0][0]
+            return self.c[0, 0]
         else:
-            return self.c[1][0]
+            return self.c[1, 0]
 
     @property
     def cy(self) -> float:
@@ -132,9 +133,9 @@ cdef class VPoint:
         If it's slider, the pin coordinate will be returned.
         """
         if self.type == VJoint.R:
-            return self.c[0][1]
+            return self.c[0, 1]
         else:
-            return self.c[1][1]
+            return self.c[1, 1]
 
     cpdef void set_links(self, object links) except *:
         """The update function of links attribute."""
@@ -144,7 +145,7 @@ cdef class VPoint:
         """Replace the value in links attribute."""
         self.set_links([link2 if link == link1 else link for link in self.links])
 
-    cpdef void move(self, tuple c1, tuple c2 = None) except *:
+    cpdef void move(self, object c1, object c2 = None) except *:
         """The update function of current coordinate(s).
         The 2nd placement is the pin coordinate of slider joints.
 
@@ -194,25 +195,25 @@ cdef class VPoint:
         if on_links:
             if self.type == VJoint.R or self.links[0] == on_links[0]:
                 # self is R joint or at base link.
-                m_x = self.c[0][0]
-                m_y = self.c[0][1]
+                m_x = self.c[0, 0]
+                m_y = self.c[0, 1]
             else:
                 # At pin joint.
-                m_x = self.c[1][0]
-                m_y = self.c[1][1]
+                m_x = self.c[1, 0]
+                m_y = self.c[1, 1]
             if p.type == VJoint.R or p.links[0] == on_links[0]:
                 # p is R joint or at base link.
-                p_x = p.c[0][0]
-                p_y = p.c[0][1]
+                p_x = p.c[0, 0]
+                p_y = p.c[0, 1]
             else:
                 # At pin joint.
-                p_x = p.c[1][0]
-                p_y = p.c[1][1]
+                p_x = p.c[1, 0]
+                p_y = p.c[1, 1]
         else:
-            m_x = self.c[0][0]
-            m_y = self.c[0][1]
-            p_x = p.c[0][0]
-            p_y = p.c[0][1]
+            m_x = self.c[0, 0]
+            m_y = self.c[0, 1]
+            p_x = p.c[0, 0]
+            p_y = p.c[0, 1]
         return hypot(p_x - m_x, p_y - m_y)
 
     cpdef bint has_offset(self):
@@ -225,7 +226,7 @@ cdef class VPoint:
 
     cpdef double true_offset(self):
         """Return the current offset value of the joint."""
-        return hypot(self.c[1][0] - self.c[0][0], self.c[1][1] - self.c[0][1])
+        return hypot(self.c[1, 0] - self.c[0, 0], self.c[1, 1] - self.c[0, 1])
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
@@ -334,12 +335,12 @@ cdef class VPoint:
 
     def __getitem__(self, i: int) -> float:
         if self.type == VJoint.R:
-            return self.c[0][i]
+            return self.c[0, i]
         else:
-            return self.c[1][i]
+            return self.c[1, i]
 
     def __repr__(self) -> str:
-        return f"VPoint({self.links}, {int(self.type)}, {self.angle}, {list(self.c)})"
+        return f"VPoint({self.links}, {int(self.type)}, {self.angle}, {self.c.tolist()})"
 
 
 @cython.final
@@ -361,11 +362,11 @@ cdef class VLink:
             self.color = None
         else:
             self.color = color_func(color_str)
-        self.points = np_array(list(points), dtype=int)
+        self.points = array(list(points), dtype=int)
 
     cpdef void set_points(self, object points) except *:
         """The update function of points attribute."""
-        self.points = np_array(list(points), dtype=int)
+        self.points = array(list(points), dtype=int)
 
     def __contains__(self, point: int) -> bint:
         return point in self.points

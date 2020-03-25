@@ -334,9 +334,9 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
     pos = []
     for vpoint in vpoints:
         if vpoint.type == VJoint.R:
-            pos.append(Coordinate.__new__(Coordinate, vpoint.c[0][0], vpoint.c[0][1]))
+            pos.append(Coordinate.__new__(Coordinate, vpoint.c[0, 0], vpoint.c[0, 1]))
         else:
-            pos.append(Coordinate.__new__(Coordinate, vpoint.c[1][0], vpoint.c[1][1]))
+            pos.append(Coordinate.__new__(Coordinate, vpoint.c[1, 0], vpoint.c[1, 1]))
 
     cdef int i, bf
     cdef double angle
@@ -351,7 +351,7 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
             vpoint.slope_angle(vpoints[bf], 1, 0) +
             vpoint.slope_angle(vpoints[bf], 0, 0)
         )
-        pos.append(Coordinate.__new__(Coordinate, vpoint.c[1][0] + cos(angle), vpoint.c[1][1] + sin(angle)))
+        pos.append(Coordinate.__new__(Coordinate, vpoint.c[1, 0] + cos(angle), vpoint.c[1, 1] + sin(angle)))
         mapping_r[f'S{i}'] = len(pos) - 1
 
     # Add data to 'data_dict' and counting DOF.

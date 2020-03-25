@@ -50,10 +50,10 @@ cdef class VPoint:
     # Set values
     cpdef void set_links(self, object links) except *
     cpdef void replace_link(self, str link1, str link2) except *
-    cpdef void move(self, tuple c1, tuple c2 = *) except *
+    cpdef void move(self, object c1, object c2 = *) except *
     cpdef void locate(self, double x, double y) except *
-    cpdef void rotate(self, double)
-    cpdef void set_offset(self, double)
+    cpdef void rotate(self, double angle)
+    cpdef void set_offset(self, double offset)
     cpdef void disable_offset(self)
 
     # Get or calculate values

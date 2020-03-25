@@ -284,12 +284,12 @@ cdef class Planar(Objective):
         for i, vpoint in enumerate(self.vpoints):
             if not vpoint.grounded():
                 continue
-            coord1 = Coordinate.__new__(Coordinate, vpoint.c[0][0], vpoint.c[0][1])
+            coord1 = Coordinate.__new__(Coordinate, vpoint.c[0, 0], vpoint.c[0, 1])
             if vpoint.type == VJoint.R:
                 self.data_dict[self.mapping[i]] = coord1
                 self.data_dict[i, -1] = coord1
             else:
-                coord2 = Coordinate.__new__(Coordinate, vpoint.c[1][0], vpoint.c[1][1])
+                coord2 = Coordinate.__new__(Coordinate, vpoint.c[1, 0], vpoint.c[1, 1])
                 self.data_dict[self.mapping[i]] = coord2
                 self.data_dict[i, -1] = coord1
                 self.data_dict[i, -2] = coord2
@@ -336,7 +336,7 @@ cdef class Planar(Objective):
                 target = symbol_str(expr.c2)
                 vpoint = self.vpoints[self.mapping_r[target]]
                 coord1 = self.data_dict[symbol_str(expr.c1)]
-                coord = pxy(coord1, vpoint.c[0][0] - coord1.x, vpoint.c[0][1] - coord1.y)
+                coord = pxy(coord1, vpoint.c[0, 0] - coord1.x, vpoint.c[0, 1] - coord1.y)
             else:
                 return False
 
