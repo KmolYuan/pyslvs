@@ -29,6 +29,7 @@ def find_version(path: str):
 
 
 src_path = 'pyslvs'
+graph_path = pth_join(src_path, 'graph')
 bfgs_path = pth_join(src_path, 'bfgs_solver')
 metaheuristics_path = pth_join(src_path, 'metaheuristics')
 macros = [('_USE_MATH_DEFINES', None), ('M_PI', 'PI')]
@@ -56,7 +57,7 @@ ext_modules = [Extension(
     language="c++",
     include_dirs=[bfgs_path]
 )]
-paths = [src_path, metaheuristics_path]
+paths = [src_path, graph_path, metaheuristics_path]
 if 'test' in argv:
     paths.append('tests')
 for place in paths:

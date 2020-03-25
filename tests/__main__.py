@@ -19,19 +19,21 @@ from pyslvs import (
     pxy,
     expr_solving,
     data_collecting,
-    link_synthesis,
-    contracted_link_synthesis,
-    conventional_graph,
-    contracted_graph,
-    Graph,
-    link_assortment,
-    contracted_link_assortment,
-    is_planar,
-    external_loop_layout,
     t_config,
     parse_vpoints,
     example_list,
     norm_path,
+)
+from pyslvs.graph import (
+    link_assortment,
+    contracted_link_assortment,
+    Graph,
+    is_planar,
+    external_loop_layout,
+    conventional_graph,
+    contracted_graph,
+    link_synthesis,
+    contracted_link_synthesis,
 )
 from pyslvs.metaheuristics import ALGORITHM, AlgorithmType, PARAMS
 from .obj_func import TestObj

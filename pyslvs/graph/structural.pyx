@@ -37,7 +37,7 @@ from numpy import (
     arange,
 )
 from .graph cimport Graph, link_assortment
-from .graph_planar cimport is_planar
+from .planar cimport is_planar
 
 ctypedef unsigned int uint
 ctypedef unsigned long long ullong

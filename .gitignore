@@ -105,6 +105,7 @@ venv.bak/
 
 #Cython source
 pyslvs/*.cpp
+pyslvs/graph/*.cpp
 tests/*.cpp
 
 #Qt project

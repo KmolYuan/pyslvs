@@ -5,6 +5,7 @@
 + Rename `planar_check` module to `graph_planar`.
 + Add ordered simples option of planar linkage synthesis.
 + Change several variable names of backend.
++ Move graph related modules into `pyslvs.graph` package.
 
 # Version 20.02
 
