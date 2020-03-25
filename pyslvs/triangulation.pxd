@@ -44,9 +44,9 @@ cdef class EStack:
 
     cdef vector[Expr] stack
 
-    cdef void add_pla(self, sym c1, sym v1, sym v2, sym target)
-    cdef void add_plap(self, sym c1, sym v1, sym v2, sym c2, sym target)
-    cdef void add_pllp(self, sym c1, sym v1, sym v2, sym c2, sym target)
-    cdef void add_plpp(self, sym c1, sym v1, sym c2, sym c3, sym target, bint op)
-    cdef void add_pxy(self, sym c1, sym v1, sym v2, sym target)
+    cdef void add_pla(self, sym c1, sym v1, sym v2, sym target) nogil
+    cdef void add_plap(self, sym c1, sym v1, sym v2, sym c2, sym target) nogil
+    cdef void add_pllp(self, sym c1, sym v1, sym v2, sym c2, sym target) nogil
+    cdef void add_plpp(self, sym c1, sym v1, sym c2, sym c3, sym target, bint op) nogil
+    cdef void add_pxy(self, sym c1, sym v1, sym v2, sym target) nogil
     cpdef list as_list(self)

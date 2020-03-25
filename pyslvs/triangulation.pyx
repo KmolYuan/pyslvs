@@ -11,10 +11,11 @@ email: pyslvs@gmail.com
 
 from typing import Sequence, Iterator
 from libc.math cimport sin, cos, M_PI
+from numpy import zeros, float64 as np_float
 from .expression cimport VJoint, VPoint, VLink
 
 
-cdef inline str symbol_str(sym p):
+cdef str symbol_str(sym p):
     """Pair to string."""
     if p.first == P_LABEL:
         return f"P{p.second}"
@@ -34,7 +35,7 @@ cdef class EStack:
     It is pointless to call the constructor.
     """
 
-    cdef void add_pla(self, sym c1, sym v1, sym v2, sym target):
+    cdef void add_pla(self, sym c1, sym v1, sym v2, sym target) nogil:
         cdef Expr e
         e.func = PLA
         e.c1 = c1
@@ -44,7 +45,7 @@ cdef class EStack:
         e.op = False
         self.stack.push_back(e)
 
-    cdef void add_plap(self, sym c1, sym v1, sym v2, sym c2, sym target):
+    cdef void add_plap(self, sym c1, sym v1, sym v2, sym c2, sym target) nogil:
         cdef Expr e
         e.func = PLAP
         e.c1 = c1
@@ -55,35 +56,35 @@ cdef class EStack:
         e.op = False
         self.stack.push_back(e)
 
-    cdef void add_pllp(self, sym c1, sym v1, sym v2, sym c2, sym target):
+    cdef void add_pllp(self, sym c1, sym v1, sym v2, sym c2, sym t) nogil:
         cdef Expr e
         e.func = PLLP
         e.c1 = c1
         e.v1 = v1
         e.v2 = v2
         e.c2 = c2
-        e.c3 = target
+        e.c3 = t
         e.op = False
         self.stack.push_back(e)
 
-    cdef void add_plpp(self, sym c1, sym v1, sym c2, sym c3, sym target, bint op):
+    cdef void add_plpp(self, sym c1, sym v1, sym c2, sym c3, sym t, bint op) nogil:
         cdef Expr e
         e.func = PLPP
         e.c1 = c1
         e.v1 = v1
         e.c2 = c2
         e.c3 = c3
-        e.c4 = target
+        e.c4 = t
         e.op = op
         self.stack.push_back(e)
 
-    cdef void add_pxy(self, sym c1, sym v1, sym v2, sym target):
+    cdef void add_pxy(self, sym c1, sym v1, sym v2, sym t) nogil:
         cdef Expr e
         e.func = PXY
         e.c1 = c1
         e.v1 = v1
         e.v2 = v2
-        e.c2 = target
+        e.c2 = t
         e.op = False
         self.stack.push_back(e)
 
@@ -141,7 +142,7 @@ cdef class EStack:
         return f"{type(self).__name__}({self.as_list()})"
 
 
-cdef inline bint _is_all_lock(dict status):
+cdef bint _is_all_lock(dict status):
     """Test is all status done."""
     cdef int node
     cdef bint n_status
@@ -151,7 +152,7 @@ cdef inline bint _is_all_lock(dict status):
     return True
 
 
-cdef inline bint _clockwise(tuple c1, tuple c2, tuple c3):
+cdef bint _clockwise(double[:] c1, double[:] c2, double[:] c3):
     """Check orientation of three points."""
     cdef double val = (c2[1] - c1[1]) * (c3[0] - c2[0]) - (c2[0] - c1[0]) * (c3[1] - c2[1])
     return val == 0 or val > 0
@@ -163,8 +164,8 @@ def _get_reliable_friend(
     vlinks: dict,
     status: dict
 ) -> Iterator[int]:
-    """Return a generator yield the vertices
-        that "has been solved" on the same link.
+    """Return a generator yield the vertices that "has been solved" on the
+    same link.
     """
     cdef int friend
     for link in vpoints[node].links:
@@ -182,6 +183,12 @@ def _get_not_base_friend(
     status: dict
 ) -> Iterator[int]:
     """Get a friend from constrained nodes."""
+    if vpoints[node].pin_grounded():
+        raise StopIteration
+    if not vpoints[node].grounded():
+        raise StopIteration
+    if vpoints[node].has_offset():
+        raise StopIteration
     if len(vpoints[node].links) < 2:
         raise StopIteration
     cdef int friend
@@ -204,7 +211,7 @@ def _get_base_friend(
         yield friend
 
 
-cdef inline int _get_input_base(int node, object inputs):
+cdef int _get_input_base(int node, object inputs):
     """Get the base node for input pairs."""
     cdef int base, node_
     for base, node_ in inputs:
@@ -233,15 +240,11 @@ cpdef EStack t_config(
         inputs = ()
     if status is None:
         status = {}
-
     if not vpoints_:
         return EStack.__new__(EStack)
     if not inputs:
         return EStack.__new__(EStack)
-
     vpoints = list(vpoints_)
-    cdef int vpoints_count = len(vpoints)
-
     # First, we create a "VLinks" that can help us to
     # find a relationship just like adjacency matrix.
     cdef int node
@@ -261,12 +264,11 @@ cpdef EStack t_config(
                     vlinks[link].add(node)
         else:
             status[node] = True
-
     # Replace the P joints and their friends with RP joint.
     # DOF must be same after properties changed.
     cdef int base
     cdef VPoint vpoint_
-    for base in range(vpoints_count):
+    for base in range(len(vpoints)):
         vpoint = vpoints[base]
         if vpoint.type != VJoint.P or not vpoint.grounded():
             continue
@@ -287,16 +289,15 @@ cpdef EStack t_config(
                     vpoint_.x,
                     vpoint_.y
                 )
-
     # Add positions parameters.
-    pos = []
-    for vpoint in vpoints:
-        pos.append(vpoint.c[0 if vpoint.type == VJoint.R else 1])
-
+    cdef double[:, :] pos = zeros((len(vpoints), 2), dtype=np_float)
+    for i, vpoint in enumerate(vpoints):
+        node = 0 if vpoint.type == VJoint.R else 1
+        pos[i, 0] = vpoint.c[node][0]
+        pos[i, 1] = vpoint.c[node][1]
     cdef EStack exprs = EStack.__new__(EStack)
     cdef int link_symbol = 0
     cdef int angle_symbol = 0
-
     # Input joints (R) that was connect with ground.
     for base, node in inputs:
         if status[base]:
@@ -309,15 +310,14 @@ cpdef EStack t_config(
             status[node] = True
             link_symbol += 1
             angle_symbol += 1
-
     # Now let we search around all of points, until find the solutions that we could.
     input_targets = {node for base, node in inputs}
     node = 0
     cdef int skip_times = 0
     cdef int around = len(status)
-
     cdef int fa, fb, fc, fd
-    cdef double tmp_x, tmp_y, angle
+    cdef double angle
+    cdef double[:] tmp = zeros(2, dtype=np_float)
     # Friend iterator
     while not _is_all_lock(status):
         if node not in status:
@@ -374,12 +374,6 @@ cpdef EStack t_config(
             # Need to solve P joint itself here (only grounded)
             fi = _get_not_base_friend(node, vpoints, vlinks, status)
             try:
-                if vpoints[node].pin_grounded():
-                    raise StopIteration
-                if not vpoints[node].grounded():
-                    raise StopIteration
-                if vpoints[node].has_offset():
-                    raise StopIteration
                 fa = next(fi)
             except StopIteration:
                 skip_times += 1
@@ -413,23 +407,17 @@ cpdef EStack t_config(
             # Copy as 'fc'.
             fc = node
             # 'S' point.
-            tmp_x, tmp_y = pos[node]
+            tmp[:] = pos[node, :]
             angle = vpoints[node].angle / 180 * M_PI
-            tmp_x += cos(angle)
-            tmp_y += sin(angle)
+            tmp[0] += cos(angle)
+            tmp[1] += sin(angle)
             try:
-                if vpoints[node].pin_grounded():
-                    raise StopIteration
-                if not vpoints[node].grounded():
-                    raise StopIteration
-                if vpoints[node].has_offset():
-                    raise StopIteration
                 fa = next(_get_not_base_friend(node, vpoints, vlinks, status))
                 fb = next(fi)
                 # Slot is not grounded.
                 if not vpoints[node].grounded():
                     fd = next(fi)
-                    if not _clockwise(pos[fb], (tmp_x, tmp_y), pos[fd]):
+                    if not _clockwise(pos[fb], tmp, pos[fd]):
                         fb, fd = fd, fb
                     exprs.add_pllp(
                         sym(P_LABEL, fb),
@@ -451,7 +439,7 @@ cpdef EStack t_config(
                 # Re-define coordinate of target point by self and 'S' point.
                 # + A 'friend' from other link.
                 # + Solve.
-                if not _clockwise(pos[fb], (tmp_x, tmp_y), pos[fc]):
+                if not _clockwise(pos[fb], tmp, pos[fc]):
                     fb, fc = fc, fb
                 exprs.add_pllp(
                     sym(P_LABEL, fb),
