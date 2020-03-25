@@ -58,6 +58,8 @@ cdef class Coordinate:
 
 
 @cython.final
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef class VPoint:
     """Mechanism expression class."""
     HOLDER = VPoint([], VJoint.R, 0., "", 0., 0.)
@@ -91,7 +93,8 @@ cdef class VPoint:
             self.c[0, 0] = self.c[1, 0] = self.x
             self.c[0, 1] = self.c[1, 1] = self.y
         else:
-            self.c[0] = (self.x, self.y)
+            self.c[0, 0] = self.x
+            self.c[0, 1] = self.y
         self.__has_offset = False
         self.__offset = 0
 
@@ -154,19 +157,20 @@ cdef class VPoint:
         """
         cdef double x, y
         x, y = c1
-        self.c[0] = (x, y)
+        self.c[0, 0] = x
+        self.c[0, 1] = y
         if self.type in {VJoint.P, VJoint.RP}:
             if c2 is not None:
                 x, y = c2
-            self.c[1] = (x, y)
+            self.c[1, 0] = x
+            self.c[1, 1] = y
 
     cpdef void locate(self, double x, double y) except *:
-        """The update function of original coordinate.
-        It will call `self.move((x, y))` after set the position.
-        """
+        """The update function of original coordinate."""
         self.x = x
         self.y = y
-        self.move((x, y))
+        self.c[0, 0] = x
+        self.c[0, 1] = y
 
     cpdef void rotate(self, double angle):
         """The update function of angle attribute."""
@@ -194,19 +198,19 @@ cdef class VPoint:
         cdef double p_y = 0
         if on_links:
             if self.type == VJoint.R or self.links[0] == on_links[0]:
-                # self is R joint or at base link.
+                # self is R joint or at base link
                 m_x = self.c[0, 0]
                 m_y = self.c[0, 1]
             else:
-                # At pin joint.
+                # At pin joint
                 m_x = self.c[1, 0]
                 m_y = self.c[1, 1]
             if p.type == VJoint.R or p.links[0] == on_links[0]:
-                # p is R joint or at base link.
+                # p is R joint or at base link
                 p_x = p.c[0, 0]
                 p_y = p.c[0, 1]
             else:
-                # At pin joint.
+                # At pin joint
                 p_x = p.c[1, 0]
                 p_y = p.c[1, 1]
         else:
@@ -305,35 +309,33 @@ cdef class VPoint:
             self.x,
             self.y
         )
-        vpoint.move(self.c[0], self.c[1])
+        vpoint.c[:] = self.c[:]
         return vpoint
 
     def __richcmp__(self, VPoint other, int op) -> bint:
+        cdef bint different = (
+            self.links != other.links or
+            self.c[0, 0] != other.c[0, 0] or
+            self.c[0, 1] != other.c[0, 1] or
+            self.c[1, 1] != other.c[1, 1] or
+            self.c[1, 1] != other.c[1, 1] or
+            self.type != other.type or
+            self.x != other.x or
+            self.y != other.y or
+            self.angle != other.angle
+        )
         if op == Py_EQ:
-            return (
-                self.links == other.links and
-                (self.c == other.c).all() and
-                self.type == other.type and
-                self.x == other.x and
-                self.y == other.y and
-                self.angle == other.angle
-            )
+            return not different
         elif op == Py_NE:
-            return (
-                self.links != other.links or
-                (self.c != other.c).any() or
-                self.type != other.type or
-                self.x != other.x or
-                self.y != other.y or
-                self.angle != other.angle
-            )
+            return different
         else:
             raise TypeError(
                 f"'{op}' not support between instances of "
                 f"{type(self)} and {type(other)}"
             )
 
-    def __getitem__(self, i: int) -> float:
+    def __getitem__(self, ind: int) -> float:
+        cdef int i = ind
         if self.type == VJoint.R:
             return self.c[0, i]
         else:

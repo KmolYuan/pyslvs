@@ -306,10 +306,10 @@ cpdef EStack t_config(
                 )
     # Add positions parameters
     cdef double[:, :] pos = zeros((len(vpoints), 2), dtype=np_float)
-    for i, vpoint in enumerate(vpoints):
+    for base, vpoint in enumerate(vpoints):
         node = 0 if vpoint.type == VJoint.R else 1
-        pos[i, 0] = vpoint.c[node, 0]
-        pos[i, 1] = vpoint.c[node, 1]
+        pos[base, 0] = vpoint.c[node, 0]
+        pos[base, 1] = vpoint.c[node, 1]
     cdef int link_symbol = 0
     cdef int angle_symbol = 0
     # Input joints (R) that was connect with ground

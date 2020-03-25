@@ -30,7 +30,7 @@ cdef class VPoint:
     # VPoint(links, type_int, angle, color_str, x, y, color_func=None)
 
     cdef readonly tuple links
-    cdef readonly ndarray c
+    cdef readonly double[:, :] c
     cdef readonly VJoint type
     cdef readonly tuple color
     cdef readonly str color_str
