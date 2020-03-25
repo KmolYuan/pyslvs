@@ -9,7 +9,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from typing import Sequence, Iterator
+cimport cython
 from libc.math cimport sin, cos, M_PI
 from numpy import zeros, float64 as np_float
 from .expression cimport VJoint, VPoint, VLink
@@ -142,73 +142,87 @@ cdef class EStack:
         return f"{type(self).__name__}({self.as_list()})"
 
 
-cdef bint _is_all_lock(dict status):
+cdef bint _is_all_lock(object status):
     """Test is all status done."""
-    cdef int node
     cdef bint n_status
-    for node, n_status in status.items():
+    for _, n_status in status.items():
         if not n_status:
             return False
     return True
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef bint _clockwise(double[:] c1, double[:] c2, double[:] c3):
     """Check orientation of three points."""
     cdef double val = (c2[1] - c1[1]) * (c3[0] - c2[0]) - (c2[0] - c1[0]) * (c3[1] - c2[1])
     return val == 0 or val > 0
 
 
-def _get_reliable_friend(
-    node: int,
-    vpoints: Sequence[VPoint],
-    vlinks: dict,
-    status: dict
-) -> Iterator[int]:
+cdef (bint, int, int) _get_reliable_friend(
+    int node,
+    object vpoints,
+    object vlinks,
+    object status
+):
     """Return a generator yield the vertices that "has been solved" on the
     same link.
     """
-    cdef int friend
+    cdef int fa = -1
+    cdef int fb = -1
+    cdef int f
     for link in vpoints[node].links:
         if len(vlinks[link]) < 2:
             continue
-        for friend in vlinks[link]:
-            if status[friend] and friend != node:
-                yield friend
+        for f in vlinks[link]:
+            if status[f] and f != node:
+                if fa == -1:
+                    fa = f
+                elif fb == -1:
+                    fb = f
+                    return True, fa, fb
+    return False, fa, fb
 
 
-def _get_not_base_friend(
-    node: int,
-    vpoints: Sequence[VPoint],
-    vlinks: dict,
-    status: dict
-) -> Iterator[int]:
+cdef (bint, int) _get_not_base_friend(
+    int node,
+    object vpoints,
+    object vlinks,
+    object status
+):
     """Get a friend from constrained nodes."""
-    if vpoints[node].pin_grounded():
-        raise StopIteration
-    if not vpoints[node].grounded():
-        raise StopIteration
-    if vpoints[node].has_offset():
-        raise StopIteration
-    if len(vpoints[node].links) < 2:
-        raise StopIteration
-    cdef int friend
-    for friend in vlinks[vpoints[node].links[1]]:
-        if status[friend]:
-            yield friend
+    if (vpoints[node].pin_grounded()
+        or not vpoints[node].grounded()
+        or vpoints[node].has_offset()
+        or len(vpoints[node].links) < 2
+    ):
+        return False, -1
+    cdef int f
+    for f in vlinks[vpoints[node].links[1]]:
+        if status[f]:
+            return True, f
+    return False, -1
 
 
-def _get_base_friend(
-    node: int,
-    vpoints: Sequence[VPoint],
-    vlinks: dict,
-    status: dict
-) -> Iterator[int]:
+cdef (bint, int, int) _get_base_friend(
+    int node,
+    object vpoints,
+    object vlinks,
+    object status
+):
     """Get the constrained node of same links."""
     if len(vpoints[node].links) < 1:
-        raise StopIteration
-    cdef int friend
-    for friend in vlinks[vpoints[node].links[0]]:
-        yield friend
+        return False, -1, -1
+    cdef int fa = -1
+    cdef int fb = -1
+    cdef int f
+    for f in vlinks[vpoints[node].links[0]]:
+        if fa == -1:
+            fa = f
+        elif fb == -1:
+            fb = f
+            return True, fa, fb
+    return False, fa, fb
 
 
 cdef int _get_input_base(int node, object inputs):
@@ -220,10 +234,12 @@ cdef int _get_input_base(int node, object inputs):
     return -1
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef EStack t_config(
     object vpoints_,
     object inputs,
-    dict status = None
+    object status = None
 ):
     """Generate the Triangle solution stack by mechanism expression `vpoints_`.
 
@@ -313,6 +329,7 @@ cpdef EStack t_config(
     # Now let we search around all of points, until find the solutions that we could.
     input_targets = {node for base, node in inputs}
     node = 0
+    cdef bint ok, ok2
     cdef int skip_times = 0
     cdef int around = len(status)
     cdef int fa, fb, fc, fd
@@ -350,11 +367,8 @@ cpdef EStack t_config(
                 else:
                     skip_times += 1
             else:
-                fi = _get_reliable_friend(node, vpoints, vlinks, status)
-                try:
-                    fa = next(fi)
-                    fb = next(fi)
-                except StopIteration:
+                ok, fa, fb = _get_reliable_friend(node, vpoints, vlinks, status)
+                if not ok:
                     skip_times += 1
                 else:
                     if not _clockwise(pos[fa], pos[node], pos[fb]):
@@ -369,13 +383,10 @@ cpdef EStack t_config(
                     status[node] = True
                     link_symbol += 2
                     skip_times = 0
-
         elif vpoint.type == VJoint.P:
             # Need to solve P joint itself here (only grounded)
-            fi = _get_not_base_friend(node, vpoints, vlinks, status)
-            try:
-                fa = next(fi)
-            except StopIteration:
+            ok, fa = _get_not_base_friend(node, vpoints, vlinks, status)
+            if not ok:
                 skip_times += 1
             else:
                 exprs.add_pxy(
@@ -400,10 +411,7 @@ cpdef EStack t_config(
                         status[fb] = True
                         link_symbol += 2
                 skip_times = 0
-
         elif vpoint.type == VJoint.RP:
-            # RP joint
-            fi = _get_base_friend(node, vpoints, vlinks, status)
             # Copy as 'fc'.
             fc = node
             # 'S' point.
@@ -411,12 +419,13 @@ cpdef EStack t_config(
             angle = vpoints[node].angle / 180 * M_PI
             tmp[0] += cos(angle)
             tmp[1] += sin(angle)
-            try:
-                fa = next(_get_not_base_friend(node, vpoints, vlinks, status))
-                fb = next(fi)
+            ok, fa = _get_not_base_friend(node, vpoints, vlinks, status)
+            ok2, fb, fd = _get_base_friend(node, vpoints, vlinks, status)
+            if not ok or not ok2:
+                skip_times += 1
+            else:
                 # Slot is not grounded.
                 if not vpoints[node].grounded():
-                    fd = next(fi)
                     if not _clockwise(pos[fb], tmp, pos[fd]):
                         fb, fd = fd, fb
                     exprs.add_pllp(
@@ -427,9 +436,6 @@ cpdef EStack t_config(
                         sym(P_LABEL, node)
                     )
                     link_symbol += 2
-            except StopIteration:
-                skip_times += 1
-            else:
                 # PLPP
                 # [PLLP]
                 # Set 'S' (slider) point to define second point of slider.
@@ -455,13 +461,11 @@ cpdef EStack t_config(
                     sym(P_LABEL, node),
                     sym(S_LABEL, node),
                     sym(P_LABEL, node),
-                    (pos[fa][0] - pos[node][0] > 0) != (vpoints[node].angle > 90)
+                    (pos[fa, 0] - pos[node, 0] > 0)
+                    != (vpoints[node].angle > 90)
                 )
                 status[node] = True
                 link_symbol += 3
                 skip_times = 0
-
         node += 1
-
-    # exprs: [('PLAP', 'P0', 'L0', 'a0', 'P1', 'P2'), ...]
     return exprs
