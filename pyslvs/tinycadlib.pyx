@@ -9,6 +9,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
+cimport cython
 from libc.math cimport M_PI, sqrt, sin, cos, atan2, NAN
 from .expression cimport VJoint, VPoint, VLink
 from .triangulation cimport sym, symbol_str, Expr, PLA, PLAP, PLLP, PLPP, PXY
@@ -33,7 +34,7 @@ cpdef Coordinate plap(
     obtained the position of third point. The unit of `a0` is degree.
 
     In the following picture, `c1` correspond to "A", `c2` correspond to "B",
-    `d0` correspond to "L0", `a0` correspond to "beta", `return` correspond 
+    `d0` correspond to "L0", `a0` correspond to "beta", `return` correspond
     to "C".
     If `c2` is not given, "alpha" will be set to zero.
 
@@ -56,11 +57,11 @@ cpdef Coordinate pllp(
     Coordinate c2,
     bint inverse = False
 ):
-    """The PLLP function requires two points and two distances, obtained the 
+    """The PLLP function requires two points and two distances, obtained the
     position of third point.
 
     In the following picture, `c1` correspond to "A", `c2` correspond to "B",
-    `d0` correspond to "L0", `d1` correspond to "L1", `return` correspond to 
+    `d0` correspond to "L0", `d1` correspond to "L1", `return` correspond to
     "C".
 
     ![PLLP](img/PLLP.png)
@@ -265,6 +266,8 @@ cdef inline int base_friend(int node, object vpoints):
             return i
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
     """Data transform function of Triangular method.
     The triangle expression stack `expr` is generated from
@@ -277,7 +280,7 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
     """
     vpoints = list(vpoints_)
     # First, we create a "VLinks" that can help us to
-    # find a relationship just like adjacency matrix.
+    # find a relationship just like adjacency matrix
     cdef int node
     cdef VPoint vpoint
     vlinks = {}
@@ -288,9 +291,8 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
                 vlinks[link] = [node]
             else:
                 vlinks[link].append(node)
-
-    # Replace the P joints and their friends with RP joint.
-    # DOF must be same after properties changed.
+    # Replace the P joints and their friends with RP joint
+    # DOF must be same after properties changed
     cdef int base
     cdef double x, y
     cdef VPoint vpoint_
@@ -306,7 +308,8 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
                 if node == base or vpoint_.type in {VJoint.P, VJoint.RP}:
                     continue
                 links.update(vpoint_.links)
-                x, y = vpoint_.c[0]
+                x = vpoint_.c[0, 0]
+                y = vpoint_.c[0, 1]
                 vpoints[node] = VPoint.c_slider_joint(
                     [vpoint.links[0]] + [
                         link_ for link_ in vpoint_.links
@@ -317,8 +320,7 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
                     x,
                     y
                 )
-
-    # Reverse mapping, exclude specified link length.
+    # Reverse mapping, exclude specified link length
     mapping_r = {}
     length = {}
     data_dict = {}
@@ -330,19 +332,17 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
                 data_dict[v] = Coordinate.__new__(Coordinate, x, y)
         elif type(k) is tuple:
             length[frozenset(k)] = v
-
     pos = []
     for vpoint in vpoints:
         if vpoint.type == VJoint.R:
             pos.append(Coordinate.__new__(Coordinate, vpoint.c[0, 0], vpoint.c[0, 1]))
         else:
             pos.append(Coordinate.__new__(Coordinate, vpoint.c[1, 0], vpoint.c[1, 1]))
-
     cdef int i, bf
     cdef double angle
-    # Add slider slot virtual coordinates.
+    # Add slider slot virtual coordinates
     for i, vpoint in enumerate(vpoints):
-        # PLPP dependents.
+        # PLPP dependencies
         if vpoint.type != VJoint.RP:
             continue
         bf = base_friend(i, vpoints)
@@ -353,19 +353,16 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
         )
         pos.append(Coordinate.__new__(Coordinate, vpoint.c[1, 0] + cos(angle), vpoint.c[1, 1] + sin(angle)))
         mapping_r[f'S{i}'] = len(pos) - 1
-
-    # Add data to 'data_dict' and counting DOF.
+    # Add data to 'data_dict' and counting DOF
     cdef int dof = 0
     cdef int target
     cdef Expr expr
     cdef Coordinate coord1, coord2
     for expr in exprs.stack:
         node = mapping_r[symbol_str(expr.c1)]
-
         # Point 1
         if symbol_str(expr.c1) not in data_dict:
             data_dict[symbol_str(expr.c1)] = pos[mapping_r[symbol_str(expr.c1)]]
-
         if expr.func in {PLA, PLAP}:
             if expr.func == PLA:
                 target = mapping_r[symbol_str(expr.c2)]
@@ -434,16 +431,17 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
                 data_dict[symbol_str(expr.v2)] = Coordinate.__new__(Coordinate, x, y)
             else:
                 data_dict[symbol_str(expr.v2)] = coord2.y - coord1.y
-
-    # Other grounded R joints.
+    # Other grounded R joints
     for i, vpoint in enumerate(vpoints):
         if vpoint.grounded() and vpoint.type == VJoint.R:
-            x, y = vpoint.c[0]
+            x = vpoint.c[0, 0]
+            y = vpoint.c[0, 1]
             data_dict[mapping[i]] = Coordinate.__new__(Coordinate, x, y)
-
     return data_dict, dof
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef list expr_solving(
     EStack exprs,
     dict mapping,
@@ -501,16 +499,16 @@ cpdef list expr_solving(
         expr_parser(exprs, data_dict)
     p_data_dict = {}
     cdef bint has_not_solved = False
-    # Add coordinate of known points.
+    # Add coordinate of known points
     for i in range(len(vpoints)):
         # {1: 'A'} vs {'A': (10., 20.)}
         if mapping[i] in data_dict:
             p_data_dict[i] = data_dict[mapping[i]]
         else:
             has_not_solved = True
-    # Calling Sketch Solve kernel and try to get the result.
+    # Calling Sketch Solve kernel and try to get the result
     if has_not_solved:
-        # Add specified link lengths.
+        # Add specified link lengths
         for k, v in mapping.items():
             if type(k) is tuple:
                 p_data_dict[k] = v
@@ -528,24 +526,27 @@ cpdef list expr_solving(
     for i in range(len(vpoints)):
         vpoint = vpoints[i]
         if mapping[i] in data_dict:
-            # These points has been solved.
+            # These points has been solved
             coord = data_dict[mapping[i]]
             if coord.is_nan():
                 raise ValueError(f"result contains failure: Point{i}")
             if vpoint.type == VJoint.R:
                 solved_points.append((coord.x, coord.y))
             else:
-                solved_points.append((vpoint.c[0], (coord.x, coord.y)))
+                solved_points.append((
+                    (vpoint.c[0, 0], vpoint.c[0, 1]),
+                    (coord.x, coord.y)
+                ))
         elif solved_bfgs is not None:
-            # These points solved by Sketch Solve.
+            # These points solved by Sketch Solve
             if vpoint.type == VJoint.R:
                 solved_points.append(solved_bfgs[i])
             else:
                 solved_points.append((solved_bfgs[i][0], solved_bfgs[i][1]))
         else:
-            # No answer.
+            # No answer
             if vpoint.type == VJoint.R:
-                solved_points.append(vpoint.c[0])
+                solved_points.append(vpoint.c[0, :])
             else:
                 solved_points.append(vpoint.c)
     return solved_points

@@ -50,6 +50,8 @@ cdef inline double _radians(double degree):
     return degree / 180 * M_PI
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef class SolverSystem:
     """Sketch Solve solver.
 
@@ -66,7 +68,6 @@ cdef class SolverSystem:
             self.inputs = {}
         if self.data_dict is None:
             self.data_dict = {}
-
         _sort_pairs(self.data_dict)
         self.build_expression()
 
@@ -100,7 +101,8 @@ cdef class SolverSystem:
         cdef Coordinate coord
         for i, vpoint in enumerate(self.vpoints):
             if vpoint.no_link():
-                x, y = vpoint.c[0]
+                x = vpoint.c[0, 0]
+                y = vpoint.c[0, 1]
                 self.constants.push_back(x)
                 tmp_ptr = &self.constants.back()
                 self.constants.push_back(y)
@@ -109,7 +111,8 @@ cdef class SolverSystem:
             if vpoint.grounded():
                 if self.check_known(i):
                     continue
-                x, y = vpoint.c[0]
+                x = vpoint.c[0, 0]
+                y = vpoint.c[0, 1]
                 self.constants.push_back(x)
                 tmp_ptr = &self.constants.back()
                 self.constants.push_back(y)
@@ -123,7 +126,8 @@ cdef class SolverSystem:
                     self.params.push_back(y + sin(vpoint.angle))
                     self.slider_slots.push_back([tmp_ptr, &self.params.back()])
                     # Pin is movable
-                    x, y = vpoint.c[1]
+                    x = vpoint.c[1, 0]
+                    y = vpoint.c[1, 1]
                     if vpoint.has_offset() and vpoint.true_offset() <= 0.1:
                         if vpoint.offset() > 0:
                             x += 0.1
@@ -140,7 +144,8 @@ cdef class SolverSystem:
                 continue
             if self.check_known(i):
                 continue
-            x, y = vpoint.c[0]
+            x = vpoint.c[0, 0]
+            y = vpoint.c[0, 1]
             self.params.push_back(x)
             tmp_ptr = &self.params.back()
             self.params.push_back(y)
@@ -155,14 +160,16 @@ cdef class SolverSystem:
                 self.slider_slots.push_back([tmp_ptr, &self.params.back()])
                 if vpoint.pin_grounded():
                     # Pin is fixed
-                    x, y = vpoint.c[1]
+                    x = vpoint.c[1, 0]
+                    y = vpoint.c[1, 1]
                     self.constants.push_back(x)
                     tmp_ptr = &self.constants.back()
                     self.constants.push_back(y)
                     self.points.push_back([tmp_ptr, &self.constants.back()])
                 else:
                     # Pin is movable
-                    x, y = vpoint.c[1]
+                    x = vpoint.c[1, 0]
+                    y = vpoint.c[1, 1]
                     if vpoint.has_offset() and vpoint.true_offset() <= 0.1:
                         if vpoint.offset() > 0:
                             x += 0.1
@@ -219,7 +226,7 @@ cdef class SolverSystem:
                         p1 = &self.slider_bases[self.sliders[c]]
                     else:
                         p1 = &self.points[c]
-                    if (d not in self.data_dict) and vp2.is_slot_link(vlink.name):
+                    if vp2.is_slot_link(vlink.name) and d not in self.data_dict:
                         p2 = &self.slider_bases[self.sliders[d]]
                     else:
                         p2 = &self.points[d]
@@ -389,7 +396,6 @@ cdef class SolverSystem:
                 handle[0] = coord.x
                 handle = de_refer_post_inc(it)
                 handle[0] = coord.y
-
         cdef int a, b, c, d
         cdef VLink vlink
         for vlink in self.vlinks.values():
@@ -397,7 +403,6 @@ cdef class SolverSystem:
                 continue
             if vlink.name == VLink.FRAME:
                 continue
-
             a = vlink.points[0]
             b = vlink.points[1]
             if (a not in self.data_dict) or (b not in self.data_dict):
@@ -426,7 +431,6 @@ cdef class SolverSystem:
         cdef size_t i
         for i in range(params_count):
             params_ptr[i] = de_refer_post_inc(it)
-
         # Pointer of constraints
         cdef size_t cons_count = <int>self.cons_list.size()
         cdef Constraint *cons = <Constraint *>PyMem_Malloc(sizeof(Constraint) * cons_count)
@@ -435,7 +439,6 @@ cdef class SolverSystem:
         for con in self.cons_list:
             cons[i] = con
             i += 1
-
         # Solve
         cdef int flag = solve(params_ptr, params_count, cons, cons_count, Rough)
         if flag == Success:
@@ -448,10 +451,8 @@ cdef class SolverSystem:
                         (self.slider_bases[self.sliders[i]].x[0], self.slider_bases[self.sliders[i]].y[0]),
                         (self.points[i].x[0], self.points[i].y[0])
                     ))
-
         PyMem_Free(params_ptr)
         PyMem_Free(cons)
-
         if flag == Success:
             return solved_points
         else:

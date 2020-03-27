@@ -349,7 +349,7 @@ cdef class Planar(Objective):
             if vpoint.type == VJoint.R:
                 self.data_dict[t, -1] = coord
             else:
-                self.data_dict[t, -1] = vpoint.c[0]
+                self.data_dict[t, -1] = (vpoint.c[0, 0], vpoint.c[0, 1])
                 self.data_dict[t, -2] = coord
         if not self.bfgs_mode:
             return True
