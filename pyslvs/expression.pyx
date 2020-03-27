@@ -246,11 +246,13 @@ cdef class VPoint:
         if num1 > 1:
             x2, y2 = self.x, self.y
         else:
-            x2, y2 = self.c[num2]
+            x2 = self.c[num2, 0]
+            y2 = self.c[num2, 1]
         if num2 > 1:
             x1, y1 = p.x, p.y
         else:
-            x1, y1 = p.c[num2]
+            x1 = p.c[num2, 0]
+            y1 = p.c[num2, 1]
         return atan2(y1 - y2, x1 - x2) / M_PI * 180
 
     cpdef bint grounded(self):

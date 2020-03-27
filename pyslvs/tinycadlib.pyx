@@ -253,7 +253,7 @@ cpdef int vpoint_dof(object vpoints):
             if link_count > 2:
                 j1 += link_count - 2
             j2 += 1
-    return 3 * (len(vlinks) - 1) - (2 * j1) - j2
+    return 3 * (len(vlinks) - 1) - 2 * j1 - j2
 
 
 cdef inline int base_friend(int node, object vpoints):

@@ -13,6 +13,7 @@ from libcpp.list cimport list as clist
 from libcpp.vector cimport vector
 from libcpp.map cimport map as cmap
 from .sketch_solve cimport Point, Line, Constraint
+from .expression cimport VLink
 
 cdef class SolverSystem:
 
@@ -37,6 +38,7 @@ cdef class SolverSystem:
     cpdef bint same_points(self, object vpoints_)
     cpdef frozenset show_inputs(self)
     cpdef frozenset show_data(self)
+    cdef Point *point_ptr(self, int i, VLink vlink)
     cdef void build_expression(self)
     cdef bint check_known(self, int i)
     cpdef void set_inputs(self, dict inputs)

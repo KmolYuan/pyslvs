@@ -28,7 +28,6 @@ from .expression cimport (
     get_vlinks,
     VJoint,
     VPoint,
-    VLink,
     Coordinate,
 )
 
@@ -90,6 +89,14 @@ cdef class SolverSystem:
         constructor.
         """
         return frozenset(self.data_dict)
+
+    cdef Point *point_ptr(self, int i, VLink vlink):
+        """Pick Point pointers."""
+        cdef VPoint vp = self.vpoints[i]
+        if i not in self.data_dict and vp.is_slot_link(vlink.name):
+            return &self.slider_bases[self.sliders[i]]
+        else:
+            return &self.points[i]
 
     cdef void build_expression(self):
         """Build the expression for solver at first time."""
@@ -199,14 +206,8 @@ cdef class SolverSystem:
             if (a not in self.data_dict) or (b not in self.data_dict):
                 vp1 = self.vpoints[a]
                 vp2 = self.vpoints[b]
-                if a not in self.data_dict and vp1.is_slot_link(vlink.name):
-                    p1 = &self.slider_bases[self.sliders[a]]
-                else:
-                    p1 = &self.points[a]
-                if b not in self.data_dict and vp2.is_slot_link(vlink.name):
-                    p2 = &self.slider_bases[self.sliders[b]]
-                else:
-                    p2 = &self.points[b]
+                p1 = self.point_ptr(a, vlink)
+                p2 = self.point_ptr(b, vlink)
                 frozen_pair = frozenset({a, b})
                 if frozen_pair in self.data_dict:
                     x = self.data_dict[frozen_pair]
@@ -222,14 +223,8 @@ cdef class SolverSystem:
                 for d in (a, b):
                     vp1 = self.vpoints[c]
                     vp2 = self.vpoints[d]
-                    if vp1.is_slot_link(vlink.name):
-                        p1 = &self.slider_bases[self.sliders[c]]
-                    else:
-                        p1 = &self.points[c]
-                    if vp2.is_slot_link(vlink.name) and d not in self.data_dict:
-                        p2 = &self.slider_bases[self.sliders[d]]
-                    else:
-                        p2 = &self.points[d]
+                    p1 = self.point_ptr(c, vlink)
+                    p2 = self.point_ptr(d, vlink)
                     frozen_pair = frozenset({c, d})
                     if frozen_pair in self.data_dict:
                         x = self.data_dict[frozen_pair]
@@ -251,7 +246,7 @@ cdef class SolverSystem:
             self.slider_lines.push_back([&self.slider_bases[b], &self.slider_slots[b]])
             slider_slot = &self.slider_lines.back()
             if vp1.grounded():
-                # Slot is grounded.
+                # Slot is grounded
                 self.constants.push_back(_radians(vp1.angle))
                 self.cons_list.push_back(LineInternalAngleConstraint(slider_slot, &self.constants.back()))
                 self.cons_list.push_back(PointOnLineConstraint(p1, slider_slot))
