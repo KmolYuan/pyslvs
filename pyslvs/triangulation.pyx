@@ -263,14 +263,14 @@ cpdef EStack t_config(
     # First, we create a "VLinks" that can help us to
     # find a relationship just like adjacency matrix
     cdef int node
-    cdef VPoint vpoint
+    cdef VPoint vp1, vp2, vp3
     vlinks = {}
-    for node, vpoint in enumerate(vpoints):
+    for node, vp1 in enumerate(vpoints):
         status[node] = False
-        if vpoint.links:
-            for link in vpoint.links:
+        if vp1.links:
+            for link in vp1.links:
                 # Connect on the ground and it is not a slider
-                if link == VLink.FRAME and vpoint.type == VJoint.R:
+                if link == VLink.FRAME and vp1.type == VJoint.R:
                     status[node] = True
                 # Add as vlink.
                 if link not in vlinks:
@@ -282,34 +282,27 @@ cpdef EStack t_config(
     # Replace the P joints and their friends with RP joint
     # DOF must be same after properties changed
     cdef int base
-    cdef VPoint vpoint_
     for base in range(len(vpoints)):
-        vpoint = vpoints[base]
-        if vpoint.type != VJoint.P or not vpoint.grounded():
+        vp1 = vpoints[base]
+        if vp1.type != VJoint.P or not vp1.grounded():
             continue
-        for link in vpoint.links[1:]:
+        for link in vp1.links[1:]:
             links = set()
             for node in vlinks[link]:
-                vpoint_ = vpoints[node]
-                if node == base or vpoint_.type != VJoint.R:
+                vp2 = vpoints[node]
+                if node == base or vp2.type != VJoint.R:
                     continue
-                links.update(vpoint_.links)
-                vpoints[node] = VPoint.c_slider_joint(
-                    [vpoint.links[0]] + [
-                        link_ for link_ in vpoint_.links
-                        if link_ not in vpoint.links
-                    ],
-                    VJoint.RP,
-                    vpoint.angle,
-                    vpoint_.x,
-                    vpoint_.y
-                )
+                links.update(vp2.links)
+                vpoints[node] = VPoint.c_slider_joint([vp1.links[0]] + [
+                    link_ for link_ in vp2.links
+                    if link_ not in vp1.links
+                ], VJoint.RP, vp1.angle, vp2.x, vp2.y)
     # Add positions parameters
     cdef double[:, :] pos = zeros((len(vpoints), 2), dtype=np_float)
-    for base, vpoint in enumerate(vpoints):
-        node = 0 if vpoint.type == VJoint.R else 1
-        pos[base, 0] = vpoint.c[node, 0]
-        pos[base, 1] = vpoint.c[node, 1]
+    for base, vp1 in enumerate(vpoints):
+        node = 0 if vp1.type == VJoint.R else 1
+        pos[base, 0] = vp1.c[node, 0]
+        pos[base, 1] = vp1.c[node, 1]
     cdef int link_symbol = 0
     cdef int angle_symbol = 0
     # Input joints (R) that was connect with ground
@@ -346,8 +339,8 @@ cpdef EStack t_config(
             node += 1
             skip_times += 1
             continue
-        vpoint = vpoints[node]
-        if vpoint.type == VJoint.R:
+        vp1 = vpoints[node]
+        if vp1.type == VJoint.R:
             # R joint
             # + Is input node?
             # + Normal revolute joint
@@ -366,12 +359,17 @@ cpdef EStack t_config(
                 else:
                     skip_times += 1
             else:
-                ok, fa, fb = _get_reliable_friend(node, vpoint, vlinks, status)
+                ok, fa, fb = _get_reliable_friend(node, vp1, vlinks, status)
                 if not ok:
                     skip_times += 1
                 else:
                     if not _clockwise(pos[fa], pos[node], pos[fb]):
                         fa, fb = fb, fa
+                    vp2 = vpoints[fa]
+                    vp3 = vpoints[fb]
+                    if vp1.same_link(vp2) and vp1.same_link(vp3):
+                        # TODO: special case
+                        pass
                     exprs.add_pllp(
                         sym(P_LABEL, fa),
                         sym(L_LABEL, link_symbol),
@@ -382,9 +380,9 @@ cpdef EStack t_config(
                     status[node] = True
                     link_symbol += 2
                     skip_times = 0
-        elif vpoint.type == VJoint.P:
+        elif vp1.type == VJoint.P:
             # Need to solve P joint itself here (only grounded)
-            fa = _get_not_base_friend(node, vpoint, vlinks, status)
+            fa = _get_not_base_friend(node, vp1, vlinks, status)
             if fa == -1:
                 skip_times += 1
             else:
@@ -397,7 +395,7 @@ cpdef EStack t_config(
                 status[node] = True
                 link_symbol += 2
                 # Solution for all friends
-                for link in vpoint.links[1:]:
+                for link in vp1.links[1:]:
                     for fb in vlinks[link]:
                         if status[fb]:
                             continue
@@ -410,21 +408,21 @@ cpdef EStack t_config(
                         status[fb] = True
                         link_symbol += 2
                 skip_times = 0
-        elif vpoint.type == VJoint.RP:
+        elif vp1.type == VJoint.RP:
             # Copy as 'fc'
             fc = node
             # 'S' point
             tmp[:] = pos[node, :]
-            angle = vpoint.angle / 180 * M_PI
+            angle = vp1.angle / 180 * M_PI
             tmp[0] += cos(angle)
             tmp[1] += sin(angle)
-            fa = _get_not_base_friend(node, vpoint, vlinks, status)
-            ok, fb, fd = _get_base_friend(node, vpoint, vlinks, status)
+            fa = _get_not_base_friend(node, vp1, vlinks, status)
+            ok, fb, fd = _get_base_friend(node, vp1, vlinks, status)
             if fa == -1 or not ok:
                 skip_times += 1
             else:
                 # Slot is not grounded
-                if not vpoint.grounded():
+                if not vp1.grounded():
                     if not _clockwise(pos[fb], tmp, pos[fd]):
                         fb, fd = fd, fb
                     exprs.add_pllp(
@@ -460,7 +458,7 @@ cpdef EStack t_config(
                     sym(P_LABEL, node),
                     sym(S_LABEL, node),
                     sym(P_LABEL, node),
-                    (pos[fa, 0] - pos[node, 0] > 0) != (vpoint.angle > 90)
+                    (pos[fa, 0] - pos[node, 0] > 0) != (vp1.angle > 90)
                 )
                 status[node] = True
                 link_symbol += 3
