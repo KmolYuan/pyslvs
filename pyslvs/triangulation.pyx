@@ -16,7 +16,7 @@ from .expression cimport VJoint, VPoint, VLink
 
 
 cdef str symbol_str(sym p):
-    """Pair to string."""
+    """The match pattern of the symbols."""
     if p.first == P_LABEL:
         return f"P{p.second}"
     elif p.first == L_LABEL:
@@ -370,8 +370,7 @@ cpdef EStack t_config(
                         fa, fb = fb, fa
                     vp2 = vpoints[fa]
                     vp3 = vpoints[fb]
-                    if False:  # vp1.same_link(vp2) and vp1.same_link(vp3):
-                        # TODO: special case
+                    if vp2.same_link(vp3):
                         exprs.add_plap(
                             sym(P_LABEL, fa),
                             sym(L_LABEL, link_symbol),

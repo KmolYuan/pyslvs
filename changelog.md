@@ -6,7 +6,9 @@
 + Add ordered simples option of planar linkage synthesis.
 + Change several variable names of backend.
 + Move graph related modules into `pyslvs.graph` package.
-+ Change triangular symbol "A" to "I" (input).
++ New graph searching method for polygon link.
+    + Change triangular symbol "A" to "I" (input).
+    + Add symbol "A" (angle of polygon link).
 
 # Version 20.02
 

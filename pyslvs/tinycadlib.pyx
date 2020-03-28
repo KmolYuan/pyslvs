@@ -354,17 +354,27 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
         if expr.func in {PLA, PLAP}:
             # Link 1
             pair = frozenset({node, target})
+            coord1 = pos[node]
+            coord2 = pos[target]
             if pair in length:
                 data_dict[symbol_str(expr.v1)] = length[pair]
             else:
-                coord1 = pos[node]
-                coord2 = pos[target]
                 data_dict[symbol_str(expr.v1)] = coord1.distance(coord2)
+            # Angle of link
+            if expr.v2.first == I_LABEL:
+                # Inputs
+                dof += 1
+            else:
+                if expr.func == PLA:
+                    data_dict[symbol_str(expr.v2)] = coord1.slope_angle(coord2)
+                else:
+                    data_dict[symbol_str(expr.v2)] = (
+                        coord1.slope_angle(coord2) -
+                        coord1.slope_angle(pos[mapping_r[symbol_str(expr.c2)]])
+                    )
             # Point 2
             if expr.func == PLAP and symbol_str(expr.c2) not in data_dict:
                 data_dict[symbol_str(expr.c2)] = pos[mapping_r[symbol_str(expr.c2)]]
-            # Inputs
-            dof += 1
         elif expr.func == PLLP:
             # Link 1
             pair = frozenset({node, target})

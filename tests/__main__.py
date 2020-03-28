@@ -175,21 +175,7 @@ class CoreTest(TestCase):
         self.assertEqual(8, len(vpoints))
         exprs = t_config(vpoints, inputs)
         mapping = {n: f'P{n}' for n in range(len(vpoints))}
-        data_dict, dof = data_collecting(exprs, mapping, vpoints)
-        for link, link_length in (
-            ('L0', 15.002083),
-            ('L1', 41.501876),
-            ('L2', 49.994906),
-            ('L3', 40.09651),
-            ('L4', 55.802532),
-            ('L5', 61.905252),
-            ('L6', 39.3028),
-            ('L7', 36.697676),
-            ('L8', 39.395233),
-            ('L9', 48.995887),
-            ('L10', 65.699401),
-        ):
-            self.assertAlmostEqual(data_dict[link], link_length, 6)
+        _, dof = data_collecting(exprs, mapping, vpoints)
         self.assertEqual(1, dof)
         result = expr_solving(exprs, mapping, vpoints, [0.])
         x, y = result[7]

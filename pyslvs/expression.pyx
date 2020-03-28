@@ -16,8 +16,13 @@ from numpy import array, zeros, float64 as np_float
 
 
 cdef inline double distance(double x1, double y1, double x2, double y2) nogil:
-    """Distance of two cartesian coordinates."""
+    """Distance of two coordinates."""
     return hypot(x2 - x1, y2 - y1)
+
+
+cdef inline double slope_angle(double x1, double y1, double x2, double y2) nogil:
+    """Slope angle of two coordinates."""
+    return atan2(y1 - y2, x1 - x2)
 
 
 cpdef list get_vlinks(object vpoints):
@@ -48,6 +53,10 @@ cdef class Coordinate:
     cpdef double distance(self, Coordinate p):
         """Return the distance between two coordinates."""
         return distance(self.x, self.y, p.x, p.y)
+
+    cpdef double slope_angle(self, Coordinate p):
+        """Slope angle of two coordinates."""
+        return slope_angle(self.x, self.y, p.x, p.y)
 
     cpdef bint is_nan(self):
         """Return True if the coordinate value is not a number."""
@@ -253,7 +262,7 @@ cdef class VPoint:
         else:
             x1 = p.c[num2, 0]
             y1 = p.c[num2, 1]
-        return atan2(y1 - y2, x1 - x2) / M_PI * 180
+        return slope_angle(x1, y1, x2, y2) / M_PI * 180
 
     cpdef bint grounded(self):
         """Return True if the joint pin is connected to ground link."""

@@ -23,7 +23,7 @@ from libcpp.vector cimport vector
 from .metaheuristics.utility cimport Objective
 from .expression cimport get_vlinks, VJoint, VPoint, VLink
 from .triangulation cimport (t_config, symbol_str, I_LABEL, A_LABEL, Expr,
-    PLA, PLAP, PLLP, PLPP, PXY)
+    PLA, PLAP, PLLP, PLPP, PXY, EStack)
 from .bfgs cimport SolverSystem
 from .tinycadlib cimport radians, Coordinate, plap, pllp, plpp, pxy
 
@@ -143,11 +143,11 @@ cdef class Planar(Objective):
     """This class is used to verified kinematics of the linkage mechanism."""
     cdef bint bfgs_mode, shape_only, wavelet_mode, ordered
     cdef int target_count, v_base
-    cdef vector[Expr] exprs
     cdef list vpoints, mapping_list
     cdef dict placement, target, mapping, mapping_r, data_dict
     cdef object inputs
     cdef double[:] upper, lower
+    cdef EStack exprs
     cdef SolverSystem bfgs_solver
 
     def __cinit__(self, dict mech):
@@ -157,7 +157,7 @@ cdef class Planar(Objective):
         #     'placement': {pt: (x, y, r)},
         #     'target': {pt: [(x0, y0), (x1, y1), ...]},
         #     'same': {pt: match_to_pt},
-        #     # Bound has no position data.
+        #     # Bound has no position data
         #     'upper': List[float],
         #     'lower': List[float],
         #     'shape_only': bool,
@@ -198,7 +198,7 @@ cdef class Planar(Objective):
         self.vpoints = list(mech.get('expression', []))
         self.inputs = OrderedDict(mech.get('input', {}))
         status = {}
-        self.exprs = t_config(self.vpoints, tuple(self.inputs.keys()), status).stack
+        self.exprs = t_config(self.vpoints, tuple(self.inputs.keys()), status)
         self.bfgs_mode = not all(status.values())
         # BFGS solver mode
         self.bfgs_solver = None
@@ -281,10 +281,8 @@ cdef class Planar(Objective):
         self.data_dict.clear()
         cdef int i
         cdef VPoint vpoint
-        cdef Coordinate coord1, coord2
+        cdef Coordinate coord1, coord2, coord3
         for i, vpoint in enumerate(self.vpoints):
-            if not vpoint.grounded():
-                continue
             coord1 = Coordinate.__new__(Coordinate, vpoint.c[0, 0], vpoint.c[0, 1])
             if vpoint.type == VJoint.R:
                 self.data_dict[self.mapping[i]] = coord1
@@ -296,19 +294,26 @@ cdef class Planar(Objective):
                 self.data_dict[i, -2] = coord2
         cdef vector[double] polar_angle
         cdef Expr expr
-        for expr in self.exprs:
+        for expr in self.exprs.stack:
             if expr.func in {PLA, PLAP}:
                 if expr.v2.first == A_LABEL:
-                    # TODO: special case
-                    pass
+                    coord1 = self.data_dict[symbol_str(expr.c1)]
+                    coord2 = self.data_dict[symbol_str(expr.target)]
+                    if expr.func == PLA:
+                        polar_angle.push_back(coord1.slope_angle(coord2))
+                    else:
+                        coord3 = self.data_dict[symbol_str(expr.c2)]
+                        polar_angle.push_back(
+                            coord1.slope_angle(coord2) -
+                            coord1.slope_angle(coord3)
+                        )
         # Solve
         i = 0
         cdef int j = 0
         cdef int t, params_count
         cdef double length, angle
-        cdef Coordinate coord
-        for expr in self.exprs:
-            coord = Coordinate.__new__(Coordinate, NAN, NAN)
+        for expr in self.exprs.stack:
+            coord3 = Coordinate.__new__(Coordinate, NAN, NAN)
             target = symbol_str(expr.target)
             if expr.func in {PLA, PLAP}:
                 coord1 = self.data_dict[symbol_str(expr.c1)]
@@ -321,9 +326,9 @@ cdef class Planar(Objective):
                     j += 1
                 angle = radians(angle)
                 if expr.func == PLA:
-                    coord = plap(coord1, length, angle)
+                    coord3 = plap(coord1, length, angle)
                 else:
-                    coord = plap(
+                    coord3 = plap(
                         coord1,
                         length,
                         angle,
@@ -331,7 +336,7 @@ cdef class Planar(Objective):
                         expr.op
                     )
             elif expr.func == PLLP:
-                coord = pllp(
+                coord3 = pllp(
                     self.data_dict[symbol_str(expr.c1)],
                     self.get_len(symbol_str(expr.c1), target),
                     self.get_len(symbol_str(expr.c2), target),
@@ -339,7 +344,7 @@ cdef class Planar(Objective):
                     expr.op
                 )
             elif expr.func == PLPP:
-                coord = plpp(
+                coord3 = plpp(
                     self.data_dict[symbol_str(expr.c1)],
                     self.get_len(symbol_str(expr.c1), target),
                     self.data_dict[symbol_str(expr.c2)],
@@ -349,23 +354,23 @@ cdef class Planar(Objective):
             elif expr.func == PXY:
                 vpoint = self.vpoints[self.mapping_r[target]]
                 coord1 = self.data_dict[symbol_str(expr.c1)]
-                coord = pxy(
+                coord3 = pxy(
                     coord1,
                     vpoint.c[0, 0] - coord1.x,
                     vpoint.c[0, 1] - coord1.y
                 )
             else:
                 return False
-            if coord.is_nan():
+            if coord3.is_nan():
                 return False
             t = self.mapping_r[target]
             vpoint = self.vpoints[t]
-            self.data_dict[target] = coord
+            self.data_dict[target] = coord3
             if vpoint.type == VJoint.R:
-                self.data_dict[t, -1] = coord
+                self.data_dict[t, -1] = coord3
             else:
                 self.data_dict[t, -1] = (vpoint.c[0, 0], vpoint.c[0, 1])
-                self.data_dict[t, -2] = coord
+                self.data_dict[t, -2] = coord3
         if not self.bfgs_mode:
             return True
         # Add coordinate of known points.
@@ -418,6 +423,7 @@ cdef class Planar(Objective):
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cdef double fitness(self, double[:] v):
+        # TODO: Decoder
         cdef int index = 0
         for m in self.mapping_list:
             if type(m) is int:

@@ -9,13 +9,12 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from numpy cimport ndarray
-
 cpdef list get_vlinks(object vpoints)
 
 cdef class Coordinate:
     cdef public double x, y
     cpdef double distance(self, Coordinate p)
+    cpdef double slope_angle(self, Coordinate p)
     cpdef bint is_nan(self)
 
 cpdef enum VJoint:

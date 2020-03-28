@@ -22,6 +22,9 @@ class Coordinate:
     def distance(self, p: Coordinate) -> float:
         ...
 
+    def slope_angle(self, p: Coordinate) -> float:
+        ...
+
     def is_nan(self) -> bool:
         ...
 
