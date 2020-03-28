@@ -12,6 +12,7 @@ email: pyslvs@gmail.com
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
+# Label, int
 ctypedef pair[int, int] sym
 
 cdef str symbol_str(sym p)
@@ -21,6 +22,7 @@ cdef enum Label:
     P_LABEL
     L_LABEL
     I_LABEL
+    A_LABEL
     S_LABEL
 
 cdef enum Func:
@@ -38,15 +40,15 @@ cdef struct Expr:
     sym c1
     sym c2
     sym c3
-    sym c4
+    sym target
 
 cdef class EStack:
 
     cdef vector[Expr] stack
 
-    cdef void add_pla(self, sym c1, sym v1, sym v2, sym target) nogil
-    cdef void add_plap(self, sym c1, sym v1, sym v2, sym c2, sym target) nogil
-    cdef void add_pllp(self, sym c1, sym v1, sym v2, sym c2, sym target) nogil
-    cdef void add_plpp(self, sym c1, sym v1, sym c2, sym c3, sym target, bint op) nogil
-    cdef void add_pxy(self, sym c1, sym v1, sym v2, sym target) nogil
+    cdef void add_pla(self, sym c1, sym v1, sym v2, sym t) nogil
+    cdef void add_plap(self, sym c1, sym v1, sym v2, sym c2, sym t) nogil
+    cdef void add_pllp(self, sym c1, sym v1, sym v2, sym c2, sym t) nogil
+    cdef void add_plpp(self, sym c1, sym v1, sym c2, sym c3, sym t, bint op) nogil
+    cdef void add_pxy(self, sym c1, sym v1, sym v2, sym t) nogil
     cpdef list as_list(self)

@@ -166,14 +166,12 @@ cpdef void expr_parser(EStack exprs, dict data_dict):
         if expr.func in {PLA, PLAP}:
             coord1 = data_dict[symbol_str(expr.c1)]
             if expr.func == PLA:
-                target = expr.c2
                 coord = plap(
                     coord1,
                     data_dict[symbol_str(expr.v1)],
                     data_dict[symbol_str(expr.v2)]
                 )
             else:
-                target = expr.c3
                 coord2 = data_dict[symbol_str(expr.c2)]
                 coord = plap(
                     coord1,
@@ -183,7 +181,6 @@ cpdef void expr_parser(EStack exprs, dict data_dict):
                     expr.op
                 )
         elif expr.func == PLLP:
-            target = expr.c3
             coord1 = data_dict[symbol_str(expr.c1)]
             coord2 = data_dict[symbol_str(expr.c2)]
             coord = pllp(
@@ -194,7 +191,6 @@ cpdef void expr_parser(EStack exprs, dict data_dict):
                 expr.op
             )
         elif expr.func == PLPP:
-            target = expr.c4
             coord1 = data_dict[symbol_str(expr.c1)]
             coord2 = data_dict[symbol_str(expr.c2)]
             coord3 = data_dict[symbol_str(expr.c3)]
@@ -206,7 +202,6 @@ cpdef void expr_parser(EStack exprs, dict data_dict):
                 expr.op
             )
         elif expr.func == PXY:
-            target = expr.c2
             coord1 = data_dict[symbol_str(expr.c1)]
             coord = pxy(
                 coord1,
@@ -215,7 +210,7 @@ cpdef void expr_parser(EStack exprs, dict data_dict):
             )
         else:
             raise ValueError("unsupported function")
-        data_dict[symbol_str(target)] = coord
+        data_dict[symbol_str(expr.target)] = coord
 
 
 cpdef int vpoint_dof(object vpoints):
@@ -355,11 +350,8 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
         # Point 1
         if symbol_str(expr.c1) not in data_dict:
             data_dict[symbol_str(expr.c1)] = pos[mapping_r[symbol_str(expr.c1)]]
+        target = mapping_r[symbol_str(expr.target)]
         if expr.func in {PLA, PLAP}:
-            if expr.func == PLA:
-                target = mapping_r[symbol_str(expr.c2)]
-            else:
-                target = mapping_r[symbol_str(expr.c3)]
             # Link 1
             pair = frozenset({node, target})
             if pair in length:
@@ -374,7 +366,6 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
             # Inputs
             dof += 1
         elif expr.func == PLLP:
-            target = mapping_r[symbol_str(expr.c3)]
             # Link 1
             pair = frozenset({node, target})
             if pair in length:
@@ -395,7 +386,6 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
             if symbol_str(expr.c2) not in data_dict:
                 data_dict[symbol_str(expr.c2)] = pos[mapping_r[symbol_str(expr.c2)]]
         elif expr.func == PLPP:
-            target = mapping_r[symbol_str(expr.c4)]
             # Link 1
             pair = frozenset({node, target})
             if pair in length:
@@ -408,7 +398,6 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
             if symbol_str(expr.c2) not in data_dict:
                 data_dict[symbol_str(expr.c2)] = pos[mapping_r[symbol_str(expr.c2)]]
         elif expr.func == PXY:
-            target = mapping_r[symbol_str(expr.c2)]
             coord1 = pos[node]
             coord2 = pos[target]
             # X
@@ -472,10 +461,7 @@ cpdef list expr_solving(
     cdef Expr expr
     for expr in exprs.stack:
         if expr.func in {PLA, PLAP}:
-            if expr.func == PLA:
-                target = mapping_r[symbol_str(expr.c2)]
-            else:
-                target = mapping_r[symbol_str(expr.c3)]
+            target = mapping_r[symbol_str(expr.target)]
             if (
                 vpoints[mapping_r[symbol_str(expr.c1)]].grounded()
                 and vpoints[target].grounded()

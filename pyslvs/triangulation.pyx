@@ -22,7 +22,9 @@ cdef str symbol_str(sym p):
     elif p.first == L_LABEL:
         return f"L{p.second}"
     elif p.first == I_LABEL:
-        return f"i{p.second}"
+        return f"I{p.second}"
+    elif p.first == A_LABEL:
+        return f"A{p.second}"
     elif p.first == S_LABEL:
         return f"S{p.second}"
     else:
@@ -35,24 +37,24 @@ cdef class EStack:
     It is pointless to call the constructor.
     """
 
-    cdef void add_pla(self, sym c1, sym v1, sym v2, sym target) nogil:
+    cdef void add_pla(self, sym c1, sym v1, sym v2, sym t) nogil:
         cdef Expr e
         e.func = PLA
         e.c1 = c1
         e.v1 = v1
         e.v2 = v2
-        e.c2 = target
+        e.target = t
         e.op = False
         self.stack.push_back(e)
 
-    cdef void add_plap(self, sym c1, sym v1, sym v2, sym c2, sym target) nogil:
+    cdef void add_plap(self, sym c1, sym v1, sym v2, sym c2, sym t) nogil:
         cdef Expr e
         e.func = PLAP
         e.c1 = c1
         e.v1 = v1
         e.v2 = v2
         e.c2 = c2
-        e.c3 = target
+        e.target = t
         e.op = False
         self.stack.push_back(e)
 
@@ -63,7 +65,7 @@ cdef class EStack:
         e.v1 = v1
         e.v2 = v2
         e.c2 = c2
-        e.c3 = t
+        e.target = t
         e.op = False
         self.stack.push_back(e)
 
@@ -74,7 +76,7 @@ cdef class EStack:
         e.v1 = v1
         e.c2 = c2
         e.c3 = c3
-        e.c4 = t
+        e.target = t
         e.op = op
         self.stack.push_back(e)
 
@@ -84,7 +86,7 @@ cdef class EStack:
         e.c1 = c1
         e.v1 = v1
         e.v2 = v2
-        e.c2 = t
+        e.target = t
         e.op = False
         self.stack.push_back(e)
 
@@ -99,7 +101,7 @@ cdef class EStack:
                     symbol_str(expr.c1),
                     symbol_str(expr.v1),
                     symbol_str(expr.v2),
-                    symbol_str(expr.c2),
+                    symbol_str(expr.target),
                 ))
             elif expr.func == PLAP:
                 stack.append((
@@ -108,7 +110,7 @@ cdef class EStack:
                     symbol_str(expr.v1),
                     symbol_str(expr.v2),
                     symbol_str(expr.c2),
-                    symbol_str(expr.c3),
+                    symbol_str(expr.target),
                 ))
             elif expr.func == PLLP:
                 stack.append((
@@ -117,7 +119,7 @@ cdef class EStack:
                     symbol_str(expr.v1),
                     symbol_str(expr.v2),
                     symbol_str(expr.c2),
-                    symbol_str(expr.c3),
+                    symbol_str(expr.target),
                 ))
             elif expr.func == PLPP:
                 stack.append((
@@ -126,7 +128,7 @@ cdef class EStack:
                     symbol_str(expr.v1),
                     symbol_str(expr.c2),
                     symbol_str(expr.c3),
-                    symbol_str(expr.c4),
+                    symbol_str(expr.target),
                 ))
             elif expr.func == PXY:
                 stack.append((
@@ -134,7 +136,7 @@ cdef class EStack:
                     symbol_str(expr.c1),
                     symbol_str(expr.v1),
                     symbol_str(expr.v2),
-                    symbol_str(expr.c2),
+                    symbol_str(expr.target),
                 ))
         return stack
 
@@ -305,6 +307,7 @@ cpdef EStack t_config(
         pos[base, 1] = vp1.c[node, 1]
     cdef int link_symbol = 0
     cdef int input_symbol = 0
+    cdef int angle_symbol = 0
     # Input joints (R) that was connect with ground
     for base, node in inputs:
         if status[base]:
@@ -372,12 +375,12 @@ cpdef EStack t_config(
                         exprs.add_plap(
                             sym(P_LABEL, fa),
                             sym(L_LABEL, link_symbol),
-                            sym(I_LABEL, input_symbol),
+                            sym(A_LABEL, angle_symbol),
                             sym(P_LABEL, fb),
                             sym(P_LABEL, node)
                         )
                         link_symbol += 1
-                        input_symbol += 1
+                        angle_symbol += 1
                     else:
                         exprs.add_pllp(
                             sym(P_LABEL, fa),

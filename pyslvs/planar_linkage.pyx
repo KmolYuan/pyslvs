@@ -22,7 +22,8 @@ from libc.math cimport HUGE_VAL, NAN, cos, sin, atan2, INFINITY as INF
 from libcpp.vector cimport vector
 from .metaheuristics.utility cimport Objective
 from .expression cimport get_vlinks, VJoint, VPoint, VLink
-from .triangulation cimport t_config, symbol_str, Expr, PLA, PLLP, PLPP, PXY
+from .triangulation cimport (t_config, symbol_str, I_LABEL, A_LABEL, Expr,
+    PLA, PLAP, PLLP, PLPP, PXY)
 from .bfgs cimport SolverSystem
 from .tinycadlib cimport radians, Coordinate, plap, pllp, plpp, pxy
 
@@ -293,56 +294,70 @@ cdef class Planar(Objective):
                 self.data_dict[self.mapping[i]] = coord2
                 self.data_dict[i, -1] = coord1
                 self.data_dict[i, -2] = coord2
-        # Solve
-        i = 0
-        cdef int t, params_count
-        cdef Coordinate coord, coord3
+        cdef vector[double] polar_angle
         cdef Expr expr
         for expr in self.exprs:
+            if expr.func in {PLA, PLAP}:
+                if expr.v2.first == A_LABEL:
+                    # TODO: special case
+                    pass
+        # Solve
+        i = 0
+        cdef int j = 0
+        cdef int t, params_count
+        cdef double length, angle
+        cdef Coordinate coord
+        for expr in self.exprs:
             coord = Coordinate.__new__(Coordinate, NAN, NAN)
-            if expr.func == PLA:
-                target = symbol_str(expr.c2)
+            target = symbol_str(expr.target)
+            if expr.func in {PLA, PLAP}:
                 coord1 = self.data_dict[symbol_str(expr.c1)]
-                coord = plap(
-                    coord1,
-                    self.get_len(symbol_str(expr.c1), target),
-                    radians(input_list[i])
-                )
-                i += 1
+                length = self.get_len(symbol_str(expr.c1), target)
+                if expr.v2.first == I_LABEL:
+                    angle = input_list[i]
+                    i += 1
+                else:
+                    angle = polar_angle[j]
+                    j += 1
+                angle = radians(angle)
+                if expr.func == PLA:
+                    coord = plap(coord1, length, angle)
+                else:
+                    coord = plap(
+                        coord1,
+                        length,
+                        angle,
+                        self.data_dict[symbol_str(expr.c2)],
+                        expr.op
+                    )
             elif expr.func == PLLP:
-                target = symbol_str(expr.c3)
-                coord1 = self.data_dict[symbol_str(expr.c1)]
-                coord2 = self.data_dict[symbol_str(expr.c2)]
                 coord = pllp(
-                    coord1,
+                    self.data_dict[symbol_str(expr.c1)],
                     self.get_len(symbol_str(expr.c1), target),
                     self.get_len(symbol_str(expr.c2), target),
-                    coord2,
+                    self.data_dict[symbol_str(expr.c2)],
                     expr.op
                 )
             elif expr.func == PLPP:
-                target = symbol_str(expr.c4)
-                coord1 = self.data_dict[symbol_str(expr.c1)]
-                coord2 = self.data_dict[symbol_str(expr.c2)]
-                coord3 = self.data_dict[symbol_str(expr.c3)]
                 coord = plpp(
-                    coord1,
+                    self.data_dict[symbol_str(expr.c1)],
                     self.get_len(symbol_str(expr.c1), target),
-                    coord2,
-                    coord3,
+                    self.data_dict[symbol_str(expr.c2)],
+                    self.data_dict[symbol_str(expr.c3)],
                     expr.op
                 )
             elif expr.func == PXY:
-                target = symbol_str(expr.c2)
                 vpoint = self.vpoints[self.mapping_r[target]]
                 coord1 = self.data_dict[symbol_str(expr.c1)]
-                coord = pxy(coord1, vpoint.c[0, 0] - coord1.x, vpoint.c[0, 1] - coord1.y)
+                coord = pxy(
+                    coord1,
+                    vpoint.c[0, 0] - coord1.x,
+                    vpoint.c[0, 1] - coord1.y
+                )
             else:
                 return False
-
             if coord.is_nan():
                 return False
-
             t = self.mapping_r[target]
             vpoint = self.vpoints[t]
             self.data_dict[target] = coord
