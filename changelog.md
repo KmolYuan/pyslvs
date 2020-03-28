@@ -6,6 +6,7 @@
 + Add ordered simples option of planar linkage synthesis.
 + Change several variable names of backend.
 + Move graph related modules into `pyslvs.graph` package.
++ Change triangular symbol "A" to "I" (input).
 
 # Version 20.02
 

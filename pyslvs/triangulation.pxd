@@ -20,7 +20,7 @@ cpdef EStack t_config(object vpoints_, object inputs, object status=*)
 cdef enum Label:
     P_LABEL
     L_LABEL
-    A_LABEL
+    I_LABEL
     S_LABEL
 
 cdef enum Func:

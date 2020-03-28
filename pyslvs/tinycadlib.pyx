@@ -12,7 +12,8 @@ email: pyslvs@gmail.com
 cimport cython
 from libc.math cimport M_PI, sqrt, sin, cos, atan2, NAN
 from .expression cimport VJoint, VPoint, VLink
-from .triangulation cimport sym, symbol_str, Expr, PLA, PLAP, PLLP, PLPP, PXY
+from .triangulation cimport (sym, symbol_str, I_LABEL, S_LABEL, Expr,
+    PLA, PLAP, PLLP, PLPP, PXY)
 from .bfgs cimport SolverSystem
 
 cdef Coordinate _NAN_COORD = Coordinate.__new__(Coordinate, NAN, NAN)
@@ -142,16 +143,6 @@ cpdef Coordinate pxy(Coordinate c1, double x, double y):
     ![PXY](img/PXY.png)
     """
     return Coordinate.__new__(Coordinate, c1.x + x, c1.y + y)
-
-
-cdef inline str str_between(str s, str front, str back):
-    """Get the string that is inside of parenthesis."""
-    return s[s.find(front) + 1:s.find(back)]
-
-
-cdef inline str str_before(str s, str front):
-    """Get the string that is front of parenthesis."""
-    return s[:s.find(front)]
 
 
 cpdef void expr_parser(EStack exprs, dict data_dict):
@@ -351,8 +342,9 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
             vpoint.slope_angle(vpoints[bf], 1, 0) +
             vpoint.slope_angle(vpoints[bf], 0, 0)
         )
-        pos.append(Coordinate.__new__(Coordinate, vpoint.c[1, 0] + cos(angle), vpoint.c[1, 1] + sin(angle)))
-        mapping_r[f'S{i}'] = len(pos) - 1
+        pos.append(Coordinate.__new__(Coordinate, vpoint.c[1, 0] + cos(angle),
+                                      vpoint.c[1, 1] + sin(angle)))
+        mapping_r[symbol_str(sym(S_LABEL, i))] = len(pos) - 1
     # Add data to 'data_dict' and counting DOF
     cdef int dof = 0
     cdef int target
@@ -493,7 +485,7 @@ cpdef list expr_solving(
     cdef double a
     cdef int i
     for i, a in enumerate(angles):
-        data_dict[f'a{i}'] = radians(a)
+        data_dict[symbol_str(sym(I_LABEL, i))] = radians(a)
     # Solve
     if not exprs.stack.empty():
         expr_parser(exprs, data_dict)

@@ -21,8 +21,8 @@ cdef str symbol_str(sym p):
         return f"P{p.second}"
     elif p.first == L_LABEL:
         return f"L{p.second}"
-    elif p.first == A_LABEL:
-        return f"a{p.second}"
+    elif p.first == I_LABEL:
+        return f"i{p.second}"
     elif p.first == S_LABEL:
         return f"S{p.second}"
     else:
@@ -304,19 +304,19 @@ cpdef EStack t_config(
         pos[base, 0] = vp1.c[node, 0]
         pos[base, 1] = vp1.c[node, 1]
     cdef int link_symbol = 0
-    cdef int angle_symbol = 0
+    cdef int input_symbol = 0
     # Input joints (R) that was connect with ground
     for base, node in inputs:
         if status[base]:
             exprs.add_pla(
                 [P_LABEL, base],
                 [L_LABEL, link_symbol],
-                [A_LABEL, angle_symbol],
+                [I_LABEL, input_symbol],
                 [P_LABEL, node]
             )
             status[node] = True
             link_symbol += 1
-            angle_symbol += 1
+            input_symbol += 1
     # Now let we search around all of points,
     # until find the solutions that we could
     input_targets = {node for _, node in inputs}
@@ -350,12 +350,12 @@ cpdef EStack t_config(
                     exprs.add_pla(
                         sym(P_LABEL, base),
                         sym(L_LABEL, link_symbol),
-                        sym(A_LABEL, angle_symbol),
+                        sym(I_LABEL, input_symbol),
                         sym(P_LABEL, node)
                     )
                     status[node] = True
                     link_symbol += 1
-                    angle_symbol += 1
+                    input_symbol += 1
                 else:
                     skip_times += 1
             else:
@@ -367,18 +367,27 @@ cpdef EStack t_config(
                         fa, fb = fb, fa
                     vp2 = vpoints[fa]
                     vp3 = vpoints[fb]
-                    if vp1.same_link(vp2) and vp1.same_link(vp3):
+                    if False:  # vp1.same_link(vp2) and vp1.same_link(vp3):
                         # TODO: special case
-                        pass
-                    exprs.add_pllp(
-                        sym(P_LABEL, fa),
-                        sym(L_LABEL, link_symbol),
-                        sym(L_LABEL, link_symbol + 1),
-                        sym(P_LABEL, fb),
-                        sym(P_LABEL, node)
-                    )
+                        exprs.add_plap(
+                            sym(P_LABEL, fa),
+                            sym(L_LABEL, link_symbol),
+                            sym(I_LABEL, input_symbol),
+                            sym(P_LABEL, fb),
+                            sym(P_LABEL, node)
+                        )
+                        link_symbol += 1
+                        input_symbol += 1
+                    else:
+                        exprs.add_pllp(
+                            sym(P_LABEL, fa),
+                            sym(L_LABEL, link_symbol),
+                            sym(L_LABEL, link_symbol + 1),
+                            sym(P_LABEL, fb),
+                            sym(P_LABEL, node)
+                        )
+                        link_symbol += 2
                     status[node] = True
-                    link_symbol += 2
                     skip_times = 0
         elif vp1.type == VJoint.P:
             # Need to solve P joint itself here (only grounded)
