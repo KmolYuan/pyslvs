@@ -150,6 +150,8 @@ cdef class Planar(Objective):
     cdef EStack exprs
     cdef SolverSystem bfgs_solver
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     def __cinit__(self, dict mech):
         # mech = {
         #     'expression': List[VPoint],
@@ -157,7 +159,7 @@ cdef class Planar(Objective):
         #     'placement': {pt: (x, y, r)},
         #     'target': {pt: [(x0, y0), (x1, y1), ...]},
         #     'same': {pt: match_to_pt},
-        #     # Bound has no position data
+        #     # Bounds with base link length and angle range
         #     'upper': List[float],
         #     'lower': List[float],
         #     'shape_only': bool,
@@ -239,8 +241,8 @@ cdef class Planar(Objective):
                     pair = frozenset({c, d})
                     self.mapping[pair] = None
                     self.mapping_list.append(pair)
-        # Input nodes and angle range
-        for a, ((i, j), (start, end)) in enumerate(self.inputs.items()):
+        # Input nodes
+        for _, ((i, j), (start, end)) in enumerate(self.inputs.items()):
             upper.append(start)
             lower.append(end)
             for a in range(i):
@@ -249,11 +251,13 @@ cdef class Planar(Objective):
             for a in range(j):
                 if a in same:
                     j -= 1
+        # TODO: Link length
+        # Angle rage
         upper[self.v_base:] *= self.target_count
         lower[self.v_base:] *= self.target_count
         self.upper = np_array(upper, dtype=np_float)
         self.lower = np_array(lower, dtype=np_float)
-        # Swap upper and lower bound if reversed.
+        # Swap upper and lower bound if reversed
         for i in range(len(self.upper)):
             if self.upper[i] < self.lower[i]:
                 self.upper[i], self.lower[i] = self.lower[i], self.upper[i]
@@ -423,6 +427,13 @@ cdef class Planar(Objective):
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cdef double fitness(self, double[:] v):
+        """Return fitness from chromosome.
+
+        + Coordinates of fixed pivots. [0:self.v_base]
+            [(xn, yn), ...]
+        + Length and the angles of the links. [self.v_base]
+        + Angle respect to the target points.
+        """
         # TODO: Decoder
         cdef int index = 0
         for m in self.mapping_list:
