@@ -28,8 +28,8 @@ _FOUR_BAR.update({
             (-117.56, -65.45),
         ]
     },
-    'upper': [100., 100., 100., 100., 100.],
-    'lower': [0., 0., 0., 0., 0.],
+    'upper': 100.,
+    'lower': 0.,
 })
 PLANAR_OBJECT = Planar(_FOUR_BAR)
 DEGREE_CODE_TABLE = [

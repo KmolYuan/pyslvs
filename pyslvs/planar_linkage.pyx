@@ -18,7 +18,7 @@ from numpy import (
     sort,
 )
 from pywt import dwt
-from libc.math cimport HUGE_VAL, NAN, cos, sin, atan2, INFINITY as INF
+from libc.math cimport HUGE_VAL, NAN, cos, sin, atan2, M_PI, INFINITY as INF
 from libcpp.vector cimport vector
 from .metaheuristics.utility cimport Objective
 from .expression cimport get_vlinks, VJoint, VPoint, VLink
@@ -159,9 +159,9 @@ cdef class Planar(Objective):
         #     'placement': {pt: (x, y, r)},
         #     'target': {pt: [(x0, y0), (x1, y1), ...]},
         #     'same': {pt: match_to_pt},
-        #     # Bounds with base link length and angle range
-        #     'upper': List[float],
-        #     'lower': List[float],
+        #     # Bounds of base link length
+        #     'upper': float,
+        #     'lower': float,
         #     'shape_only': bool,
         #     'wavelet_mode': bool,
         #     'ordered': bool,
@@ -209,20 +209,19 @@ cdef class Planar(Objective):
         self.mapping_r = {v: k for k, v in self.mapping.items()}
         self.mapping_list = []
         # Bounds
-        upper = list(mech.get('upper', []))
-        lower = list(mech.get('lower', []))
+        upper = []
+        lower = []
         if len(upper) != len(lower):
             raise ValueError("upper and lower should be in the same size")
         # Position
-        j = 0
         cdef double x, y, r
         for i in sorted(placement):
             x, y, r = placement[i]
-            upper[j:j] = (x + r, y + r)
-            lower[j:j] = (x - r, y - r)
+            upper.append(x + r)
+            upper.append(y + r)
+            lower.append(x - r)
+            lower.append(y - r)
             self.mapping_list.append(i)
-            j += 2
-        self.v_base = len(upper)
         # Length of links
         cdef int a, b, c, d
         cdef VLink vlink
@@ -241,6 +240,21 @@ cdef class Planar(Objective):
                     pair = frozenset({c, d})
                     self.mapping[pair] = None
                     self.mapping_list.append(pair)
+        # TODO: Link length bounds
+        link_upper = float(mech.get('upper', 100))
+        link_lower = float(mech.get('lower', 100))
+        cdef Expr expr
+        for expr in self.exprs.stack:
+            upper.append(link_upper)
+            lower.append(link_lower)
+            if expr.func in {PLA, PLAP}:
+                if expr.v2.first == A_LABEL:
+                    upper.append(2 * M_PI)
+                    lower.append(0)
+            elif expr.func in {PLLP}:
+                upper.append(link_upper)
+                lower.append(link_lower)
+        self.v_base = len(upper)
         # Input nodes
         for _, ((i, j), (start, end)) in enumerate(self.inputs.items()):
             upper.append(start)
@@ -251,7 +265,6 @@ cdef class Planar(Objective):
             for a in range(j):
                 if a in same:
                     j -= 1
-        # TODO: Link length
         # Angle rage
         upper[self.v_base:] *= self.target_count
         lower[self.v_base:] *= self.target_count
