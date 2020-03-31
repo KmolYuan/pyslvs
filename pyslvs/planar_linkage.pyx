@@ -139,10 +139,12 @@ cdef double _cmp_wavelet(double[:, :] wave1, double[:, :] wave2):
 
 
 @cython.final
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef class Planar(Objective):
     """This class is used to verified kinematics of the linkage mechanism."""
     cdef bint bfgs_mode, shape_only, wavelet_mode, ordered
-    cdef int target_count, v_base
+    cdef int target_count, l_base
     cdef list vpoints, mapping_list
     cdef dict placement, target, mapping, mapping_r, data_dict
     cdef object inputs
@@ -150,8 +152,6 @@ cdef class Planar(Objective):
     cdef EStack exprs
     cdef SolverSystem bfgs_solver
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     def __cinit__(self, dict mech):
         # mech = {
         #     'expression': List[VPoint],
@@ -223,6 +223,7 @@ cdef class Planar(Objective):
             lower.append(y - r)
             self.mapping_list.append(i)
         # Length of links
+        # TODO: Match mapping list
         cdef int a, b, c, d
         cdef VLink vlink
         for vlink in get_vlinks(self.vpoints):
@@ -240,7 +241,7 @@ cdef class Planar(Objective):
                     pair = frozenset({c, d})
                     self.mapping[pair] = None
                     self.mapping_list.append(pair)
-        # TODO: Link length bounds
+        ###
         link_upper = float(mech.get('upper', 100))
         link_lower = float(mech.get('lower', 100))
         cdef Expr expr
@@ -254,7 +255,7 @@ cdef class Planar(Objective):
             elif expr.func in {PLLP}:
                 upper.append(link_upper)
                 lower.append(link_lower)
-        self.v_base = len(upper)
+        self.l_base = len(upper)
         # Input nodes
         for _, ((i, j), (start, end)) in enumerate(self.inputs.items()):
             upper.append(start)
@@ -266,8 +267,8 @@ cdef class Planar(Objective):
                 if a in same:
                     j -= 1
         # Angle rage
-        upper[self.v_base:] *= self.target_count
-        lower[self.v_base:] *= self.target_count
+        upper[self.l_base:] *= self.target_count
+        lower[self.l_base:] *= self.target_count
         self.upper = np_array(upper, dtype=np_float)
         self.lower = np_array(lower, dtype=np_float)
         # Swap upper and lower bound if reversed
@@ -294,7 +295,7 @@ cdef class Planar(Objective):
     cdef inline double get_len(self, str expr1, str expr2):
         return self.mapping[frozenset({self.mapping_r[expr1], self.mapping_r[expr2]})]
 
-    cdef inline bint solve(self, double[:] input_list):
+    cdef bint solve(self, double[:] input_list):
         self.data_dict.clear()
         cdef int i
         cdef VPoint vpoint
@@ -390,17 +391,16 @@ cdef class Planar(Objective):
                 self.data_dict[t, -2] = coord3
         if not self.bfgs_mode:
             return True
-        # Add coordinate of known points.
+        # Add coordinate of known points
         p_data_dict = {}
         for i in range(len(self.vpoints)):
             # {1: 'A'} vs {'A': (10., 20.)}
             if self.mapping[i] in self.data_dict:
                 p_data_dict[i] = self.data_dict[self.mapping[i]]
-        # Add specified link lengths.
+        # Add specified link lengths
         for k, v in self.mapping.items():
             if type(k) is frozenset:
                 p_data_dict[k] = v
-
         if self.bfgs_solver is None:
             self.bfgs_solver = SolverSystem(self.vpoints, {}, p_data_dict)
         else:
@@ -417,7 +417,7 @@ cdef class Planar(Objective):
             if self.mapping[i] in self.data_dict:
                 continue
             vpoint = self.vpoints[i]
-            # These points solved by Sketch Solve.
+            # These points solved by Sketch Solve
             if vpoint.type == VJoint.R:
                 self.data_dict[i, -1] = Coordinate.__new__(
                     Coordinate,
@@ -437,14 +437,12 @@ cdef class Planar(Objective):
                 )
         return True
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cdef double fitness(self, double[:] v):
         """Return fitness from chromosome.
 
-        + Coordinates of fixed pivots. [0:self.v_base]
+        + Coordinates of fixed pivots. [0:self.l_base]
             [(xn, yn), ...]
-        + Length and the angles of the links. [self.v_base]
+        + Length and the angles of the links. [self.l_base]
         + Angle respect to the target points.
         """
         # TODO: Decoder
@@ -461,7 +459,7 @@ cdef class Planar(Objective):
         cdef int node
         target = {n: [] for n in self.target}
         for index in range(self.target_count):
-            index += self.v_base
+            index += self.l_base
             angles = v[index:index + self.target_count]
             if self.ordered or self.wavelet_mode:
                 angles = sort(angles)
@@ -486,17 +484,18 @@ cdef class Planar(Objective):
         """Input a generic data (variable array), return the mechanism 
         expression.
         """
-        cdef int target_index = 0
+        cdef int index = 0
         cdef VPoint vpoint
         for m in self.mapping_list:
             if type(m) is int:
                 vpoint = self.vpoints[m]
-                vpoint.locate(v[target_index], v[target_index + 1])
-                target_index += 2
+                vpoint.locate(v[index], v[index + 1])
+                index += 2
             else:
-                self.mapping[m] = v[target_index]
-                target_index += 1
-        self.solve(v[self.v_base:self.v_base + self.target_count])
+                self.mapping[m] = v[index]
+                index += 1
+        cdef double[:] angles = v[self.l_base:self.l_base + self.target_count]
+        self.solve(angles)
         expressions = []
         cdef int i
         cdef double x1, y1, x2, y2
