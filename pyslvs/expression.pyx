@@ -353,7 +353,7 @@ cdef class VPoint:
             return self.c[1, i]
 
     def __repr__(self) -> str:
-        return f"VPoint({self.links}, {int(self.type)}, {self.angle}, {self.c.tolist()})"
+        return f"VPoint({self.links}, {int(self.type)}, {self.angle}, {array(self.c).tolist()})"
 
 
 @cython.final
