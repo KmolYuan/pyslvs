@@ -149,8 +149,7 @@ cpdef void expr_parser(EStack exprs, dict data_dict):
     """Solve and update information of the triangle expression `exprs` to 
     `data_dict`.
     The argument `exprs` can be obtained by
-    [`t_config`](#t_config)
-    and [`EStack.as_list()`](#expressionstackas_list) method.
+    [`t_config`](#t_config) and [`EStack.as_list()`](#estackas_list) method.
 
     This function is already included in [`expr_solving`](#expr_solving),
     not recommended for direct use.
