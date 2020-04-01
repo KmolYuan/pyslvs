@@ -274,7 +274,7 @@ cpdef EStack t_config(
                 # Connect on the ground and it is not a slider
                 if link == VLink.FRAME and vp1.type == VJoint.R:
                     status[node] = True
-                # Add as vlink.
+                # Add as vlink
                 if link not in vlinks:
                     vlinks[link] = {node}
                 else:
@@ -462,7 +462,7 @@ cpdef EStack t_config(
                     sym(P_LABEL, fc),
                     sym(S_LABEL, node)
                 )
-                # Two conditions.
+                # Two conditions
                 exprs.add_plpp(
                     sym(P_LABEL, fa),
                     sym(L_LABEL, link_symbol + 2),

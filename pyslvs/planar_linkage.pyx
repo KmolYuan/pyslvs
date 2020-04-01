@@ -19,9 +19,8 @@ from numpy import (
 )
 from pywt import dwt
 from libc.math cimport HUGE_VAL, NAN, cos, sin, atan2, M_PI, INFINITY as INF
-from libcpp.vector cimport vector
 from .metaheuristics.utility cimport Objective
-from .expression cimport get_vlinks, VJoint, VPoint, VLink
+from .expression cimport VJoint, VPoint
 from .triangulation cimport (t_config, symbol_str, I_LABEL, A_LABEL, Expr,
     PLA, PLAP, PLLP, PLPP, PXY, EStack)
 from .bfgs cimport SolverSystem
@@ -144,7 +143,7 @@ cdef double _cmp_wavelet(double[:, :] wave1, double[:, :] wave2):
 cdef class Planar(Objective):
     """This class is used to verified kinematics of the linkage mechanism."""
     cdef bint bfgs_mode, shape_only, wavelet_mode, ordered
-    cdef int target_count, l_base
+    cdef int target_count, p_base, l_base
     cdef list vpoints, mapping_list
     cdef dict placement, target, mapping, mapping_r, data_dict
     cdef object inputs
@@ -222,41 +221,34 @@ cdef class Planar(Objective):
             lower.append(x - r)
             lower.append(y - r)
             self.mapping_list.append(i)
+        self.p_base = len(upper)
         # Length of links
         # TODO: Match mapping list
-        cdef int a, b, c, d
-        cdef VLink vlink
-        for vlink in get_vlinks(self.vpoints):
-            if len(vlink.points) < 2:
-                continue
-            if vlink.name == VLink.FRAME:
-                continue
-            a = vlink.points[0]
-            b = vlink.points[1]
-            pair = frozenset({a, b})
-            self.mapping[pair] = None
-            self.mapping_list.append(pair)
-            for c in vlink.points[2:]:
-                for d in (a, b):
-                    pair = frozenset({c, d})
-                    self.mapping[pair] = None
-                    self.mapping_list.append(pair)
-        ###
         link_upper = float(mech.get('upper', 100))
         link_lower = float(mech.get('lower', 100))
         cdef Expr expr
         for expr in self.exprs.stack:
             upper.append(link_upper)
             lower.append(link_lower)
+            sym = frozenset({expr.c1.second, expr.target.second})
+            self.mapping[sym] = None
+            self.mapping_list.append(sym)
             if expr.func in {PLA, PLAP}:
                 if expr.v2.first == A_LABEL:
                     upper.append(2 * M_PI)
                     lower.append(0)
+                    sym = f"A{expr.c1.second}"
+                    self.mapping[sym] = None
+                    self.mapping_list.append(sym)
             elif expr.func in {PLLP}:
                 upper.append(link_upper)
                 lower.append(link_lower)
+                sym = frozenset({expr.c2.second, expr.target.second})
+                self.mapping[sym] = None
+                self.mapping_list.append(sym)
         self.l_base = len(upper)
         # Input nodes
+        cdef int a
         for _, ((i, j), (start, end)) in enumerate(self.inputs.items()):
             upper.append(start)
             lower.append(end)
@@ -295,7 +287,7 @@ cdef class Planar(Objective):
     cdef inline double get_len(self, str expr1, str expr2):
         return self.mapping[frozenset({self.mapping_r[expr1], self.mapping_r[expr2]})]
 
-    cdef bint solve(self, double[:] input_list):
+    cdef bint solve(self, double[:] polar_angles, double[:] input_list):
         self.data_dict.clear()
         cdef int i
         cdef VPoint vpoint
@@ -310,26 +302,12 @@ cdef class Planar(Objective):
                 self.data_dict[self.mapping[i]] = coord2
                 self.data_dict[i, -1] = coord1
                 self.data_dict[i, -2] = coord2
-        cdef vector[double] polar_angle
-        cdef Expr expr
-        for expr in self.exprs.stack:
-            if expr.func in {PLA, PLAP}:
-                if expr.v2.first == A_LABEL:
-                    coord1 = self.data_dict[symbol_str(expr.c1)]
-                    coord2 = self.data_dict[symbol_str(expr.target)]
-                    if expr.func == PLA:
-                        polar_angle.push_back(coord1.slope_angle(coord2))
-                    else:
-                        coord3 = self.data_dict[symbol_str(expr.c2)]
-                        polar_angle.push_back(
-                            coord1.slope_angle(coord2) -
-                            coord1.slope_angle(coord3)
-                        )
         # Solve
         i = 0
         cdef int j = 0
         cdef int t, params_count
         cdef double length, angle
+        cdef Expr expr
         for expr in self.exprs.stack:
             coord3 = Coordinate.__new__(Coordinate, NAN, NAN)
             target = symbol_str(expr.target)
@@ -340,7 +318,7 @@ cdef class Planar(Objective):
                     angle = input_list[i]
                     i += 1
                 else:
-                    angle = polar_angle[j]
+                    angle = polar_angles[j]
                     j += 1
                 angle = radians(angle)
                 if expr.func == PLA:
@@ -447,10 +425,16 @@ cdef class Planar(Objective):
         """
         # TODO: Decoder
         cdef int index = 0
+        cdef int a_index = 0
+        cdef double[:] polar_angles = zeros(self.l_base - self.p_base)
         for m in self.mapping_list:
             if type(m) is int:
                 (<VPoint>self.vpoints[m]).locate(v[index], v[index + 1])
                 index += 2
+            elif type(m) is str and m.startswith('A'):
+                polar_angles[a_index] = v[index]
+                a_index += 1
+                index += 1
             else:
                 self.mapping[m] = v[index]
                 index += 1
@@ -463,7 +447,7 @@ cdef class Planar(Objective):
             angles = v[index:index + self.target_count]
             if self.ordered or self.wavelet_mode:
                 angles = sort(angles)
-            if not self.solve(angles):
+            if not self.solve(polar_angles, angles):
                 return HUGE_VAL
             for node in self.target:
                 target[node].append(self.data_dict[node, -1])
@@ -485,17 +469,23 @@ cdef class Planar(Objective):
         expression.
         """
         cdef int index = 0
+        cdef int a_index = 0
+        cdef double[:] polar_angles = zeros(self.l_base - self.p_base)
         cdef VPoint vpoint
         for m in self.mapping_list:
             if type(m) is int:
                 vpoint = self.vpoints[m]
                 vpoint.locate(v[index], v[index + 1])
                 index += 2
+            elif type(m) is str and m.startswith('A'):
+                polar_angles[a_index] = v[index]
+                a_index += 1
+                index += 1
             else:
                 self.mapping[m] = v[index]
                 index += 1
         cdef double[:] angles = v[self.l_base:self.l_base + self.target_count]
-        self.solve(angles)
+        self.solve(polar_angles, angles)
         expressions = []
         cdef int i
         cdef double x1, y1, x2, y2
