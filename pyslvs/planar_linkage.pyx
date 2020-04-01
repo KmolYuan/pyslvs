@@ -11,14 +11,9 @@ email: pyslvs@gmail.com
 
 cimport cython
 from collections import OrderedDict
-from numpy import (
-    zeros,
-    array as np_array,
-    float64 as np_float,
-    sort,
-)
+from numpy import zeros, array, float64 as np_float, sort
 from pywt import dwt
-from libc.math cimport HUGE_VAL, NAN, cos, sin, atan2, M_PI, INFINITY as INF
+from libc.math cimport HUGE_VAL, NAN, cos, sin, atan2, INFINITY as INF
 from .metaheuristics.utility cimport Objective
 from .expression cimport VJoint, VPoint
 from .triangulation cimport (t_config, symbol_str, I_LABEL, A_LABEL, Expr,
@@ -31,7 +26,7 @@ DEF WAVELET = "db3"
 
 def norm_path(path, scale=1):
     """Python wrapper of normalization function."""
-    cdef Coordinate[:] path_m = np_array([
+    cdef Coordinate[:] path_m = array([
         Coordinate.__new__(Coordinate, x, y) for x, y in path], dtype=object)
     _normalization(path_m, scale)
     return [(c.x, c.y) for c in path_m]
@@ -62,7 +57,7 @@ cdef void _normalization(Coordinate[:] path, double scale):
             angle[end] = angle[i]
             sp = end
     _aligned(path, sp)
-    cdef double[:] bound = np_array([INF, -INF], dtype=np_float)
+    cdef double[:] bound = array([INF, -INF], dtype=np_float)
     cdef double a
     for i in range(len(path)):
         c = path[i]
@@ -185,7 +180,7 @@ cdef class Planar(Objective):
         cdef double[:, :] wave
         cdef Coordinate[:] path
         for i in target:
-            path = np_array([Coordinate(x, y) for x, y in target[i]], dtype=object)
+            path = array([Coordinate(x, y) for x, y in target[i]], dtype=object)
             for j in range(i):
                 if j in same:
                     i -= 1
@@ -235,7 +230,7 @@ cdef class Planar(Objective):
             self.mapping_list.append(sym)
             if expr.func in {PLA, PLAP}:
                 if expr.v2.first == A_LABEL:
-                    upper.append(2 * M_PI)
+                    upper.append(360)
                     lower.append(0)
                     sym = f"A{expr.c1.second}"
                     self.mapping[sym] = None
@@ -261,8 +256,8 @@ cdef class Planar(Objective):
         # Angle rage
         upper[self.l_base:] *= self.target_count
         lower[self.l_base:] *= self.target_count
-        self.upper = np_array(upper, dtype=np_float)
-        self.lower = np_array(lower, dtype=np_float)
+        self.upper = array(upper, dtype=np_float)
+        self.lower = array(lower, dtype=np_float)
         # Swap upper and lower bound if reversed
         for i in range(len(self.upper)):
             if self.upper[i] < self.lower[i]:
@@ -423,10 +418,9 @@ cdef class Planar(Objective):
         + Length and the angles of the links. [self.l_base]
         + Angle respect to the target points.
         """
-        # TODO: Decoder
         cdef int index = 0
         cdef int a_index = 0
-        cdef double[:] polar_angles = zeros(self.l_base - self.p_base)
+        cdef double[:] polar_angles = zeros(self.l_base - self.p_base, dtype=np_float)
         for m in self.mapping_list:
             if type(m) is int:
                 (<VPoint>self.vpoints[m]).locate(v[index], v[index + 1])
@@ -438,6 +432,7 @@ cdef class Planar(Objective):
             else:
                 self.mapping[m] = v[index]
                 index += 1
+        # print(array(polar_angles))
         cdef double fitness = 0
         cdef double[:] angles
         cdef int node
@@ -453,7 +448,7 @@ cdef class Planar(Objective):
                 target[node].append(self.data_dict[node, -1])
         cdef Coordinate[:] path1, path2
         for node in self.target:
-            path1 = np_array(target[node], dtype=object)
+            path1 = array(target[node], dtype=object)
             if self.shape_only or self.wavelet_mode:
                 _normalization(path1, 1)
                 if self.wavelet_mode:
