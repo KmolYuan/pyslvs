@@ -12,7 +12,7 @@ from pyslvs import collection_list, parse_vpoints, Planar
 _FOUR_BAR = collection_list("Four bar linkage mechanism")
 _FOUR_BAR.update({
     'expression': parse_vpoints(_FOUR_BAR['expression']),
-    'placement': {0: (-70, -70, 50), 1: (70, -70, 50)},
+    'placement': {0: (-70, -70, 10), 1: (70, -70, 10)},
     'target': {
         4: [
             (60.3, 118.12),

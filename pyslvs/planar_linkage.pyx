@@ -218,7 +218,6 @@ cdef class Planar(Objective):
             self.mapping_list.append(i)
         self.p_base = len(upper)
         # Length of links
-        # TODO: Match mapping list
         link_upper = float(mech.get('upper', 100))
         link_lower = float(mech.get('lower', 0))
         i = 0
@@ -246,7 +245,7 @@ cdef class Planar(Objective):
         self.l_base = len(upper)
         # Input nodes
         cdef int a
-        for _, ((i, j), (start, end)) in enumerate(self.inputs.items()):
+        for (i, j), (start, end) in self.inputs.items():
             upper.append(radians(start))
             lower.append(radians(end))
             for a in range(i):
@@ -441,6 +440,7 @@ cdef class Planar(Objective):
             if self.ordered or self.wavelet_mode:
                 angles = sort(angles)
             if not self.solve(angles):
+                # Punishment
                 return HUGE_VAL
             for node in self.target:
                 target[node].append(self.data_dict[node, -1])
