@@ -225,12 +225,12 @@ class CoreTest(TestCase):
 
     def algorithm_generic(self, t: AlgorithmType):
         """Generic algorithm setup."""
-        settings = {'max_time': 1, 'report': 10}
+        settings = {'max_gen': 10, 'report': 10}
         settings.update(PARAMS[t])
         algorithm = ALGORITHM[t](PLANAR_OBJECT, settings)
         algorithm.run()
         t_f = algorithm.history()
-        self.assertTrue(10 >= t_f[1][0] - t_f[0][0])
+        self.assertTrue(10 == t_f[1][0] - t_f[0][0])
 
     def test_algorithms(self):
         """Test algorithms."""
