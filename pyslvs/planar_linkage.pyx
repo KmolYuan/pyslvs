@@ -11,7 +11,8 @@ email: pyslvs@gmail.com
 
 cimport cython
 from collections import OrderedDict
-from numpy import zeros, array, float64 as np_float, sort
+from numpy cimport ndarray
+from numpy import zeros, array, float64 as np_float
 from pywt import dwt
 from libc.math cimport HUGE_VAL, M_PI, cos, sin, atan2, INFINITY as INF
 from .metaheuristics.utility cimport Objective
@@ -138,7 +139,7 @@ cdef double _cmp_wavelet(double[:, :] wave1, double[:, :] wave2):
 cdef class Planar(Objective):
     """This class is used to verified kinematics of the linkage mechanism."""
     cdef bint bfgs_mode, shape_only, wavelet_mode, ordered
-    cdef int target_count, p_base, l_base
+    cdef int target_count, input_count, p_base, l_base
     cdef list vpoints, mapping_list
     cdef dict placement, target, mapping, mapping_r, data_dict
     cdef object inputs
@@ -236,7 +237,7 @@ cdef class Planar(Objective):
                     self.mapping[sym] = None
                     self.mapping_list.append(sym)
                     i += 1
-            elif expr.func in {PLLP}:
+            elif expr.func == PLLP:
                 upper.append(link_upper)
                 lower.append(link_lower)
                 sym = frozenset({expr.c2.second, expr.target.second})
@@ -244,6 +245,7 @@ cdef class Planar(Objective):
                 self.mapping_list.append(sym)
         self.l_base = len(upper)
         # Input nodes
+        self.input_count = len(self.inputs)
         cdef int a
         for start, end in self.inputs.values():
             upper.append(radians(start))
@@ -424,16 +426,18 @@ cdef class Planar(Objective):
             else:
                 self.mapping[m] = v[index]
                 index += 1
+        cdef ndarray[double, ndim=2] angles = zeros(
+            (self.input_count, self.target_count), dtype=np_float)
+        for index in range(self.input_count):
+            a_index = index + self.l_base
+            angles[index, :] = array(v[a_index:a_index + self.target_count])
+        if self.ordered or self.wavelet_mode:
+            angles.sort(axis=1)
         cdef double fitness = 0
-        cdef double[:] angles
         cdef int node
         target = {n: [] for n in self.target}
         for index in range(self.target_count):
-            index += self.l_base
-            angles = v[index:index + self.target_count]
-            if self.ordered or self.wavelet_mode:
-                angles = sort(angles)
-            if not self.solve(angles):
+            if not self.solve(angles[:, index]):
                 # Punishment
                 return HUGE_VAL
             for node in self.target:
