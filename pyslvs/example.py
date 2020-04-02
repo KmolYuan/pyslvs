@@ -23,7 +23,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[7.0, 131.125], L[L3, L6]],"
         "J[R, color[Green], P[163.5, 47.875], L[L7]],"
         "]", ((0, 1), (0, 2))),
-
     "Ball lifter (Double)": (
         "M["
         "J[R, color[Green], P[10.2, 10.4], L[ground, L1]],"
@@ -41,7 +40,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[35.64, 40.55], L[L8, L9]],"
         "J[R, color[Green], P[8.73, 80.39], L[L8]],"
         "]", ((0, 1),)),
-
     "Ball lifter (Triple)": (
         "M["
         "J[R, color[Green], P[10.2, 10.4], L[ground, L1]],"
@@ -65,7 +63,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[111.74, 70.43], L[L12, L13]],"
         "J[R, color[Green], P[7.50, 93.44], L[L12]],"
         "]", ((0, 1),)),
-
     "Crank lifter": (
         "M["
         "J[R, color[Green], P[-67.38, 36.13], L[ground, L1]],"
@@ -76,7 +73,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[109.1972, 63.8805], L[L3, L5]],"
         "J[RP, A[0.0], color[Green], P[0.82, 64.42], L[L5, L4]],"
         "]", ((0, 1),)),
-
     "Crank rocker": (
         "M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, L1]],"
@@ -85,7 +81,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[33.3, 66.95], L[L2]],"
         "J[R, color[Green], P[90.0, 0.0], L[ground, L3]],"
         "]", ((0, 1),)),
-
     "Crank slider (P joint)": (
         "M["
         "J[R, color[Green], P[-33.625, -19.625], L[ground, L1]],"
@@ -96,7 +91,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[143.455, 65.967], L[L4, L5]],"
         "J[R, color[Green], P[99.244, 20.447], L[ground, L4]],"
         "]", ((0, 1),)),
-
     "Crank slider (RP joint)": (
         "M["
         "J[R, color[Green], P[-67.38, 36.13], L[ground, L1]],"
@@ -106,14 +100,12 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[74.375, 7.625], L[ground, L4]],"
         "J[R, color[Green], P[95.1972, 52.8805], L[L3]],"
         "]", ((0, 1),)),
-
     "Crank slider (Three bar)": (
         "M["
         "J[R, color[Green], P[-30.0, -10.0], L[ground, L1]],"
         "J[R, color[Green], P[-9.9986, 4.999], L[L1, L2]],"
         "J[RP, A[0.0], color[Green], P[65.0, -45.0], L[L2, ground]],"
         "]", ((0, 1),)),
-
     "Horse leg": (
         "M["
         "J[R, color[Green], P[49, -75], L[ground, link_1]],"
@@ -128,7 +120,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[204, -169], L[link_6, link_7]],"
         "J[R, color[Green], P[230, -219], L[link_7]],"
         "]", ((0, 3),)),
-
     "Inverted slider": (
         "M["
         "J[R, color[Green], P[-15.0, 0.0], L[ground, L1]],"
@@ -136,7 +127,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[-8.0, 25.0], L[L1, L2]],"
         "J[P, A[0.0], color[Green], P[44.0, 41.0], L[L3, L2]],"
         "]", ((0, 2),)),
-
     "Jansen's linkage (Single)": (
         "M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, L1]],"
@@ -148,7 +138,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[-56.05, -35.42], L[L6, L7]],"
         "J[R, color[Green], P[-22.22, -91.74], L[L7]],"
         "]", ((0, 1),)),
-
     "Jansen's linkage (Double)": (
         "M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, L1]],"
@@ -166,7 +155,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[64.84, -61.13], L[L12, L13]],"
         "J[R, color[Green], P[4.79, -87.79], L[L13]],"
         "]", ((0, 1),)),
-
     "Slider lifter": (
         "M["
         "J[RP, A[0.0], color[Green], P[0.0, 0.0], L[ground, L2]],"
@@ -175,7 +163,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[1.0, 54.0], L[L1]],"
         "J[R, color[Green], P[50.0, 53.0], L[L2]],"
         "]", ((0, 0),)),
-
     "Stephenson I": (
         "M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, L1]],"
@@ -186,7 +173,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[105.25, 87.5625], L[L4, L5]],"
         "J[R, color[Green], P[113.75, 0.0], L[ground, L4]],"
         "]", ((0, 1),)),
-
     "Stephenson II": (
         "M["
         "J[R, color[Green], P[-45.0, -15.5], L[ground, L1]],"
@@ -197,7 +183,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[85.25, -27.25], L[ground, L3]],"
         "J[R, color[Green], P[57.5, 77.0], L[L3, L5]],"
         "]", ((0, 1),)),
-
     "Stephenson III": (
         "M["
         "J[R, color[Green], P[0.25, -0.625], L[ground, L1]],"
@@ -208,7 +193,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[134.625, 119.875], L[L3, L5]],"
         "J[R, color[Green], P[138.875, 33.125], L[ground, L5]],"
         "]", ((0, 1),)),
-
     "Ten Fold's levers": (
         "M["
         "J[R, color[Green], P[17.0, -19.0], L[ground, L2]],"
@@ -225,7 +209,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[132.026, -104.8377], L[L5, L7]],"
         "J[R, color[Green], P[221.6968, -20.8773], L[L10]],"
         "]", ((0, 2),)),
-
     "Watt I": (
         "M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, L1]],"
@@ -236,7 +219,6 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[122.0, 76.5], L[L4, L5]],"
         "J[R, color[Green], P[64.0, 0.0], L[ground, L5]],"
         "]", ((0, 1),)),
-
     "Watt II": (
         "M["
         "J[R, color[Green], P[0.0, 0.0], L[ground, L1]],"

@@ -14,11 +14,11 @@ _collection_list = {
     "Four bar linkage mechanism": {
         'expression':
             "M["
-            "J[R, P[-70, -70], L[ground, L1]],"
-            "J[R, P[70, -70], L[ground, L2]],"
-            "J[R, P[-70, 12.5], L[L1, L3]],"
-            "J[R, P[70, 12.5], L[L2, L3]],"
-            "J[R, P[0, 63.5], L[L3]]"
+            "J[R, P[0.0, 0.0], L[ground, L1]],"
+            "J[R, P[90.0, 0.0], L[ground, L2]],"
+            "J[R, P[12.92, 32.53], L[L1, L3]],"
+            "J[R, P[73.28, 67.97], L[L2, L3]],"
+            "J[R, P[33.3, 66.95], L[L3]],"
             "]",
         'input': [((0, 2), [0, 360])],
         'graph': ((0, 1), (0, 2), (1, 3), (2, 3)),
@@ -27,7 +27,6 @@ _collection_list = {
         'cus': {4: 3},
         'same': {},
     },
-
     "Six bar linkage mechanism": {
         'expression':
             "M["
@@ -46,7 +45,6 @@ _collection_list = {
         'input': [((1, 6), [0, 360])],
         'same': {},
     },
-
     "Eight bar linkage mechanism": {
         'expression':
             "M["
@@ -60,24 +58,13 @@ _collection_list = {
             "J[R, P[35.5, -107.5], L[L7]]"
             "]",
         'input': [((0, 3), [0, 360])],
-        'graph': (
-            (0, 1),
-            (0, 4),
-            (0, 5),
-            (1, 2),
-            (1, 3),
-            (2, 4),
-            (3, 5),
-            (3, 7),
-            (4, 6),
-            (6, 7),
-        ),
+        'graph': ((0, 1), (0, 4), (0, 5), (1, 2), (1, 3), (2, 4), (3, 5),
+                  (3, 7), (4, 6), (6, 7)),
         'placement': {0: None, 1: None},
         'target': {10: None},
         'cus': {10: 7},
         'same': {2: 1, 4: 3, 7: 6},
     },
-
     "Ball lifter linkage mechanism": {
         'expression':
             "M["
@@ -97,21 +84,8 @@ _collection_list = {
             "J[R, P[44.12, 107.65], L[L8]]"
             "]",
         'input': [((0, 5), [0, 360])],
-        'graph': (
-            (0, 1),
-            (0, 4),
-            (0, 6),
-            (0, 7),
-            (0, 9),
-            (1, 2),
-            (1, 3),
-            (2, 4),
-            (2, 5),
-            (3, 7),
-            (3, 8),
-            (5, 6),
-            (8, 9),
-        ),
+        'graph': ((0, 1), (0, 4), (0, 6), (0, 7), (0, 9), (1, 2), (1, 3),
+                  (2, 4), (2, 5), (3, 7), (3, 8), (5, 6), (8, 9)),
         'placement': {0: None, 1: None, 2: None, 3: None, 4: None},
         'target': {13: None, 14: None},
         'cus': {13: 5, 14: 8},
@@ -135,7 +109,8 @@ def collection_list(key: str) -> Dict[str, Any]:
         + type: Dict[int, Optional[Tuple[float, float, float]]]
     + `Target`: The target joints settings.
         + type: Dict[int, Optional[Sequence[Tuple[float, float]]]]
-    + `cus`: The custom joints on specific link. (link number correspond to the graph expression.)
+    + `cus`: The custom joints on specific link. (link number correspond to
+        the graph expression.)
         + type: Dict[int, int]
     + `same`: The multiple joints setting.
         + type: Dict[int, int]

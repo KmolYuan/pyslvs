@@ -234,6 +234,7 @@ class CoreTest(TestCase):
 
     def test_algorithms(self):
         """Test algorithms."""
+        self.assertFalse(PLANAR_OBJECT.is_two_kernel())
         # Real-coded genetic algorithm
         self.algorithm_generic(AlgorithmType.RGA)
         # Firefly algorithm
