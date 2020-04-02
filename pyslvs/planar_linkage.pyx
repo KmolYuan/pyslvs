@@ -13,7 +13,7 @@ cimport cython
 from collections import OrderedDict
 from numpy import zeros, array, float64 as np_float, sort
 from pywt import dwt
-from libc.math cimport HUGE_VAL, NAN, cos, sin, atan2, INFINITY as INF
+from libc.math cimport HUGE_VAL, M_PI, cos, sin, atan2, INFINITY as INF
 from .metaheuristics.utility cimport Objective
 from .expression cimport VJoint, VPoint
 from .triangulation cimport (t_config, symbol_str, I_LABEL, A_LABEL, Expr,
@@ -142,7 +142,7 @@ cdef class Planar(Objective):
     cdef list vpoints, mapping_list
     cdef dict placement, target, mapping, mapping_r, data_dict
     cdef object inputs
-    cdef double[:] upper, lower
+    cdef double[:] upper, lower, polar_angles
     cdef EStack exprs
     cdef SolverSystem bfgs_solver
 
@@ -170,7 +170,7 @@ cdef class Planar(Objective):
         if len(check_set) != 1:
             raise ValueError("target paths should be in the same size")
         self.target_count = check_set.pop()
-        # Change the target paths into memory view.
+        # Change the target paths into memory view
         self.target = {}
         same = mech.get('same', {})
         self.shape_only = mech.get('shape_only', False)
@@ -220,7 +220,8 @@ cdef class Planar(Objective):
         # Length of links
         # TODO: Match mapping list
         link_upper = float(mech.get('upper', 100))
-        link_lower = float(mech.get('lower', 100))
+        link_lower = float(mech.get('lower', 0))
+        i = 0
         cdef Expr expr
         for expr in self.exprs.stack:
             upper.append(link_upper)
@@ -230,11 +231,12 @@ cdef class Planar(Objective):
             self.mapping_list.append(sym)
             if expr.func in {PLA, PLAP}:
                 if expr.v2.first == A_LABEL:
-                    upper.append(360)
+                    upper.append(2 * M_PI)
                     lower.append(0)
-                    sym = f"A{expr.c1.second}"
+                    sym = f"A{i}"
                     self.mapping[sym] = None
                     self.mapping_list.append(sym)
+                    i += 1
             elif expr.func in {PLLP}:
                 upper.append(link_upper)
                 lower.append(link_lower)
@@ -245,8 +247,8 @@ cdef class Planar(Objective):
         # Input nodes
         cdef int a
         for _, ((i, j), (start, end)) in enumerate(self.inputs.items()):
-            upper.append(start)
-            lower.append(end)
+            upper.append(radians(start))
+            lower.append(radians(end))
             for a in range(i):
                 if a in same:
                     i -= 1
@@ -262,6 +264,8 @@ cdef class Planar(Objective):
         for i in range(len(self.upper)):
             if self.upper[i] < self.lower[i]:
                 self.upper[i], self.lower[i] = self.lower[i], self.upper[i]
+        # Allocate memory
+        self.polar_angles = zeros(self.l_base - self.p_base, dtype=np_float)
         # Result list
         self.data_dict = {}
 
@@ -274,7 +278,7 @@ cdef class Planar(Objective):
         return self.lower
 
     cpdef bint is_two_kernel(self):
-        """Input a generic data (variable array), return the mechanism 
+        """Input a generic data (variable array), return the mechanism
         expression.
         """
         return self.bfgs_mode
@@ -282,7 +286,7 @@ cdef class Planar(Objective):
     cdef inline double get_len(self, str expr1, str expr2):
         return self.mapping[frozenset({self.mapping_r[expr1], self.mapping_r[expr2]})]
 
-    cdef bint solve(self, double[:] polar_angles, double[:] input_list):
+    cdef bint solve(self, double[:] input_list):
         self.data_dict.clear()
         cdef int i
         cdef VPoint vpoint
@@ -299,33 +303,29 @@ cdef class Planar(Objective):
                 self.data_dict[i, -2] = coord2
         # Solve
         i = 0
-        cdef int j = 0
+        cdef int a = 0
         cdef int t, params_count
         cdef double length, angle
         cdef Expr expr
         for expr in self.exprs.stack:
-            coord3 = Coordinate.__new__(Coordinate, NAN, NAN)
             target = symbol_str(expr.target)
             if expr.func in {PLA, PLAP}:
                 coord1 = self.data_dict[symbol_str(expr.c1)]
+                if expr.func == PLAP:
+                    coord2 = self.data_dict[symbol_str(expr.c2)]
                 length = self.get_len(symbol_str(expr.c1), target)
                 if expr.v2.first == I_LABEL:
                     angle = input_list[i]
                     i += 1
                 else:
-                    angle = polar_angles[j]
-                    j += 1
-                angle = radians(angle)
+                    angle = self.polar_angles[a]
+                    if expr.func == PLAP:
+                        angle -= coord1.slope_angle(coord2)
+                    a += 1
                 if expr.func == PLA:
                     coord3 = plap(coord1, length, angle)
                 else:
-                    coord3 = plap(
-                        coord1,
-                        length,
-                        angle,
-                        self.data_dict[symbol_str(expr.c2)],
-                        expr.op
-                    )
+                    coord3 = plap(coord1, length, angle, coord2, expr.op)
             elif expr.func == PLLP:
                 coord3 = pllp(
                     self.data_dict[symbol_str(expr.c1)],
@@ -420,19 +420,17 @@ cdef class Planar(Objective):
         """
         cdef int index = 0
         cdef int a_index = 0
-        cdef double[:] polar_angles = zeros(self.l_base - self.p_base, dtype=np_float)
         for m in self.mapping_list:
             if type(m) is int:
                 (<VPoint>self.vpoints[m]).locate(v[index], v[index + 1])
                 index += 2
             elif type(m) is str and m.startswith('A'):
-                polar_angles[a_index] = v[index]
+                self.polar_angles[a_index] = v[index]
                 a_index += 1
                 index += 1
             else:
                 self.mapping[m] = v[index]
                 index += 1
-        # print(array(polar_angles))
         cdef double fitness = 0
         cdef double[:] angles
         cdef int node
@@ -442,7 +440,7 @@ cdef class Planar(Objective):
             angles = v[index:index + self.target_count]
             if self.ordered or self.wavelet_mode:
                 angles = sort(angles)
-            if not self.solve(polar_angles, angles):
+            if not self.solve(angles):
                 return HUGE_VAL
             for node in self.target:
                 target[node].append(self.data_dict[node, -1])
@@ -460,12 +458,11 @@ cdef class Planar(Objective):
         return fitness
 
     cpdef object result(self, double[:] v):
-        """Input a generic data (variable array), return the mechanism 
+        """Input a generic data (variable array), return the mechanism
         expression.
         """
         cdef int index = 0
         cdef int a_index = 0
-        cdef double[:] polar_angles = zeros(self.l_base - self.p_base)
         cdef VPoint vpoint
         for m in self.mapping_list:
             if type(m) is int:
@@ -473,14 +470,13 @@ cdef class Planar(Objective):
                 vpoint.locate(v[index], v[index + 1])
                 index += 2
             elif type(m) is str and m.startswith('A'):
-                polar_angles[a_index] = v[index]
+                self.polar_angles[a_index] = v[index]
                 a_index += 1
                 index += 1
             else:
                 self.mapping[m] = v[index]
                 index += 1
-        cdef double[:] angles = v[self.l_base:self.l_base + self.target_count]
-        self.solve(polar_angles, angles)
+        self.solve(v[self.l_base:self.l_base + self.target_count])
         expressions = []
         cdef int i
         cdef double x1, y1, x2, y2
