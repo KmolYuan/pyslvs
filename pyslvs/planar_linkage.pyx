@@ -166,7 +166,7 @@ cdef class Planar(Objective):
         target = mech.get('target', {})
         if len(target) == 0:
             raise ValueError("no target joint")
-        check_set = set(map(len, target.values()))
+        check_set = {len(t) for t in target.values()}
         if len(check_set) != 1:
             raise ValueError("target paths should be in the same size")
         self.target_count = check_set.pop()
@@ -245,15 +245,9 @@ cdef class Planar(Objective):
         self.l_base = len(upper)
         # Input nodes
         cdef int a
-        for (i, j), (start, end) in self.inputs.items():
+        for start, end in self.inputs.values():
             upper.append(radians(start))
             lower.append(radians(end))
-            for a in range(i):
-                if a in same:
-                    i -= 1
-            for a in range(j):
-                if a in same:
-                    j -= 1
         # Angle rage
         upper[self.l_base:] *= self.target_count
         lower[self.l_base:] *= self.target_count
