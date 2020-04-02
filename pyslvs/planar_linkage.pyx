@@ -139,7 +139,7 @@ cdef double _cmp_wavelet(double[:, :] wave1, double[:, :] wave2):
 cdef class Planar(Objective):
     """This class is used to verified kinematics of the linkage mechanism."""
     cdef bint bfgs_mode, shape_only, wavelet_mode, ordered
-    cdef int target_count, input_count, p_base, l_base
+    cdef int target_count, input_count, l_base
     cdef list vpoints, mapping_list
     cdef dict placement, target, mapping, mapping_r, data_dict
     cdef object inputs
@@ -159,7 +159,6 @@ cdef class Planar(Objective):
         #     'lower': float,
         #     'shape_only': bool,
         #     'wavelet_mode': bool,
-        #     'ordered': bool,
         # }
         placement = mech.get('placement', {})
         if len(placement) == 0:
@@ -176,7 +175,6 @@ cdef class Planar(Objective):
         same = mech.get('same', {})
         self.shape_only = mech.get('shape_only', False)
         self.wavelet_mode = mech.get('wavelet_mode', False)
-        self.ordered = mech.get('ordered', True)
         cdef int i, j
         cdef double[:, :] wave
         cdef Coordinate[:] path
@@ -217,7 +215,7 @@ cdef class Planar(Objective):
             lower.append(x - r)
             lower.append(y - r)
             self.mapping_list.append(i)
-        self.p_base = len(upper)
+        cdef int p_base = len(upper)
         # Length of links
         link_upper = float(mech.get('upper', 100))
         link_lower = float(mech.get('lower', 0))
@@ -260,7 +258,7 @@ cdef class Planar(Objective):
             if self.upper[i] < self.lower[i]:
                 self.upper[i], self.lower[i] = self.lower[i], self.upper[i]
         # Allocate memory
-        self.polar_angles = zeros(self.l_base - self.p_base, dtype=np_float)
+        self.polar_angles = zeros(self.l_base - p_base, dtype=np_float)
         # Result list
         self.data_dict = {}
 
@@ -314,8 +312,6 @@ cdef class Planar(Objective):
                     i += 1
                 else:
                     angle = self.polar_angles[a]
-                    if expr.func == PLAP:
-                        angle -= coord1.slope_angle(coord2)
                     a += 1
                 if expr.func == PLA:
                     coord3 = plap(coord1, length, angle)
@@ -431,7 +427,7 @@ cdef class Planar(Objective):
         for index in range(self.input_count):
             a_index = index + self.l_base
             angles[index, :] = array(v[a_index:a_index + self.target_count])
-        if self.ordered or self.wavelet_mode:
+        if self.wavelet_mode:
             angles.sort(axis=1)
         cdef double fitness = 0
         cdef int node
