@@ -4,8 +4,14 @@ from typing import Tuple, List, Dict, Iterable, Any
 from numpy import ndarray, double
 from .metaheuristics import Objective
 
+_Coord = Tuple[float, float]
 
-def norm_path(path: Iterable[Tuple[float, float]], scale: float = 1) -> List[Tuple[float, float]]:
+
+def norm_path(path: Iterable[_Coord], scale: float = 1) -> List[_Coord]:
+    ...
+
+
+def curvature(path: Iterable[_Coord]) -> ndarray:
     ...
 
 

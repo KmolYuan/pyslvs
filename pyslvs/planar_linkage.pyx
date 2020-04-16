@@ -29,14 +29,14 @@ def norm_path(path, scale=1):
     """Python wrapper of normalization function."""
     cdef Coordinate[:] path_m = array([
         Coordinate.__new__(Coordinate, x, y) for x, y in path], dtype=object)
-    _normalization(path_m, scale)
+    _norm(path_m, scale)
     return [(c.x, c.y) for c in path_m]
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void _normalization(Coordinate[:] path, double scale):
-    """Normalization implementation."""
+cdef void _norm(Coordinate[:] path, double scale):
+    """Normalization implementation inplace."""
     cdef Coordinate centre = Coordinate.__new__(Coordinate, 0, 0)
     cdef Coordinate c
     for c in path:
@@ -133,6 +133,61 @@ cdef double _cmp_wavelet(double[:, :] wave1, double[:, :] wave2):
     return fitness
 
 
+def curvature(path):
+    """Calculate the signed curvature and return as an array."""
+    cdef Coordinate[:] path_m = array([
+        Coordinate.__new__(Coordinate, x, y) for x, y in path], dtype=object)
+    return array(_curvature(path_m))
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef double[:] _curvature(Coordinate[:] path):
+    """Calculate the signed curvature."""
+    cdef double[:, :] p = zeros((len(path), 2), dtype=np_float)
+    cdef int i
+    cdef Coordinate c
+    for i, c in enumerate(path):
+        p[i, 0] = c.x
+        p[i, 1] = c.y
+    cdef double[:, :] p1d = _derivative(p)
+    cdef double[:, :] p2d = _derivative(p1d)
+    cdef double[:] k = zeros((len(path), 2), dtype=np_float)
+    for i in range(len(path)):
+        k[i] = ((p1d[i, 0] * p2d[i, 1] - p2d[i, 0] * p1d[i, 1])
+                / (p1d[i, 0] * p1d[i, 0] + p1d[i, 1] * p1d[i, 1]) ** 1.5)
+    return k
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef double[:, :] _derivative(double[:, :] p):
+    """Differential function."""
+    cdef double[:, :] pd = zeros((len(p), 2), dtype=np_float)
+    cdef int i, j
+    for i in range(len(p)):
+        j = i + 1
+        if j >= len(p):
+            j = 0
+        pd[i, 0] = p[j, 0] - p[i, 0]
+        pd[i, 1] = p[j, 1] - p[i, 1]
+    return pd
+
+
+# TODO: unused
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef double[:] _big_k(double[:] k):
+    """Return K value based on a curvature."""
+    cdef double[:] k_big = zeros(len(k), dtype=np_float)
+    cdef int i
+    for i in range(len(k)):
+        if i > 0:
+            k_big[i] = k_big[i - 1]
+        k_big[i] += abs(k[i])
+    return k_big
+
+
 @cython.final
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -184,7 +239,7 @@ cdef class Planar(Objective):
                 if j in same:
                     i -= 1
             if self.shape_only or self.wavelet_mode:
-                _normalization(path, 1)
+                _norm(path, 1)
                 if self.wavelet_mode:
                     self.target[i] = _wavelet(path)
                     continue
@@ -442,7 +497,7 @@ cdef class Planar(Objective):
         for node in self.target:
             path1 = array(target[node], dtype=object)
             if self.shape_only or self.wavelet_mode:
-                _normalization(path1, 1)
+                _norm(path1, 1)
                 if self.wavelet_mode:
                     fitness += _cmp_wavelet(_wavelet(path1), self.target[node])
                     continue
