@@ -15,6 +15,10 @@ def curvature(path: Iterable[_Coord]) -> ndarray:
     ...
 
 
+def derivative(path: ndarray) -> ndarray:
+    ...
+
+
 class Planar(Objective[str]):
 
     def __init__(self, mech: Dict[str, Any]) -> None:

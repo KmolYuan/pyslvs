@@ -159,10 +159,15 @@ cdef double[:] _curvature(Coordinate[:] path):
     return k
 
 
+def derivative(double[:, :] p):
+    """Differential function."""
+    return array(_derivative(p))
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef double[:, :] _derivative(double[:, :] p):
-    """Differential function."""
+    """Differential function backend."""
     cdef double[:, :] pd = zeros((len(p), 2), dtype=np_float)
     cdef int i, j
     for i in range(len(p)):

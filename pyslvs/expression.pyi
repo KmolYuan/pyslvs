@@ -2,10 +2,10 @@
 
 from typing import Tuple, List, Iterable, Sequence, Callable, Optional, ClassVar
 from enum import IntEnum, auto
+from numpy import ndarray
 
 # Color type must be a RGB data
 _Color = Tuple[int, int, int]
-_Coord = Tuple[float, float]
 
 def get_vlinks(vpoints: Iterable[VPoint]) -> List[VLink]:
     ...
@@ -37,7 +37,7 @@ class VJoint(IntEnum):
 class VPoint:
 
     links: Sequence[str]
-    c: Tuple[_Coord, _Coord]
+    c: ndarray
     type: VJoint
     color: Optional[_Color]
     color_str: str

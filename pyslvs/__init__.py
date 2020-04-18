@@ -18,6 +18,7 @@ __all__ = [
     'VLink',
     'SolverSystem',
     'norm_path',
+    'derivative',
     'Planar',
     't_config',
     'EStack',
@@ -59,7 +60,7 @@ from .tinycadlib import (
     expr_solving,
     data_collecting,
 )
-from .planar_linkage import Planar, norm_path
+from .planar_linkage import Planar, norm_path, derivative
 from .expression_parser import (
     color_names,
     color_rgb,
