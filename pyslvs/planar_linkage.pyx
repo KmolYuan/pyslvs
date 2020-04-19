@@ -152,7 +152,7 @@ cdef double[:] _curvature(Coordinate[:] path):
         p[i, 1] = c.y
     cdef double[:, :] p1d = _derivative(p)
     cdef double[:, :] p2d = _derivative(p1d)
-    cdef double[:] k = zeros((len(path), 2), dtype=np_float)
+    cdef double[:] k = zeros(len(path), dtype=np_float)
     for i in range(len(path)):
         k[i] = ((p1d[i, 0] * p2d[i, 1] - p2d[i, 0] * p1d[i, 1])
                 / (p1d[i, 0] * p1d[i, 0] + p1d[i, 1] * p1d[i, 1]) ** 1.5)
