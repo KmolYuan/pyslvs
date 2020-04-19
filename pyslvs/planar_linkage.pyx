@@ -179,7 +179,14 @@ cdef double[:, :] _derivative(double[:, :] p):
     return pd
 
 
-# TODO: unused
+def path_signature(double[:] k):
+    """Require a curvature, return path signature."""
+    cdef ndarray[double, ndim=2] s = zeros((len(k), 2), dtype=np_float)
+    s[:, 0] = _big_k(k)
+    s[:, 1] = k
+    return s
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef double[:] _big_k(double[:] k):

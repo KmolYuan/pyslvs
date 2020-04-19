@@ -6,18 +6,17 @@ from .metaheuristics import Objective
 
 _Coord = Tuple[float, float]
 
-
 def norm_path(path: Iterable[_Coord], scale: float = 1) -> List[_Coord]:
     ...
-
 
 def curvature(path: Iterable[_Coord]) -> ndarray:
     ...
 
-
 def derivative(path: ndarray) -> ndarray:
     ...
 
+def path_signature(k: ndarray) -> ndarray:
+    ...
 
 class Planar(Objective[str]):
 
