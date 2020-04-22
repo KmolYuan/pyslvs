@@ -1,6 +1,6 @@
 # Version 20.04
 
-+ None
++ Fix the bug of topological algorithm.
 
 # Version 20.03
 
