@@ -370,7 +370,7 @@ cpdef EStack t_config(
                         fa, fb = fb, fa
                     vp2 = vpoints[fa]
                     vp3 = vpoints[fb]
-                    if vp2.same_link(vp3):
+                    if vp2.same_link(vp3) and not (vp2.grounded() and vp3.grounded()):
                         exprs.add_plap(
                             sym(P_LABEL, fa),
                             sym(L_LABEL, link_symbol),
