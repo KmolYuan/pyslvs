@@ -1,6 +1,7 @@
 # Version 20.04
 
 + Fix the bug of topological algorithm.
++ Add `curvature`, `derivative` and `path_signature` functions.
 
 # Version 20.03
 
