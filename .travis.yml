@@ -1,21 +1,20 @@
 # Travis-Ci for Pyslvs
 language: python
+os: linux
+dist: xenial
 
 git:
   depth: 1
 
-matrix:
+jobs:
   include:
     - &linux
-      os: linux
-      sudo: required
       python: "3.7"
-      dist: bionic
       deploy:
         provider: pypi
-        user: $TWINE_USERNAME
+        username: $TWINE_USERNAME
         password: $TWINE_PASSWORD
-        skip_cleanup: true
+        cleanup: false
         skip_existing: true
         distributions: sdist
         on:
