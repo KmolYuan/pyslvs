@@ -15,7 +15,7 @@ class Coordinate:
     x: float
     y: float
 
-    def __init__(self, x: float, y: float) -> None:
+    def __init__(self, x: float, y: float):
         """The constructor of Coordinate class."""
         ...
 

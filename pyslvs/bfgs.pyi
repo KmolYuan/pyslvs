@@ -13,7 +13,7 @@ class SolverSystem:
         vpoints: Sequence[VPoint],
         inputs: Optional[Dict[Tuple[int, int], float]] = None,
         data_dict: Optional[Dict[Union[int, Tuple[int, int]], Union[Coordinate, float]]] = None
-    ) -> None:
+    ):
         """The expression `vpoints` solver function of BFGS method by
         giving the input pairs `inputs` and link length `data_dict` requirements.
 

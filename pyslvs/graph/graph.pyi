@@ -17,7 +17,7 @@ class Graph:
     edges: Tuple[Tuple[int, int], ...]
     vertices: Tuple[int, ...]
 
-    def __init__(self, edges: Iterable[Tuple[int, int]]) -> None:
+    def __init__(self, edges: Iterable[Tuple[int, int]]):
         """Input edges of the graph. The vertices symbols are
         positive continuously integer.
         """

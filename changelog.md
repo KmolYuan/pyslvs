@@ -1,6 +1,6 @@
 # Version 20.05
 
-+ None
++ Remove "return none" annotation from stubs.
 
 # Version 20.04
 

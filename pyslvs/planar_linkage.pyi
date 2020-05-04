@@ -20,7 +20,7 @@ def path_signature(k: ndarray) -> ndarray:
 
 class Planar(Objective[str]):
 
-    def __init__(self, mech: Dict[str, Any]) -> None:
+    def __init__(self, mech: Dict[str, Any]):
         """The constructor of objective object.
 
         Options of `mech_params`:
