@@ -1,6 +1,7 @@
 # Version 20.05
 
 + Remove "return none" annotation from stubs.
++ A shell version of "set_pycompiler".
 
 # Version 20.04
 
