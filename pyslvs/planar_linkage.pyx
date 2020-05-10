@@ -152,8 +152,8 @@ cdef double[:] _curvature(Coordinate[:] path):
         p[i, 1] = c.y
     cdef double[:, :] p1d = _derivative(p)
     cdef double[:, :] p2d = _derivative(p1d)
-    cdef double[:] k = zeros(len(path), dtype=np_float)
-    for i in range(len(path)):
+    cdef double[:] k = zeros(len(path) - 2, dtype=np_float)
+    for i in range(len(path) - 2):
         k[i] = ((p1d[i, 0] * p2d[i, 1] - p2d[i, 0] * p1d[i, 1])
                 / (p1d[i, 0] * p1d[i, 0] + p1d[i, 1] * p1d[i, 1]) ** 1.5)
     return k
@@ -168,12 +168,10 @@ def derivative(double[:, :] p):
 @cython.wraparound(False)
 cdef double[:, :] _derivative(double[:, :] p):
     """Differential function backend."""
-    cdef double[:, :] pd = zeros((len(p), 2), dtype=np_float)
+    cdef double[:, :] pd = zeros((len(p) - 1, 2), dtype=np_float)
     cdef int i, j
-    for i in range(len(p)):
+    for i in range(len(p) - 1):
         j = i + 1
-        if j >= len(p):
-            j = 0
         pd[i, 0] = p[j, 0] - p[i, 0]
         pd[i, 1] = p[j, 1] - p[i, 1]
     return pd

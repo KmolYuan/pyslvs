@@ -2,6 +2,7 @@
 
 + Remove "return none" annotation from stubs.
 + A shell version of "set_pycompiler".
++ Support incomplete path works with derivative function.
 
 # Version 20.04
 
