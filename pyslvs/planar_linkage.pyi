@@ -18,6 +18,9 @@ def derivative(path: ndarray) -> ndarray:
 def path_signature(k: ndarray) -> ndarray:
     ...
 
+def cross_correlation(p1: ndarray, p2: ndarray) -> ndarray:
+    ...
+
 class Planar(Objective[str]):
 
     def __init__(self, mech: Dict[str, Any]):

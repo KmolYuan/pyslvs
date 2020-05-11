@@ -21,6 +21,7 @@ __all__ = [
     'curvature',
     'derivative',
     'path_signature',
+    'cross_correlation',
     'Planar',
     't_config',
     'EStack',
@@ -63,7 +64,7 @@ from .tinycadlib import (
     data_collecting,
 )
 from .planar_linkage import (Planar, norm_path, curvature, derivative,
-                             path_signature)
+                             path_signature, cross_correlation)
 from .expression_parser import (
     color_names,
     color_rgb,

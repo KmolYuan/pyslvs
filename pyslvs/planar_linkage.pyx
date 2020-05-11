@@ -14,7 +14,7 @@ from collections import OrderedDict
 from numpy cimport ndarray
 from numpy import zeros, array, float64 as np_float
 from pywt import dwt
-from libc.math cimport HUGE_VAL, M_PI, cos, sin, atan2, INFINITY as INF
+from libc.math cimport HUGE_VAL, M_PI, sqrt, cos, sin, atan2, INFINITY as INF
 from .metaheuristics.utility cimport Objective
 from .expression cimport VJoint, VPoint
 from .triangulation cimport (t_config, symbol_str, I_LABEL, A_LABEL, Expr,
@@ -196,6 +196,47 @@ cdef double[:] _big_k(double[:] k):
             k_big[i] = k_big[i - 1]
         k_big[i] += abs(k[i])
     return k_big
+
+
+def cross_correlation(double[:] p1, double[:] p2):
+    """Compare two curvature and return as an 1d array."""
+    return array(_cross_correlation(p1, p2), dtype=np_float)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef double[:] _cross_correlation(double[:] p1, double[:] p2):
+    """Compare two curvature."""
+    cdef int diff = len(p1) - len(p2)
+    cdef double[:] cn = zeros(diff, dtype=np_float)
+    cdef int i, j, k
+    cdef double m1, m2, tmp, tmp1, tmp2
+    for j in range(diff):
+        for i in range(len(p2)):
+            m1 = _mean(p1[j:j + len(p2)])
+            m2 = _mean(p2)
+            tmp1 = 0
+            for k in range(len(p2)):
+                tmp = p1[k + j] - m1
+                tmp1 += tmp * tmp
+            tmp2 = 0
+            for k in range(len(p2)):
+                tmp = p2[k] - m2
+                tmp2 += tmp * tmp
+            cn[j] += (p1[i + j] - m1) * (p2[i] - m2) / sqrt(tmp1 * tmp2)
+        cn[j] = abs(cn[j])
+    return cn
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef double _mean(double[:] p):
+    """Calculate mean of the memory view."""
+    cdef double s = 0
+    cdef double v
+    for v in p:
+        s += v
+    return s / len(p)
 
 
 @cython.final
