@@ -12,7 +12,7 @@ email: pyslvs@gmail.com
 cimport cython
 from collections import OrderedDict
 from numpy cimport ndarray
-from numpy import zeros, array, arange, interp, float64 as np_float
+from numpy import zeros, abs, array, arange, interp, float64 as np_float
 from pywt import dwt
 from libc.math cimport HUGE_VAL, M_PI, sqrt, cos, sin, atan2, INFINITY as INF
 from .metaheuristics.utility cimport Objective
@@ -198,18 +198,18 @@ def path_signature(double[:] k):
     return s
 
 
-def cross_correlation(double[:, :] p1, double[:, :] p2):
+def cross_correlation(double[:, :] p1, double[:, :] p2, double t):
     """Compare two path signature and return as an 1d array."""
-    return array(_cross_correlation(p1, p2), dtype=np_float)
+    return array(_cross_correlation(p1, p2, t), dtype=np_float)
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2):
+cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2, double t):
     """Compare two path signature."""
-    cdef double[:] p1 = interp(arange(0, ps1[len(ps1) - 1, 0], 0.1), ps1[:, 0],
+    cdef double[:] p1 = interp(arange(0, ps1[len(ps1) - 1, 0], t), ps1[:, 0],
                                ps1[:, 1])
-    cdef double[:] p2 = interp(arange(0, ps2[len(ps2) - 1, 0], 0.1), ps2[:, 0],
+    cdef double[:] p2 = interp(arange(0, ps2[len(ps2) - 1, 0], t), ps2[:, 0],
                                ps2[:, 1])
     cdef int diff = len(p1) - len(p2)
     cdef double[:] cn = zeros(diff, dtype=np_float)
