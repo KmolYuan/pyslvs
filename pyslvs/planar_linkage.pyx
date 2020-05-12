@@ -14,7 +14,8 @@ from collections import OrderedDict
 from numpy cimport ndarray
 from numpy import zeros, abs, array, arange, interp, float64 as np_float
 from pywt import dwt
-from libc.math cimport HUGE_VAL, M_PI, sqrt, cos, sin, atan2, INFINITY as INF
+from libc.math cimport (HUGE_VAL, M_PI, fabs, sqrt, cos, sin, atan2,
+                        INFINITY as INF)
 from .metaheuristics.utility cimport Objective
 from .expression cimport VJoint, VPoint
 from .triangulation cimport (t_config, symbol_str, I_LABEL, A_LABEL, Expr,
@@ -177,23 +178,21 @@ cdef double[:, :] _derivative(double[:, :] p):
     return pd
 
 
+def path_signature(double[:] k):
+    """Require a curvature, return path signature."""
+    return array(_path_signature(k))
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef double[:] _big_k(double[:] k):
-    """Return K value based on a curvature."""
-    cdef double[:] k_big = zeros(len(k), dtype=np_float)
+cdef double[:, :] _path_signature(double[:] k):
+    """Require a curvature, return path signature."""
+    cdef double[:, :] s = zeros((len(k), 2), dtype=np_float)
     cdef int i
     for i in range(len(k)):
         if i > 0:
-            k_big[i] = k_big[i - 1]
-        k_big[i] += abs(k[i])
-    return k_big
-
-
-def path_signature(double[:] k):
-    """Require a curvature, return path signature."""
-    cdef ndarray[double, ndim=2] s = zeros((len(k), 2), dtype=np_float)
-    s[:, 0] = _big_k(k)
+            s[i, 0] = s[i - 1, 0]
+        s[i, 0] += fabs(k[i])
     s[:, 1] = k
     return s
 
