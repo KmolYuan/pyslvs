@@ -12,7 +12,7 @@ email: pyslvs@gmail.com
 cimport cython
 from collections import OrderedDict
 from numpy cimport ndarray
-from numpy import zeros, abs, array, arange, interp, float64 as np_float
+from numpy import zeros, array, arange, interp, float64 as np_float
 from pywt import dwt
 from libc.math cimport (HUGE_VAL, M_PI, fabs, sqrt, cos, sin, atan2,
                         INFINITY as INF)
@@ -126,10 +126,10 @@ cdef double _cmp_wavelet(double[:, :] wave1, double[:, :] wave2):
     cdef size_t i
     for i in range(len(wave1)):
         fitness += (
-            abs(wave1[0, i] - wave2[0, i])
-            + abs(wave1[1, i] - wave2[1, i])
-            + abs(wave1[2, i] - wave2[2, i]) * 1e3
-            + abs(wave1[3, i] - wave2[3, i]) * 1e3
+            fabs(wave1[0, i] - wave2[0, i])
+            + fabs(wave1[1, i] - wave2[1, i])
+            + fabs(wave1[2, i] - wave2[2, i]) * 1e3
+            + fabs(wave1[3, i] - wave2[3, i]) * 1e3
         )
     return fitness
 
@@ -227,7 +227,7 @@ cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2, double t):
                 tmp = p2[k] - m2
                 tmp2 += tmp * tmp
             cn[j] += (p1[i + j] - m1) * (p2[i] - m2) / sqrt(tmp1 * tmp2)
-        cn[j] = abs(cn[j])
+        cn[j] = fabs(cn[j])
     return cn
 
 
