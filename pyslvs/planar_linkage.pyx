@@ -135,7 +135,12 @@ cdef double _cmp_wavelet(double[:, :] wave1, double[:, :] wave2):
 
 
 def curvature(path):
-    """Calculate the signed curvature and return as an array."""
+    r"""Calculate the signed curvature and return as an array.
+
+    $$
+    \kappa(t) = \frac{x'y'' - x''y'}{(x'^2 + y'^2)^\frac{3}{2}}
+    $$
+    """
     cdef Coordinate[:] path_m = array([
         Coordinate.__new__(Coordinate, x, y) for x, y in path], dtype=object)
     return array(_curvature(path_m))
@@ -161,7 +166,7 @@ cdef double[:] _curvature(Coordinate[:] path):
 
 
 def derivative(double[:, :] p):
-    """Differential function."""
+    """Differential function. Return $p'$."""
     return array(_derivative(p))
 
 
@@ -179,7 +184,13 @@ cdef double[:, :] _derivative(double[:, :] p):
 
 
 def path_signature(double[:] k):
-    """Require a curvature, return path signature."""
+    r"""Require a curvature, return path signature.
+    It's composed by curvature $\kappa$ and a $K$ value.
+
+    $$
+    K = \int^t_0 |\kappa(t)| dt
+    $$
+    """
     return array(_path_signature(k))
 
 
@@ -198,7 +209,19 @@ cdef double[:, :] _path_signature(double[:] k):
 
 
 def cross_correlation(double[:, :] p1, double[:, :] p2, double t):
-    """Compare two path signature and return as an 1d array."""
+    r"""Compare two path signature and return as an 1d array.
+
+    $$
+    \begin{aligned}
+    C_n(j, W, P) &= \left|\sum_i^{l_P} \frac{(W_{i + j}
+    - \overline{W}_{j\rightarrow j + l_P})(P_i-\overline{P})}{
+    \sqrt{\sum_i^{l_P}(W_{i + j} - \overline{W}_{j\rightarrow j + l_P})^2
+    \sum_i^{l_P}(P_i - \overline{P})^2}}\right|
+    \\
+    S &= \arg\max\{C_n(j)\} t
+    \end{aligned}
+    $$
+    """
     return array(_cross_correlation(p1, p2, t), dtype=np_float)
 
 
