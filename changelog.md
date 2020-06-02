@@ -1,3 +1,7 @@
+# Version 20.06
+
++ None.
+
 # Version 20.05
 
 + Remove "return none" annotation from stubs.
@@ -37,7 +41,7 @@
 
 # Version 19.12
 
-+ None
++ None.
 
 # Version 19.11
 
@@ -96,7 +100,7 @@
 
 # Version 19.06
 
-+ None
++ None.
 
 # Version 19.05
 
