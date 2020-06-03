@@ -1,6 +1,6 @@
 # Version 20.06
 
-+ None.
++ Support MSVC versions `1910`~`1916` and `1920`~`1926`.
 
 # Version 20.05
 
