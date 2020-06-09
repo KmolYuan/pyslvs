@@ -174,13 +174,24 @@ def derivative(double[:, :] p):
 @cython.wraparound(False)
 cdef double[:, :] _derivative(double[:, :] p):
     """Differential function backend."""
-    cdef double[:, :] pd = zeros((len(p) - 1, 2), dtype=np_float)
+    cdef double[:, :] pd = zeros((len(p), 2), dtype=np_float)
+    cdef double max0 = 0
+    cdef double max1 = 0
     cdef int i, j
-    for i in range(len(p) - 1):
+    for i in range(len(p)):
         j = i + 1
+        if j >= len(p):
+            j = 0
         pd[i, 0] = p[j, 0] - p[i, 0]
         pd[i, 1] = p[j, 1] - p[i, 1]
-    return pd
+        if pd[i, 0] > max0:
+            max0 = pd[i, 0]
+        if pd[i, 1] > max1:
+            max1 = pd[i, 1]
+    if max0 == pd[len(p) - 1, 0] or max1 == pd[len(p) - 1, 1]:
+        return pd[:len(p) - 1]
+    else:
+        return pd
 
 
 def path_signature(double[:] k):

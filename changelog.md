@@ -1,6 +1,7 @@
 # Version 20.06
 
 + Support MSVC versions `1910`~`1916` and `1920`~`1926`.
++ Derivation will treat a path as a full stroke if difference is not the maximum.
 
 # Version 20.05
 
