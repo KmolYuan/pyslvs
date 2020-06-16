@@ -10,20 +10,8 @@ __email__ = "pyslvs@gmail.com"
 from typing import Tuple, Sized, Sequence
 from math import pi, sin, cos, atan2, degrees, radians
 from numpy import (
-    sqrt,
-    abs,
-    cos as np_cos,
-    sin as np_sin,
-    dot,
-    sum as np_sum,
-    array,
-    ndarray,
-    linspace,
-    zeros,
-    ones,
-    diff,
-    concatenate,
-    cumsum,
+    sqrt, abs, cos as np_cos, sin as np_sin, dot, sum as np_sum, array,
+    ndarray, linspace, zeros, ones, diff, concatenate, cumsum,
 )
 
 

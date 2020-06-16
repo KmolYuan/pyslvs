@@ -9,15 +9,7 @@ __email__ = "pyslvs@gmail.com"
 
 from abc import abstractmethod
 from typing import (
-    cast,
-    Tuple,
-    List,
-    Dict,
-    Iterator,
-    Optional,
-    Union,
-    TypeVar,
-    Generic,
+    cast, Tuple, List, Dict, Iterator, Optional, Union, TypeVar, Generic,
 )
 from dataclasses import dataclass
 from lark import Lark, Transformer, LexError

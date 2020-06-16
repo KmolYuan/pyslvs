@@ -54,28 +54,16 @@ from .expression import get_vlinks, VJoint, VPoint, VLink, Coordinate
 from .bfgs import SolverSystem
 from .triangulation import t_config, EStack
 from .tinycadlib import (
-    plap,
-    pllp,
-    plpp,
-    pxy,
-    vpoint_dof,
-    expr_parser,
-    expr_solving,
+    plap, pllp, plpp, pxy, vpoint_dof, expr_parser, expr_solving,
     data_collecting,
 )
-from .planar_linkage import (Planar, norm_path, curvature, derivative,
-                             path_signature, cross_correlation)
+from .planar_linkage import (
+    Planar, norm_path, curvature, derivative,
+    path_signature, cross_correlation,
+)
 from .expression_parser import (
-    color_names,
-    color_rgb,
-    parse_params,
-    parse_pos,
-    parse_vpoints,
-    parse_vlinks,
-    edges_view,
-    graph2vpoints,
-    PointArgs,
-    LinkArgs,
+    color_names, color_rgb, parse_params, parse_pos, parse_vpoints,
+    parse_vlinks, edges_view, graph2vpoints, PointArgs, LinkArgs,
 )
 from .example import example_list, all_examples
 from .collection import collection_list, all_collections

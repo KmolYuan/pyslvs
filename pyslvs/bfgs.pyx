@@ -24,12 +24,7 @@ from .sketch_solve cimport (
     LineInternalAngleConstraint,
     solve,
 )
-from .expression cimport (
-    get_vlinks,
-    VJoint,
-    VPoint,
-    Coordinate,
-)
+from .expression cimport get_vlinks, VJoint, VPoint, Coordinate
 
 
 cdef inline double *de_refer_post_inc(clist[double].iterator &it):

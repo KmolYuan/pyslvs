@@ -13,7 +13,7 @@ cimport cython
 from libc.math cimport M_PI, sqrt, sin, cos, atan2, NAN
 from .expression cimport VJoint, VPoint, VLink
 from .triangulation cimport (sym, symbol_str, I_LABEL, S_LABEL, Expr,
-    PLA, PLAP, PLLP, PLPP, PXY)
+                             PLA, PLAP, PLLP, PLPP, PXY)
 from .bfgs cimport SolverSystem
 
 cdef Coordinate _NAN_COORD = Coordinate.__new__(Coordinate, NAN, NAN)
