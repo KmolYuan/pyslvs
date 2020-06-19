@@ -24,6 +24,19 @@ cdef inline double radians(double degree) nogil:
     return degree / 180 * M_PI
 
 
+cpdef Coordinate pxy(Coordinate c1, double x, double y):
+    """The PXY function requires one point and offset values, obtained the 
+    position of second point.
+
+    In the following picture, `c1` correspond to "A", `d0` correspond to "X",
+    `d1` correspond to "Y", `return` correspond to "B", the sign of value are
+    correspond to coordinate system.
+
+    ![PXY](img/PXY.png)
+    """
+    return Coordinate.__new__(Coordinate, c1.x + x, c1.y + y)
+
+
 cpdef Coordinate plap(
     Coordinate c1,
     double d0,
@@ -98,7 +111,7 @@ cpdef Coordinate plpp(
     Coordinate c3,
     bint inverse = False
 ):
-    """The PLLP function requires three points and one distance, obtained the 
+    """The PLPP function requires three points and one distance, obtained the 
     position of fourth point.
 
     In the following picture, `c1` correspond to "A", `c2` correspond to "B",
@@ -132,17 +145,29 @@ cpdef Coordinate plpp(
         return Coordinate.__new__(Coordinate, inter.x + dx, inter.y + dy)
 
 
-cpdef Coordinate pxy(Coordinate c1, double x, double y):
-    """The PXY function requires one point and offset values, obtained the 
-    position of second point.
+cpdef Coordinate palp(
+    Coordinate c1,
+    double a0,
+    double d0,
+    Coordinate c2,
+    bint inverse = False
+):
+    """The PALP function requires two points, one angle and one distance,
+    obtained the position of fourth point.
 
-    In the following picture, `c1` correspond to "A", `d0` correspond to "X",
-    `d1` correspond to "Y", `return` correspond to "B", the sign of value are
-    correspond to coordinate system.
+    In the following picture, `c1` correspond to "A", `c2` correspond to "B",
+    `d0` correspond to "L0", `a0` correspond to "alpha", `return` correspond
+    to "C".
 
-    ![PXY](img/PXY.png)
+    ![PALP](img/PALP.png)
+
+    Set `inverse` option to `True` can make the result upside down.
     """
-    return Coordinate.__new__(Coordinate, c1.x + x, c1.y + y)
+    # TODO: Implementation
+    if inverse:
+        return Coordinate.__new__(Coordinate, 0, 0)
+    else:
+        return Coordinate.__new__(Coordinate, 0, 0)
 
 
 cpdef void expr_parser(EStack exprs, dict data_dict):

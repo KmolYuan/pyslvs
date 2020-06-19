@@ -4,7 +4,10 @@ from typing import Tuple, List, Sequence, Dict, Union, Optional
 from .triangulation import EStack
 from .expression import VPoint, Coordinate
 
-TuplePoint = Tuple[float, float]
+_Coord = Tuple[float, float]
+
+def pxy(c1: Coordinate, x: float, y: float) -> Coordinate:
+    ...
 
 def plap(
     c1: Coordinate,
@@ -33,7 +36,13 @@ def plpp(
 ) -> Coordinate:
     ...
 
-def pxy(c1: Coordinate, x: float, y: float) -> Coordinate:
+def palp(
+    c1: Coordinate,
+    a0: float,
+    d0: float,
+    c2: Coordinate,
+    inverse: bool = False
+) -> Coordinate:
     ...
 
 def vpoint_dof(vpoints: Sequence[VPoint]) -> int:
@@ -54,5 +63,5 @@ def expr_solving(
     mapping: Dict[Union[int, Tuple[int, int]], Union[str, float]],
     vpoints: Sequence[VPoint],
     angles: Optional[Sequence[float]] = None
-) -> List[Union[TuplePoint, Tuple[TuplePoint, TuplePoint]]]:
+) -> List[Union[_Coord, Tuple[_Coord, _Coord]]]:
     ...

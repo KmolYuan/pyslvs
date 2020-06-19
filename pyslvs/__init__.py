@@ -5,10 +5,11 @@
 __all__ = [
     '__version__',
     'Coordinate',
+    'pxy',
     'plap',
     'pllp',
     'plpp',
-    'pxy',
+    'palp',
     'expr_parser',
     'expr_solving',
     'data_collecting',
@@ -54,7 +55,7 @@ from .expression import get_vlinks, VJoint, VPoint, VLink, Coordinate
 from .bfgs import SolverSystem
 from .triangulation import t_config, EStack
 from .tinycadlib import (
-    plap, pllp, plpp, pxy, vpoint_dof, expr_parser, expr_solving,
+    pxy, plap, pllp, plpp, palp, vpoint_dof, expr_parser, expr_solving,
     data_collecting,
 )
 from .planar_linkage import (
