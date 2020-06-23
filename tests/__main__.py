@@ -11,18 +11,8 @@ from unittest import TestCase
 from math import sqrt, radians, hypot, sin, cos
 from numpy import array
 from pyslvs import (
-    Coordinate,
-    SolverSystem,
-    plap,
-    pllp,
-    plpp,
-    pxy,
-    expr_solving,
-    data_collecting,
-    t_config,
-    parse_vpoints,
-    example_list,
-    norm_path,
+    Coordinate, SolverSystem, pxy, plap, pllp, plpp, palp, expr_solving,
+    data_collecting, t_config, parse_vpoints, example_list, norm_path,
 )
 from pyslvs.graph import (
     link_assortment,
@@ -41,6 +31,11 @@ from .utility import PLANAR_OBJECT, DEGREE_CODE_TABLE, PATH
 
 
 class CoreTest(TestCase):
+
+    def test_pxy(self):
+        coord = pxy(Coordinate(80, 90), 40, -20)
+        self.assertAlmostEqual(120, coord.x)
+        self.assertAlmostEqual(70, coord.y)
 
     def test_plap(self):
         """Test for plap function."""
@@ -70,10 +65,11 @@ class CoreTest(TestCase):
         self.assertAlmostEqual(2, coord.x)
         self.assertAlmostEqual(1, coord.y)
 
-    def test_pxy(self):
-        coord = pxy(Coordinate(80, 90), 40, -20)
-        self.assertAlmostEqual(120, coord.x)
-        self.assertAlmostEqual(70, coord.y)
+    def test_palp(self):
+        """Test for palp function."""
+        coord = palp(Coordinate(0, 0), radians(15), 20, Coordinate(60, 10))
+        self.assertAlmostEqual(42.253221, coord.x, 6)
+        self.assertAlmostEqual(19.222356, coord.y, 6)
 
     def test_graph_basic(self):
         """Test 'graph' libraries."""

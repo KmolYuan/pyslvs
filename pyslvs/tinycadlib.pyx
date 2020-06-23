@@ -10,7 +10,7 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
-from libc.math cimport M_PI, sqrt, sin, cos, atan2, NAN
+from libc.math cimport M_PI, sqrt, sin, cos, tan, atan2, NAN
 from .expression cimport VJoint, VPoint, VLink
 from .triangulation cimport (sym, symbol_str, I_LABEL, S_LABEL, Expr,
                              PLA, PLAP, PLLP, PLPP, PXY)
@@ -134,7 +134,7 @@ cpdef Coordinate plpp(
         return _NAN_COORD
     elif d == d0:
         # One intersection point
-        return inter.x, inter.y
+        return inter
     # Two intersection points
     d = sqrt(d0 * d0 - d * d) / line_mag
     dx *= d
@@ -163,11 +163,21 @@ cpdef Coordinate palp(
 
     Set `inverse` option to `True` can make the result upside down.
     """
-    # TODO: Implementation
+    a0 += c2.slope_angle(c1)
+    cdef double tan_a = tan(a0)
+    cdef double tan2_a = tan_a * tan_a
+    cdef double tan2_a1 = tan2_a + 1
+    cdef double c1l = c1.x - c1.y / tan_a
+    cdef double c1c2x = c1.x - c2.x
+    cdef double c1c2y = c1.y - c2.y
+    cdef double sq = sqrt(d0 * d0 * tan2_a1
+        - c1c2x * c1c2x * tan2_a - c1c2y * c1c2y + 2 * tan_a * c1c2y * c1c2x)
+    cdef double cx = 0
     if inverse:
-        return Coordinate.__new__(Coordinate, 0, 0)
+        cx = c1l - (c1l - c2.y * tan_a - c2.x - sq) / tan2_a1
     else:
-        return Coordinate.__new__(Coordinate, 0, 0)
+        cx = c1l - (c1l - c2.y * tan_a - c2.x + sq) / tan2_a1
+    return Coordinate.__new__(Coordinate, cx, tan_a * (cx - c1.x) + c1.y)
 
 
 cpdef void expr_parser(EStack exprs, dict data_dict):

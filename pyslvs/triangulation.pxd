@@ -26,11 +26,12 @@ cdef enum Label:
     S_LABEL
 
 cdef enum Func:
+    PXY
     PLA
     PLAP
     PLLP
     PLPP
-    PXY
+    PALP
 
 cdef struct Expr:
     bint op
