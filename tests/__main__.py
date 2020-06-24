@@ -166,17 +166,23 @@ class CoreTest(TestCase):
         + Test data collecting function.
         + Test expression solving function.
         """
-        expr, inputs = example_list("Jansen's linkage (Single)")
-        vpoints = parse_vpoints(expr)
-        self.assertEqual(8, len(vpoints))
-        exprs = t_config(vpoints, inputs)
-        mapping = {n: f'P{n}' for n in range(len(vpoints))}
-        _, dof = data_collecting(exprs, mapping, vpoints)
-        self.assertEqual(1, dof)
-        result = expr_solving(exprs, mapping, vpoints, [0.])
-        x, y = result[7]
+        def test_case(name: str):
+            expr, inputs = example_list(name)
+            vpoints = parse_vpoints(expr)
+            exprs = t_config(vpoints, inputs)
+            mapping = {n: f'P{n}' for n in range(len(vpoints))}
+            _, dof = data_collecting(exprs, mapping, vpoints)
+            self.assertEqual(1, dof)
+            result = expr_solving(exprs, mapping, vpoints, [0.])
+            return result[-1]
+
+        x, y = test_case("Jansen's linkage (Single)")
         self.assertAlmostEqual(-43.170055, x, 6)
         self.assertAlmostEqual(-91.753226, y, 6)
+        x, y = test_case("Crank slider (RP joint)")
+        self.assertAlmostEqual(103.801126, x, 6)
+        self.assertAlmostEqual(78.393173, y, 6)
+        # TODO: New test case for Inverted slider
 
     def test_solving_bfgs(self):
         """Test Sketch Solve kernel."""
