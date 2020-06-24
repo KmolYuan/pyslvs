@@ -122,10 +122,10 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "]", ((0, 3),)),
     "Inverted slider": (
         "M["
-        "J[R, color[Green], P[-15.0, 0.0], L[ground, L1]],"
-        "J[R, color[Green], P[41.0, 0.0], L[ground, L3]],"
-        "J[R, color[Green], P[-8.0, 25.0], L[L1, L2]],"
-        "J[P, A[0.0], color[Green], P[44.0, 41.0], L[L3, L2]],"
+        "J[R, color[Green], P[0, 0], L[ground, L1]],"
+        "J[R, color[Green], P[56, 0], L[ground, L3]],"
+        "J[R, color[Green], P[7, 25], L[L1, L2]],"
+        "J[P, A[0.0], color[Green], P[59, 41], L[L3, L2]]"
         "]", ((0, 2),)),
     "Jansen's linkage (Single)": (
         "M["
