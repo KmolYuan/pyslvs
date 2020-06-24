@@ -20,10 +20,12 @@ environment:
       PY: 3.7
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
       PY: 3.8
+      DEPLOY: "true"
     - APPVEYOR_BUILD_WORKER_IMAGE: macos-mojave
       PY: 3.7
     - APPVEYOR_BUILD_WORKER_IMAGE: macos-mojave
       PY: 3.8
+      DEPLOY: "true"
 
 install:
   # Clone submodules
@@ -54,7 +56,13 @@ after_build:
   # PyPI deployment
   - cmd: IF "%APPVEYOR_REPO_TAG%"=="true"
          IF "%APPVEYOR_REPO_NAME%"=="KmolYuan/pyslvs" (
-         pip install twine &&
+         python -m pip install twine &&
          python setup.py bdist_wheel &&
-         twine upload dist\*.whl --skip-existing
+         python -m twine upload dist\*.whl --skip-existing
          )
+  - sh: if [[ "$APPVEYOR_REPO_TAG" == "true" &&
+              "$APPVEYOR_REPO_NAME" == "KmolYuan/pyslvs" ]]; then
+        python3 -m pip install twine;
+        python3 setup.py bdist_wheel;
+        python3 -m twine upload dist/*.whl --skip-existing;
+        fi
