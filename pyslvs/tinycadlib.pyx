@@ -13,7 +13,7 @@ cimport cython
 from libc.math cimport M_PI, sqrt, sin, cos, tan, atan2, NAN
 from .expression cimport VJoint, VPoint, VLink
 from .triangulation cimport (sym, symbol_str, I_LABEL, S_LABEL, Expr,
-                             PLA, PLAP, PLLP, PLPP, PXY)
+                             PXY, PLA, PLAP, PLLP, PLPP, PALP)
 from .bfgs cimport SolverSystem
 
 cdef Coordinate _NAN_COORD = Coordinate.__new__(Coordinate, NAN, NAN)
@@ -235,6 +235,16 @@ cpdef void expr_parser(EStack exprs, dict data_dict):
                 coord3,
                 expr.op
             )
+        elif expr.func == PALP:
+            coord1 = data_dict[symbol_str(expr.c1)]
+            coord2 = data_dict[symbol_str(expr.c2)]
+            coord = palp(
+                coord1,
+                data_dict[symbol_str(expr.v1)],
+                data_dict[symbol_str(expr.v2)],
+                coord2,
+                expr.op
+            )
         elif expr.func == PXY:
             coord1 = data_dict[symbol_str(expr.c1)]
             coord = pxy(
@@ -366,11 +376,9 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
         if vpoint.type != VJoint.RP:
             continue
         bf = base_friend(i, vpoints)
-        angle = radians(
-            vpoint.angle -
-            vpoint.slope_angle(vpoints[bf], 1, 0) +
-            vpoint.slope_angle(vpoints[bf], 0, 0)
-        )
+        angle = radians(vpoint.angle
+                        - vpoint.slope_angle(vpoints[bf], 1, 0)
+                        + vpoint.slope_angle(vpoints[bf], 0, 0))
         pos.append(Coordinate.__new__(Coordinate, vpoint.c[1, 0] + cos(angle),
                                       vpoint.c[1, 1] + sin(angle)))
         mapping_r[symbol_str(sym(S_LABEL, i))] = len(pos) - 1
@@ -381,10 +389,12 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
     cdef Coordinate coord1, coord2
     for expr in exprs.stack:
         node = mapping_r[symbol_str(expr.c1)]
+        base = mapping_r[symbol_str(expr.c2)]
+        target = mapping_r[symbol_str(expr.target)]
         # Point 1
         if symbol_str(expr.c1) not in data_dict:
-            data_dict[symbol_str(expr.c1)] = pos[mapping_r[symbol_str(expr.c1)]]
-        target = mapping_r[symbol_str(expr.target)]
+            data_dict[symbol_str(expr.c1)] = pos[node]
+        # For all expressions
         if expr.func in {PLA, PLAP}:
             # Link 1
             pair = frozenset({node, target})
@@ -394,21 +404,20 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
                 data_dict[symbol_str(expr.v1)] = length[pair]
             else:
                 data_dict[symbol_str(expr.v1)] = coord1.distance(coord2)
-            # Angle of link
+            # Angle 1
             if expr.v2.first == I_LABEL:
                 # Inputs
                 dof += 1
             else:
+                # Links
                 if expr.func == PLA:
                     data_dict[symbol_str(expr.v2)] = coord1.slope_angle(coord2)
                 else:
-                    data_dict[symbol_str(expr.v2)] = (
-                        coord1.slope_angle(coord2) -
-                        coord1.slope_angle(pos[mapping_r[symbol_str(expr.c2)]])
-                    )
+                    data_dict[symbol_str(expr.v2)] = (coord1.slope_angle(coord2)
+                        - coord1.slope_angle(pos[base]))
             # Point 2
             if expr.func == PLAP and symbol_str(expr.c2) not in data_dict:
-                data_dict[symbol_str(expr.c2)] = pos[mapping_r[symbol_str(expr.c2)]]
+                data_dict[symbol_str(expr.c2)] = pos[base]
         elif expr.func == PLLP:
             # Link 1
             pair = frozenset({node, target})
@@ -419,16 +428,16 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
                 coord2 = pos[target]
                 data_dict[symbol_str(expr.v1)] = coord1.distance(coord2)
             # Link 2
-            pair = frozenset({mapping_r[symbol_str(expr.c2)], target})
+            pair = frozenset({base, target})
             if pair in length:
                 data_dict[symbol_str(expr.v2)] = length[pair]
             else:
-                coord1 = pos[mapping_r[symbol_str(expr.c2)]]
+                coord1 = pos[base]
                 coord2 = pos[target]
                 data_dict[symbol_str(expr.v2)] = coord1.distance(coord2)
             # Point 2
             if symbol_str(expr.c2) not in data_dict:
-                data_dict[symbol_str(expr.c2)] = pos[mapping_r[symbol_str(expr.c2)]]
+                data_dict[symbol_str(expr.c2)] = pos[base]
         elif expr.func == PLPP:
             # Link 1
             pair = frozenset({node, target})
@@ -440,7 +449,24 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
                 data_dict[symbol_str(expr.v1)] = coord1.distance(coord2)
             # Point 2
             if symbol_str(expr.c2) not in data_dict:
-                data_dict[symbol_str(expr.c2)] = pos[mapping_r[symbol_str(expr.c2)]]
+                data_dict[symbol_str(expr.c2)] = pos[base]
+        elif expr.func == PALP:
+            # Angle 1
+            vpoint = vpoints[node]
+            coord1 = pos[node]
+            coord2 = pos[base]
+            data_dict[symbol_str(expr.v1)] = (vpoint.angle
+                                              - coord1.slope_angle(coord2))
+            # Link 1
+            pair = frozenset({base, target})
+            if pair in length:
+                data_dict[symbol_str(expr.v2)] = length[pair]
+            else:
+                coord1 = pos[base]
+                coord2 = pos[target]
+                data_dict[symbol_str(expr.v2)] = coord1.distance(coord2)
+            # Point 2
+            data_dict[symbol_str(expr.c2)] = pos[base]
         elif expr.func == PXY:
             coord1 = pos[node]
             coord2 = pos[target]

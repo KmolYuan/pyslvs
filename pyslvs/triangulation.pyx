@@ -37,6 +37,16 @@ cdef class EStack:
     It is pointless to call the constructor.
     """
 
+    cdef void add_pxy(self, sym c1, sym v1, sym v2, sym t) nogil:
+        cdef Expr e
+        e.func = PXY
+        e.c1 = c1
+        e.v1 = v1
+        e.v2 = v2
+        e.target = t
+        e.op = False
+        self.stack.push_back(e)
+
     cdef void add_pla(self, sym c1, sym v1, sym v2, sym t) nogil:
         cdef Expr e
         e.func = PLA
@@ -80,14 +90,15 @@ cdef class EStack:
         e.op = op
         self.stack.push_back(e)
 
-    cdef void add_pxy(self, sym c1, sym v1, sym v2, sym t) nogil:
+    cdef void add_palp(self, sym c1, sym v1, sym v2, sym c2, sym t, bint op) nogil:
         cdef Expr e
-        e.func = PXY
+        e.func = PALP
         e.c1 = c1
         e.v1 = v1
         e.v2 = v2
+        e.c2 = c2
         e.target = t
-        e.op = False
+        e.op = op
         self.stack.push_back(e)
 
     cpdef list as_list(self):
@@ -128,6 +139,15 @@ cdef class EStack:
                     symbol_str(expr.v1),
                     symbol_str(expr.c2),
                     symbol_str(expr.c3),
+                    symbol_str(expr.target),
+                ))
+            elif expr.func == PALP:
+                stack.append((
+                    "PALP",
+                    symbol_str(expr.c1),
+                    symbol_str(expr.v1),
+                    symbol_str(expr.v2),
+                    symbol_str(expr.c2),
                     symbol_str(expr.target),
                 ))
             elif expr.func == PXY:

@@ -19,9 +19,9 @@ from libc.math cimport (HUGE_VAL, M_PI, fabs, sqrt, cos, sin, atan2,
 from .metaheuristics.utility cimport Objective
 from .expression cimport VJoint, VPoint
 from .triangulation cimport (t_config, symbol_str, I_LABEL, A_LABEL, Expr,
-    PLA, PLAP, PLLP, PLPP, PXY, EStack)
+    PXY, PLA, PLAP, PLLP, PLPP, PALP, EStack)
 from .bfgs cimport SolverSystem
-from .tinycadlib cimport radians, Coordinate, plap, pllp, plpp, pxy
+from .tinycadlib cimport radians, Coordinate, pxy, plap, pllp, plpp, palp
 
 DEF WAVELET = "db3"
 
@@ -445,7 +445,15 @@ cdef class Planar(Objective):
         cdef Expr expr
         for expr in self.exprs.stack:
             target = symbol_str(expr.target)
-            if expr.func in {PLA, PLAP}:
+            if expr.func == PXY:
+                vpoint = self.vpoints[self.mapping_r[target]]
+                coord1 = self.data_dict[symbol_str(expr.c1)]
+                coord3 = pxy(
+                    coord1,
+                    vpoint.c[0, 0] - coord1.x,
+                    vpoint.c[0, 1] - coord1.y
+                )
+            elif expr.func in {PLA, PLAP}:
                 coord1 = self.data_dict[symbol_str(expr.c1)]
                 if expr.func == PLAP:
                     coord2 = self.data_dict[symbol_str(expr.c2)]
@@ -476,13 +484,15 @@ cdef class Planar(Objective):
                     self.data_dict[symbol_str(expr.c3)],
                     expr.op
                 )
-            elif expr.func == PXY:
-                vpoint = self.vpoints[self.mapping_r[target]]
-                coord1 = self.data_dict[symbol_str(expr.c1)]
-                coord3 = pxy(
-                    coord1,
-                    vpoint.c[0, 0] - coord1.x,
-                    vpoint.c[0, 1] - coord1.y
+            elif expr.func == PALP:
+                angle = self.polar_angles[a]
+                a += 1
+                coord3 = palp(
+                    self.data_dict[symbol_str(expr.c1)],
+                    angle,
+                    self.get_len(symbol_str(expr.c2), target),
+                    self.data_dict[symbol_str(expr.c2)],
+                    expr.op
                 )
             else:
                 return False
