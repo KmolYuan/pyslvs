@@ -44,7 +44,7 @@ __all__ = [
     'efd_fitting',
     'get_include',
 ]
-__version__ = "20.06.0"
+__version__ = "20.07.0.dev0"
 __author__ = "Yuan Chang"
 __copyright__ = "Copyright (C) 2016-2020"
 __license__ = "AGPL"
