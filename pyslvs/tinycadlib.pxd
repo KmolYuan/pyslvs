@@ -10,19 +10,15 @@ email: pyslvs@gmail.com
 """
 
 from .triangulation cimport EStack
-from .expression cimport Coordinate
+from .expression cimport Coord
 
 cdef double radians(double degree) nogil
 
-cpdef Coordinate pxy(Coordinate c1, double x, double y)
-cpdef Coordinate plap(Coordinate c1, double d0, double a0, Coordinate c2=*,
-                      bint inverse=*)
-cpdef Coordinate pllp(Coordinate c1, double d0, double d1, Coordinate c2,
-                      bint inverse=*)
-cpdef Coordinate plpp(Coordinate c1, double d0, Coordinate c2, Coordinate c3,
-                      bint inverse=*)
-cpdef Coordinate palp(Coordinate c1, double a0, double d0, Coordinate c2,
-                      bint inverse=*)
+cpdef Coord pxy(Coord c1, double x, double y)
+cpdef Coord plap(Coord c1, double d0, double a0, Coord c2=*, bint inverse=*)
+cpdef Coord pllp(Coord c1, double d0, double d1, Coord c2, bint inverse=*)
+cpdef Coord plpp(Coord c1, double d0, Coord c2, Coord c3, bint inverse=*)
+cpdef Coord palp(Coord c1, double a0, double d0, Coord c2, bint inverse=*)
 
 cpdef void expr_parser(EStack exprs, dict data_dict)
 cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_)

@@ -2,47 +2,31 @@
 
 from typing import Tuple, List, Sequence, Dict, Union, Optional
 from .triangulation import EStack
-from .expression import VPoint, Coordinate
+from .expression import VPoint, Coord
 
 _Coord = Tuple[float, float]
 
-def pxy(c1: Coordinate, x: float, y: float) -> Coordinate:
+def pxy(c1: Coord, x: float, y: float) -> Coord:
     ...
 
 def plap(
-    c1: Coordinate,
+    c1: Coord,
     d0: float,
     a0: float,
-    c2: Optional[Coordinate] = None,
+    c2: Optional[Coord] = None,
     inverse: bool = False
-) -> Coordinate:
+) -> Coord:
     ...
 
-def pllp(
-    c1: Coordinate,
-    d0: float,
-    d1: float,
-    c2: Coordinate,
-    inverse: bool = False
-) -> Coordinate:
+def pllp(c1: Coord, d0: float, d1: float, c2: Coord,
+         inverse: bool = False) -> Coord:
     ...
 
-def plpp(
-    c1: Coordinate,
-    d0: float,
-    c2: Coordinate,
-    c3: Coordinate,
-    inverse: bool = False
-) -> Coordinate:
+def plpp(c1: Coord, d0: float, c2: Coord, c3: Coord,
+         inverse: bool = False) -> Coord:
     ...
 
-def palp(
-    c1: Coordinate,
-    a0: float,
-    d0: float,
-    c2: Coordinate,
-    inverse: bool = False
-) -> Coordinate:
+def palp(c1: Coord, a0: float, d0: float, c2: Coord, inverse: bool = False) -> Coord:
     ...
 
 def vpoint_dof(vpoints: Sequence[VPoint]) -> int:
@@ -55,7 +39,7 @@ def data_collecting(
     exprs: EStack,
     mapping: Dict[int, str],
     vpoints_: Sequence[VPoint],
-) -> Tuple[Dict[str, Union[Coordinate, float]], int]:
+) -> Tuple[Dict[str, Union[Coord, float]], int]:
     ...
 
 def expr_solving(

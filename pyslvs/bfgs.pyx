@@ -24,7 +24,7 @@ from .sketch_solve cimport (
     LineInternalAngleConstraint,
     solve,
 )
-from .expression cimport get_vlinks, VJoint, VPoint, Coordinate
+from .expression cimport get_vlinks, VJoint, VPoint, Coord
 
 
 cdef inline double *de_refer_post_inc(clist[double].iterator &it):
@@ -100,7 +100,7 @@ cdef class SolverSystem:
         cdef double x, y
         cdef double *tmp_ptr
         cdef VPoint vpoint
-        cdef Coordinate coord
+        cdef Coord coord
         for i, vpoint in enumerate(self.vpoints):
             if vpoint.no_link():
                 x = vpoint.c[0, 0]
@@ -368,7 +368,7 @@ cdef class SolverSystem:
         cdef int i
         cdef double *handle
         cdef VPoint vpoint
-        cdef Coordinate coord
+        cdef Coord coord
         cdef clist[double].iterator it = self.data_values.begin()
         for i, vpoint in enumerate(self.vpoints):
             if vpoint.grounded():

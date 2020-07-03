@@ -5,6 +5,7 @@
 __all__ = [
     '__version__',
     'Coordinate',
+    'Coord',
     'pxy',
     'plap',
     'pllp',
@@ -51,7 +52,7 @@ __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
 import pywt as _
-from .expression import get_vlinks, VJoint, VPoint, VLink, Coordinate
+from .expression import get_vlinks, VJoint, VPoint, VLink, Coord
 from .bfgs import SolverSystem
 from .triangulation import t_config, EStack
 from .tinycadlib import (
@@ -69,6 +70,9 @@ from .expression_parser import (
 from .example import example_list, all_examples
 from .collection import collection_list, all_collections
 from .efd import efd_fitting
+
+# backward alignment
+Coordinate = Coord
 
 
 def get_include() -> str:

@@ -43,18 +43,18 @@ cpdef list get_vlinks(object vpoints):
 
 
 @cython.final
-cdef class Coordinate:
+cdef class Coord:
     """A data class used to store coordinates."""
 
     def __cinit__(self, double x, double y):
         self.x = x
         self.y = y
 
-    cpdef double distance(self, Coordinate p):
+    cpdef double distance(self, Coord p):
         """Return the distance between two coordinates."""
         return distance(self.x, self.y, p.x, p.y)
 
-    cpdef double slope_angle(self, Coordinate p):
+    cpdef double slope_angle(self, Coord p):
         """Slope angle of two coordinates."""
         return slope_angle(self.x, self.y, p.x, p.y)
 
@@ -63,7 +63,7 @@ cdef class Coordinate:
         return self.x != self.x
 
     def __repr__(self):
-        return f"Coordinate({self.x:.02f}, {self.y:.02f})"
+        return f"Coord({self.x:.02f}, {self.y:.02f})"
 
 
 @cython.final

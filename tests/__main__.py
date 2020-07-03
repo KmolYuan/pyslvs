@@ -11,7 +11,7 @@ from unittest import TestCase
 from math import sqrt, radians, hypot, sin, cos
 from numpy import array
 from pyslvs import (
-    Coordinate, SolverSystem, pxy, plap, pllp, plpp, palp, expr_solving,
+    Coord, SolverSystem, pxy, plap, pllp, plpp, palp, expr_solving,
     data_collecting, t_config, parse_vpoints, example_list, norm_path,
 )
 from pyslvs.graph import (
@@ -33,21 +33,20 @@ from .utility import PLANAR_OBJECT, DEGREE_CODE_TABLE, PATH
 class CoreTest(TestCase):
 
     def test_pxy(self):
-        coord = pxy(Coordinate(80, 90), 40, -20)
+        coord = pxy(Coord(80, 90), 40, -20)
         self.assertAlmostEqual(120, coord.x)
         self.assertAlmostEqual(70, coord.y)
 
     def test_plap(self):
         """Test for plap function."""
-        coord = plap(
-            Coordinate(0, 0), 50 * sqrt(2), radians(45), Coordinate(50, 0))
+        coord = plap(Coord(0, 0), 50 * sqrt(2), radians(45), Coord(50, 0))
         self.assertAlmostEqual(50, coord.x)
         self.assertAlmostEqual(50, coord.y)
 
     def test_pllp(self):
         """Test for pllp function."""
-        c1 = Coordinate(-30, 0)
-        c2 = Coordinate(30, 0)
+        c1 = Coord(-30, 0)
+        c2 = Coord(30, 0)
         coord = pllp(c1, 50, 50, c2)
         self.assertAlmostEqual(0, coord.x)
         self.assertAlmostEqual(40, coord.y)
@@ -60,14 +59,13 @@ class CoreTest(TestCase):
 
     def test_plpp(self):
         """Test for plpp function."""
-        coord = plpp(
-            Coordinate(0, 0), sqrt(5), Coordinate(0, -3), Coordinate(3 / 2, 0))
+        coord = plpp(Coord(0, 0), sqrt(5), Coord(0, -3), Coord(3 / 2, 0))
         self.assertAlmostEqual(2, coord.x)
         self.assertAlmostEqual(1, coord.y)
 
     def test_palp(self):
         """Test for palp function."""
-        coord = palp(Coordinate(0, 0), radians(15), 20, Coordinate(60, 10))
+        coord = palp(Coord(0, 0), radians(15), 20, Coord(60, 10))
         self.assertAlmostEqual(42.253221, coord.x, 6)
         self.assertAlmostEqual(19.222356, coord.y, 6)
 
@@ -166,6 +164,7 @@ class CoreTest(TestCase):
         + Test data collecting function.
         + Test expression solving function.
         """
+
         def test_case(name: str):
             expr, inputs = example_list(name)
             vpoints = parse_vpoints(expr)

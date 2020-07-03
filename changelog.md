@@ -1,6 +1,6 @@
 # Version 20.07
 
-+ None
++ Rename "Coordinate" to "Coord"(keep old name).
 
 # Version 20.06
 

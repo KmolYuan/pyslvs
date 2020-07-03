@@ -16,7 +16,7 @@ from .triangulation cimport (sym, symbol_str, I_LABEL, S_LABEL, Expr,
                              PXY, PLA, PLAP, PLLP, PLPP, PALP)
 from .bfgs cimport SolverSystem
 
-cdef Coordinate _NAN_COORD = Coordinate.__new__(Coordinate, NAN, NAN)
+cdef Coord _NAN_COORD = Coord.__new__(Coord, NAN, NAN)
 
 
 cdef inline double radians(double degree) nogil:
@@ -24,7 +24,7 @@ cdef inline double radians(double degree) nogil:
     return degree / 180 * M_PI
 
 
-cpdef Coordinate pxy(Coordinate c1, double x, double y):
+cpdef Coord pxy(Coord c1, double x, double y):
     """The PXY function requires one point and offset values, obtained the 
     position of second point.
 
@@ -34,14 +34,14 @@ cpdef Coordinate pxy(Coordinate c1, double x, double y):
 
     ![PXY](img/PXY.png)
     """
-    return Coordinate.__new__(Coordinate, c1.x + x, c1.y + y)
+    return Coord.__new__(Coord, c1.x + x, c1.y + y)
 
 
-cpdef Coordinate plap(
-    Coordinate c1,
+cpdef Coord plap(
+    Coord c1,
     double d0,
     double a0,
-    Coordinate c2 = None,
+    Coord c2 = None,
     bint inverse = False
 ):
     """The PLAP function requires two points, one distance and one angle,
@@ -61,14 +61,14 @@ cpdef Coordinate plap(
         a1 -= a0
     else:
         a1 += a0
-    return Coordinate.__new__(Coordinate, c1.x + d0 * cos(a1), c1.y + d0 * sin(a1))
+    return Coord.__new__(Coord, c1.x + d0 * cos(a1), c1.y + d0 * sin(a1))
 
 
-cpdef Coordinate pllp(
-    Coordinate c1,
+cpdef Coord pllp(
+    Coord c1,
     double d0,
     double d1,
-    Coordinate c2,
+    Coord c2,
     bint inverse = False
 ):
     """The PLLP function requires two points and two distances, obtained the
@@ -99,16 +99,16 @@ cpdef Coordinate pllp(
     cdef double xm = c1.x + a * dx / d
     cdef double ym = c1.y + a * dy / d
     if inverse:
-        return Coordinate.__new__(Coordinate, xm + h * dy / d, ym - h * dx / d)
+        return Coord.__new__(Coord, xm + h * dy / d, ym - h * dx / d)
     else:
-        return Coordinate.__new__(Coordinate, xm - h * dy / d, ym + h * dx / d)
+        return Coord.__new__(Coord, xm - h * dy / d, ym + h * dx / d)
 
 
-cpdef Coordinate plpp(
-    Coordinate c1,
+cpdef Coord plpp(
+    Coord c1,
     double d0,
-    Coordinate c2,
-    Coordinate c3,
+    Coord c2,
+    Coord c3,
     bint inverse = False
 ):
     """The PLPP function requires three points and one distance, obtained the 
@@ -126,7 +126,7 @@ cpdef Coordinate plpp(
     cdef double dx = c3.x - c2.x
     cdef double dy = c3.y - c2.y
     cdef double u = ((c1.x - c2.x) * dx + (c1.y - c2.y) * dy) / (line_mag * line_mag)
-    cdef Coordinate inter = Coordinate.__new__(Coordinate, c2.x + u * dx, c2.y + u * dy)
+    cdef Coord inter = Coord.__new__(Coord, c2.x + u * dx, c2.y + u * dy)
     # Test distance between point A and intersection
     cdef double d = c1.distance(inter)
     if d > d0:
@@ -140,16 +140,16 @@ cpdef Coordinate plpp(
     dx *= d
     dy *= d
     if inverse:
-        return Coordinate.__new__(Coordinate, inter.x - dx, inter.y - dy)
+        return Coord.__new__(Coord, inter.x - dx, inter.y - dy)
     else:
-        return Coordinate.__new__(Coordinate, inter.x + dx, inter.y + dy)
+        return Coord.__new__(Coord, inter.x + dx, inter.y + dy)
 
 
-cpdef Coordinate palp(
-    Coordinate c1,
+cpdef Coord palp(
+    Coord c1,
     double a0,
     double d0,
-    Coordinate c2,
+    Coord c2,
     bint inverse = False
 ):
     """The PALP function requires two points, one angle and one distance,
@@ -177,7 +177,7 @@ cpdef Coordinate palp(
         cx = c1l - (c1l - c2.y * tan_a - c2.x - sq) / tan2_a1
     else:
         cx = c1l - (c1l - c2.y * tan_a - c2.x + sq) / tan2_a1
-    return Coordinate.__new__(Coordinate, cx, tan_a * (cx - c1.x) + c1.y)
+    return Coord.__new__(Coord, cx, tan_a * (cx - c1.x) + c1.y)
 
 
 cpdef void expr_parser(EStack exprs, dict data_dict):
@@ -193,7 +193,7 @@ cpdef void expr_parser(EStack exprs, dict data_dict):
     # + exprs: [("PLAP", "P0", "L0", "a0", "P1", "P2"), ..."]
     # + data_dict: {'a0':0., 'L1':10., 'A':(30., 40.), ...}
     cdef sym target
-    cdef Coordinate coord, coord1, coord2, coord3
+    cdef Coord coord, coord1, coord2, coord3
     cdef Expr expr
     for expr in exprs.stack:
         coord = _NAN_COORD
@@ -359,15 +359,15 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
             mapping_r[v] = k
             if v in mapping:
                 x, y = mapping[v]
-                data_dict[v] = Coordinate.__new__(Coordinate, x, y)
+                data_dict[v] = Coord.__new__(Coord, x, y)
         elif type(k) is tuple:
             length[frozenset(k)] = v
     pos = []
     for vpoint in vpoints:
         if vpoint.type == VJoint.R:
-            pos.append(Coordinate.__new__(Coordinate, vpoint.c[0, 0], vpoint.c[0, 1]))
+            pos.append(Coord.__new__(Coord, vpoint.c[0, 0], vpoint.c[0, 1]))
         else:
-            pos.append(Coordinate.__new__(Coordinate, vpoint.c[1, 0], vpoint.c[1, 1]))
+            pos.append(Coord.__new__(Coord, vpoint.c[1, 0], vpoint.c[1, 1]))
     cdef int i, bf
     cdef double angle
     # Add slider slot virtual coordinates
@@ -379,14 +379,14 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
         angle = radians(vpoint.angle
                         - vpoint.slope_angle(vpoints[bf], 1, 0)
                         + vpoint.slope_angle(vpoints[bf], 0, 0))
-        pos.append(Coordinate.__new__(Coordinate, vpoint.c[1, 0] + cos(angle),
-                                      vpoint.c[1, 1] + sin(angle)))
+        pos.append(Coord.__new__(Coord, vpoint.c[1, 0] + cos(angle),
+                                 vpoint.c[1, 1] + sin(angle)))
         mapping_r[symbol_str(sym(S_LABEL, i))] = len(pos) - 1
     # Add data to 'data_dict' and counting DOF
     cdef int dof = 0
     cdef int target
     cdef Expr expr
-    cdef Coordinate coord1, coord2
+    cdef Coord coord1, coord2
     for expr in exprs.stack:
         node = mapping_r[symbol_str(expr.c1)]
         base = mapping_r[symbol_str(expr.c2)]
@@ -473,13 +473,13 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
             # X
             if symbol_str(expr.v1) in mapping:
                 x, y = mapping[symbol_str(expr.v1)]
-                data_dict[symbol_str(expr.v1)] = Coordinate.__new__(Coordinate, x, y)
+                data_dict[symbol_str(expr.v1)] = Coord.__new__(Coord, x, y)
             else:
                 data_dict[symbol_str(expr.v1)] = coord2.x - coord1.x
             # Y
             if symbol_str(expr.v2) in mapping:
                 x, y = mapping[symbol_str(expr.v2)]
-                data_dict[symbol_str(expr.v2)] = Coordinate.__new__(Coordinate, x, y)
+                data_dict[symbol_str(expr.v2)] = Coord.__new__(Coord, x, y)
             else:
                 data_dict[symbol_str(expr.v2)] = coord2.y - coord1.y
     # Other grounded R joints
@@ -487,7 +487,7 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
         if vpoint.grounded() and vpoint.type == VJoint.R:
             x = vpoint.c[0, 0]
             y = vpoint.c[0, 1]
-            data_dict[mapping[i]] = Coordinate.__new__(Coordinate, x, y)
+            data_dict[mapping[i]] = Coord.__new__(Coord, x, y)
     return data_dict, dof
 
 
@@ -570,7 +570,7 @@ cpdef list expr_solving(
     # P or RP joint: [[p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))]
     solved_points = []
     cdef VPoint vpoint
-    cdef Coordinate coord
+    cdef Coord coord
     for i in range(len(vpoints)):
         vpoint = vpoints[i]
         if mapping[i] in data_dict:

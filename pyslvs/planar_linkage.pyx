@@ -17,29 +17,29 @@ from pywt import dwt
 from libc.math cimport (HUGE_VAL, M_PI, fabs, sqrt, cos, sin, atan2,
                         INFINITY as INF)
 from .metaheuristics.utility cimport Objective
-from .expression cimport VJoint, VPoint
+from .expression cimport VJoint, VPoint, Coord
 from .triangulation cimport (t_config, symbol_str, I_LABEL, A_LABEL, Expr,
     PXY, PLA, PLAP, PLLP, PLPP, PALP, EStack)
 from .bfgs cimport SolverSystem
-from .tinycadlib cimport radians, Coordinate, pxy, plap, pllp, plpp, palp
+from .tinycadlib cimport radians, pxy, plap, pllp, plpp, palp
 
 DEF WAVELET = "db3"
 
 
 def norm_path(path, scale=1):
     """Python wrapper of normalization function."""
-    cdef Coordinate[:] path_m = array([
-        Coordinate.__new__(Coordinate, x, y) for x, y in path], dtype=object)
+    cdef Coord[:] path_m = array([
+        Coord.__new__(Coord, x, y) for x, y in path], dtype=object)
     _norm(path_m, scale)
     return [(c.x, c.y) for c in path_m]
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void _norm(Coordinate[:] path, double scale):
+cdef void _norm(Coord[:] path, double scale):
     """Normalization implementation inplace."""
-    cdef Coordinate centre = Coordinate.__new__(Coordinate, 0, 0)
-    cdef Coordinate c
+    cdef Coord centre = Coord.__new__(Coord, 0, 0)
+    cdef Coord c
     for c in path:
         centre.x += c.x
         centre.y += c.y
@@ -78,7 +78,7 @@ cdef void _norm(Coordinate[:] path, double scale):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void _aligned(Coordinate[:] path, size_t sp):
+cdef void _aligned(Coord[:] path, size_t sp):
     """Split 1D path from sp, concatenate to end."""
     if sp == 0:
         return
@@ -97,11 +97,11 @@ cdef void _aligned(Coordinate[:] path, size_t sp):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef double[:, :] _wavelet(Coordinate[:] path) except *:
+cdef double[:, :] _wavelet(Coord[:] path) except *:
     """Return DWT."""
     cdef double[:, :] wave = zeros((len(path), 2), dtype=np_float)
     cdef size_t i
-    cdef Coordinate c
+    cdef Coord c
     for i in range(len(path)):
         c = path[i]
         wave[i, 0] = c.x
@@ -141,18 +141,18 @@ def curvature(path):
     \kappa(t) = \frac{x'y'' - x''y'}{(x'^2 + y'^2)^\frac{3}{2}}
     $$
     """
-    cdef Coordinate[:] path_m = array([
-        Coordinate.__new__(Coordinate, x, y) for x, y in path], dtype=object)
+    cdef Coord[:] path_m = array([
+        Coord.__new__(Coord, x, y) for x, y in path], dtype=object)
     return array(_curvature(path_m))
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef double[:] _curvature(Coordinate[:] path):
+cdef double[:] _curvature(Coord[:] path):
     """Calculate the signed curvature."""
     cdef double[:, :] p = zeros((len(path), 2), dtype=np_float)
     cdef int i
-    cdef Coordinate c
+    cdef Coord c
     for i, c in enumerate(path):
         p[i, 0] = c.x
         p[i, 1] = c.y
@@ -320,9 +320,9 @@ cdef class Planar(Objective):
         self.wavelet_mode = mech.get('wavelet_mode', False)
         cdef int i, j
         cdef double[:, :] wave
-        cdef Coordinate[:] path
+        cdef Coord[:] path
         for i in target:
-            path = array([Coordinate(x, y) for x, y in target[i]], dtype=object)
+            path = array([Coord(x, y) for x, y in target[i]], dtype=object)
             for j in range(i):
                 if j in same:
                     i -= 1
@@ -426,14 +426,14 @@ cdef class Planar(Objective):
         self.data_dict.clear()
         cdef int i
         cdef VPoint vpoint
-        cdef Coordinate coord1, coord2, coord3
+        cdef Coord coord1, coord2, coord3
         for i, vpoint in enumerate(self.vpoints):
-            coord1 = Coordinate.__new__(Coordinate, vpoint.c[0, 0], vpoint.c[0, 1])
+            coord1 = Coord.__new__(Coord, vpoint.c[0, 0], vpoint.c[0, 1])
             if vpoint.type == VJoint.R:
                 self.data_dict[self.mapping[i]] = coord1
                 self.data_dict[i, -1] = coord1
             else:
-                coord2 = Coordinate.__new__(Coordinate, vpoint.c[1, 0], vpoint.c[1, 1])
+                coord2 = Coord.__new__(Coord, vpoint.c[1, 0], vpoint.c[1, 1])
                 self.data_dict[self.mapping[i]] = coord2
                 self.data_dict[i, -1] = coord1
                 self.data_dict[i, -2] = coord2
@@ -536,19 +536,19 @@ cdef class Planar(Objective):
             vpoint = self.vpoints[i]
             # These points solved by Sketch Solve
             if vpoint.type == VJoint.R:
-                self.data_dict[i, -1] = Coordinate.__new__(
-                    Coordinate,
+                self.data_dict[i, -1] = Coord.__new__(
+                    Coord,
                     solved_bfgs[i][0],
                     solved_bfgs[i][1]
                 )
             else:
-                self.data_dict[i, -1] = Coordinate.__new__(
-                    Coordinate,
+                self.data_dict[i, -1] = Coord.__new__(
+                    Coord,
                     solved_bfgs[i][0][0],
                     solved_bfgs[i][0][1]
                 )
-                self.data_dict[i, -2] = Coordinate.__new__(
-                    Coordinate,
+                self.data_dict[i, -2] = Coord.__new__(
+                    Coord,
                     solved_bfgs[i][1][0],
                     solved_bfgs[i][1][1]
                 )
@@ -591,7 +591,7 @@ cdef class Planar(Objective):
                 return HUGE_VAL
             for node in self.target:
                 target[node].append(self.data_dict[node, -1])
-        cdef Coordinate[:] path1, path2
+        cdef Coord[:] path1, path2
         for node in self.target:
             path1 = array(target[node], dtype=object)
             if self.shape_only or self.wavelet_mode:
@@ -601,7 +601,7 @@ cdef class Planar(Objective):
                     continue
             path2 = self.target[node]
             for index in range(self.target_count):
-                fitness += (<Coordinate>path1[index]).distance(path2[index])
+                fitness += (<Coord>path1[index]).distance(path2[index])
         return fitness
 
     cpdef object result(self, double[:] v):
@@ -627,7 +627,7 @@ cdef class Planar(Objective):
         expressions = []
         cdef int i
         cdef double x1, y1, x2, y2
-        cdef Coordinate coord1, coord2
+        cdef Coord coord1, coord2
         for i in range(len(self.vpoints)):
             vpoint = self.vpoints[i]
             coord1 = self.data_dict[i, -1]

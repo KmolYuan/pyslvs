@@ -10,8 +10,7 @@ _Color = Tuple[int, int, int]
 def get_vlinks(vpoints: Iterable[VPoint]) -> List[VLink]:
     ...
 
-class Coordinate:
-
+class Coord:
     x: float
     y: float
 
@@ -19,10 +18,10 @@ class Coordinate:
         """The constructor of Coordinate class."""
         ...
 
-    def distance(self, p: Coordinate) -> float:
+    def distance(self, p: Coord) -> float:
         ...
 
-    def slope_angle(self, p: Coordinate) -> float:
+    def slope_angle(self, p: Coord) -> float:
         ...
 
     def is_nan(self) -> bool:
@@ -35,7 +34,6 @@ class VJoint(IntEnum):
     RP = auto()
 
 class VPoint:
-
     links: Sequence[str]
     c: ndarray
     type: VJoint
@@ -154,7 +152,6 @@ class VPoint:
         ...
 
 class VLink:
-
     name: str
     color_str: str
     color: Optional[_Color]

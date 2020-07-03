@@ -11,10 +11,10 @@ email: pyslvs@gmail.com
 
 cpdef list get_vlinks(object vpoints)
 
-cdef class Coordinate:
+cdef class Coord:
     cdef public double x, y
-    cpdef double distance(self, Coordinate p)
-    cpdef double slope_angle(self, Coordinate p)
+    cpdef double distance(self, Coord p)
+    cpdef double slope_angle(self, Coord p)
     cpdef bint is_nan(self)
 
 cpdef enum VJoint:
