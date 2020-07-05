@@ -279,7 +279,7 @@ cdef class VPoint:
         if vlink is None:
             return Coord.__new__(Coord, NAN, NAN)
         cdef int ind
-        if self.type == VJoint.R or vlink.name == self.links[0]:
+        if self.type == VJoint.R or self.is_slot_link(vlink.name):
             ind = 0
         else:
             ind = 1
@@ -407,8 +407,10 @@ cdef class VLink:
         coords = []
         cdef int i
         cdef Coord c
+        cdef VPoint vpoint
         for i in self.points:
-            coords.append(vpoints[i].link_pos(self))
+            vpoint = vpoints[i]
+            coords.append(vpoint.link_pos(self))
         return array(coords, dtype=object)
 
     def __contains__(self, point: int) -> bint:
