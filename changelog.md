@@ -2,6 +2,7 @@
 
 + Rename "Coordinate" to "Coord"(keep old name).
 + Add "sx" & "sy" properties for VPoint slot coordinate.
++ Add "link_pos" and "points_pos" methods for VPoint and VLink respectively.
 
 # Version 20.06
 

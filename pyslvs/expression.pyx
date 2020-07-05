@@ -10,7 +10,7 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
-from libc.math cimport M_PI, atan2, hypot
+from libc.math cimport M_PI, atan2, hypot, NAN
 from cpython.object cimport Py_EQ, Py_NE
 from numpy import array, zeros, float64 as np_float
 
@@ -274,6 +274,17 @@ cdef class VPoint:
             y1 = p.c[num2, 1]
         return slope_angle(x1, y1, x2, y2) / M_PI * 180
 
+    cpdef Coord link_pos(self, VLink vlink):
+        """Return the position for the vlink."""
+        if vlink is None:
+            return Coord.__new__(Coord, NAN, NAN)
+        cdef int ind
+        if self.type == VJoint.R or vlink.name == self.links[0]:
+            ind = 0
+        else:
+            ind = 1
+        return Coord.__new__(Coord, self.c[ind, 0], self.c[ind, 1])
+
     cpdef bint grounded(self):
         """Return True if the joint pin is connected to ground link."""
         if self.type == VJoint.R:
@@ -390,6 +401,15 @@ cdef class VLink:
     cpdef void set_points(self, object points) except *:
         """The update function of points attribute."""
         self.points = array(list(points), dtype=int)
+
+    cpdef Coord[:] points_pos(self, vpoints) except *:
+        """Get link positions from a VPoint list."""
+        coords = []
+        cdef int i
+        cdef Coord c
+        for i in self.points:
+            coords.append(vpoints[i].link_pos(self))
+        return array(coords, dtype=object)
 
     def __contains__(self, point: int) -> bint:
         return point in self.points

@@ -138,6 +138,9 @@ class VPoint:
     def slope_angle(self, p: VPoint, num1: int = 2, num2: int = 2) -> float:
         ...
 
+    def link_pos(self, vlink: VLink) -> Coord:
+        ...
+
     def grounded(self) -> bool:
         ...
 
@@ -182,6 +185,9 @@ class VLink:
         ...
 
     def set_points(self, points: Iterable[int]) -> None:
+        ...
+
+    def points_pos(self, vpoints: Iterable[VPoint]) -> Sequence[Coord]:
         ...
 
     def __contains__(self, point: int) -> bool:
