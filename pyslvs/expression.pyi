@@ -83,6 +83,14 @@ class VPoint:
         ...
 
     @property
+    def sx(self) -> float:
+        ...
+
+    @property
+    def sy(self) -> float:
+        ...
+
+    @property
     def cx(self) -> float:
         ...
 

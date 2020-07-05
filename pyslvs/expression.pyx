@@ -130,6 +130,16 @@ cdef class VPoint:
         return self.__copy__()
 
     @property
+    def sx(self) -> float:
+        """X value of slot coordinate."""
+        return self.c[0, 0]
+
+    @property
+    def sy(self) -> float:
+        """Y value of slot coordinate."""
+        return self.c[0, 1]
+
+    @property
     def cx(self) -> float:
         """X value of current coordinate.
         If it's slider, the pin coordinate will be returned.

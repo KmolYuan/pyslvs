@@ -1,6 +1,7 @@
 # Version 20.07
 
 + Rename "Coordinate" to "Coord"(keep old name).
++ Add "sx" & "sy" properties for VPoint slot coordinate.
 
 # Version 20.06
 
