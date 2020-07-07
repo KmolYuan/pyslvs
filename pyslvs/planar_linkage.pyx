@@ -288,7 +288,6 @@ cdef class Planar(Objective):
     cdef object inputs
     cdef double[:] upper, lower, polar_angles
     cdef EStack exprs
-    cdef SolverSystem bfgs_solver
 
     def __cinit__(self, dict mech):
         # mech = {
@@ -338,8 +337,6 @@ cdef class Planar(Objective):
         status = {}
         self.exprs = t_config(self.vpoints, tuple(self.inputs.keys()), status)
         self.bfgs_mode = not all(status.values())
-        # BFGS solver mode
-        self.bfgs_solver = None
         # Data mapping
         self.mapping = {i: f"P{i}" for i in range(len(self.vpoints))}
         self.mapping_r = {v: k for k, v in self.mapping.items()}
@@ -518,13 +515,9 @@ cdef class Planar(Objective):
         for k, v in self.mapping.items():
             if type(k) is frozenset:
                 p_data_dict[k] = v
-        if self.bfgs_solver is None:
-            self.bfgs_solver = SolverSystem(self.vpoints, {}, p_data_dict)
-        else:
-            self.bfgs_solver.set_data(p_data_dict)
         # Solve
         try:
-            solved_bfgs = self.bfgs_solver.solve()
+            solved_bfgs = SolverSystem(self.vpoints, {}, p_data_dict).solve()
         except ValueError:
             return False
         # Format:

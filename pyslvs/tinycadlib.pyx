@@ -10,7 +10,7 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
-from libc.math cimport M_PI, sqrt, sin, cos, tan, atan2, NAN
+from libc.math cimport M_PI, sqrt, sin, cos, tan, atan2
 from .expression cimport VJoint, VPoint, VLink
 from .triangulation cimport (sym, symbol_str, I_LABEL, S_LABEL, Expr,
                              PXY, PLA, PLAP, PLLP, PLPP, PALP)
