@@ -16,6 +16,8 @@ cdef class Coord:
     cpdef double distance(self, Coord p)
     cpdef double slope_angle(self, Coord p)
     cpdef bint is_nan(self)
+    @staticmethod
+    cdef Coord nan()
 
 cpdef enum VJoint:
     # Joint types.

@@ -65,6 +65,11 @@ cdef class Coord:
     def __repr__(self):
         return f"Coord({self.x:.02f}, {self.y:.02f})"
 
+    @staticmethod
+    cdef Coord nan():
+        """Return "not a number" coordinate."""
+        return Coord.__new__(Coord, NAN, NAN)
+
 
 @cython.final
 @cython.boundscheck(False)
@@ -277,7 +282,7 @@ cdef class VPoint:
     cpdef Coord link_pos(self, VLink vlink):
         """Return the position for the vlink."""
         if vlink is None:
-            return Coord.__new__(Coord, NAN, NAN)
+            return Coord.nan()
         cdef int ind
         if self.type == VJoint.R or self.is_slot_link(vlink.name):
             ind = 0

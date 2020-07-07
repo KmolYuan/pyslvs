@@ -16,8 +16,6 @@ from .triangulation cimport (sym, symbol_str, I_LABEL, S_LABEL, Expr,
                              PXY, PLA, PLAP, PLLP, PLPP, PALP)
 from .bfgs cimport SolverSystem
 
-cdef Coord _NAN_COORD = Coord.__new__(Coord, NAN, NAN)
-
 
 cdef inline double radians(double degree) nogil:
     """Deg to rad."""
@@ -87,13 +85,13 @@ cpdef Coord pllp(
     cdef double d = c1.distance(c2)
     # No solutions, the circles are separate
     if d > d0 + d1:
-        return _NAN_COORD
+        return Coord.nan()
     # No solutions because one circle is contained within the other
     if d < abs(d0 - d1):
-        return _NAN_COORD
+        return Coord.nan()
     # Circles are coincident and there are an infinite number of solutions
     if d == 0 and d0 == d1:
-        return _NAN_COORD
+        return Coord.nan()
     cdef double a = (d0 * d0 - d1 * d1 + d * d) / (2 * d)
     cdef double h = sqrt(d0 * d0 - a * a)
     cdef double xm = c1.x + a * dx / d
@@ -131,7 +129,7 @@ cpdef Coord plpp(
     cdef double d = c1.distance(inter)
     if d > d0:
         # No intersection
-        return _NAN_COORD
+        return Coord.nan()
     elif d == d0:
         # One intersection point
         return inter
@@ -196,7 +194,7 @@ cpdef void expr_parser(EStack exprs, dict data_dict):
     cdef Coord coord, coord1, coord2, coord3
     cdef Expr expr
     for expr in exprs.stack:
-        coord = _NAN_COORD
+        coord = Coord.nan()
         if expr.func in {PLA, PLAP}:
             coord1 = data_dict[symbol_str(expr.c1)]
             if expr.func == PLA:
