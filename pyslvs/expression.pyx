@@ -279,12 +279,10 @@ cdef class VPoint:
             y1 = p.c[num2, 1]
         return slope_angle(x1, y1, x2, y2) / M_PI * 180
 
-    cpdef Coord link_pos(self, VLink vlink):
+    cpdef Coord link_pos(self, str link):
         """Return the position for the vlink."""
-        if vlink is None:
-            return Coord.nan()
         cdef int ind
-        if self.type == VJoint.R or self.is_slot_link(vlink.name):
+        if self.type == VJoint.R or self.is_slot_link(link):
             ind = 0
         else:
             ind = 1
@@ -312,12 +310,12 @@ cdef class VPoint:
         """Return True if there is no any link in links attribute."""
         return not self.links
 
-    cpdef bint is_slot_link(self, str link_name):
+    cpdef bint is_slot_link(self, str link):
         """Return True if the slot is on the link `link_name`."""
         if self.type == VJoint.R:
             return False
         if self.links:
-            return link_name == self.links[0]
+            return link == self.links[0]
         else:
             return False
 
@@ -407,7 +405,7 @@ cdef class VLink:
         """The update function of points attribute."""
         self.points = array(list(points), dtype=int)
 
-    cpdef Coord[:] points_pos(self, vpoints) except *:
+    cpdef Coord[:] points_pos(self, object vpoints) except *:
         """Get link positions from a VPoint list."""
         coords = []
         cdef int i
@@ -415,7 +413,7 @@ cdef class VLink:
         cdef VPoint vpoint
         for i in self.points:
             vpoint = vpoints[i]
-            coords.append(vpoint.link_pos(self))
+            coords.append(vpoint.link_pos(self.name))
         return array(coords, dtype=object)
 
     def __contains__(self, point: int) -> bint:

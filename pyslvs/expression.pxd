@@ -63,14 +63,14 @@ cdef class VPoint:
     cpdef double offset(self)
     cpdef double true_offset(self)
     cpdef double slope_angle(self, VPoint p, int num1 = *, int num2 = *)
-    cpdef Coord link_pos(self, VLink vlink)
+    cpdef Coord link_pos(self, str link)
 
     # Link operators
     cpdef bint grounded(self)
     cpdef bint pin_grounded(self)
     cpdef bint same_link(self, VPoint p)
     cpdef bint no_link(self)
-    cpdef bint is_slot_link(self, str link_name)
+    cpdef bint is_slot_link(self, str link)
 
     # Expression
     cpdef str expr(self)
@@ -85,4 +85,4 @@ cdef class VLink:
 
     # Set values
     cpdef void set_points(self, object points) except *
-    cpdef Coord[:] points_pos(self, vpoints) except *
+    cpdef Coord[:] points_pos(self, object vpoints) except *

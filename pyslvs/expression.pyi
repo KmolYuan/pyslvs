@@ -138,7 +138,7 @@ class VPoint:
     def slope_angle(self, p: VPoint, num1: int = 2, num2: int = 2) -> float:
         ...
 
-    def link_pos(self, vlink: VLink) -> Coord:
+    def link_pos(self, link: str) -> Coord:
         ...
 
     def grounded(self) -> bool:
@@ -153,7 +153,7 @@ class VPoint:
     def no_link(self) -> bool:
         ...
 
-    def is_slot_link(self, link_name: str) -> bool:
+    def is_slot_link(self, link: str) -> bool:
         ...
 
     def expr(self) -> str:
