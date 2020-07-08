@@ -14,7 +14,7 @@ from collections import OrderedDict
 from numpy import zeros, array, arange, interp, float64 as np_float
 from libc.math cimport (HUGE_VAL, M_PI, fabs, sqrt, cos, sin, atan2,
                         INFINITY as INF)
-from .metaheuristics.utility cimport Objective
+from .metaheuristics.utility cimport ObjFunc
 from .expression cimport VJoint, VPoint, Coord
 from .triangulation cimport (t_config, symbol_str, I_LABEL, A_LABEL, Expr,
     PXY, PLA, PLAP, PLLP, PLPP, PALP, EStack)
@@ -144,8 +144,9 @@ cdef double[:, :] _derivative(double[:, :] p):
             max0 = pd[i, 0]
         if pd[i, 1] > max1:
             max1 = pd[i, 1]
-    if max0 == pd[len(p) - 1, 0] or max1 == pd[len(p) - 1, 1]:
-        return pd[:len(p) - 1]
+    i = len(p) - 1
+    if max0 == pd[i, 0] or max1 == pd[i, 1]:
+        return pd[:i]
     else:
         return pd
 
@@ -235,7 +236,7 @@ cdef double _mean(double[:] p):
 @cython.final
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef class Planar(Objective):
+cdef class Planar(ObjFunc):
     """This class is used to verified kinematics of the linkage mechanism."""
     cdef bint bfgs_mode, shape_only, ordered
     cdef int target_count, input_count, l_base
@@ -523,7 +524,7 @@ cdef class Planar(Objective):
                                          dtype=np_float)
         for index in range(self.input_count):
             a_index = index + self.l_base
-            angles[index, :] = array(v[a_index:a_index + self.target_count])
+            angles[index, :] = v[a_index:a_index + self.target_count]
         cdef double fitness = 0
         cdef int node
         target = {n: [] for n in self.target}

@@ -11,10 +11,10 @@ email: pyslvs@gmail.com
 
 cimport cython
 from numpy import array, float64 as np_float
-from pyslvs.metaheuristics.utility cimport Objective
+from pyslvs.metaheuristics.utility cimport ObjFunc
 
 @cython.final
-cdef class TestObj(Objective):
+cdef class TestObj(ObjFunc):
     """Test objective function."""
 
     cpdef double[:] get_upper(self):
