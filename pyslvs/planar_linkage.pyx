@@ -90,6 +90,32 @@ cdef void _aligned(Coord[:] path, size_t sp):
         path[len(path) - sp + i].x = tmp[i, 0]
         path[len(path) - sp + i].y = tmp[i, 1]
 
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef double[:, :] _to_numpy(Coord[:] path):
+    """To memory view."""
+    cdef double[:, :] p = zeros((len(path), 2), dtype=np_float)
+    cdef int i
+    cdef Coord c
+    for i, c in enumerate(path):
+        p[i, 0] = c.x
+        p[i, 1] = c.y
+    return p
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef Coord[:] _to_coord(double[:, :] path):
+    """To coordinates."""
+    coords = []
+    cdef int i
+    for i in range(len(path)):
+        coords.append(Coord.__new__(Coord, path[i, 0], path[i, 1]))
+    cdef Coord[:] path_m = array(coords, dtype=object)
+    return path_m
+
+
 def curvature(path):
     r"""Calculate the signed curvature and return as an array.
 
@@ -106,15 +132,11 @@ def curvature(path):
 @cython.wraparound(False)
 cdef double[:] _curvature(Coord[:] path):
     """Calculate the signed curvature."""
-    cdef double[:, :] p = zeros((len(path), 2), dtype=np_float)
-    cdef int i
-    cdef Coord c
-    for i, c in enumerate(path):
-        p[i, 0] = c.x
-        p[i, 1] = c.y
+    cdef double[:, :] p = _to_numpy(path)
     cdef double[:, :] p1d = _derivative(p)
     cdef double[:, :] p2d = _derivative(p1d)
     cdef double[:] k = zeros(len(path) - 2, dtype=np_float)
+    cdef int i
     for i in range(len(path) - 2):
         k[i] = ((p1d[i, 0] * p2d[i, 1] - p2d[i, 0] * p1d[i, 1])
                 / (p1d[i, 0] * p1d[i, 0] + p1d[i, 1] * p1d[i, 1]) ** 1.5)
@@ -158,6 +180,8 @@ def path_signature(double[:] k):
     $$
     K = \int^t_0 |\kappa(t)| dt
     $$
+
+    >>> path_signature(curvature(...))
     """
     return array(_path_signature(k))
 
@@ -189,6 +213,10 @@ def cross_correlation(double[:, :] p1, double[:, :] p2, double t):
     S &= \arg\max\{C_n(j)\} t
     \end{aligned}
     $$
+
+    >>> ps1 = path_signature(curvature(...))
+    >>> ps2 = path_signature(curvature(...))
+    >>> cc = cross_correlation(ps1, ps2, len(ps1))
     """
     return array(_cross_correlation(p1, p2, t), dtype=np_float)
 
@@ -273,7 +301,6 @@ cdef class Planar(ObjFunc):
         same = mech.get('same', {})
         self.shape_only = mech.get('shape_only', False)
         cdef int i, j
-        cdef double[:, :] wave
         cdef Coord[:] path
         for i in target:
             path = array([Coord(x, y) for x, y in target[i]], dtype=object)
@@ -336,7 +363,6 @@ cdef class Planar(ObjFunc):
         self.l_base = len(upper)
         # Input nodes
         self.input_count = len(self.inputs)
-        cdef int a
         for start, end in self.inputs.values():
             upper.append(radians(start))
             lower.append(radians(end))
