@@ -74,6 +74,7 @@ cdef class VPoint:
 
     # Expression
     cpdef str expr(self)
+    cpdef Coord to_coord(self, size_t ind)
 
 cdef class VLink:
 

@@ -159,6 +159,9 @@ class VPoint:
     def expr(self) -> str:
         ...
 
+    def to_coord(self, ind: int) -> Coord:
+        ...
+
     def __getitem__(self, i: int) -> float:
         ...
 

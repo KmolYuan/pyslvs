@@ -281,12 +281,12 @@ cdef class VPoint:
 
     cpdef Coord link_pos(self, str link):
         """Return the position for the vlink."""
-        cdef int ind
+        cdef size_t ind
         if self.type == VJoint.R or self.is_slot_link(link):
             ind = 0
         else:
             ind = 1
-        return Coord.__new__(Coord, self.c[ind, 0], self.c[ind, 1])
+        return self.to_coord(ind)
 
     cpdef bint grounded(self):
         """Return True if the joint pin is connected to ground link."""
@@ -333,6 +333,10 @@ cdef class VPoint:
         x_text = f"{self.x:.4f}".rstrip('0').rstrip('.')
         y_text = f"{self.y:.4f}".rstrip('0').rstrip('.')
         return f"J[{type_text}{color}, P[{x_text}, {y_text}], L[{links_text}]]"
+
+    cpdef Coord to_coord(self, size_t ind):
+        """Obtain coordinate by Coord object."""
+        return Coord.__new__(Coord, self.c[ind, 0], self.c[ind, 1])
 
     def __copy__(self) -> VPoint:
         cdef VPoint vpoint = VPoint.__new__(
