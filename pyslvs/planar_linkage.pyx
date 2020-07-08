@@ -11,9 +11,7 @@ email: pyslvs@gmail.com
 
 cimport cython
 from collections import OrderedDict
-from numpy cimport ndarray
 from numpy import zeros, array, arange, interp, float64 as np_float
-from pywt import dwt
 from libc.math cimport (HUGE_VAL, M_PI, fabs, sqrt, cos, sin, atan2,
                         INFINITY as INF)
 from .metaheuristics.utility cimport Objective
@@ -22,8 +20,6 @@ from .triangulation cimport (t_config, symbol_str, I_LABEL, A_LABEL, Expr,
     PXY, PLA, PLAP, PLLP, PLPP, PALP, EStack)
 from .bfgs cimport SolverSystem
 from .tinycadlib cimport radians, pxy, plap, pllp, plpp, palp
-
-DEF WAVELET = "db3"
 
 
 def norm_path(path, scale=1):
@@ -93,46 +89,6 @@ cdef void _aligned(Coord[:] path, size_t sp):
     for i in range(sp):
         path[len(path) - sp + i].x = tmp[i, 0]
         path[len(path) - sp + i].y = tmp[i, 1]
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef double[:, :] _wavelet(Coord[:] path) except *:
-    """Return DWT."""
-    cdef double[:, :] wave = zeros((len(path), 2), dtype=np_float)
-    cdef size_t i
-    cdef Coord c
-    for i in range(len(path)):
-        c = path[i]
-        wave[i, 0] = c.x
-        wave[i, 1] = c.y
-    xa, xd = dwt(wave[:, 0], WAVELET)
-    ya, yd = dwt(wave[:, 1], WAVELET)
-    wave = zeros((4, max(len(xa), len(xd))), dtype=np_float)
-    for i in range(len(xa)):
-        wave[0, i] = xa[i]
-        wave[1, i] = ya[i]
-    for i in range(len(xd)):
-        wave[2, i] = xd[i]
-        wave[3, i] = yd[i]
-    return wave
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef double _cmp_wavelet(double[:, :] wave1, double[:, :] wave2):
-    """Compare two waves."""
-    cdef double fitness = 0
-    cdef size_t i
-    for i in range(len(wave1)):
-        fitness += (
-            fabs(wave1[0, i] - wave2[0, i])
-            + fabs(wave1[1, i] - wave2[1, i])
-            + fabs(wave1[2, i] - wave2[2, i]) * 1e3
-            + fabs(wave1[3, i] - wave2[3, i]) * 1e3
-        )
-    return fitness
-
 
 def curvature(path):
     r"""Calculate the signed curvature and return as an array.
@@ -281,7 +237,7 @@ cdef double _mean(double[:] p):
 @cython.wraparound(False)
 cdef class Planar(Objective):
     """This class is used to verified kinematics of the linkage mechanism."""
-    cdef bint bfgs_mode, shape_only, wavelet_mode, ordered
+    cdef bint bfgs_mode, shape_only, ordered
     cdef int target_count, input_count, l_base
     cdef list vpoints, mapping_list
     cdef dict placement, target, mapping, mapping_r, data_dict
@@ -300,7 +256,6 @@ cdef class Planar(Objective):
         #     'upper': float,
         #     'lower': float,
         #     'shape_only': bool,
-        #     'wavelet_mode': bool,
         # }
         placement = mech.get('placement', {})
         if len(placement) == 0:
@@ -316,7 +271,6 @@ cdef class Planar(Objective):
         self.target = {}
         same = mech.get('same', {})
         self.shape_only = mech.get('shape_only', False)
-        self.wavelet_mode = mech.get('wavelet_mode', False)
         cdef int i, j
         cdef double[:, :] wave
         cdef Coord[:] path
@@ -325,11 +279,8 @@ cdef class Planar(Objective):
             for j in range(i):
                 if j in same:
                     i -= 1
-            if self.shape_only or self.wavelet_mode:
+            if self.shape_only:
                 _norm(path, 1)
-                if self.wavelet_mode:
-                    self.target[i] = _wavelet(path)
-                    continue
             self.target[i] = path
         # Expressions
         self.vpoints = list(mech.get('expression', []))
@@ -568,13 +519,11 @@ cdef class Planar(Objective):
             else:
                 self.mapping[m] = v[index]
                 index += 1
-        cdef ndarray[double, ndim=2] angles = zeros(
-            (self.input_count, self.target_count), dtype=np_float)
+        cdef double[:, :] angles = zeros((self.input_count, self.target_count),
+                                         dtype=np_float)
         for index in range(self.input_count):
             a_index = index + self.l_base
             angles[index, :] = array(v[a_index:a_index + self.target_count])
-        if self.wavelet_mode:
-            angles.sort(axis=1)
         cdef double fitness = 0
         cdef int node
         target = {n: [] for n in self.target}
@@ -587,11 +536,8 @@ cdef class Planar(Objective):
         cdef Coord[:] path1, path2
         for node in self.target:
             path1 = array(target[node], dtype=object)
-            if self.shape_only or self.wavelet_mode:
+            if self.shape_only:
                 _norm(path1, 1)
-                if self.wavelet_mode:
-                    fitness += _cmp_wavelet(_wavelet(path1), self.target[node])
-                    continue
             path2 = self.target[node]
             for index in range(self.target_count):
                 fitness += (<Coord>path1[index]).distance(path2[index])

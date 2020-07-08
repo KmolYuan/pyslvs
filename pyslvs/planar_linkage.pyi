@@ -44,9 +44,6 @@ class Planar(Objective[str]):
             + type: List[float]
         + `shape_only`: Compare paths by shape only.
             + type: bool
-        + `wavelet_mode`: Compare paths by wavelet transform, will force enable
-            `shape_only`.
-            + type: bool
 
         Variable array:
 
