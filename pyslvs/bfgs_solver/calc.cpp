@@ -43,9 +43,8 @@ auto point_on_point(Constraint *con) -> double {
 }
 
 auto p2p_distance(Constraint *con) -> double {
-    auto dx = P2_x - P1_x;
-    auto dy = P2_y - P1_y;
-    return (dx * dx + dy * dy - DISTANCE * DISTANCE) * 1e2;
+    auto tmp = hypot(P2_x - P1_x, P2_y - P1_y) - DISTANCE;
+    return tmp * tmp * 100;
 }
 
 auto point_on_line(Constraint *con) -> double {
@@ -59,21 +58,21 @@ auto point_on_line(Constraint *con) -> double {
 }
 
 auto internal_angle(Constraint *con) -> double {
-    auto temp = atan2(L2_P2_y - L2_P1_y, L2_P2_x - L2_P1_x)
-                - atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - ANGLE;
-    return temp * temp;
+    auto tmp = atan2(L2_P2_y - L2_P1_y, L2_P2_x - L2_P1_x)
+               - atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - ANGLE;
+    return tmp * tmp;
 }
 
 auto line_internal_angle(Constraint *con) -> double {
-    auto temp = sin(atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - ANGLE);
-    return temp * temp;
+    auto tmp = sin(atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - ANGLE);
+    return tmp * tmp;
 }
 }  // namespace
 
 auto calc(Constraint *cons, size_t cons_len) -> double {
     auto error = 0.;
     for (auto i = 0u; i < cons_len; i++) {
-        Constraint *con = cons + i;
+        auto con = cons + i;
         switch (con->type) {
             case POINT_ON_POINT:
                 error += point_on_point(con);

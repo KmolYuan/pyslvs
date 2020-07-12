@@ -4,14 +4,12 @@
  *  Contributor: KmolYuan
  */
 
-#include "calc.h"
-
-using namespace std;
+#include "derivatives.h"
 
 void derivatives(double **x, double *grad, size_t x_len, Constraint *cons,
                  size_t cons_len) {
     for (auto i = 0u; i < cons_len; i++) {
-        Constraint *con = cons + i;
+        auto con = cons + i;
         switch (con->type) {
             //////////////////////////////////////
             /// Point on Point GeoConstraint derivative
@@ -30,12 +28,12 @@ void derivatives(double **x, double *grad, size_t x_len, Constraint *cons,
                 // Derivative with respect to p2x
                 position = con->point2->x - x[0];
                 if (position >= 0 && position < x_len)
-                    grad[position] += -2 * (*con->point1->x - *con->point2->x);
+                    grad[position] -= 2 * (*con->point1->x - *con->point2->x);
 
                 // Derivative with respect to p2y
                 position = con->point2->y - x[0];
                 if (position >= 0 && position < x_len)
-                    grad[position] += -2 * (*con->point1->y - *con->point2->y);
+                    grad[position] -= 2 * (*con->point1->y - *con->point2->y);
                 break;
             }
             //////////////////////////////////////
@@ -55,17 +53,17 @@ void derivatives(double **x, double *grad, size_t x_len, Constraint *cons,
                 // Derivative with respect to p2x
                 position = con->point2->x - x[0];
                 if (position >= 0 && position < x_len)
-                    grad[position] += -2 * (*con->point1->x - *con->point2->x);
+                    grad[position] -= 2 * (*con->point1->x - *con->point2->x);
 
                 // Derivative with respect to p2y
                 position = con->point2->y - x[0];
                 if (position >= 0 && position < x_len)
-                    grad[position] += -2 * (*con->point1->y - *con->point2->y);
+                    grad[position] -= 2 * (*con->point1->y - *con->point2->y);
 
                 // Derivative with respect to DISTANCE
                 position = con->parameter - x[0];
                 if (position >= 0 && position < x_len)
-                    grad[position] += -2 * *con->parameter;
+                    grad[position] -= 2 * *con->parameter;
                 break;
             }
             //////////////////////////////////////
@@ -80,12 +78,12 @@ void derivatives(double **x, double *grad, size_t x_len, Constraint *cons,
                 // Derivative with respect to p2x
                 position = con->point2->x - x[0];
                 if (position >= 0 && position < x_len)
-                    grad[position] += -2 * (*con->point1->x - *con->point2->x);
+                    grad[position] -= 2 * (*con->point1->x - *con->point2->x);
 
                 // Derivative with respect to DISTANCE
                 position = con->parameter - x[0];
                 if (position >= 0 && position < x_len)
-                    grad[position] += -2 * *con->parameter;
+                    grad[position] -= 2 * *con->parameter;
                 break;
             }
         }

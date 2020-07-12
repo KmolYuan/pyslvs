@@ -1,5 +1,4 @@
-/*
- * ============================================================================
+/* ============================================================================
  * Name        : SolverPointers.cpp
  * Author      : Jonathan George
  * Contributor : KmolYuan
@@ -7,7 +6,7 @@
 
 #include <cmath>
 #include <iostream>
-#include "solve.h"
+#include "derivatives.h"
 
 using namespace std;
 
@@ -27,7 +26,7 @@ auto main() -> int {
     for (int i = 0; i < param_count; i++)
         pparameters[i] = &parameters[i];
     // Input a constant parameter list
-    double constants[] = {30, 10, 24, M_PI / 2};
+    double constants[] = {30, 10, 24, M_PI * 0.5};
 
     // Create geometric objects and constraints with pointers
     Point points[] = {

@@ -53,18 +53,15 @@ auto point_on_point(Point *point1, Point *point2) -> Constraint {
     return con;
 }
 
-auto p2p_distance(Point *point1, Point *point2, double *value)
-    -> Constraint {
+auto p2p_distance(Point *point1, Point *point2, double *value) -> Constraint {
     return p2p_distance_constraint(P2P_DISTANCE, point1, point2, value);
 }
 
-[[maybe_unused]] auto point_on_line(Point *point1, Line *line1)
-    -> Constraint {
+[[maybe_unused]] auto point_on_line(Point *point1, Line *line1) -> Constraint {
     return point_line_constraint(POINT_ON_LINE, point1, line1);
 }
 
-auto internal_angle(Line *line1, Line *line2, double *value)
-    -> Constraint {
+auto internal_angle(Line *line1, Line *line2, double *value) -> Constraint {
     return angle_constraint(INTERNAL_ANGLE, line1, line2, value);
 }
 

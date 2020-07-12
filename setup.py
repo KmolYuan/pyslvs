@@ -49,8 +49,7 @@ ext_modules = [Extension(
     src_path.replace(sep, '.') + '.bfgs',
     [
         pth_join(src_path, 'bfgs.pyx'),
-        pth_join(bfgs_path, 'geometric_constraint.cpp'),
-        pth_join(bfgs_path, 'derivatives.cpp'),
+        pth_join(bfgs_path, 'constraints.cpp'),
         pth_join(bfgs_path, 'solve.cpp'),
         pth_join(bfgs_path, 'calc.cpp'),
     ],
@@ -87,7 +86,7 @@ class Build(build_ext):
         elif compiler == 'msvc':
             for e in self.extensions:
                 e.define_macros = macros[:1]
-                e.extra_compile_args = ['/O2']
+                e.extra_compile_args = ['/O2', '/std:c++17']
         super(Build, self).build_extensions()
 
     def finalize_options(self):

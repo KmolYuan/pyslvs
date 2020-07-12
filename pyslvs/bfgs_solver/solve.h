@@ -65,7 +65,6 @@ Constraint line_internal_angle(Line *, double *);
 ///////////////////////////////////////
 
 int solve(double **, size_t, Constraint *, size_t, bool);
-void derivatives(double **, double *, size_t, Constraint *, size_t);
 
 #ifdef __cplusplus
 }

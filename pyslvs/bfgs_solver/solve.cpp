@@ -20,6 +20,7 @@
 #define VALID_SOLUTION_FINE 1e-12
 #define VALID_SOLUTION_ROUGH 1e-4
 
+// Dynamic arrays
 using array1d = std::vector<double>;
 using array2d = std::vector<array1d>;
 
@@ -147,13 +148,14 @@ auto solve(double **param, size_t param_len, Constraint *cons, size_t cons_len,
     auto delta_x = array1d(param_len);
     auto grad_new = array1d(param_len);
     auto gamma = array1d(param_len);
-    auto gn = array1d(param_len);  // gamma' dot n
+    auto gn = array1d(param_len);  // gamma' @ n
     auto first_second = array2d(param_len, array1d(param_len));
-    auto dgn =
-        array2d(param_len, array1d(param_len));  // delta_x dot gamma' dot n
-    auto gd = array2d(param_len, array1d(param_len));  // gamma' dot delta_x
-    auto ngd =
-        array2d(param_len, array1d(param_len));  // n dot gamma dot delta_x
+    // delta_x @ gamma' @ n
+    auto dgn = array2d(param_len, array1d(param_len));
+    // gamma' @ delta_x
+    auto gd = array2d(param_len, array1d(param_len));
+    // n @ gamma @ delta_x
+    auto ngd = array2d(param_len, array1d(param_len));
     // Calculate delta_x
     for (auto i = 0u; i < param_len; i++)
         // Calculate the difference in x for the Hessian update
@@ -179,20 +181,20 @@ auto solve(double **param, size_t param_len, Constraint *cons, size_t cons_len,
         // make sure that bottom is never 0
         if (bottom == 0.)
             bottom = 1e-10;
-        // calculate all (1xn)dot(nxn)
+        // calculate all (1xn)@(nxn)
         for (auto i = 0u; i < param_len; i++) {
             gn[i] = 0;
             for (auto j = 0u; j < param_len; j++)
                 // This is gn transpose
                 gn[i] += gamma[j] * n[i][j];
         }
-        // calculate all (1xn)dot(nx1)
-        auto gng = 0.;  // gamma' dot n dot gamma
+        // calculate all (1xn)@(nx1)
+        auto gng = 0.;  // gamma' @ n @ gamma
         for (auto i = 0u; i < param_len; i++)
             gng += gn[i] * gamma[i];
         // Calculate the first term
         auto first_term = 1 + gng / bottom;
-        // Calculate all (nx1)dot(1xn) matrices
+        // Calculate all (nx1)@(1xn) matrices
         for (auto i = 0u; i < param_len; i++)
             for (auto j = 0u; j < param_len; j++) {
                 first_second[i][j] =
@@ -200,7 +202,7 @@ auto solve(double **param, size_t param_len, Constraint *cons, size_t cons_len,
                 dgn[i][j] = delta_x[i] * gn[j];
                 gd[i][j] = gamma[i] * delta_x[j];
             }
-        // Calculate all (nxn)dot(nxn) matrices
+        // Calculate all (nxn)@(nxn) matrices
         for (auto i = 0u; i < param_len; i++)
             for (auto j = 0u; j < param_len; j++) {
                 ngd[i][j] = 0;
@@ -252,7 +254,7 @@ auto solve(double **param, size_t param_len, Constraint *cons, size_t cons_len,
                 // two
                 alpha3 = alpha2;
                 f3 = f2;
-                alpha2 /= 2;
+                alpha2 *= 0.5;
                 for (auto i = 0u; i < param_len; i++)
                     // calculate the new x
                     *param[i] = x_old[i] + alpha2 * s[i];
@@ -277,7 +279,7 @@ auto solve(double **param, size_t param_len, Constraint *cons, size_t cons_len,
         // Guarantee that the new alpha_s is within the bracket
         if (alpha_s >= alpha3 || alpha_s <= alpha1)
             alpha_s = alpha2;
-        // Avoid NaN
+
         if (std::isnan(alpha_s))
             alpha_s = 0;
 
@@ -298,7 +300,7 @@ auto solve(double **param, size_t param_len, Constraint *cons, size_t cons_len,
             grad[i] = grad_new[i];
         }
         delta_x_norm = sqrt(delta_x_norm);
-        iterations++;
+        iterations += 1;
         /////////////////////////////////////////////////////////////
         /// End of Main loop
         /////////////////////////////////////////////////////////////
