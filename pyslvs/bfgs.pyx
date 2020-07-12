@@ -15,8 +15,6 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.math cimport M_PI, cos, sin
 from libcpp.pair cimport pair
 from .sketch_solve cimport (
-    ROUGH,
-    SUCCESS,
     point_on_point,
     p2p_distance,
     internal_angle,
@@ -430,8 +428,8 @@ cdef class SolverSystem:
             cons[i] = con
             i += 1
         # Solve
-        cdef int flag = solve(params_ptr, params_count, cons, cons_count, ROUGH)
-        if flag == SUCCESS:
+        cdef bint flag = solve(params_ptr, params_count, cons, cons_count, False)
+        if flag:
             solved_points = []
             for i, vpoint in enumerate(self.vpoints):
                 if vpoint.type == VJoint.R:
@@ -443,7 +441,7 @@ cdef class SolverSystem:
                     ))
         PyMem_Free(params_ptr)
         PyMem_Free(cons)
-        if flag == SUCCESS:
+        if flag:
             return solved_points
         else:
             raise ValueError("no valid solutions were found from initialed values")

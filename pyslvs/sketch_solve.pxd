@@ -12,9 +12,6 @@ email: pyslvs@gmail.com
 """
 
 cdef extern from "bfgs_solver/solve.h" nogil:
-    int ROUGH
-    int SUCCESS
-
     struct Point:
         double *x
         double *y
@@ -36,5 +33,4 @@ cdef extern from "bfgs_solver/solve.h" nogil:
     Constraint point_on_line(Point *, Line *)
     Constraint internal_angle(Line *, Line *, double *)
     Constraint line_internal_angle(Line *, double *)
-
-    int solve(double **, size_t, Constraint *, size_t, int)
+    bint solve(double **, size_t, Constraint *, size_t, bint)

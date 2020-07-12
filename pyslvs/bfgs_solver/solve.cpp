@@ -38,7 +38,7 @@ auto cal_grad(double *param, Constraint *cons, size_t cons_len, double pert)
 }  // namespace
 
 auto solve(double **param, size_t param_len, Constraint *cons, size_t cons_len,
-           bool is_fine) -> int {
+           bool is_fine) -> bool {
     // Save the original parameters for later
     auto param_origin = array1d(param_len);
     for (auto i = 0u; i < param_len; i++)
@@ -46,7 +46,7 @@ auto solve(double **param, size_t param_len, Constraint *cons, size_t cons_len,
     // Calculate Function at the starting point:
     auto f0 = calc(cons, cons_len);
     if (f0 < EPS)
-        return SUCCESS;
+        return true;
 
     // Calculate the gradient at the starting point:
     // The gradient vector (1xn)
@@ -307,9 +307,9 @@ auto solve(double **param, size_t param_len, Constraint *cons, size_t cons_len,
     }
     // End of function
     if (fnew < (is_fine ? VALID_SOLUTION_FINE : VALID_SOLUTION_ROUGH))
-        return SUCCESS;
+        return true;
     // Replace the bad numbers with the last result
     for (auto i = 0u; i < param_len; i++)
         *param[i] = param_origin[i];
-    return NO_SOLUTION;
+    return false;
 }

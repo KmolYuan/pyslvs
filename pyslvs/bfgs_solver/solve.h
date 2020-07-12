@@ -16,15 +16,6 @@ extern "C" {
 #endif
 
 ///////////////////////////////////////
-/// Solver parameters
-///////////////////////////////////////
-
-#define ROUGH 0
-// Solve exit codes
-#define SUCCESS 1
-#define NO_SOLUTION 0
-
-///////////////////////////////////////
 /// Position Expression data
 ///////////////////////////////////////
 
@@ -44,7 +35,7 @@ struct Constraint {
 };
 
 ///////////////////////////////////////
-/// Constraint Functions (for safe access of members)
+/// Functions (for safe access of members)
 ///////////////////////////////////////
 
 // Geometric Constraints
@@ -59,12 +50,7 @@ Constraint internal_angle(Line *, Line *, double *);
 [[maybe_unused]]
 #endif
 Constraint line_internal_angle(Line *, double *);
-
-///////////////////////////////////////
-/// Public Functions
-///////////////////////////////////////
-
-int solve(double **, size_t, Constraint *, size_t, bool);
+bool solve(double **, size_t, Constraint *, size_t, bool);
 
 #ifdef __cplusplus
 }

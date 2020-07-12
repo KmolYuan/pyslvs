@@ -49,7 +49,7 @@ auto main() -> int {
     printpoints(points, point_count);
 
     // Solve
-    if (solve(pparameters, param_count, cons, cons_count, ROUGH) == SUCCESS)
+    if (solve(pparameters, param_count, cons, cons_count, false))
         cout << "A good Solution was found." << endl;
     else
         cout << "No valid Solutions were found from this start point." << endl;
