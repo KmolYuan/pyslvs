@@ -6,6 +6,7 @@ PointerAlignment: Right
 UseTab: Never
 SpaceBeforeParens: ControlStatements
 SpacesInParentheses: false
+BreakBeforeBinaryOperators: NonAssignment
 ReflowComments: true
 AlwaysBreakTemplateDeclarations: Yes
 AllowAllParametersOfDeclarationOnNextLine: true

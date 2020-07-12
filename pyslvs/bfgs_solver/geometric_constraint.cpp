@@ -7,8 +7,8 @@
 #include "calc.h"
 
 namespace {
-auto P2PDistanceConstraint(unsigned type, Point *point1, Point *point2,
-                           double *value) -> Constraint {
+auto p2p_distance_constraint(unsigned type, Point *point1, Point *point2,
+                             double *value) -> Constraint {
     auto con = Constraint{};
     con.type = type;
     con.point1 = point1;
@@ -17,7 +17,7 @@ auto P2PDistanceConstraint(unsigned type, Point *point1, Point *point2,
     return con;
 }
 
-auto PointLineConstraint(unsigned type, Point *point1, Line *line1)
+auto point_line_constraint(unsigned type, Point *point1, Line *line1)
     -> Constraint {
     auto con = Constraint{};
     con.type = type;
@@ -26,7 +26,7 @@ auto PointLineConstraint(unsigned type, Point *point1, Line *line1)
     return con;
 }
 
-auto LineConstraint(unsigned type, Line *line1, double *value) -> Constraint {
+auto line_constraint(unsigned type, Line *line1, double *value) -> Constraint {
     auto con = Constraint{};
     con.type = type;
     con.line1 = line1;
@@ -34,7 +34,7 @@ auto LineConstraint(unsigned type, Line *line1, double *value) -> Constraint {
     return con;
 }
 
-auto AngleConstraint(unsigned type, Line *line1, Line *line2, double *value)
+auto angle_constraint(unsigned type, Line *line1, Line *line2, double *value)
     -> Constraint {
     auto con = Constraint{};
     con.type = type;
@@ -45,7 +45,7 @@ auto AngleConstraint(unsigned type, Line *line1, Line *line2, double *value)
 }
 }  // namespace
 
-auto PointOnPointConstraint(Point *point1, Point *point2) -> Constraint {
+auto point_on_point(Point *point1, Point *point2) -> Constraint {
     auto con = Constraint{};
     con.type = POINT_ON_POINT;
     con.point1 = point1;
@@ -53,22 +53,22 @@ auto PointOnPointConstraint(Point *point1, Point *point2) -> Constraint {
     return con;
 }
 
-auto P2PDistanceConstraint(Point *point1, Point *point2, double *value)
+auto p2p_distance(Point *point1, Point *point2, double *value)
     -> Constraint {
-    return P2PDistanceConstraint(P2P_DISTANCE, point1, point2, value);
+    return p2p_distance_constraint(P2P_DISTANCE, point1, point2, value);
 }
 
-[[maybe_unused]] auto PointOnLineConstraint(Point *point1, Line *line1)
+[[maybe_unused]] auto point_on_line(Point *point1, Line *line1)
     -> Constraint {
-    return PointLineConstraint(POINT_ON_LINE, point1, line1);
+    return point_line_constraint(POINT_ON_LINE, point1, line1);
 }
 
-auto InternalAngleConstraint(Line *line1, Line *line2, double *value)
+auto internal_angle(Line *line1, Line *line2, double *value)
     -> Constraint {
-    return AngleConstraint(INTERNAL_ANGLE, line1, line2, value);
+    return angle_constraint(INTERNAL_ANGLE, line1, line2, value);
 }
 
-[[maybe_unused]] auto LineInternalAngleConstraint(Line *line1, double *value)
+[[maybe_unused]] auto line_internal_angle(Line *line1, double *value)
     -> Constraint {
-    return LineConstraint(LINE_INTERNAL_ANGLE, line1, value);
+    return line_constraint(LINE_INTERNAL_ANGLE, line1, value);
 }

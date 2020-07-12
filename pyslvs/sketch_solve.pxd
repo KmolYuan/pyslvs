@@ -12,13 +12,8 @@ email: pyslvs@gmail.com
 """
 
 cdef extern from "bfgs_solver/solve.h" nogil:
-
-    int Rough
-    int Fine
-    int MaxIterations
-
-    int Success
-    int NoSolution
+    int ROUGH
+    int SUCCESS
 
     struct Point:
         double *x
@@ -36,10 +31,10 @@ cdef extern from "bfgs_solver/solve.h" nogil:
         Line *line2
         double *parameter
 
-    Constraint PointOnPointConstraint(Point *, Point *);
-    Constraint P2PDistanceConstraint(Point *, Point *, double *)
-    Constraint PointOnLineConstraint(Point *, Line *)
-    Constraint InternalAngleConstraint(Line *, Line *, double *)
-    Constraint LineInternalAngleConstraint(Line *, double *)
+    Constraint point_on_point(Point *, Point *)
+    Constraint p2p_distance(Point *, Point *, double *)
+    Constraint point_on_line(Point *, Line *)
+    Constraint internal_angle(Line *, Line *, double *)
+    Constraint line_internal_angle(Line *, double *)
 
     int solve(double **, size_t, Constraint *, size_t, int)

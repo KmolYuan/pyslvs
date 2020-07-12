@@ -6,13 +6,22 @@
  *  Contributor: KmolYuan
  */
 
+#include "solve.h"
 #include <cmath>
 #include <vector>
-#include "solve.h"
 #include "calc.h"
 
-typedef std::vector<double> array1d;
-typedef std::vector<array1d> array2d;
+#define EPS 1e-20
+#define MAX_ITER 50
+#define PERT_MAG 1e-6
+#define PERT_MIN 1e-10
+#define CONVERGENCE_ROUGH 1e-8
+#define CONVERGENCE_FINE 1e-10
+#define VALID_SOLUTION_FINE 1e-12
+#define VALID_SOLUTION_ROUGH 1e-4
+
+using array1d = std::vector<double>;
+using array2d = std::vector<array1d>;
 
 namespace {
 auto cal_grad(double *param, Constraint *cons, size_t cons_len, double pert)
@@ -35,13 +44,13 @@ auto solve(double **param, size_t param_len, Constraint *cons, size_t cons_len,
         param_origin[i] = *param[i];
     // Calculate Function at the starting point:
     auto f0 = calc(cons, cons_len);
-    if (f0 < SmallF)
-        return Success;
+    if (f0 < EPS)
+        return SUCCESS;
 
     // Calculate the gradient at the starting point:
     // The gradient vector (1xn)
     auto grad = array1d(param_len);
-    auto pert = f0 * PertMag;
+    auto pert = f0 * PERT_MAG;
     // The norm of the gradient vector
     for (auto j = 0u; j < param_len; j++)
         grad[j] = cal_grad(param[j], cons, cons_len, pert);
@@ -140,9 +149,11 @@ auto solve(double **param, size_t param_len, Constraint *cons, size_t cons_len,
     auto gamma = array1d(param_len);
     auto gn = array1d(param_len);  // gamma' dot n
     auto first_second = array2d(param_len, array1d(param_len));
-    auto dgn = array2d(param_len, array1d(param_len));  // delta_x dot gamma' dot n
-    auto gd = array2d(param_len, array1d(param_len));   // gamma' dot delta_x
-    auto ngd = array2d(param_len, array1d(param_len));  // n dot gamma dot delta_x
+    auto dgn =
+        array2d(param_len, array1d(param_len));  // delta_x dot gamma' dot n
+    auto gd = array2d(param_len, array1d(param_len));  // gamma' dot delta_x
+    auto ngd =
+        array2d(param_len, array1d(param_len));  // n dot gamma dot delta_x
     // Calculate delta_x
     for (auto i = 0u; i < param_len; i++)
         // Calculate the difference in x for the Hessian update
@@ -150,15 +161,15 @@ auto solve(double **param, size_t param_len, Constraint *cons, size_t cons_len,
 
     auto iterations = 1u;
     auto delta_x_norm = 1.;
-    while (delta_x_norm > (is_fine ? XConvergenceFine : XConvergenceRough) &&
-           fnew > SmallF && iterations < MaxIterations * param_len) {
+    while (delta_x_norm > (is_fine ? CONVERGENCE_FINE : CONVERGENCE_ROUGH)
+           && fnew > EPS && iterations < MAX_ITER * param_len) {
         //////////////////////////////////////////////////////////////////////
         /// Start of main loop!!!!
         //////////////////////////////////////////////////////////////////////
         auto bottom = 0.;
-        pert = fnew * PertMag;
-        if (pert < PertMin)
-            pert = PertMin;
+        pert = fnew * PERT_MAG;
+        if (pert < PERT_MIN)
+            pert = PERT_MIN;
         for (auto i = 0u; i < param_len; i++) {
             grad_new[i] = cal_grad(param[i], cons, cons_len, pert);
             // Calculate the change in the gradient
@@ -293,10 +304,10 @@ auto solve(double **param, size_t param_len, Constraint *cons, size_t cons_len,
         /////////////////////////////////////////////////////////////
     }
     // End of function
-    if (fnew < (is_fine ? ValidSolutionFine : ValidSoltuionRough))
-        return Success;
+    if (fnew < (is_fine ? VALID_SOLUTION_FINE : VALID_SOLUTION_ROUGH))
+        return SUCCESS;
     // Replace the bad numbers with the last result
     for (auto i = 0u; i < param_len; i++)
         *param[i] = param_origin[i];
-    return NoSolution;
+    return NO_SOLUTION;
 }

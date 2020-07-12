@@ -15,13 +15,13 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.math cimport M_PI, cos, sin
 from libcpp.pair cimport pair
 from .sketch_solve cimport (
-    Rough,
-    Success,
-    PointOnPointConstraint,
-    P2PDistanceConstraint,
-    InternalAngleConstraint,
-    PointOnLineConstraint,
-    LineInternalAngleConstraint,
+    ROUGH,
+    SUCCESS,
+    point_on_point,
+    p2p_distance,
+    internal_angle,
+    point_on_line,
+    line_internal_angle,
     solve,
 )
 from .expression cimport get_vlinks, VJoint, VPoint, Coord
@@ -210,7 +210,7 @@ cdef class SolverSystem:
                     x = vp1.distance(vp2)
                     self.data_dict[frozen_pair] = x
                 self.data_values.push_back(x)
-                self.cons_list.push_back(P2PDistanceConstraint(p1, p2, &self.data_values.back()))
+                self.cons_list.push_back(p2p_distance(p1, p2, &self.data_values.back()))
             for c in vlink.points[2:]:
                 if c in self.data_dict:
                     # Known coordinate
@@ -227,7 +227,7 @@ cdef class SolverSystem:
                         x = vp1.distance(vp2)
                         self.data_dict[frozen_pair] = x
                     self.data_values.push_back(x)
-                    self.cons_list.push_back(P2PDistanceConstraint(p1, p2, &self.data_values.back()))
+                    self.cons_list.push_back(p2p_distance(p1, p2, &self.data_values.back()))
         # Slider constraints
         cdef Line *slider_slot
         cdef pair[int, int] slider
@@ -243,15 +243,15 @@ cdef class SolverSystem:
             if vp1.grounded():
                 # Slot is grounded
                 self.constants.push_back(_radians(vp1.angle))
-                self.cons_list.push_back(LineInternalAngleConstraint(slider_slot, &self.constants.back()))
-                self.cons_list.push_back(PointOnLineConstraint(p1, slider_slot))
+                self.cons_list.push_back(line_internal_angle(slider_slot, &self.constants.back()))
+                self.cons_list.push_back(point_on_line(p1, slider_slot))
                 if vp1.has_offset():
                     p2 = &self.slider_bases[b]
                     if vp1.offset():
                         self.constants.push_back(vp1.offset())
-                        self.cons_list.push_back(P2PDistanceConstraint(p2, p1, &self.constants.back()))
+                        self.cons_list.push_back(p2p_distance(p2, p1, &self.constants.back()))
                     else:
-                        self.cons_list.push_back(PointOnPointConstraint(p2, p1))
+                        self.cons_list.push_back(point_on_point(p2, p1))
             else:
                 # Slider between links
                 for name in vp1.links[:1]:
@@ -272,19 +272,19 @@ cdef class SolverSystem:
                         p2 = &self.points[c]
                     self.slider_lines.push_back([&self.slider_bases[b], p2])
                     self.constants.push_back(_radians(vp1.slope_angle(vp2) - vp1.angle))
-                    self.cons_list.push_back(InternalAngleConstraint(
+                    self.cons_list.push_back(internal_angle(
                         slider_slot,
                         &self.slider_lines.back(),
                         &self.constants.back()
                     ))
-                    self.cons_list.push_back(PointOnLineConstraint(p1, slider_slot))
+                    self.cons_list.push_back(point_on_line(p1, slider_slot))
                     if vp1.has_offset():
                         p2 = &self.slider_bases[b]
                         if vp1.offset():
                             self.constants.push_back(vp1.offset())
-                            self.cons_list.push_back(P2PDistanceConstraint(p2, p1, &self.constants.back()))
+                            self.cons_list.push_back(p2p_distance(p2, p1, &self.constants.back()))
                         else:
-                            self.cons_list.push_back(PointOnPointConstraint(p2, p1))
+                            self.cons_list.push_back(point_on_point(p2, p1))
             if vp1.type != VJoint.P:
                 continue
             for name in vp1.links[1:]:
@@ -305,7 +305,7 @@ cdef class SolverSystem:
                     p2 = &self.points[c]
                 self.slider_lines.push_back([p1, p2])
                 self.constants.push_back(_radians(vp1.slope_angle(vp2) - vp1.angle))
-                self.cons_list.push_back(InternalAngleConstraint(
+                self.cons_list.push_back(internal_angle(
                     slider_slot,
                     &self.slider_lines.back(),
                     &self.constants.back()
@@ -317,7 +317,7 @@ cdef class SolverSystem:
                 continue
             self.handles.push_back([&self.points[b], &self.points[d]])
             self.inputs_angle.push_back(_radians(angle))
-            self.cons_list.push_back(LineInternalAngleConstraint(
+            self.cons_list.push_back(line_internal_angle(
                 &self.handles.back(),
                 &self.inputs_angle.back()
             ))
@@ -430,8 +430,8 @@ cdef class SolverSystem:
             cons[i] = con
             i += 1
         # Solve
-        cdef int flag = solve(params_ptr, params_count, cons, cons_count, Rough)
-        if flag == Success:
+        cdef int flag = solve(params_ptr, params_count, cons, cons_count, ROUGH)
+        if flag == SUCCESS:
             solved_points = []
             for i, vpoint in enumerate(self.vpoints):
                 if vpoint.type == VJoint.R:
@@ -443,7 +443,7 @@ cdef class SolverSystem:
                     ))
         PyMem_Free(params_ptr)
         PyMem_Free(cons)
-        if flag == Success:
+        if flag == SUCCESS:
             return solved_points
         else:
             raise ValueError("no valid solutions were found from initialed values")

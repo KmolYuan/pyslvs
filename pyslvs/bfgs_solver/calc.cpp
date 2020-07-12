@@ -30,8 +30,8 @@
 #define L2_P2 L2->p2
 #define L2_P2_x (*L2_P2->x)
 #define L2_P2_y (*L2_P2->y)
-#define RADIUS (*con->parameter)
-#define DISTANCE fabs(RADIUS)
+#define ANGLE (*con->parameter)
+#define DISTANCE fabs(ANGLE)
 
 namespace {
 auto point_on_point(Constraint *con) -> double {
@@ -43,8 +43,9 @@ auto point_on_point(Constraint *con) -> double {
 }
 
 auto p2p_distance(Constraint *con) -> double {
-    auto temp = hypot(P2_x - P1_x, P2_y - P1_y) - DISTANCE;
-    return temp * temp * 100;
+    auto dx = P2_x - P1_x;
+    auto dy = P2_y - P1_y;
+    return (dx * dx + dy * dy - DISTANCE * DISTANCE) * 1e2;
 }
 
 auto point_on_line(Constraint *con) -> double {
@@ -52,18 +53,19 @@ auto point_on_line(Constraint *con) -> double {
     auto dy = L1_P2_y - L1_P1_y;
     auto t =
         ((P1_x - L1_P1_x) * dx + (P1_y - L1_P1_y) * dy) / (dx * dx + dy * dy);
-    auto temp = hypot((L1_P1_x + dx * t) - P1_x, (L1_P1_y + dy * t) - P1_y);
-    return temp * temp / 1000;
+    dx = (L1_P1_x + dx * t) - P1_x;
+    dy = (L1_P1_y + dy * t) - P1_y;
+    return (dx * dx + dy * dy) * 1e-3;
 }
 
 auto internal_angle(Constraint *con) -> double {
-    auto temp = atan2(L2_P2_y - L2_P1_y, L2_P2_x - L2_P1_x) -
-                atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - RADIUS;
+    auto temp = atan2(L2_P2_y - L2_P1_y, L2_P2_x - L2_P1_x)
+                - atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - ANGLE;
     return temp * temp;
 }
 
 auto line_internal_angle(Constraint *con) -> double {
-    auto temp = sin(atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - RADIUS);
+    auto temp = sin(atan2(L1_P2_y - L1_P1_y, L1_P2_x - L1_P1_x) - ANGLE);
     return temp * temp;
 }
 }  // namespace

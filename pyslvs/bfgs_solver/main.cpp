@@ -5,8 +5,8 @@
  * Contributor : KmolYuan
  *============================================================================*/
 
-#include <iostream>
 #include <cmath>
+#include <iostream>
 #include "solve.h"
 
 using namespace std;
@@ -35,24 +35,22 @@ auto main() -> int {
         {pparameters[4], pparameters[5]}, {pparameters[6], pparameters[7]},
         {&constants[0], &constants[1]},
     };
-    const size_t point_count = sizeof(points) / sizeof(*points);
-
     Line lines[] = {
         {&points[0], &points[1]},
         {&points[1], &points[2]},
     };
-
     Constraint cons[] = {
-        InternalAngleConstraint(&lines[0], &lines[1], &constants[3]),
-        PointOnPointConstraint(&points[2], &points[4]),
-        PointOnPointConstraint(&points[3], &points[4]),
-        P2PDistanceConstraint(&points[1], &points[2], &constants[2]),
+        internal_angle(&lines[0], &lines[1], &constants[3]),
+        point_on_point(&points[2], &points[4]),
+        point_on_point(&points[3], &points[4]),
+        p2p_distance(&points[1], &points[2], &constants[2]),
     };
-    const int cons_count = sizeof(cons) / sizeof(*cons);
+    const auto point_count = sizeof(points) / sizeof(*points);
+    const auto cons_count = sizeof(cons) / sizeof(*cons);
     printpoints(points, point_count);
 
     // Solve
-    if (solve(pparameters, param_count, cons, cons_count, Rough) == Success)
+    if (solve(pparameters, param_count, cons, cons_count, ROUGH) == SUCCESS)
         cout << "A good Solution was found." << endl;
     else
         cout << "No valid Solutions were found from this start point." << endl;

@@ -18,7 +18,7 @@ void derivatives(double **x, double *grad, size_t x_len, Constraint *cons,
             //////////////////////////////////////
             case POINT_ON_POINT: {
                 // Derivative with respect to p1x
-                auto position = con->point1->x - x[0];
+                auto position = size_t(con->point1->x - x[0]);
                 if (position >= 0 && position < x_len)
                     grad[position] += 2 * (*con->point1->x - *con->point2->x);
 
@@ -43,7 +43,7 @@ void derivatives(double **x, double *grad, size_t x_len, Constraint *cons,
             //////////////////////////////////////
             case P2P_DISTANCE: {
                 // Derivative with respect to p1x
-                auto position = con->point1->x - x[0];
+                auto position = size_t(con->point1->x - x[0]);
                 if (position >= 0 && position < x_len)
                     grad[position] += 2 * (*con->point1->x - *con->point2->x);
 
@@ -73,7 +73,7 @@ void derivatives(double **x, double *grad, size_t x_len, Constraint *cons,
             //////////////////////////////////////
             case POINT_ON_LINE: {
                 // Derivative with respect to p1x
-                auto position = con->point1->x - x[0];
+                auto position = size_t(con->point1->x - x[0]);
                 if (position >= 0 && position < x_len)
                     grad[position] += 2 * (*con->point1->x - *con->point2->x);
 

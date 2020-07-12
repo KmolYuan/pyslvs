@@ -7,30 +7,22 @@
  *  Contributor: KmolYuan
  */
 
+#ifdef __cplusplus
 #include <cstddef>
+extern "C" {
+#else
+#include <stdbool.h>
+#include <stddef.h>
+#endif
 
 ///////////////////////////////////////
 /// Solver parameters
 ///////////////////////////////////////
 
-#define PertMag 1e-6
-#define PertMin 1e-10
-#define XConvergenceRough 1e-8
-#define XConvergenceFine 1e-10
-#define SmallF 1e-20
-#define ValidSolutionFine 1e-12
-#define ValidSoltuionRough 1e-4
-#define Rough 0
-// Note that the total number of iterations allowed is MaxIterations *xLength
-#define MaxIterations 50
-
+#define ROUGH 0
 // Solve exit codes
-#define Success 1
-#define NoSolution 0
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define SUCCESS 1
+#define NO_SOLUTION 0
 
 ///////////////////////////////////////
 /// Position Expression data
@@ -48,7 +40,7 @@ struct Constraint {
     unsigned type;
     Point *point1, *point2;
     Line *line1, *line2;
-    double *parameter;  // Radius, length, angle etc.
+    double *parameter;
 };
 
 ///////////////////////////////////////
@@ -56,11 +48,17 @@ struct Constraint {
 ///////////////////////////////////////
 
 // Geometric Constraints
-Constraint PointOnPointConstraint(Point *, Point *);
-Constraint P2PDistanceConstraint(Point *, Point *, double *);
-[[maybe_unused]] Constraint PointOnLineConstraint(Point *, Line *);
-Constraint InternalAngleConstraint(Line *, Line *, double *);
-[[maybe_unused]] Constraint LineInternalAngleConstraint(Line *, double *);
+Constraint point_on_point(Point *, Point *);
+Constraint p2p_distance(Point *, Point *, double *);
+#ifdef __cplusplus
+[[maybe_unused]]
+#endif
+Constraint point_on_line(Point *, Line *);
+Constraint internal_angle(Line *, Line *, double *);
+#ifdef __cplusplus
+[[maybe_unused]]
+#endif
+Constraint line_internal_angle(Line *, double *);
 
 ///////////////////////////////////////
 /// Public Functions
