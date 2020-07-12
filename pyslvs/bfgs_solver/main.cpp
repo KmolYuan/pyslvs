@@ -6,18 +6,19 @@
  *============================================================================*/
 
 #include <iostream>
+#include <cmath>
 #include "solve.h"
 
 using namespace std;
 
 // Show coordinates
-void printpoints(Point *points, size_t N) {
-    for (size_t i = 0; i < N; i++)
+auto printpoints(Point *points, size_t N) {
+    for (auto i = 0u; i < N; i++)
         cout << "Point " << i << ": (" << *points[i].x << ", " << *points[i].y
              << ")" << endl;
 }
 
-int main() {
+auto main() -> int {
     // Input a parameter list
     double parameters[] = {0, 0, 5, 0, 6, 5, 6, 5};
     const size_t param_count = sizeof(parameters) / sizeof(*parameters);
@@ -26,7 +27,7 @@ int main() {
     for (int i = 0; i < param_count; i++)
         pparameters[i] = &parameters[i];
     // Input a constant parameter list
-    double constants[] = {30, 10, 24};
+    double constants[] = {30, 10, 24, M_PI / 2};
 
     // Create geometric objects and constraints with pointers
     Point points[] = {
@@ -42,7 +43,7 @@ int main() {
     };
 
     Constraint cons[] = {
-        HorizontalConstraint(&lines[0]),
+        InternalAngleConstraint(&lines[0], &lines[1], &constants[3]),
         PointOnPointConstraint(&points[2], &points[4]),
         PointOnPointConstraint(&points[3], &points[4]),
         P2PDistanceConstraint(&points[1], &points[2], &constants[2]),
