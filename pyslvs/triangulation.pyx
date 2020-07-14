@@ -32,8 +32,7 @@ cdef str symbol_str(Sym p):
 
 
 cdef class EStack:
-    """Triangle solution stack, generated from
-    [`t_config`](#t_config).
+    """Triangle solution stack, generated from [`t_config`](#t_config).
     It is pointless to call the constructor.
     """
 
@@ -198,7 +197,7 @@ cdef bint _clockwise(double[:] c1, double[:] c2, double[:] c3):
     return val == 0 or val > 0
 
 
-cdef (bint, int, int) _get_reliable_friend(
+cdef (bint, int, int) _get_reliable_friends(
     int node,
     VPoint vpoint,
     object vlinks,
@@ -221,12 +220,26 @@ cdef (bint, int, int) _get_reliable_friend(
     return False, -1, -1
 
 
-cdef int _get_not_base_friend(
-    int node,
-    VPoint vpoint,
+cdef int _get_intersection(
+    int node1,
+    int node2,
+    object vpoints,
     object vlinks,
     object status
 ):
+    """Get a configured node between two nodes."""
+    cdef int node
+    cdef VPoint vp
+    for node, vp in enumerate(vpoints):
+        if (set(vp.links) & set((<VPoint>vpoints[node1]).links)
+            and set(vp.links) & set((<VPoint> vpoints[node2]).links)
+            and status[node]
+        ):
+            return node
+    return -1
+
+
+cdef int _get_not_base_friend(VPoint vpoint, object vlinks, object status):
     """Get a configured node from other links."""
     if (vpoint.pin_grounded()
         or not vpoint.grounded()
@@ -235,18 +248,13 @@ cdef int _get_not_base_friend(
     ):
         return -1
     cdef int f
-    for f in vlinks[vpoint.links[1:]]:
+    for f in vlinks[vpoint.links[1]]:
         if status[f]:
             return f
     return -1
 
 
-cdef (bint, int, int) _get_base_friend(
-    int node,
-    VPoint vpoint,
-    object vlinks,
-    object status
-):
+cdef (bint, int, int) _get_base_friend(VPoint vpoint, object vlinks):
     """Get two configured nodes on the same links."""
     if len(vpoint.links) < 1:
         return False, -1, -1
@@ -296,7 +304,7 @@ cpdef EStack t_config(
     cdef EStack exprs = EStack.__new__(EStack)
     if not vpoints_ or not inputs:
         return exprs
-    vpoints = list(vpoints_)
+    vpoints = tuple(vpoints_)
     # First, we create a "VLinks" that can help us to
     # find a relationship just like adjacency matrix
     cdef int node
@@ -397,7 +405,7 @@ cpdef EStack t_config(
                 else:
                     skip_times += 1
             else:
-                ok, fa, fb = _get_reliable_friend(node, vp1, vlinks, status)
+                ok, fa, fb = _get_reliable_friends(node, vp1, vlinks, status)
                 if not ok:
                     skip_times += 1
                 else:
@@ -416,20 +424,36 @@ cpdef EStack t_config(
                         link_symbol += 1
                         angle_symbol += 1
                     else:
-                        # TODO: Decide when to solve parallel linkage.
-                        exprs.add_pllp(
-                            Sym(P_LABEL, fa),
-                            Sym(L_LABEL, link_symbol),
-                            Sym(L_LABEL, link_symbol + 1),
-                            Sym(P_LABEL, fb),
-                            Sym(P_LABEL, node)
-                        )
-                        link_symbol += 2
+                        # Decide when to solve parallel linkage
+                        fc = _get_intersection(fa, fb, vpoints, vlinks, status)
+                        if (fc != -1
+                            and abs((<VPoint>vpoints[fa]).distance(vpoints[fc])
+                            - (<VPoint> vpoints[fb]).distance(vpoints[node]))
+                            < 1e-10
+                            and abs((<VPoint> vpoints[fb]).distance(vpoints[fc])
+                            - (<VPoint> vpoints[fa]).distance(vpoints[node]))
+                            < 1e-10
+                        ):
+                            exprs.add_ppp(
+                                Sym(P_LABEL, fc),
+                                Sym(P_LABEL, fa),
+                                Sym(P_LABEL, fb),
+                                Sym(P_LABEL, node)
+                            )
+                        else:
+                            exprs.add_pllp(
+                                Sym(P_LABEL, fa),
+                                Sym(L_LABEL, link_symbol),
+                                Sym(L_LABEL, link_symbol + 1),
+                                Sym(P_LABEL, fb),
+                                Sym(P_LABEL, node)
+                            )
+                            link_symbol += 2
                     status[node] = True
                     skip_times = 0
         elif vp1.type == VJoint.P:
             # Need to solve P joint itself here (only grounded)
-            fa = _get_not_base_friend(node, vp1, vlinks, status)
+            fa = _get_not_base_friend(vp1, vlinks, status)
             if fa == -1:
                 skip_times += 1
             else:
@@ -463,8 +487,8 @@ cpdef EStack t_config(
             angle = vp1.angle / 180 * M_PI
             tmp[0] += cos(angle)
             tmp[1] += sin(angle)
-            fa = _get_not_base_friend(node, vp1, vlinks, status)
-            ok, fb, fd = _get_base_friend(node, vp1, vlinks, status)
+            fa = _get_not_base_friend(vp1, vlinks, status)
+            ok, fb, fd = _get_base_friend(vp1, vlinks)
             if fa == -1 or not ok:
                 skip_times += 1
             else:

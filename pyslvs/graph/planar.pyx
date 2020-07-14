@@ -13,11 +13,11 @@ email: pyslvs@gmail.com
 """
 
 from collections import defaultdict
-from libcpp.pair cimport pair as cpair
+from libcpp.pair cimport pair
 from libcpp.list cimport list as clist
 from libcpp.map cimport map as cmap
 
-ctypedef cpair[int, int] ipair
+ctypedef pair[int, int] ipair
 
 
 cpdef bint is_planar(Graph g):

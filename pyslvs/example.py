@@ -155,6 +155,13 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[64.84, -61.13], L[L12, L13]],"
         "J[R, color[Green], P[4.79, -87.79], L[L13]],"
         "]", ((0, 1),)),
+    "Parallel Linkage": (
+        "M["
+        "J[R, color[Green], P[0, 0], L[ground, link_1]],"
+        "J[R, color[Green], P[100, 0], L[ground, link_3]],"
+        "J[R, color[Green], P[0, 100], L[link_1, link_2]],"
+        "J[R, color[Green], P[100, 100], L[link_2, link_3]],"
+        "]", ((0, 2),)),
     "Slider lifter": (
         "M["
         "J[RP, A[0.0], color[Green], P[0.0, 0.0], L[ground, L2]],"

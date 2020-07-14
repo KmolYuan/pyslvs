@@ -216,7 +216,7 @@ cpdef void expr_parser(EStack exprs, dict data_dict):
                 data_dict[symbol_str(expr.v2)]
             )
         elif expr.func == PPP:
-            coord = pxy(
+            coord = ppp(
                 data_dict[symbol_str(expr.c1)],
                 data_dict[symbol_str(expr.c2)],
                 data_dict[symbol_str(expr.c3)]

@@ -8,7 +8,7 @@ class EStack:
         ...
 
 def t_config(
-    vpoints_: Sequence[VPoint],
+    vpoints: Sequence[VPoint],
     inputs: Sequence[Tuple[int, int]],
     status: Optional[Dict[int, bool]] = None
 ) -> EStack:

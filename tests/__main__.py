@@ -188,6 +188,9 @@ class CoreTest(TestCase):
         x, y = test_case("Crank slider (RP joint)")
         self.assertAlmostEqual(103.801126, x, 6)
         self.assertAlmostEqual(78.393173, y, 6)
+        x, y = test_case("Parallel Linkage")
+        self.assertAlmostEqual(200, x, 6)
+        self.assertAlmostEqual(0, y, 6)
         # TODO: New test case for Inverted slider
 
     def test_solving_bfgs(self):
