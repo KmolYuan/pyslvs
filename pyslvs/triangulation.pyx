@@ -177,7 +177,7 @@ cdef class EStack:
                 ))
         return stack
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return f"{type(self).__name__}({self.as_list()})"
 
 
@@ -193,7 +193,7 @@ cdef bint _is_all_lock(object status):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef bint _clockwise(double[:] c1, double[:] c2, double[:] c3):
-    """Check orientation of three points."""
+    """Check the orientation of three points."""
     cdef double val = (c2[1] - c1[1]) * (c3[0] - c2[0]) - (c2[0] - c1[0]) * (c3[1] - c2[1])
     return val == 0 or val > 0
 
@@ -204,9 +204,7 @@ cdef (bint, int, int) _get_reliable_friend(
     object vlinks,
     object status
 ):
-    """Return a generator yield the vertices that "has been solved" on the
-    same link.
-    """
+    """Return two "has been solved" nodes on the same link."""
     cdef int fa = -1
     cdef int fb = -1
     cdef int f
@@ -220,7 +218,7 @@ cdef (bint, int, int) _get_reliable_friend(
                 elif fb == -1:
                     fb = f
                     return True, fa, fb
-    return False, fa, fb
+    return False, -1, -1
 
 
 cdef int _get_not_base_friend(
@@ -229,7 +227,7 @@ cdef int _get_not_base_friend(
     object vlinks,
     object status
 ):
-    """Get a friend from constrained nodes."""
+    """Get a configured node from other links."""
     if (vpoint.pin_grounded()
         or not vpoint.grounded()
         or vpoint.has_offset()
@@ -237,7 +235,7 @@ cdef int _get_not_base_friend(
     ):
         return -1
     cdef int f
-    for f in vlinks[vpoint.links[1]]:
+    for f in vlinks[vpoint.links[1:]]:
         if status[f]:
             return f
     return -1
@@ -249,7 +247,7 @@ cdef (bint, int, int) _get_base_friend(
     object vlinks,
     object status
 ):
-    """Get the constrained node of same links."""
+    """Get two configured nodes on the same links."""
     if len(vpoint.links) < 1:
         return False, -1, -1
     cdef int fa = -1
@@ -261,7 +259,7 @@ cdef (bint, int, int) _get_base_friend(
         elif fb == -1:
             fb = f
             return True, fa, fb
-    return False, fa, fb
+    return False, -1, -1
 
 
 cdef int _get_input_base(int node, object inputs):
@@ -408,7 +406,6 @@ cpdef EStack t_config(
                     vp2 = vpoints[fa]
                     vp3 = vpoints[fb]
                     if vp2.same_link(vp3) and not (vp2.grounded() and vp3.grounded()):
-                        # TODO: Decide when to solve parallel linkage.
                         exprs.add_plap(
                             Sym(P_LABEL, fa),
                             Sym(L_LABEL, link_symbol),
@@ -419,6 +416,7 @@ cpdef EStack t_config(
                         link_symbol += 1
                         angle_symbol += 1
                     else:
+                        # TODO: Decide when to solve parallel linkage.
                         exprs.add_pllp(
                             Sym(P_LABEL, fa),
                             Sym(L_LABEL, link_symbol),

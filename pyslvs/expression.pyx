@@ -113,7 +113,7 @@ cdef class VPoint:
         self.__offset = 0
 
     @staticmethod
-    def r_joint(links, x, y) -> VPoint:
+    def r_joint(links, x, y):
         """A fast constructor of revolute joints."""
         return VPoint.c_r_joint(links, x, y)
 
@@ -122,7 +122,7 @@ cdef class VPoint:
         return VPoint.__new__(VPoint, links, VJoint.R, 0., '', x, y)
 
     @staticmethod
-    def slider_joint(links, type_int, angle, x, y) -> VPoint:
+    def slider_joint(links, type_int, angle, x, y):
         """A fast constructor of slider joints."""
         return VPoint.c_slider_joint(links, type_int, angle, x, y)
 
@@ -135,17 +135,17 @@ cdef class VPoint:
         return self.__copy__()
 
     @property
-    def sx(self) -> float:
+    def sx(self):
         """X value of slot coordinate."""
         return self.c[0, 0]
 
     @property
-    def sy(self) -> float:
+    def sy(self):
         """Y value of slot coordinate."""
         return self.c[0, 1]
 
     @property
-    def cx(self) -> float:
+    def cx(self):
         """X value of current coordinate.
         If it's slider, the pin coordinate will be returned.
         """
@@ -155,7 +155,7 @@ cdef class VPoint:
             return self.c[1, 0]
 
     @property
-    def cy(self) -> float:
+    def cy(self):
         """Y value of current coordinate.
         If it's slider, the pin coordinate will be returned.
         """
@@ -338,7 +338,7 @@ cdef class VPoint:
         """Obtain coordinate by Coord object."""
         return Coord.__new__(Coord, self.c[ind, 0], self.c[ind, 1])
 
-    def __copy__(self) -> VPoint:
+    def __copy__(self):
         cdef VPoint vpoint = VPoint.__new__(
             VPoint,
             self.links,
@@ -351,7 +351,8 @@ cdef class VPoint:
         vpoint.c[:] = self.c[:]
         return vpoint
 
-    def __richcmp__(self, VPoint other, int op) -> bint:
+    def __richcmp__(self, rhs, int op):
+        cdef VPoint other = rhs
         cdef bint different = (
             self.links != other.links or
             self.c[0, 0] != other.c[0, 0] or
@@ -373,14 +374,14 @@ cdef class VPoint:
                 f"{type(self)} and {type(other)}"
             )
 
-    def __getitem__(self, ind: int) -> float:
+    def __getitem__(self, ind):
         cdef int i = ind
         if self.type == VJoint.R:
             return self.c[0, i]
         else:
             return self.c[1, i]
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return f"VPoint({self.links}, {int(self.type)}, {self.angle}, {array(self.c).tolist()})"
 
 
@@ -420,8 +421,8 @@ cdef class VLink:
             coords.append(vpoint.link_pos(self.name))
         return array(coords, dtype=object)
 
-    def __contains__(self, point: int) -> bint:
+    def __contains__(self, point: int):
         return point in self.points
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return f"VLink('{self.name}', {tuple(self.points)}, color_qt)"
