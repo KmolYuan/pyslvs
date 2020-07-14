@@ -15,7 +15,7 @@ from numpy import zeros, float64 as np_float
 from .expression cimport VJoint, VPoint, VLink
 
 
-cdef str symbol_str(sym p):
+cdef str symbol_str(Sym p):
     """The match pattern of the symbols."""
     if p.first == P_LABEL:
         return f"P{p.second}"
@@ -37,7 +37,7 @@ cdef class EStack:
     It is pointless to call the constructor.
     """
 
-    cdef void add_pxy(self, sym c1, sym v1, sym v2, sym t) nogil:
+    cdef void add_pxy(self, Sym c1, Sym v1, Sym v2, Sym t) nogil:
         cdef Expr e
         e.func = PXY
         e.c1 = c1
@@ -47,7 +47,16 @@ cdef class EStack:
         e.op = False
         self.stack.push_back(e)
 
-    cdef void add_pla(self, sym c1, sym v1, sym v2, sym t) nogil:
+    cdef void add_ppp(self, Sym c1, Sym c2, Sym c3, Sym t) nogil:
+        cdef Expr e
+        e.func = PPP
+        e.c1 = c1
+        e.c2 = c2
+        e.c3 = c3
+        e.target = t
+        self.stack.push_back(e)
+
+    cdef void add_pla(self, Sym c1, Sym v1, Sym v2, Sym t) nogil:
         cdef Expr e
         e.func = PLA
         e.c1 = c1
@@ -57,7 +66,7 @@ cdef class EStack:
         e.op = False
         self.stack.push_back(e)
 
-    cdef void add_plap(self, sym c1, sym v1, sym v2, sym c2, sym t) nogil:
+    cdef void add_plap(self, Sym c1, Sym v1, Sym v2, Sym c2, Sym t) nogil:
         cdef Expr e
         e.func = PLAP
         e.c1 = c1
@@ -68,7 +77,7 @@ cdef class EStack:
         e.op = False
         self.stack.push_back(e)
 
-    cdef void add_pllp(self, sym c1, sym v1, sym v2, sym c2, sym t) nogil:
+    cdef void add_pllp(self, Sym c1, Sym v1, Sym v2, Sym c2, Sym t) nogil:
         cdef Expr e
         e.func = PLLP
         e.c1 = c1
@@ -79,7 +88,7 @@ cdef class EStack:
         e.op = False
         self.stack.push_back(e)
 
-    cdef void add_plpp(self, sym c1, sym v1, sym c2, sym c3, sym t, bint op) nogil:
+    cdef void add_plpp(self, Sym c1, Sym v1, Sym c2, Sym c3, Sym t, bint op) nogil:
         cdef Expr e
         e.func = PLPP
         e.c1 = c1
@@ -90,7 +99,7 @@ cdef class EStack:
         e.op = op
         self.stack.push_back(e)
 
-    cdef void add_palp(self, sym c1, sym v1, sym v2, sym c2, sym t, bint op) nogil:
+    cdef void add_palp(self, Sym c1, Sym v1, Sym v2, Sym c2, Sym t, bint op) nogil:
         cdef Expr e
         e.func = PALP
         e.c1 = c1
@@ -106,7 +115,23 @@ cdef class EStack:
         stack = []
         cdef Expr expr
         for expr in self.stack:
-            if expr.func == PLA:
+            if expr.func == PXY:
+                stack.append((
+                    "PXY",
+                    symbol_str(expr.c1),
+                    symbol_str(expr.v1),
+                    symbol_str(expr.v2),
+                    symbol_str(expr.target),
+                ))
+            elif expr.func == PPP:
+                stack.append((
+                    "PPP",
+                    symbol_str(expr.c1),
+                    symbol_str(expr.c2),
+                    symbol_str(expr.c3),
+                    symbol_str(expr.target),
+                ))
+            elif expr.func == PLA:
                 stack.append((
                     "PLAP",
                     symbol_str(expr.c1),
@@ -148,14 +173,6 @@ cdef class EStack:
                     symbol_str(expr.v1),
                     symbol_str(expr.v2),
                     symbol_str(expr.c2),
-                    symbol_str(expr.target),
-                ))
-            elif expr.func == PXY:
-                stack.append((
-                    "PXY",
-                    symbol_str(expr.c1),
-                    symbol_str(expr.v1),
-                    symbol_str(expr.v2),
                     symbol_str(expr.target),
                 ))
         return stack
@@ -371,10 +388,10 @@ cpdef EStack t_config(
                 base = _get_input_base(node, inputs)
                 if status[base]:
                     exprs.add_pla(
-                        sym(P_LABEL, base),
-                        sym(L_LABEL, link_symbol),
-                        sym(I_LABEL, input_symbol),
-                        sym(P_LABEL, node)
+                        Sym(P_LABEL, base),
+                        Sym(L_LABEL, link_symbol),
+                        Sym(I_LABEL, input_symbol),
+                        Sym(P_LABEL, node)
                     )
                     status[node] = True
                     link_symbol += 1
@@ -391,22 +408,23 @@ cpdef EStack t_config(
                     vp2 = vpoints[fa]
                     vp3 = vpoints[fb]
                     if vp2.same_link(vp3) and not (vp2.grounded() and vp3.grounded()):
+                        # TODO: Decide when to solve parallel linkage.
                         exprs.add_plap(
-                            sym(P_LABEL, fa),
-                            sym(L_LABEL, link_symbol),
-                            sym(A_LABEL, angle_symbol),
-                            sym(P_LABEL, fb),
-                            sym(P_LABEL, node)
+                            Sym(P_LABEL, fa),
+                            Sym(L_LABEL, link_symbol),
+                            Sym(A_LABEL, angle_symbol),
+                            Sym(P_LABEL, fb),
+                            Sym(P_LABEL, node)
                         )
                         link_symbol += 1
                         angle_symbol += 1
                     else:
                         exprs.add_pllp(
-                            sym(P_LABEL, fa),
-                            sym(L_LABEL, link_symbol),
-                            sym(L_LABEL, link_symbol + 1),
-                            sym(P_LABEL, fb),
-                            sym(P_LABEL, node)
+                            Sym(P_LABEL, fa),
+                            Sym(L_LABEL, link_symbol),
+                            Sym(L_LABEL, link_symbol + 1),
+                            Sym(P_LABEL, fb),
+                            Sym(P_LABEL, node)
                         )
                         link_symbol += 2
                     status[node] = True
@@ -418,10 +436,10 @@ cpdef EStack t_config(
                 skip_times += 1
             else:
                 exprs.add_pxy(
-                    sym(P_LABEL, fa),
-                    sym(L_LABEL, link_symbol),
-                    sym(L_LABEL, link_symbol + 1),
-                    sym(P_LABEL, node)
+                    Sym(P_LABEL, fa),
+                    Sym(L_LABEL, link_symbol),
+                    Sym(L_LABEL, link_symbol + 1),
+                    Sym(P_LABEL, node)
                 )
                 status[node] = True
                 link_symbol += 2
@@ -431,10 +449,10 @@ cpdef EStack t_config(
                         if status[fb]:
                             continue
                         exprs.add_pxy(
-                            sym(P_LABEL, node),
-                            sym(L_LABEL, link_symbol),
-                            sym(L_LABEL, link_symbol + 1),
-                            sym(P_LABEL, fb)
+                            Sym(P_LABEL, node),
+                            Sym(L_LABEL, link_symbol),
+                            Sym(L_LABEL, link_symbol + 1),
+                            Sym(P_LABEL, fb)
                         )
                         status[fb] = True
                         link_symbol += 2
@@ -457,11 +475,11 @@ cpdef EStack t_config(
                     if not _clockwise(pos[fb], tmp, pos[fd]):
                         fb, fd = fd, fb
                     exprs.add_pllp(
-                        sym(P_LABEL, fb),
-                        sym(L_LABEL, link_symbol),
-                        sym(L_LABEL, link_symbol + 1),
-                        sym(P_LABEL, fd),
-                        sym(P_LABEL, node)
+                        Sym(P_LABEL, fb),
+                        Sym(L_LABEL, link_symbol),
+                        Sym(L_LABEL, link_symbol + 1),
+                        Sym(P_LABEL, fd),
+                        Sym(P_LABEL, node)
                     )
                     link_symbol += 2
                 # PLPP
@@ -476,19 +494,19 @@ cpdef EStack t_config(
                 if not _clockwise(pos[fb], tmp, pos[fc]):
                     fb, fc = fc, fb
                 exprs.add_pllp(
-                    sym(P_LABEL, fb),
-                    sym(L_LABEL, link_symbol),
-                    sym(L_LABEL, link_symbol + 1),
-                    sym(P_LABEL, fc),
-                    sym(S_LABEL, node)
+                    Sym(P_LABEL, fb),
+                    Sym(L_LABEL, link_symbol),
+                    Sym(L_LABEL, link_symbol + 1),
+                    Sym(P_LABEL, fc),
+                    Sym(S_LABEL, node)
                 )
                 # Two conditions
                 exprs.add_plpp(
-                    sym(P_LABEL, fa),
-                    sym(L_LABEL, link_symbol + 2),
-                    sym(P_LABEL, node),
-                    sym(S_LABEL, node),
-                    sym(P_LABEL, node),
+                    Sym(P_LABEL, fa),
+                    Sym(L_LABEL, link_symbol + 2),
+                    Sym(P_LABEL, node),
+                    Sym(S_LABEL, node),
+                    Sym(P_LABEL, node),
                     (pos[fa, 0] - pos[node, 0] > 0) != (vp1.angle > 90)
                 )
                 status[node] = True

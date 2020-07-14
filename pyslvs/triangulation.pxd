@@ -13,9 +13,9 @@ from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
 # Label, int
-ctypedef pair[int, int] sym
+ctypedef pair[int, int] Sym
 
-cdef str symbol_str(sym p)
+cdef str symbol_str(Sym p)
 cpdef EStack t_config(object vpoints_, object inputs, object status=*)
 
 cdef enum Label:
@@ -27,6 +27,7 @@ cdef enum Label:
 
 cdef enum Func:
     PXY
+    PPP
     PLA
     PLAP
     PLLP
@@ -36,21 +37,21 @@ cdef enum Func:
 cdef struct Expr:
     bint op
     Func func
-    sym v1
-    sym v2
-    sym c1
-    sym c2
-    sym c3
-    sym target
+    Sym v1
+    Sym v2
+    Sym c1
+    Sym c2
+    Sym c3
+    Sym target
 
 cdef class EStack:
-
     cdef vector[Expr] stack
 
-    cdef void add_pxy(self, sym c1, sym v1, sym v2, sym t) nogil
-    cdef void add_pla(self, sym c1, sym v1, sym v2, sym t) nogil
-    cdef void add_plap(self, sym c1, sym v1, sym v2, sym c2, sym t) nogil
-    cdef void add_pllp(self, sym c1, sym v1, sym v2, sym c2, sym t) nogil
-    cdef void add_plpp(self, sym c1, sym v1, sym c2, sym c3, sym t, bint op) nogil
-    cdef void add_palp(self, sym c1, sym v1, sym v2, sym c2, sym t, bint op) nogil
+    cdef void add_pxy(self, Sym c1, Sym v1, Sym v2, Sym t) nogil
+    cdef void add_ppp(self, Sym c1, Sym c2, Sym c3, Sym t) nogil
+    cdef void add_pla(self, Sym c1, Sym v1, Sym v2, Sym t) nogil
+    cdef void add_plap(self, Sym c1, Sym v1, Sym v2, Sym c2, Sym t) nogil
+    cdef void add_pllp(self, Sym c1, Sym v1, Sym v2, Sym c2, Sym t) nogil
+    cdef void add_plpp(self, Sym c1, Sym v1, Sym c2, Sym c3, Sym t, bint op) nogil
+    cdef void add_palp(self, Sym c1, Sym v1, Sym v2, Sym c2, Sym t, bint op) nogil
     cpdef list as_list(self)

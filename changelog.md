@@ -5,6 +5,7 @@
 + Add "link_pos" and "points_pos" methods for VPoint and VLink respectively.
 + Add "to_coord" method for VPoint objects.
 + Reduce unused code of Sketch Solve and redesign its API.
++ Add PPP function to solve parallel linkage.
 
 # Version 20.06
 

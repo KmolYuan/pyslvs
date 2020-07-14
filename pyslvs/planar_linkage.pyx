@@ -17,9 +17,9 @@ from libc.math cimport (HUGE_VAL, M_PI, fabs, sqrt, cos, sin, atan2,
 from .metaheuristics.utility cimport ObjFunc
 from .expression cimport VJoint, VPoint, Coord
 from .triangulation cimport (t_config, symbol_str, I_LABEL, A_LABEL, Expr,
-    PXY, PLA, PLAP, PLLP, PLPP, PALP, EStack)
+    PXY, PPP, PLA, PLAP, PLLP, PLPP, PALP, EStack)
 from .bfgs cimport SolverSystem
-from .tinycadlib cimport radians, pxy, plap, pllp, plpp, palp
+from .tinycadlib cimport radians, pxy, ppp, plap, pllp, plpp, palp
 
 
 def norm_path(path, scale=1):
@@ -421,12 +421,17 @@ cdef class Planar(ObjFunc):
         for expr in self.exprs.stack:
             target = symbol_str(expr.target)
             if expr.func == PXY:
-                vpoint = self.vpoints[self.mapping_r[target]]
                 coord1 = self.data_dict[symbol_str(expr.c1)]
                 coord3 = pxy(
                     coord1,
                     vpoint.c[0, 0] - coord1.x,
                     vpoint.c[0, 1] - coord1.y
+                )
+            elif expr.func == PPP:
+                coord3 = ppp(
+                    self.data_dict[symbol_str(expr.c1)],
+                    self.data_dict[symbol_str(expr.c2)],
+                    self.data_dict[symbol_str(expr.c3)],
                 )
             elif expr.func in {PLA, PLAP}:
                 coord1 = self.data_dict[symbol_str(expr.c1)]

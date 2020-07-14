@@ -15,6 +15,7 @@ from .expression cimport Coord
 cdef double radians(double degree) nogil
 
 cpdef Coord pxy(Coord c1, double x, double y)
+cpdef Coord ppp(Coord c1, Coord c2, Coord c3)
 cpdef Coord plap(Coord c1, double d0, double a0, Coord c2=*, bint inverse=*)
 cpdef Coord pllp(Coord c1, double d0, double d1, Coord c2, bint inverse=*)
 cpdef Coord plpp(Coord c1, double d0, Coord c2, Coord c3, bint inverse=*)

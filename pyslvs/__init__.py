@@ -7,6 +7,7 @@ __all__ = [
     'Coordinate',
     'Coord',
     'pxy',
+    'ppp',
     'plap',
     'pllp',
     'plpp',
@@ -55,12 +56,11 @@ from .expression import get_vlinks, VJoint, VPoint, VLink, Coord
 from .bfgs import SolverSystem
 from .triangulation import t_config, EStack
 from .tinycadlib import (
-    pxy, plap, pllp, plpp, palp, vpoint_dof, expr_parser, expr_solving,
+    pxy, ppp, plap, pllp, plpp, palp, vpoint_dof, expr_parser, expr_solving,
     data_collecting,
 )
 from .planar_linkage import (
-    Planar, norm_path, curvature, derivative,
-    path_signature, cross_correlation,
+    Planar, norm_path, curvature, derivative, path_signature, cross_correlation,
 )
 from .expression_parser import (
     color_names, color_rgb, parse_params, parse_pos, parse_vpoints,

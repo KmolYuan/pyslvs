@@ -12,8 +12,8 @@ email: pyslvs@gmail.com
 cimport cython
 from libc.math cimport M_PI, sqrt, sin, cos, tan, atan2
 from .expression cimport VJoint, VPoint, VLink
-from .triangulation cimport (sym, symbol_str, I_LABEL, S_LABEL, Expr,
-                             PXY, PLA, PLAP, PLLP, PLPP, PALP)
+from .triangulation cimport (Sym, symbol_str, I_LABEL, S_LABEL, Expr,
+                             PXY, PPP, PLA, PLAP, PLLP, PLPP, PALP)
 from .bfgs cimport SolverSystem
 
 
@@ -33,6 +33,20 @@ cpdef Coord pxy(Coord c1, double x, double y):
     ![PXY](img/PXY.png)
     """
     return Coord.__new__(Coord, c1.x + x, c1.y + y)
+
+
+cpdef Coord ppp(Coord c1, Coord c2, Coord c3):
+    """The PPP function is used to solve parallel linkage.
+
+    In the following picture, `c1` correspond to "A", `c2` correspond to "B",
+    `c3` correspond to "C", `return` correspond to "D".
+
+    ![PPP](img/PPP.png)
+    """
+    cdef double length = c1.distance(c2)
+    cdef double alpha = c2.slope_angle(c1)
+    return Coord.__new__(Coord, c3.x + length * cos(alpha),
+                                c3.y + length * sin(alpha))
 
 
 cpdef Coord plap(
@@ -190,65 +204,61 @@ cpdef void expr_parser(EStack exprs, dict data_dict):
     # Update data
     # + exprs: [("PLAP", "P0", "L0", "a0", "P1", "P2"), ..."]
     # + data_dict: {'a0':0., 'L1':10., 'A':(30., 40.), ...}
-    cdef sym target
-    cdef Coord coord, coord1, coord2, coord3
+    cdef Sym target
+    cdef Coord coord
     cdef Expr expr
     for expr in exprs.stack:
         coord = Coord.nan()
-        if expr.func in {PLA, PLAP}:
-            coord1 = data_dict[symbol_str(expr.c1)]
+        if expr.func == PXY:
+            coord = pxy(
+                data_dict[symbol_str(expr.c1)],
+                data_dict[symbol_str(expr.v1)],
+                data_dict[symbol_str(expr.v2)]
+            )
+        elif expr.func == PPP:
+            coord = pxy(
+                data_dict[symbol_str(expr.c1)],
+                data_dict[symbol_str(expr.c2)],
+                data_dict[symbol_str(expr.c3)]
+            )
+        elif expr.func in {PLA, PLAP}:
             if expr.func == PLA:
                 coord = plap(
-                    coord1,
+                    data_dict[symbol_str(expr.c1)],
                     data_dict[symbol_str(expr.v1)],
                     data_dict[symbol_str(expr.v2)]
                 )
             else:
-                coord2 = data_dict[symbol_str(expr.c2)]
                 coord = plap(
-                    coord1,
+                    data_dict[symbol_str(expr.c1)],
                     data_dict[symbol_str(expr.v1)],
                     data_dict[symbol_str(expr.v2)],
-                    coord2,
+                    data_dict[symbol_str(expr.c2)],
                     expr.op
                 )
         elif expr.func == PLLP:
-            coord1 = data_dict[symbol_str(expr.c1)]
-            coord2 = data_dict[symbol_str(expr.c2)]
             coord = pllp(
-                coord1,
+                data_dict[symbol_str(expr.c1)],
                 data_dict[symbol_str(expr.v1)],
                 data_dict[symbol_str(expr.v2)],
-                coord2,
+                data_dict[symbol_str(expr.c2)],
                 expr.op
             )
         elif expr.func == PLPP:
-            coord1 = data_dict[symbol_str(expr.c1)]
-            coord2 = data_dict[symbol_str(expr.c2)]
-            coord3 = data_dict[symbol_str(expr.c3)]
             coord = plpp(
-                coord1,
+                data_dict[symbol_str(expr.c1)],
                 data_dict[symbol_str(expr.v1)],
-                coord2,
-                coord3,
+                data_dict[symbol_str(expr.c2)],
+                data_dict[symbol_str(expr.c3)],
                 expr.op
             )
         elif expr.func == PALP:
-            coord1 = data_dict[symbol_str(expr.c1)]
-            coord2 = data_dict[symbol_str(expr.c2)]
             coord = palp(
-                coord1,
+                data_dict[symbol_str(expr.c1)],
                 data_dict[symbol_str(expr.v1)],
                 data_dict[symbol_str(expr.v2)],
-                coord2,
+                data_dict[symbol_str(expr.c2)],
                 expr.op
-            )
-        elif expr.func == PXY:
-            coord1 = data_dict[symbol_str(expr.c1)]
-            coord = pxy(
-                coord1,
-                data_dict[symbol_str(expr.v1)],
-                data_dict[symbol_str(expr.v2)]
             )
         else:
             raise ValueError("unsupported function")
@@ -379,7 +389,7 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
                         + vpoint.slope_angle(vpoints[bf], 0, 0))
         pos.append(Coord.__new__(Coord, vpoint.c[1, 0] + cos(angle),
                                  vpoint.c[1, 1] + sin(angle)))
-        mapping_r[symbol_str(sym(S_LABEL, i))] = len(pos) - 1
+        mapping_r[symbol_str(Sym(S_LABEL, i))] = len(pos) - 1
     # Add data to 'data_dict' and counting DOF
     cdef int dof = 0
     cdef int target
@@ -393,7 +403,29 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
         if symbol_str(expr.c1) not in data_dict:
             data_dict[symbol_str(expr.c1)] = pos[node]
         # For all expressions
-        if expr.func in {PLA, PLAP}:
+        if expr.func == PXY:
+            coord1 = pos[node]
+            coord2 = pos[target]
+            # X
+            if symbol_str(expr.v1) in mapping:
+                x, y = mapping[symbol_str(expr.v1)]
+                data_dict[symbol_str(expr.v1)] = Coord.__new__(Coord, x, y)
+            else:
+                data_dict[symbol_str(expr.v1)] = coord2.x - coord1.x
+            # Y
+            if symbol_str(expr.v2) in mapping:
+                x, y = mapping[symbol_str(expr.v2)]
+                data_dict[symbol_str(expr.v2)] = Coord.__new__(Coord, x, y)
+            else:
+                data_dict[symbol_str(expr.v2)] = coord2.y - coord1.y
+        elif expr.func == PPP:
+            # Point 2
+            if symbol_str(expr.c2) not in data_dict:
+                data_dict[symbol_str(expr.c2)] = pos[base]
+            # Point 3
+            if symbol_str(expr.c3) not in data_dict:
+                data_dict[symbol_str(expr.c3)] = pos[mapping_r[symbol_str(expr.c3)]]
+        elif expr.func in {PLA, PLAP}:
             # Link 1
             pair = frozenset({node, target})
             coord1 = pos[node]
@@ -448,6 +480,7 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
             # Point 2
             if symbol_str(expr.c2) not in data_dict:
                 data_dict[symbol_str(expr.c2)] = pos[base]
+            # Point 3 is not needed
         elif expr.func == PALP:
             # Angle 1
             vpoint = vpoints[node]
@@ -465,21 +498,6 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
                 data_dict[symbol_str(expr.v2)] = coord1.distance(coord2)
             # Point 2
             data_dict[symbol_str(expr.c2)] = pos[base]
-        elif expr.func == PXY:
-            coord1 = pos[node]
-            coord2 = pos[target]
-            # X
-            if symbol_str(expr.v1) in mapping:
-                x, y = mapping[symbol_str(expr.v1)]
-                data_dict[symbol_str(expr.v1)] = Coord.__new__(Coord, x, y)
-            else:
-                data_dict[symbol_str(expr.v1)] = coord2.x - coord1.x
-            # Y
-            if symbol_str(expr.v2) in mapping:
-                x, y = mapping[symbol_str(expr.v2)]
-                data_dict[symbol_str(expr.v2)] = Coord.__new__(Coord, x, y)
-            else:
-                data_dict[symbol_str(expr.v2)] = coord2.y - coord1.y
     # Other grounded R joints
     for i, vpoint in enumerate(vpoints):
         if vpoint.grounded() and vpoint.type == VJoint.R:
@@ -539,7 +557,7 @@ cpdef list expr_solving(
     cdef double a
     cdef int i
     for i, a in enumerate(angles):
-        data_dict[symbol_str(sym(I_LABEL, i))] = radians(a)
+        data_dict[symbol_str(Sym(I_LABEL, i))] = radians(a)
     # Solve
     if not exprs.stack.empty():
         expr_parser(exprs, data_dict)

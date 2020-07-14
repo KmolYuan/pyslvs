@@ -11,7 +11,7 @@ from unittest import TestCase
 from math import sqrt, radians, hypot, sin, cos
 from numpy import array
 from pyslvs import (
-    Coord, SolverSystem, pxy, plap, pllp, plpp, palp, expr_solving,
+    Coord, SolverSystem, pxy, ppp, plap, pllp, plpp, palp, expr_solving,
     data_collecting, t_config, parse_vpoints, example_list, norm_path,
 )
 from pyslvs.graph import (
@@ -33,9 +33,16 @@ from .utility import PLANAR_OBJECT, DEGREE_CODE_TABLE, PATH
 class CoreTest(TestCase):
 
     def test_pxy(self):
+        """Test for pxy function."""
         coord = pxy(Coord(80, 90), 40, -20)
         self.assertAlmostEqual(120, coord.x)
         self.assertAlmostEqual(70, coord.y)
+
+    def test_ppp(self):
+        """Test for ppp function."""
+        coord = ppp(Coord(0, 0), Coord(0, 90), Coord(90, 0))
+        self.assertAlmostEqual(90, coord.x)
+        self.assertAlmostEqual(90, coord.y)
 
     def test_plap(self):
         """Test for plap function."""

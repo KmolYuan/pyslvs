@@ -18,6 +18,9 @@ def plap(
 ) -> Coord:
     ...
 
+def ppp(c1: Coord, c2: Coord, c3: Coord) -> Coord:
+    ...
+
 def pllp(c1: Coord, d0: float, d1: float, c2: Coord,
          inverse: bool = False) -> Coord:
     ...
