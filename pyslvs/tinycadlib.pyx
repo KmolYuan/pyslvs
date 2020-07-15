@@ -30,7 +30,7 @@ cpdef Coord pxy(Coord c1, double x, double y):
     `d1` correspond to "Y", `return` correspond to "B", the sign of value are
     correspond to coordinate system.
 
-    ![PXY](img/PXY.png)
+    ![pxy](img/pxy.png)
     """
     return Coord.__new__(Coord, c1.x + x, c1.y + y)
 
@@ -41,7 +41,7 @@ cpdef Coord ppp(Coord c1, Coord c2, Coord c3):
     In the following picture, `c1` correspond to "A", `c2` correspond to "B",
     `c3` correspond to "C", `return` correspond to "D".
 
-    ![PPP](img/PPP.png)
+    ![ppp](img/ppp.png)
     """
     cdef double length = c1.distance(c2)
     cdef double alpha = c2.slope_angle(c1)
@@ -64,7 +64,7 @@ cpdef Coord plap(
     to "C".
     If `c2` is not given, "alpha" will be set to zero.
 
-    ![PLAP](img/PLAP.png)
+    ![plap](img/plap.png)
 
     Set `inverse` option to `True` can make `a0` value as negative.
     """
@@ -90,7 +90,7 @@ cpdef Coord pllp(
     `d0` correspond to "L0", `d1` correspond to "L1", `return` correspond to
     "C".
 
-    ![PLLP](img/PLLP.png)
+    ![pllp](img/pllp.png)
 
     Set `inverse` option to `True` can make the result upside down.
     """
@@ -129,7 +129,7 @@ cpdef Coord plpp(
     In the following picture, `c1` correspond to "A", `c2` correspond to "B",
     `c3` correspond to "C", `d0` correspond to "L0", `return` correspond to "D".
 
-    ![PLPP](img/PLPP.png)
+    ![plpp](img/plpp.png)
 
     Set `inverse` option to `True` can make the result to the another side
     between `c1` and line `c2` `c3`.
@@ -171,7 +171,7 @@ cpdef Coord palp(
     `d0` correspond to "L0", `a0` correspond to "alpha", `return` correspond
     to "C".
 
-    ![PALP](img/PALP.png)
+    ![palp](img/palp.png)
 
     Set `inverse` option to `True` can make the result upside down.
     """
