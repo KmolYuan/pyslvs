@@ -9,11 +9,11 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from libcpp.map cimport map as cmap
+from libcpp.map cimport map
 from numpy cimport ndarray
 
 ctypedef unsigned long long ullong
-ctypedef cmap[int, int] imap
+ctypedef map[int, int] imap
 
 cpdef list link_assortment(Graph g)
 cpdef list contracted_link_assortment(Graph g)

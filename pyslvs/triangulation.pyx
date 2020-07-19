@@ -15,8 +15,7 @@ from libcpp.map cimport map
 from numpy import zeros, float64 as np_float
 from .expression cimport VJoint, VPoint, VLink
 
-ctypedef pair[int, int] ipair
-ctypedef vector[ipair] Inputs
+ctypedef vector[Sym] Inputs
 ctypedef map[int, bint] Status
 
 
@@ -319,7 +318,7 @@ cpdef EStack t_config(
     cdef Status status
     if has_input:
         for node, base in inputs_:
-            inputs.push_back(ipair(node, base))
+            inputs.push_back(Sym(node, base))
     if has_status:
         for node, ok in status_.items():
             status[node] = ok

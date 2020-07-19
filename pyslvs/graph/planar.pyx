@@ -15,7 +15,7 @@ email: pyslvs@gmail.com
 from collections import defaultdict
 from libcpp.pair cimport pair
 from libcpp.list cimport list as clist
-from libcpp.map cimport map as cmap
+from libcpp.map cimport map
 
 ctypedef pair[int, int] ipair
 
@@ -133,7 +133,7 @@ cdef class _LRPlanarity:
         # the recursion stack
         cdef clist[int] dfs_stack = [v]
         # index of next edge to handle in adjacency list of each node
-        cdef cmap[int, int] ind
+        cdef map[int, int] ind
         # bintean to indicate whether to skip the initial work for an edge
         skip_init = defaultdict(lambda: False)
         cdef bint skip_final
@@ -178,7 +178,7 @@ cdef class _LRPlanarity:
         # the recursion stack
         cdef clist[int] dfs_stack = [v]
         # index of next edge to handle in adjacency list of each node
-        cdef cmap[int, int] ind
+        cdef map[int, int] ind
         cdef int w
         while not dfs_stack.empty():
             v = dfs_stack.back()
@@ -205,7 +205,7 @@ cdef class _LRPlanarity:
         # the recursion stack
         cdef clist[int] dfs_stack = [v]
         # index of next edge to handle in adjacency list of each node
-        cdef cmap[int, int] ind
+        cdef map[int, int] ind
         # bintean to indicate whether to skip the initial work for an edge
         skip_init = defaultdict(lambda: False)
         cdef int w
@@ -406,8 +406,8 @@ cdef class _Interval:
 
 cdef class _PlanarEmbedding(Graph):
     """Represents a planar graph with its planar embedding."""
-    cdef cmap[int, int] node_label
-    cdef cmap[ipair, ipair] edge_label
+    cdef map[int, int] node_label
+    cdef map[ipair, ipair] edge_label
 
     cdef void add_half_edge_cw(self, int start_node, int end_node, int reference_neighbor):
         """Adds a half-edge from start_node to end_node.

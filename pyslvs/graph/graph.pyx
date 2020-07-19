@@ -13,13 +13,13 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
-from libcpp.pair cimport pair as cpair
+from libcpp.pair cimport pair
 import sys
 from typing import Tuple, Dict, Iterator
 from itertools import permutations, groupby
 from numpy import zeros, uint8 as np_uint
 
-ctypedef cpair[int, int] ipair
+ctypedef pair[int, int] ipair
 
 
 cpdef list link_assortment(Graph g):

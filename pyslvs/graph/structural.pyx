@@ -19,9 +19,9 @@ from time import process_time
 from logging import getLogger
 from collections import Counter
 cimport cython
-from libcpp.pair cimport pair as cpair
+from libcpp.pair cimport pair
 from libcpp.vector cimport vector
-from libcpp.map cimport map as cmap
+from libcpp.map cimport map
 from numpy import (
     int16 as np_int,
     array as np_array,
@@ -41,8 +41,8 @@ from .planar cimport is_planar
 
 ctypedef unsigned int uint
 ctypedef unsigned long long ullong
-ctypedef cpair[int, int] ipair
-ctypedef cmap[int, int] imap
+ctypedef pair[int, int] ipair
+ctypedef map[int, int] imap
 
 logger = getLogger()
 
