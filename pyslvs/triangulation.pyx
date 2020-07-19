@@ -193,6 +193,12 @@ cdef bint _is_all_lock(Status &status):
     return True
 
 
+cdef bint _is_parallel(VPoint p1, VPoint p2, VPoint p3, VPoint p4):
+    """Check parallel four bar loop."""
+    return (abs(p1.distance(p3) - p2.distance(p4)) < 1e-10
+            and abs(p2.distance(p3) - p1.distance(p4)) < 1e-10)
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef bint _clockwise(double[:] c1, double[:] c2, double[:] c3):
@@ -263,14 +269,12 @@ cdef (bint, int, int) _get_base_friend(VPoint vpoint, object vlinks):
     if len(vpoint.links) < 1:
         return False, -1, -1
     cdef int fa = -1
-    cdef int fb = -1
     cdef int f
     for f in vlinks[vpoint.links[0]]:
         if fa == -1:
             fa = f
-        elif fb == -1:
-            fb = f
-            return True, fa, fb
+        else:
+            return True, fa, f
     return False, -1, -1
 
 
@@ -311,11 +315,12 @@ cpdef EStack t_config(
     if not vpoints_ or not has_input:
         return exprs
 
-    cdef bint ok
-    cdef int node, base
     vpoints = tuple(vpoints_)
     cdef Inputs inputs
     cdef Status status
+
+    cdef bint ok
+    cdef int node, base
     if has_input:
         for node, base in inputs_:
             inputs.push_back(Sym(node, base))
@@ -342,17 +347,14 @@ cpdef EStack t_config(
             status[node] = True
     # Replace the P joints and their friends with RP joint
     # DOF must be same after properties changed
-    for base in range(len(vpoints)):
-        vp1 = vpoints[base]
+    for base, vp1 in enumerate(vpoints):
         if vp1.type != VJoint.P or not vp1.grounded():
             continue
         for link in vp1.links[1:]:
-            links = set()
             for node in vlinks[link]:
                 vp2 = vpoints[node]
                 if node == base or vp2.type != VJoint.R:
                     continue
-                links.update(vp2.links)
                 vpoints[node] = VPoint.c_slider_joint([vp1.links[0]] + [
                     link_ for link_ in vp2.links
                     if link_ not in vp1.links
@@ -378,8 +380,8 @@ cpdef EStack t_config(
             status[node] = True
             link_symbol += 1
             input_symbol += 1
-    # Now let we search around all of points,
-    # until find the solutions that we could
+    # Now let we search around all the points, until we find the solutions
+    # that we could
     input_targets = {node for _, node in inputs}
     node = 0
     cdef int skip_times = 0
@@ -440,14 +442,9 @@ cpdef EStack t_config(
                     else:
                         # Decide when to solve parallel linkage
                         fc = _get_intersection(fa, fb, vpoints, vlinks, status)
-                        if (fc != -1
-                            and abs((<VPoint>vpoints[fa]).distance(vpoints[fc])
-                            - (<VPoint> vpoints[fb]).distance(vpoints[node]))
-                            < 1e-10
-                            and abs((<VPoint> vpoints[fb]).distance(vpoints[fc])
-                            - (<VPoint> vpoints[fa]).distance(vpoints[node]))
-                            < 1e-10
-                        ):
+                        if (fc != -1 and _is_parallel(
+                            vpoints[fa], vpoints[fb], vpoints[fc], vpoints[node]
+                        )):
                             exprs.add_ppp(
                                 Sym(P_LABEL, fc),
                                 Sym(P_LABEL, fa),
