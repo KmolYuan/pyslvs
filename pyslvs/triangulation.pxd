@@ -16,7 +16,7 @@ from libcpp.pair cimport pair
 ctypedef pair[int, int] Sym
 
 cdef str symbol_str(Sym p)
-cpdef EStack t_config(object vpoints_, object inputs, object status=*)
+cpdef EStack t_config(object vpoints_, object inputs_, object status_=*)
 
 cdef enum Label:
     P_LABEL

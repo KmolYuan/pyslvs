@@ -11,8 +11,13 @@ email: pyslvs@gmail.com
 
 cimport cython
 from libc.math cimport sin, cos, M_PI
+from libcpp.map cimport map
 from numpy import zeros, float64 as np_float
 from .expression cimport VJoint, VPoint, VLink
+
+ctypedef pair[int, int] ipair
+ctypedef vector[ipair] Inputs
+ctypedef map[int, bint] Status
 
 
 cdef str symbol_str(Sym p):
@@ -180,10 +185,10 @@ cdef class EStack:
         return f"{type(self).__name__}({self.as_list()})"
 
 
-cdef bint _is_all_lock(object status):
+cdef bint _is_all_lock(Status &status):
     """Test is all status done."""
     cdef bint n_status
-    for _, n_status in status.items():
+    for _, n_status in status:
         if not n_status:
             return False
     return True
@@ -201,7 +206,7 @@ cdef (bint, int, int) _get_reliable_friends(
     int node,
     VPoint vpoint,
     object vlinks,
-    object status
+    Status &status
 ):
     """Return two "has been solved" nodes on the same link."""
     cdef int fa = -1
@@ -225,7 +230,7 @@ cdef int _get_intersection(
     int node2,
     object vpoints,
     object vlinks,
-    object status
+    Status &status
 ):
     """Get a configured node between two nodes."""
     cdef int node
@@ -239,7 +244,7 @@ cdef int _get_intersection(
     return -1
 
 
-cdef int _get_not_base_friend(VPoint vpoint, object vlinks, object status):
+cdef int _get_not_base_friend(VPoint vpoint, object vlinks, Status &status):
     """Get a configured node from other links."""
     if (vpoint.pin_grounded()
         or not vpoint.grounded()
@@ -270,7 +275,7 @@ cdef (bint, int, int) _get_base_friend(VPoint vpoint, object vlinks):
     return False, -1, -1
 
 
-cdef int _get_input_base(int node, object inputs):
+cdef int _get_input_base(int node, Inputs &inputs):
     """Get the base node for input pairs."""
     cdef int base, node_
     for base, node_ in inputs:
@@ -283,8 +288,8 @@ cdef int _get_input_base(int node, object inputs):
 @cython.wraparound(False)
 cpdef EStack t_config(
     object vpoints_,
-    object inputs,
-    object status = None
+    object inputs_,
+    object status_ = None
 ):
     """Generate the Triangle solution stack by mechanism expression `vpoints_`.
 
@@ -297,17 +302,29 @@ cpdef EStack t_config(
     # + inputs: [(p0, p1), (p0, p2), ...]
     # + status: Dict[int, bint]
     # vpoints will make a copy that we don't want to modified itself
-    if inputs is None:
-        inputs = ()
-    if status is None:
-        status = {}
+    cdef bint has_input = True
+    cdef bint has_status = True
+    if inputs_ is None or not inputs_:
+        has_input = False
+    if status_ is None:
+        has_status = False
     cdef EStack exprs = EStack.__new__(EStack)
-    if not vpoints_ or not inputs:
+    if not vpoints_ or not has_input:
         return exprs
+
+    cdef bint ok
+    cdef int node, base
     vpoints = tuple(vpoints_)
+    cdef Inputs inputs
+    cdef Status status
+    if has_input:
+        for node, base in inputs_:
+            inputs.push_back(ipair(node, base))
+    if has_status:
+        for node, ok in status_.items():
+            status[node] = ok
     # First, we create a "VLinks" that can help us to
     # find a relationship just like adjacency matrix
-    cdef int node
     cdef VPoint vp1, vp2, vp3
     vlinks = {}
     for node, vp1 in enumerate(vpoints):
@@ -326,7 +343,6 @@ cpdef EStack t_config(
             status[node] = True
     # Replace the P joints and their friends with RP joint
     # DOF must be same after properties changed
-    cdef int base
     for base in range(len(vpoints)):
         vp1 = vpoints[base]
         if vp1.type != VJoint.P or not vp1.grounded():
@@ -367,7 +383,6 @@ cpdef EStack t_config(
     # until find the solutions that we could
     input_targets = {node for _, node in inputs}
     node = 0
-    cdef bint ok
     cdef int skip_times = 0
     cdef int around = len(status)
     cdef int fa, fb, fc, fd
@@ -375,7 +390,7 @@ cpdef EStack t_config(
     cdef double[:] tmp = zeros(2, dtype=np_float)
     # Friend iterator
     while not _is_all_lock(status):
-        if node not in status:
+        if status.count(node) == 0:
             node = 0
             continue
         # Check and break the loop if it's re-scan again
@@ -535,4 +550,7 @@ cpdef EStack t_config(
                 link_symbol += 3
                 skip_times = 0
         node += 1
+    if has_status:
+        for node, ok in status:
+            status_[node] = ok
     return exprs
