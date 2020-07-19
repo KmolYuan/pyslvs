@@ -6,6 +6,7 @@
 + Add "to_coord" method for VPoint objects.
 + Reduce unused code of Sketch Solve and redesign its API.
 + Add PPP function to solve parallel linkage.
++ Rename the module "topo_config".
 
 # Version 20.06
 

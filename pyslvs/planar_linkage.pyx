@@ -16,7 +16,7 @@ from libc.math cimport (HUGE_VAL, M_PI, fabs, sqrt, cos, sin, atan2,
                         INFINITY as INF)
 from .metaheuristics.utility cimport ObjFunc
 from .expression cimport VJoint, VPoint, Coord
-from .triangulation cimport (t_config, symbol_str, I_LABEL, A_LABEL, Expr,
+from .topo_config cimport (t_config, symbol_str, I_LABEL, A_LABEL, Expr,
     PXY, PPP, PLA, PLAP, PLLP, PLPP, PALP, EStack)
 from .bfgs cimport SolverSystem
 from .tinycadlib cimport radians, pxy, ppp, plap, pllp, plpp, palp

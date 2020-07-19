@@ -9,7 +9,7 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from .triangulation cimport EStack
+from .topo_config cimport EStack
 from .expression cimport Coord
 
 cdef double radians(double degree) nogil

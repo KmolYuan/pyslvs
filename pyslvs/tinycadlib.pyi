@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from typing import Tuple, List, Sequence, Dict, Union, Optional
-from .triangulation import EStack
+from .topo_config import EStack
 from .expression import VPoint, Coord
 
 _Coord = Tuple[float, float]

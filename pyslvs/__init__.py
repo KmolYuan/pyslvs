@@ -54,7 +54,7 @@ __email__ = "pyslvs@gmail.com"
 
 from .expression import get_vlinks, VJoint, VPoint, VLink, Coord
 from .bfgs import SolverSystem
-from .triangulation import t_config, EStack
+from .topo_config import t_config, EStack
 from .tinycadlib import (
     pxy, ppp, plap, pllp, plpp, palp, vpoint_dof, expr_parser, expr_solving,
     data_collecting,

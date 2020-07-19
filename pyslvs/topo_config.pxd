@@ -37,12 +37,7 @@ cdef enum Func:
 cdef struct Expr:
     bint op
     Func func
-    Sym v1
-    Sym v2
-    Sym c1
-    Sym c2
-    Sym c3
-    Sym target
+    Sym v1, v2, c1, c2, c3, target
 
 cdef class EStack:
     cdef vector[Expr] stack

@@ -12,8 +12,8 @@ email: pyslvs@gmail.com
 cimport cython
 from libc.math cimport M_PI, sqrt, sin, cos, tan, atan2
 from .expression cimport VJoint, VPoint, VLink
-from .triangulation cimport (Sym, symbol_str, I_LABEL, S_LABEL, Expr,
-                             PXY, PPP, PLA, PLAP, PLLP, PLPP, PALP)
+from .topo_config cimport (Sym, symbol_str, I_LABEL, S_LABEL, Expr,
+                           PXY, PPP, PLA, PLAP, PLLP, PLPP, PALP)
 from .bfgs cimport SolverSystem
 
 
