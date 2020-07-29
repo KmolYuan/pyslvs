@@ -38,12 +38,12 @@ install:
   - sh: source ~/venv${PY}/bin/activate
   # Show Python
   - python --version
-  - pip --version
+  - python -m pip --version
   # Set Python compiler to MinGW
   - cmd: platform\set_pycompiler %PYTHON_DIR% %COMPILER%
   # Install modules
-  - pip install setuptools -U
-  - pip install -r requirements.txt
+  - python -m pip install pip setuptools wheel -U
+  - python -m pip install -r requirements.txt
 
 build_script:
   - python setup.py install
