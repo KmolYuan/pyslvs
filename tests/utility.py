@@ -31,7 +31,7 @@ _FOUR_BAR.update({
     'upper': 100.,
     'lower': 0.,
 })
-PLANAR_OBJECT = Planar(_FOUR_BAR)
+PLANAR_OBJECT = FMatch(_FOUR_BAR)
 DEGREE_CODE_TABLE = [
     (7, [(0, 1), (1, 2), (0, 2)]),
     (51, [(0, 1), (1, 2), (2, 3), (0, 3)]),

@@ -21,7 +21,7 @@ def path_signature(k: ndarray) -> ndarray:
 def cross_correlation(p1: ndarray, p2: ndarray, t: float) -> ndarray:
     ...
 
-class Planar(ObjFunc[str]):
+class FMatch(ObjFunc[str]):
 
     def __init__(self, mech: Dict[str, Any]):
         """The constructor of objective object.
