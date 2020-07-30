@@ -265,7 +265,10 @@ cdef double _mean(double[:] p):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef class Planar(ObjFunc):
-    """This class is used to verified kinematics of the linkage mechanism."""
+    """This class is used to verified kinematics of the linkage mechanism.
+
+    A fast matching method that adds mapping angles to variables.
+    """
     cdef bint bfgs_mode, shape_only, ordered
     cdef int target_count, input_count, l_base
     cdef list vpoints, mapping_list
