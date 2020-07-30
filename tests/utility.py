@@ -7,7 +7,7 @@ __copyright__ = "Copyright (C) 2016-2020"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
-from pyslvs import collection_list, parse_vpoints, Planar
+from pyslvs import collection_list, parse_vpoints, FMatch
 
 _FOUR_BAR = collection_list("Four bar linkage mechanism")
 _FOUR_BAR.update({
