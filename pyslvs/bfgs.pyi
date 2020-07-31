@@ -25,8 +25,8 @@ class SolverSystem:
 
         The format of `data_dict`:
 
-        + Specific coordinates: Dict\[int, List[Coord]]
-        + Specific link length: Dict\[Tuple[int, int], float]
+        + Specific coordinates: Dict\[int, List\[Coord]]
+        + Specific link length: Dict\[Tuple\[int, int], float]
 
         The `data_dict` parameter will reformat its keys into `frozenset` type.
         """
