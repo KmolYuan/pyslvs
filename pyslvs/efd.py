@@ -18,8 +18,8 @@ from numpy import (
 def efd_fitting(path: Sequence[Tuple[float, float]], n: int = 0) -> ndarray:
     """Curve fitting using Elliptical Fourier Descriptor.
 
-    The path `path` will be translate to Fourier descriptor coefficients,
-    then regenerate a new paths as a `n` x 4 NumPy array.
+    The path `path` will be translated to Fourier descriptor coefficients,
+    then regenerate a new path as a `n` x 4 NumPy array.
     """
     contour = array(path, dtype=float)
     if n < 3:
