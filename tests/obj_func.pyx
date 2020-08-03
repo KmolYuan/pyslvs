@@ -17,11 +17,9 @@ from pyslvs.metaheuristics.utility cimport ObjFunc
 cdef class TestObj(ObjFunc):
     """Test objective function."""
 
-    cpdef double[:] get_upper(self):
-        return array([100, 100], dtype=np_float)
-
-    cpdef double[:] get_lower(self):
-        return array([0, 0], dtype=np_float)
+    def __cinit__(self):
+        self.upper = array([100, 100], dtype=np_float)
+        self.lower = array([0, 0], dtype=np_float)
 
     cdef double target(self, double[:] v):
         cdef double x1 = v[0]

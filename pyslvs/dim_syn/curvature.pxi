@@ -2,6 +2,7 @@ cimport cython
 from numpy import zeros, array, arange, interp, float64 as np_float
 from libc.math cimport cos, sin, fabs, sqrt, atan2, INFINITY as INF
 from .expression cimport Coord
+from .metaheuristics.utility cimport ObjFunc
 
 
 def norm_path(path, scale=1):
@@ -241,3 +242,34 @@ cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2, double t):
             cn[j] += (p1[i + j] - m1) * (p2[i] - m2) / sqrt(tmp1 * tmp2)
         cn[j] = fabs(cn[j])
     return cn
+
+'''
+@cython.final
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef class Curvature(ObjFunc):
+    """The objective function to compare curvature."""
+
+    def __cinit__(self, dict mech):
+        # mech = {
+        #     'expression': List[VPoint],
+        #     'input': OrderedDict([((b0, d0), [start, end]), ...]),
+        #     'placement': {pt: (x, y, r)},
+        #     'target': {pt: [(x0, y0), (x1, y1), ...]},
+        #     'same': {pt: match_to_pt},
+        #     # Bounds of base link length
+        #     'upper': float,
+        #     'lower': float,
+        #     'shape_only': bool,
+        # }
+        placement = mech.get('placement', {})
+        if len(placement) == 0:
+            raise ValueError("no grounded joint")
+        target = mech.get('target', {})
+        if len(target) == 0:
+            raise ValueError("no target joint")
+        check_set = {len(t) for t in target.values()}
+        if len(check_set) != 1:
+            raise ValueError("target paths should be in the same size")
+        self.target_count = check_set.pop()
+'''

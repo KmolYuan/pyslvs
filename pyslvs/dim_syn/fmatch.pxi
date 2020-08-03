@@ -25,7 +25,7 @@ cdef class FMatch(ObjFunc):
     cdef list vpoints, mapping_list
     cdef dict placement, target, mapping, mapping_r, data_dict
     cdef object inputs
-    cdef double[:] upper, lower, polar_angles
+    cdef double[:] polar_angles
     cdef EStack exprs
 
     def __cinit__(self, dict mech):
