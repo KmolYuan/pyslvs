@@ -134,14 +134,6 @@ cdef class FMatch(ObjFunc):
         # Result list
         self.data_dict = {}
 
-    cpdef double[:] get_upper(self):
-        """Return upper bound."""
-        return self.upper
-
-    cpdef double[:] get_lower(self):
-        """Return lower bound."""
-        return self.lower
-
     cpdef bint is_two_kernel(self):
         """Input a generic data (variable array), return the mechanism
         expression.
