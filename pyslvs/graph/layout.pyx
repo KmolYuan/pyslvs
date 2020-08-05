@@ -29,7 +29,7 @@ cpdef dict external_loop_layout(Graph g, bint node_mode, double scale = 1.):
     Argument `scale` will resize the position by scale factor.
     """
     pos = _line_polygon_layout(g, scale)
-    # Node mode.
+    # Node mode
     cdef int i, n1, n2
     cdef double x1, y1, x2, y2
     if not node_mode:
@@ -49,7 +49,7 @@ cdef inline dict _line_polygon_layout(Graph g, double scale):
     cdef OrderedSet o_loop = _external_loop(g)
     lines = None
     while lines is None:
-        # Patch function of external cycle.
+        # Patch function of external cycle
         lines = _inner_lines(g, o_loop)
 
     o_loop.roll(min(o_loop), 0)
@@ -68,7 +68,7 @@ cdef inline dict _line_polygon_layout(Graph g, double scale):
     for line, start, end in lines:
         x1, y1 = pos[start]
         x2, y2 = pos[end]
-        # Conditions of linear or bezier curve.
+        # Conditions of linear or bezier curve
         limit = line_limit[start][end]
         if limit == 1:
             _linear_layout(x1, y1, x2, y2, line, pos)
@@ -78,7 +78,7 @@ cdef inline dict _line_polygon_layout(Graph g, double scale):
             _bezier_layout(p, x1, y1, x2, y2, line, pos)
         used_nodes.update(line)
 
-    # Last check for debug.
+    # Last check for debug
     if set(g.vertices) != set(pos):
         raise ValueError(
             f"the algorithm is error with {g.edges}\n"
@@ -139,10 +139,9 @@ cdef inline void _bezier_layout(
     cdef int count = len(vertices)
     if count < 1:
         raise ValueError(f"Invalid point number {count}")
-
     count += 1
 
-    # Make direction from start and end nodes.
+    # Make direction from start and end nodes
     cdef double sx = x2 - x1
     cdef double sy = y2 - y1
     cdef double r = hypot(sx, sy) * 0.45
@@ -191,7 +190,7 @@ cdef inline tuple _middle_point(double x1, double y1, double x2, double y2):
 
 cdef list _inner_lines(Graph g, OrderedSet o_loop):
     """Layout for inner vertices of graph block."""
-    cdef OrderedSet vertices = set(g.vertices) - o_loop
+    cdef OrderedSet vertices = OrderedSet(g.vertices) - o_loop
     if not vertices:
         return []
     lines = []
@@ -201,24 +200,24 @@ cdef list _inner_lines(Graph g, OrderedSet o_loop):
     while vertices:
         n = vertices.pop(0)
         if not (used_nodes & g.adj[n]):
-            # Not contacted yet.
+            # Not contacted yet
             vertices.add(n)
             continue
 
         line = OrderedSet.__new__(OrderedSet)
         line.add(n)
-        inter = set(g.adj[n]) - used_nodes
+        inter = OrderedSet(g.adj[n]) - used_nodes
         while inter:
-            # New vertices to add.
+            # New vertices to add
             n = inter.pop()
             line.add(n)
             vertices.remove(n)
             inter = vertices & g.adj[n]
             if used_nodes & g.adj[n]:
-                # If connected with any used node.
+                # Connected with any used node
                 break
 
-        # Find the intersections of the line.
+        # Find the intersections of the line
         if line[0] == line[-1]:
             inter = used_nodes & g.adj[line[0]]
             start = inter.pop()
@@ -230,15 +229,15 @@ cdef list _inner_lines(Graph g, OrderedSet o_loop):
             end = inter.pop()
 
         if _split_loop(o_loop, line, start, end):
-            # 'o_loop' has been changed.
+            # 'o_loop' has been changed
             return None
 
-        # Unified format of start node and end node.
+        # A unified format of start node and end node
         if end < start:
             end, start = start, end
             line.reverse()
 
-        # Line is ended.
+        # Line is ended
         used_nodes.update(line)
         lines.append((line, start, end))
 
@@ -267,10 +266,10 @@ cdef inline bint _split_loop(OrderedSet o_loop, OrderedSet line, int n1, int n2)
             s2 = i
             break
     else:
-        # Split failed.
+        # Split failed
         return False
 
-    # Remove the last repeated part.
+    # Remove the last repeated part
     loop_list = loop_list[:s2 + 1]
 
     cdef int anchor
@@ -278,7 +277,7 @@ cdef inline bint _split_loop(OrderedSet o_loop, OrderedSet line, int n1, int n2)
         anchor = s0 + 1
         del loop_list[anchor:s1]
         if loop_list[s0] == n2:
-            # reverse!
+            # reverse
             loop_list[anchor:anchor] = reversed(line)
         else:
             loop_list[anchor:anchor] = line
@@ -286,16 +285,16 @@ cdef inline bint _split_loop(OrderedSet o_loop, OrderedSet line, int n1, int n2)
         anchor = s1 + 1
         del loop_list[anchor:s2]
         if loop_list[s1] == n2:
-            # reverse!
+            # reverse
             loop_list[anchor:anchor] = reversed(line)
         else:
             loop_list[anchor:anchor] = line
     else:
-        # Is a normal chord.
+        # Is a normal chord
         return False
 
     o_loop.clear()
-    # Remove the first repeated part.
+    # Remove the first repeated part
     o_loop.update(loop_list[s0:])
     return True
 
@@ -313,8 +312,8 @@ cdef inline OrderedSet _external_loop(Graph g):
             if _merge_inter(c1, c2, cycles, g):
                 break
         else:
-            # Cycles has no contacted.
-            # Find connection from edges.
+            # Cycles have no contacted
+            # Find connection from edges
             for c2 in cycles:
                 if _merge_no_inter(c1, c2, cycles, g):
                     break
@@ -334,21 +333,21 @@ cdef inline bint _merge_inter(
     Graph g
 ):
     """Merge function for intersection strategy."""
-    # Find the intersection.
+    # Find the intersection
     if not len(c1 & c2) >= 2:
         return False
 
-    # Ignore subsets.
+    # Ignore subsets
     if c1 >= c2:
         cycles.remove(c2)
         cycles.append(c1)
         return True
     inter_over = c1.ordered_intersections(c2, is_loop=True)
-    # Find the intersection with reversed cycle.
+    # Find the intersection with reversed cycle
     c2.reverse()
     inter_tmp = c1.ordered_intersections(c2, is_loop=True)
     if len(inter_tmp) < len(inter_over):
-        # Choose the longest continuous intersection.
+        # Choose the longest continuous intersection
         inter_over = inter_tmp
     inter_tmp = None
 
@@ -359,25 +358,25 @@ cdef inline bint _merge_inter(
     cdef OrderedSet inter
     for i, inter in enumerate(inter_over):
         if not inter.is_ordered_subset(c1, is_loop=True):
-            # Intersection and cycle 1 has wrong direction.
+            # Intersection and cycle 1 has wrong direction
             inter.reverse()
         if inter.is_ordered_subset(c2, is_loop=True) and i == 0:
-            # Cycle 1 and cycle 2 should has different direction.
+            # Cycle 1 and cycle 2 should has different direction
             c2.reverse()
 
-        # Prune cycle 2 by intersection.
+        # Prune cycle 2 by intersection
         c2 -= inter[1:-1]
 
-        # Interface nodes.
+        # Interface nodes
         if i == 0:
             start = inter[0]
         end = inter[-1]
 
-    # Roll to interface.
+    # Roll to interface
     c1.roll(end, -1)
     c2.roll(start, 0)
 
-    # Insert points.
+    # Insert points
     _compare_insert(
         c1,
         c2,
@@ -388,7 +387,7 @@ cdef inline bint _merge_inter(
         g
     )
 
-    # The cycle 2 has been merged into cycle 1.
+    # The cycle 2 has been merged into cycle 1
     cycles.remove(c2)
     cycles.append(c1)
     return True
@@ -416,7 +415,7 @@ cdef inline bint _merge_no_inter(
     if not inter:
         return False
 
-    # Resort intersection.
+    # Resort intersection
     if not inter.is_ordered_subset(c1, is_loop=True):
         inter = c1 & inter
     cdef int start = inter[0]
@@ -426,11 +425,11 @@ cdef inline bint _merge_no_inter(
     if replace_start > replace_end:
         c2.reverse()
 
-    # Roll to interface.
+    # Roll to interface
     c1.roll(end, -1)
     c2.roll(inter_map[start], 0)
 
-    # Merge them.
+    # Merge them
     _compare_insert(
         c1,
         c2,
@@ -441,7 +440,7 @@ cdef inline bint _merge_no_inter(
         g
     )
 
-    # The cycle 2 has been merged into cycle 1.
+    # The cycle 2 has been merged into cycle 1
     cycles.remove(c2)
     cycles.append(c1)
     return True
@@ -472,7 +471,7 @@ cdef inline void _compare_insert(
     if not (c2_degrees > c1_degrees):
         return
 
-    # Cycle 2 should longer then intersection.
+    # Cycle 2 should longer then intersection
     del c1[insert_start:insert_end]
     c1.insert_from(insert_start, c2_slice)
 
@@ -581,7 +580,7 @@ cdef inline bint _not_subset(OrderedSet o_set, list members):
             return True
         if member >= o_set:
             return False
-    # No subset.
+    # No subset
     return True
 
 
@@ -704,7 +703,7 @@ cdef class OrderedSet:
             raise ValueError(f"{elem} is not in {self}")
 
         while elem != self[index]:
-            # Rolling the list.
+            # Rolling the list
             self.add(self.pop(0))
 
     cpdef object pop(self, int index = -1):
@@ -741,7 +740,7 @@ cdef class OrderedSet:
         return OrderedSet(self)
 
     def __sub__(self, other: Iterable[Any]) -> OrderedSet:
-        """Implement of '-' operator."""
+        """Implement for '-' operator."""
         if not isinstance(other, Set):
             if not isinstance(other, Iterable):
                 return NotImplemented
@@ -750,7 +749,7 @@ cdef class OrderedSet:
         return OrderedSet._from_iterable(value for value in self if value not in other)
 
     def __isub__(self, other: Iterable[Any]) -> OrderedSet:
-        """Implement of '-=' operator."""
+        """Implement for '-=' operator."""
         if other is self:
             self.clear()
         else:
@@ -759,11 +758,11 @@ cdef class OrderedSet:
         return self
 
     cpdef OrderedSet intersection(self, other):
-        """Method of '&' operator."""
+        """Implement of '&' operator."""
         return self & other
 
     def __and__(self, other: Iterable[Any]) -> OrderedSet:
-        """Implement of '&' operator."""
+        """Implement for '&' operator."""
         if not isinstance(other, Set):
             if not isinstance(other, Iterable):
                 return NotImplemented
@@ -772,7 +771,7 @@ cdef class OrderedSet:
         return OrderedSet._from_iterable(value for value in self if value in other)
 
     def __iand__(self, it: Iterable[Any]):
-        """Implement of '&=' operator."""
+        """Implement for '&=' operator."""
         for value in (self - it):
             self.discard(value)
         return self
@@ -797,7 +796,7 @@ cdef class OrderedSet:
             try:
                 matched_other = other_list.index(self_elem)
             except ValueError:
-                # Not found.
+                # Not found
                 continue
 
             match_set = {matched_other_old + 1}
@@ -805,10 +804,10 @@ cdef class OrderedSet:
                 match_set.add(matched_other_old + 1 - len(other_list))
 
             if subset and not (matched_self == matched_self_old + 1 or matched_other in match_set):
-                # Add to results.
+                # Add to results
                 if _not_subset(subset, subsets):
                     subsets.append(subset)
-                # Start new record.
+                # Start new record
                 subset = OrderedSet.__new__(OrderedSet)
             subset.add(self_elem)
             matched_other_old = matched_other
@@ -844,7 +843,7 @@ cdef class OrderedSet:
         return _isorderedsubset(other, self, is_loop)
 
     def __xor__(self, other: Iterable[Any]) -> OrderedSet:
-        """Implement of '^' operator."""
+        """Implement for '^' operator."""
         if not isinstance(other, Iterable):
             return NotImplemented
 
@@ -852,7 +851,7 @@ cdef class OrderedSet:
         return (self - o_other) | (o_other - self)
 
     def __ixor__(self, other: Iterable[Any]):
-        """Implement of '^=' operator."""
+        """Implement for '^=' operator."""
         if other is self:
             self.clear()
         else:
@@ -874,14 +873,14 @@ cdef class OrderedSet:
         self |= other
 
     def __or__(self, other: Iterable[Any]) -> OrderedSet:
-        """Implement of '|' operator."""
+        """Implement for '|' operator."""
         if not isinstance(other, Iterable):
             return NotImplemented
         chain = (e for s in (self, other) for e in s)
         return OrderedSet._from_iterable(chain)
 
     def __ior__(self, other: Iterable[Any]) -> OrderedSet:
-        """Implement of '|=' operator."""
+        """Implement for '|=' operator."""
         for elem in other:
             _add(self, elem)
         return self
@@ -1030,7 +1029,7 @@ cdef class OrderedSet:
     def __eq__(self, other: Iterable[Any]) -> bool:
         """Implement of '==' operator."""
         if isinstance(other, Set):
-            # Set is no ordered.
+            # Set is no ordered
             return set(self) == set(other)
         if isinstance(other, Iterable):
             return len(self) == len(other) and list(self) == list(other)
