@@ -247,7 +247,7 @@ cdef double max1d(double[:] s) nogil:
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef void mul1d(double[:] s, double v) nogil:
-    """Assign to 1D slice."""
+    """Inplace assignment of 1D slice."""
     cdef int i
     for i in range(len(s)):
         s[i] *= v
@@ -538,6 +538,7 @@ cdef class FMatch(ObjFunc):
         + Length and the angles of the links. [self.l_base]
         + Angle respect to the target points.
         """
+        # Copy data
         cdef int i = 0
         cdef int j = 0
         for m in self.mapping_list:
@@ -551,11 +552,20 @@ cdef class FMatch(ObjFunc):
             else:
                 self.mapping[m] = v[i]
                 i += 1
-        cdef double[:, :] angles = zeros((self.input_count, self.target_count),
-                                         dtype=np_float)
-        for i in range(self.input_count):
-            j = i + self.l_base
-            angles[i, :] = v[j:j + self.target_count]
+        # Solver
+        # Angles (node, path length)
+        cdef double[:, :] angles
+        if self.use_curvature:
+            angles = zeros((self.input_count, 360), dtype=np_float)
+            for i in range(self.input_count):
+                for j in range(360):
+                    angles[i, j] = j
+        else:
+            angles = zeros((self.input_count, self.target_count),
+                           dtype=np_float)
+            for i in range(self.input_count):
+                j = i + self.l_base
+                angles[i, :] = v[j:j + self.target_count]
         cdef double fitness = 0
         cdef int node
         cdef Coord c
@@ -567,6 +577,7 @@ cdef class FMatch(ObjFunc):
             for node in self.target:
                 c = self.data_dict[node, -1]
                 target[node].append((c.x, c.y))
+        # Compare
         cdef double scale
         cdef double[:, :] path1, path2
         for node in self.target:
