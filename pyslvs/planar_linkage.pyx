@@ -11,8 +11,10 @@ email: pyslvs@gmail.com
 
 cimport cython
 from collections import OrderedDict
-from numpy import zeros, array, arange, interp, float64 as np_float
-from libc.math cimport cos, sin, fabs, sqrt, atan2, INFINITY as INF, HUGE_VAL, M_PI
+from numpy import zeros, array, arange, interp, argmax, float64 as np_float
+from libc.math cimport (
+    cos, sin, fabs, sqrt, atan2, INFINITY as INF, HUGE_VAL, M_PI
+)
 from .expression cimport Coord, VJoint, VPoint
 from .metaheuristics.utility cimport ObjFunc
 from .tinycadlib cimport radians, pxy, ppp, plap, pllp, plpp, palp
@@ -27,7 +29,7 @@ def norm_path(path, scale=1):
     """Python wrapper of normalization function."""
     cdef double[:, :] path_m = array(path, dtype=np_float)
     _norm(path_m, scale)
-    return path_m.tolist()
+    return [(x, y) for x, y in path_m]
 
 
 @cython.boundscheck(False)
@@ -286,6 +288,8 @@ cdef class FMatch(ObjFunc):
                     i -= 1
             if self.shape_only:
                 _norm(path, 1)
+            if self.use_curvature:
+                path = _path_signature(_curvature(path))
             self.target[i] = path
         # Expressions
         self.vpoints = list(mech.get('expression', []))
@@ -298,57 +302,57 @@ cdef class FMatch(ObjFunc):
         self.mapping_r = {v: k for k, v in self.mapping.items()}
         self.mapping_list = []
         # Bounds
-        upper = []
-        lower = []
-        if len(upper) != len(lower):
+        ub = []
+        lb = []
+        if len(ub) != len(lb):
             raise ValueError("upper and lower should be in the same size")
         # Position
         cdef double x, y, r
         for i in sorted(placement):
             x, y, r = placement[i]
-            upper.append(x + r)
-            upper.append(y + r)
-            lower.append(x - r)
-            lower.append(y - r)
+            ub.append(x + r)
+            ub.append(y + r)
+            lb.append(x - r)
+            lb.append(y - r)
             self.mapping_list.append(i)
-        cdef int p_base = len(upper)
+        cdef int p_base = len(ub)
         # Length of links
         link_upper = float(mech.get('upper', 100))
         link_lower = float(mech.get('lower', 0))
         i = 0
         cdef Expr expr
         for expr in self.exprs.stack:
-            upper.append(link_upper)
-            lower.append(link_lower)
+            ub.append(link_upper)
+            lb.append(link_lower)
             sym = frozenset({expr.c1.second, expr.target.second})
             self.mapping[sym] = None
             self.mapping_list.append(sym)
             if expr.func in {PLA, PLAP}:
                 if expr.v2.first == A_LABEL:
-                    upper.append(2 * M_PI)
-                    lower.append(0)
+                    ub.append(2 * M_PI)
+                    lb.append(0)
                     sym = f"A{i}"
                     self.mapping[sym] = None
                     self.mapping_list.append(sym)
                     i += 1
             elif expr.func == PLLP:
-                upper.append(link_upper)
-                lower.append(link_lower)
+                ub.append(link_upper)
+                lb.append(link_lower)
                 sym = frozenset({expr.c2.second, expr.target.second})
                 self.mapping[sym] = None
                 self.mapping_list.append(sym)
-        self.l_base = len(upper)
+        self.l_base = len(ub)
         if not self.use_curvature:
             # Input nodes
             self.input_count = len(inputs)
             for start, end in inputs.values():
-                upper.append(radians(start))
-                lower.append(radians(end))
+                ub.append(radians(start))
+                lb.append(radians(end))
             # Angle rage
-            upper[self.l_base:] *= self.target_count
-            lower[self.l_base:] *= self.target_count
-        self.ub = array(upper, dtype=np_float)
-        self.lb = array(lower, dtype=np_float)
+            ub[self.l_base:] *= self.target_count
+            lb[self.l_base:] *= self.target_count
+        self.ub = array(ub, dtype=np_float)
+        self.lb = array(lb, dtype=np_float)
         # Swap upper and lower bound if reversed
         for i in range(len(self.ub)):
             if self.ub[i] < self.lb[i]:
@@ -509,30 +513,30 @@ cdef class FMatch(ObjFunc):
         + Length and the angles of the links. [self.l_base]
         + Angle respect to the target points.
         """
-        cdef int index = 0
-        cdef int a_index = 0
+        cdef int i = 0
+        cdef int j = 0
         for m in self.mapping_list:
             if type(m) is int:
-                (<VPoint>self.vpoints[m]).locate(v[index], v[index + 1])
-                index += 2
+                (<VPoint>self.vpoints[m]).locate(v[i], v[i + 1])
+                i += 2
             elif type(m) is str and m.startswith('A'):
-                self.polar_angles[a_index] = v[index]
-                a_index += 1
-                index += 1
+                self.polar_angles[j] = v[i]
+                j += 1
+                i += 1
             else:
-                self.mapping[m] = v[index]
-                index += 1
+                self.mapping[m] = v[i]
+                i += 1
         cdef double[:, :] angles = zeros((self.input_count, self.target_count),
                                          dtype=np_float)
-        for index in range(self.input_count):
-            a_index = index + self.l_base
-            angles[index, :] = v[a_index:a_index + self.target_count]
+        for i in range(self.input_count):
+            j = i + self.l_base
+            angles[i, :] = v[j:j + self.target_count]
         cdef double fitness = 0
         cdef int node
         cdef Coord c1, c2
         target = {n: [] for n in self.target}
-        for index in range(self.target_count):
-            if not self.solve(angles[:, index]):
+        for i in range(self.target_count):
+            if not self.solve(angles[:, i]):
                 # Punishment
                 return HUGE_VAL
             for node in self.target:
@@ -541,13 +545,21 @@ cdef class FMatch(ObjFunc):
         cdef double[:, :] path1, path2
         for node in self.target:
             path1 = array(target[node], dtype=np_float)
+            path2 = self.target[node]
             if self.shape_only:
                 _norm(path1, 1)
-            path2 = self.target[node]
-            for index in range(self.target_count):
-                c1 = Coord.__new__(Coord, path1[index, 0], path1[index, 1])
-                c2 = Coord.__new__(Coord, path2[index, 0], path2[index, 1])
-                fitness += c1.distance(c2)
+            if self.use_curvature:
+                path1 = _path_signature(_curvature(path1))
+                j = argmax(_cross_correlation(path1, path2, v[len(v) - 1]))
+                for i in range(len(path2)):
+                    path2[i, 0] += j
+            for i in range(self.target_count):
+                if self.use_curvature:
+                    fitness += path1[i, 0] - path2[i, 0]
+                else:
+                    c1 = Coord.__new__(Coord, path1[i, 0], path1[i, 1])
+                    c2 = Coord.__new__(Coord, path2[i, 0], path2[i, 1])
+                    fitness += c1.distance(c2)
         return fitness
 
     cpdef object result(self, double[:] v):
