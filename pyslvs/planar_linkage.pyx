@@ -15,7 +15,7 @@ from numpy import zeros, array, arange, interp, argmax, float64 as np_float
 from libc.math cimport (
     cos, sin, fabs, sqrt, atan2, INFINITY as INF, HUGE_VAL, M_PI
 )
-from .expression cimport Coord, VJoint, VPoint
+from .expression cimport Coord, VJoint, VPoint, distance
 from .metaheuristics.utility cimport ObjFunc
 from .tinycadlib cimport radians, pxy, ppp, plap, pllp, plpp, palp
 from .topo_config cimport (
@@ -36,21 +36,21 @@ def norm_path(path, scale=1):
 @cython.wraparound(False)
 cdef void _norm(double[:, :] path, double scale):
     """Normalization implementation inplace."""
-    cdef Coord centre = Coord.__new__(Coord, 0, 0)
+    cdef double[:] centre = zeros(2, dtype=np_float)
     cdef double x, y
     for x, y in path:
         centre.x += x
         centre.y += y
     cdef int end = len(path)
-    centre.x /= end
-    centre.y /= end
+    centre[0] /= end
+    centre[1] /= end
     cdef double[:] angle = zeros(end + 1, dtype=np_float)
     cdef double[:] length = zeros(end + 1, dtype=np_float)
     cdef int sp = 0
     cdef int i
     for i, (x, y) in enumerate(path):
-        angle[i] = atan2(y - centre.y, x - centre.x)
-        length[i] = centre.distance(Coord.__new__(Coord, x, y))
+        angle[i] = atan2(y - centre[1], x - centre[0])
+        length[i] = distance(centre[0], centre[1], x, y)
         if length[i] > length[end]:
             length[end] = length[i]
             angle[end] = angle[i]
@@ -533,15 +533,15 @@ cdef class FMatch(ObjFunc):
             angles[i, :] = v[j:j + self.target_count]
         cdef double fitness = 0
         cdef int node
-        cdef Coord c1, c2
+        cdef Coord c
         target = {n: [] for n in self.target}
         for i in range(self.target_count):
             if not self.solve(angles[:, i]):
                 # Punishment
                 return HUGE_VAL
             for node in self.target:
-                c1 = self.data_dict[node, -1]
-                target[node].append((c1.x, c1.y))
+                c = self.data_dict[node, -1]
+                target[node].append((c.x, c.y))
         cdef double[:, :] path1, path2
         for node in self.target:
             path1 = array(target[node], dtype=np_float)
@@ -557,9 +557,8 @@ cdef class FMatch(ObjFunc):
                 if self.use_curvature:
                     fitness += path1[i, 0] - path2[i, 0]
                 else:
-                    c1 = Coord.__new__(Coord, path1[i, 0], path1[i, 1])
-                    c2 = Coord.__new__(Coord, path2[i, 0], path2[i, 1])
-                    fitness += c1.distance(c2)
+                    fitness += distance(path1[i, 0], path1[i, 1],
+                                        path2[i, 0], path2[i, 1])
         return fitness
 
     cpdef object result(self, double[:] v):

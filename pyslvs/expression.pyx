@@ -15,12 +15,12 @@ from cpython.object cimport Py_EQ, Py_NE
 from numpy import array, zeros, float64 as np_float
 
 
-cdef inline double distance(double x1, double y1, double x2, double y2) nogil:
+cdef double distance(double x1, double y1, double x2, double y2) nogil:
     """Distance of two coordinates."""
     return hypot(x2 - x1, y2 - y1)
 
 
-cdef inline double slope_angle(double x1, double y1, double x2, double y2) nogil:
+cdef double slope_angle(double x1, double y1, double x2, double y2) nogil:
     """Slope angle of two coordinates."""
     return atan2(y1 - y2, x1 - x2)
 

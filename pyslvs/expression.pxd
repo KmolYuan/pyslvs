@@ -9,6 +9,8 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
+cdef double distance(double x1, double y1, double x2, double y2) nogil
+cdef double slope_angle(double x1, double y1, double x2, double y2) nogil
 cpdef list get_vlinks(object vpoints)
 
 cdef class Coord:
