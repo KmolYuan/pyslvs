@@ -184,8 +184,8 @@ cdef double[:, :] _path_signature(double[:] k):
     return s
 
 
-def cross_correlation(double[:, :] p1, double[:, :] p2, double t):
-    r"""Compare two path signature and return as an 1d array.
+def cross_correlation(double[:, :] p1, double[:, :] p2, double t = 0.1):
+    r"""Compare path signature and return as an 1d array.
 
     $$
     \begin{aligned}
@@ -200,7 +200,7 @@ def cross_correlation(double[:, :] p1, double[:, :] p2, double t):
 
     >>> ps1 = path_signature(curvature(...))
     >>> ps2 = path_signature(curvature(...))
-    >>> cc = cross_correlation(ps1, ps2, len(ps1))
+    >>> cc = cross_correlation(ps1, ps2)
     """
     return array(_cross_correlation(p1, p2, t), dtype=np_float)
 
@@ -209,11 +209,11 @@ def cross_correlation(double[:, :] p1, double[:, :] p2, double t):
 @cython.wraparound(False)
 cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2, double t):
     """Compare two path signature."""
-    cdef double[:] p1 = interp(arange(0, ps1[len(ps1) - 1, 0], t), ps1[:, 0],
-                               ps1[:, 1])
-    cdef double[:] p2 = interp(arange(0, ps2[len(ps2) - 1, 0], t), ps2[:, 0],
-                               ps2[:, 1])
-    cdef int diff = len(p1) - len(p2)
+    cdef double[:] p1 = interp(arange(0, ps1[len(ps1) - 1, 0], t),
+                               ps1[:, 0], ps1[:, 1])
+    cdef double[:] p2 = interp(arange(0, ps2[len(ps2) - 1, 0], t),
+                               ps2[:, 0], ps2[:, 1])
+    cdef int diff = max(len(p1), len(p2))
     cdef double[:] cn = zeros(diff, dtype=np_float)
     cdef int i, j, k
     cdef double m1, m2, tmp, tmp1, tmp2
@@ -550,13 +550,13 @@ cdef class FMatch(ObjFunc):
                 _norm(path1, 1)
             if self.use_curvature:
                 path1 = _path_signature(_curvature(path1))
-                j = argmax(_cross_correlation(path1, path2, v[len(v) - 1]))
+                j = argmax(_cross_correlation(path1, path2, 0.1))
                 for i in range(len(path2)):
                     path2[i, 0] += j
-            for i in range(self.target_count):
-                if self.use_curvature:
+                for i in range(self.target_count):
                     fitness += path1[i, 0] - path2[i, 0]
-                else:
+            else:
+                for i in range(self.target_count):
                     fitness += distance(path1[i, 0], path1[i, 1],
                                         path2[i, 0], path2[i, 1])
         return fitness

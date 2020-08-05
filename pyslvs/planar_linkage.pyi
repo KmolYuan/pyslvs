@@ -18,7 +18,7 @@ def derivative(path: ndarray) -> ndarray:
 def path_signature(k: ndarray) -> ndarray:
     ...
 
-def cross_correlation(p1: ndarray, p2: ndarray, t: float) -> ndarray:
+def cross_correlation(p1: ndarray, p2: ndarray, t: float = 0.1) -> ndarray:
     ...
 
 class FMatch(ObjFunc[str]):
