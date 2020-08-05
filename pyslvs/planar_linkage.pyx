@@ -39,8 +39,8 @@ cdef void _norm(double[:, :] path, double scale):
     cdef double[:] centre = zeros(2, dtype=np_float)
     cdef double x, y
     for x, y in path:
-        centre.x += x
-        centre.y += y
+        centre[0] += x
+        centre[1] += y
     cdef int end = len(path)
     centre[0] /= end
     centre[1] /= end
