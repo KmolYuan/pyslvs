@@ -55,12 +55,6 @@ class FMatch(ObjFunc[str]):
         """
         ...
 
-    def get_upper(self) -> ndarray:
-        ...
-
-    def get_lower(self) -> ndarray:
-        ...
-
     def fitness(self, v: ndarray) -> double:
         """The fitness is the error between target path and self.
 

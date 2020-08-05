@@ -18,8 +18,8 @@ cdef class TestObj(ObjFunc):
     """Test objective function."""
 
     def __cinit__(self):
-        self.upper = array([100, 100], dtype=np_float)
-        self.lower = array([0, 0], dtype=np_float)
+        self.ub = array([100, 100], dtype=np_float)
+        self.lb = array([0, 0], dtype=np_float)
 
     cdef double target(self, double[:] v):
         cdef double x1 = v[0]
