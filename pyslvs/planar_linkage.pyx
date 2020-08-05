@@ -13,7 +13,7 @@ cimport cython
 from collections import OrderedDict
 from numpy import zeros, array, arange, interp, argmax, float64 as np_float
 from libc.math cimport (
-cos, sin, fabs, sqrt, atan2, INFINITY as INF, HUGE_VAL, M_PI,
+    cos, sin, fabs, sqrt, atan2, isnan, INFINITY as INF, HUGE_VAL, M_PI,
 )
 from .expression cimport Coord, VJoint, VPoint, distance
 from .metaheuristics.utility cimport ObjFunc
@@ -48,7 +48,9 @@ cdef void _norm(double[:, :] path, double scale):
     cdef double[:] length = zeros(end + 1, dtype=np_float)
     cdef int sp = 0
     cdef int i
-    for i, (x, y) in enumerate(path):
+    for i in range(len(path)):
+        x = path[i, 0]
+        y = path[i, 1]
         angle[i] = atan2(y - centre[1], x - centre[0])
         length[i] = distance(centre[0], centre[1], x, y)
         if length[i] > length[end]:
@@ -67,8 +69,8 @@ cdef void _norm(double[:, :] path, double scale):
         if path[i, 0] > bound[1]:
             bound[1] = path[i, 0]
     scale /= (bound[1] - bound[0])
-    mul1d(path[:, 0], scale)
-    mul1d(path[:, 1], scale)
+    _mul1d(path[:, 0], scale)
+    _mul1d(path[:, 1], scale)
 
 
 @cython.boundscheck(False)
@@ -184,7 +186,7 @@ cdef double[:, :] _path_signature(double[:] k):
 
 
 def cross_correlation(double[:, :] p1, double[:, :] p2, double t = 0.1):
-    r"""Compare path signature and return as an 1d array.
+    r"""Compare signature and return as an 1d array.
 
     $$
     \begin{aligned}
@@ -207,10 +209,10 @@ def cross_correlation(double[:, :] p1, double[:, :] p2, double t = 0.1):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2, double t):
-    """Compare two path signature."""
-    cdef double[:] p1 = interp(arange(0, ps1[len(ps1) - 1, 0], t),
+    """Compare path signature."""
+    cdef double[:] p1 = interp(arange(0, _max1d(ps1[:, 0]), t),
                                ps1[:, 0], ps1[:, 1])
-    cdef double[:] p2 = interp(arange(0, ps2[len(ps2) - 1, 0], t),
+    cdef double[:] p2 = interp(arange(0, _max1d(ps2[:, 0]), t),
                                ps2[:, 0], ps2[:, 1])
     cdef int diff = max(len(p1), len(p2))
     cdef double[:] cn = zeros(diff, dtype=np_float)
@@ -235,7 +237,7 @@ cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2, double t):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef double max1d(double[:] s) nogil:
+cdef double _max1d(double[:] s) nogil:
     """Max value of 1D slice."""
     cdef double m = -INF
     for v in s:
@@ -246,11 +248,35 @@ cdef double max1d(double[:] s) nogil:
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void mul1d(double[:] s, double v) nogil:
+cdef void _mul1d(double[:] s, double v) nogil:
     """Inplace assignment of 1D slice."""
     cdef int i
     for i in range(len(s)):
         s[i] *= v
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef double[:, :] _slice_nan2d(double[:, :] s):
+    """Slice copy without NaN."""
+    cdef int first = -1
+    cdef int second = -1
+    cdef int i
+    cdef double v
+    for i in range(len(s)):
+        v = s[i, 1]
+        if i == first + 1 and isnan(v):
+            # The first of slice
+            first = i
+        elif isnan(v):
+            # The end of slice
+            second = i
+            break
+    if first == -1:
+        first = 0
+    if second == -1:
+        second = len(s) - 1
+    return s[first:second]
 
 
 @cython.final
@@ -315,6 +341,7 @@ cdef class FMatch(ObjFunc):
         # Expressions
         self.vpoints = list(mech.get('expression', []))
         inputs = OrderedDict(mech.get('input', {}))
+        self.input_count = len(inputs)
         status = {}
         self.exprs = t_config(self.vpoints, tuple(inputs.keys()), status)
         self.bfgs_mode = not all(status.values())
@@ -369,7 +396,6 @@ cdef class FMatch(ObjFunc):
             lb.append(0)
         else:
             # Input nodes
-            self.input_count = len(inputs)
             for start, end in inputs.values():
                 ub.append(radians(start))
                 lb.append(radians(end))
@@ -556,10 +582,10 @@ cdef class FMatch(ObjFunc):
         # Angles (node, path length)
         cdef double[:, :] angles
         if self.use_curvature:
-            angles = zeros((self.input_count, 360), dtype=np_float)
+            angles = zeros((self.input_count, 36), dtype=np_float)
             for i in range(self.input_count):
-                for j in range(360):
-                    angles[i, j] = j
+                for j in range(0, 360, 10):
+                    angles[i, j] = radians(j)
         else:
             angles = zeros((self.input_count, self.target_count),
                            dtype=np_float)
@@ -582,21 +608,27 @@ cdef class FMatch(ObjFunc):
         cdef double[:, :] path1, path2
         for node in self.target:
             path1 = array(target[node], dtype=np_float)
-            path2 = self.target[node]
-            if self.shape_only:
-                _norm(path1, 1)
+            path2 = array(self.target[node])
             if self.use_curvature:
+                path1 = _slice_nan2d(path1)
+                if len(path1) == 0:
+                    return HUGE_VAL
                 path1 = _path_signature(_curvature(path1))
                 scale = 1 / (v[len(v) - 1] or 1e-10)
                 if not self.full_path:
-                    scale *= max1d(path1[:, 0]) / max1d(path2[:, 0])
-                mul1d(path2[:, 0], scale)
-                j = argmax(_cross_correlation(path1, path2, 0.1))
+                    scale *= _max1d(path1[:, 0]) / _max1d(path2[:, 0])
+                _mul1d(path2[:, 0], scale)
+                if len(path2) > len(path1):
+                    j = argmax(_cross_correlation(path2, path1, 0.1))
+                else:
+                    j = argmax(_cross_correlation(path1, path2, 0.1))
                 for i in range(len(path2)):
                     path2[i, 0] += j
                 for i in range(self.target_count):
                     fitness += path1[i, 0] - path2[i, 0]
             else:
+                if self.shape_only:
+                    _norm(path1, 1)
                 for i in range(self.target_count):
                     fitness += distance(path1[i, 0], path1[i, 1],
                                         path2[i, 0], path2[i, 1])
