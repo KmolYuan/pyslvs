@@ -13,7 +13,7 @@ cimport cython
 from collections import OrderedDict
 from numpy import zeros, array, arange, interp, argmax, float64 as np_float
 from libc.math cimport (
-    cos, sin, fabs, sqrt, atan2, INFINITY as INF, HUGE_VAL, M_PI
+cos, sin, fabs, sqrt, atan2, INFINITY as INF, HUGE_VAL, M_PI,
 )
 from .expression cimport Coord, VJoint, VPoint, distance
 from .metaheuristics.utility cimport ObjFunc
@@ -67,9 +67,8 @@ cdef void _norm(double[:, :] path, double scale):
         if path[i, 0] > bound[1]:
             bound[1] = path[i, 0]
     scale /= (bound[1] - bound[0])
-    for i in range(len(path)):
-        path[i, 0] *= scale
-        path[i, 1] *= scale
+    mul1d(path[:, 0], scale)
+    mul1d(path[:, 1], scale)
 
 
 @cython.boundscheck(False)
@@ -234,6 +233,26 @@ cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2, double t):
     return cn
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef double max1d(double[:] s) nogil:
+    """Max value of 1D slice."""
+    cdef double m = -INF
+    for v in s:
+        if v > m:
+            m = v
+    return m
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef void mul1d(double[:] s, double v) nogil:
+    """Assign to 1D slice."""
+    cdef int i
+    for i in range(len(s)):
+        s[i] *= v
+
+
 @cython.final
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -242,7 +261,7 @@ cdef class FMatch(ObjFunc):
 
     A fast matching method that adds mapping angles to variables.
     """
-    cdef bint bfgs_mode, shape_only, use_curvature, ordered
+    cdef bint bfgs_mode, shape_only, use_curvature, full_path, ordered
     cdef int target_count, input_count, l_base
     cdef list vpoints, mapping_list
     cdef dict placement, target, mapping, mapping_r, data_dict
@@ -261,6 +280,7 @@ cdef class FMatch(ObjFunc):
         #     'lower': float,
         #     'shape_only': bool,
         #     'use_curvature': bool,
+        #     'full_path': bool,
         # }
         placement = mech.get('placement', {})
         if len(placement) == 0:
@@ -277,6 +297,7 @@ cdef class FMatch(ObjFunc):
         same = mech.get('same', {})
         self.shape_only = mech.get('shape_only', False)
         self.use_curvature = mech.get('use_curvature', False)
+        self.full_path = mech.get('full_path', False)
         if self.use_curvature:
             self.shape_only = False
         cdef int i, j
@@ -342,7 +363,11 @@ cdef class FMatch(ObjFunc):
                 self.mapping[sym] = None
                 self.mapping_list.append(sym)
         self.l_base = len(ub)
-        if not self.use_curvature:
+        if self.use_curvature and self.full_path:
+            # Scale factor
+            ub.append(1)
+            lb.append(0)
+        else:
             # Input nodes
             self.input_count = len(inputs)
             for start, end in inputs.values():
@@ -542,6 +567,7 @@ cdef class FMatch(ObjFunc):
             for node in self.target:
                 c = self.data_dict[node, -1]
                 target[node].append((c.x, c.y))
+        cdef double scale
         cdef double[:, :] path1, path2
         for node in self.target:
             path1 = array(target[node], dtype=np_float)
@@ -550,6 +576,10 @@ cdef class FMatch(ObjFunc):
                 _norm(path1, 1)
             if self.use_curvature:
                 path1 = _path_signature(_curvature(path1))
+                scale = 1 / (v[len(v) - 1] or 1e-10)
+                if not self.full_path:
+                    scale *= max1d(path1[:, 0]) / max1d(path2[:, 0])
+                mul1d(path2[:, 0], scale)
                 j = argmax(_cross_correlation(path1, path2, 0.1))
                 for i in range(len(path2)):
                     path2[i, 0] += j
