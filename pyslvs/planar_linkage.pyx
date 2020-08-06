@@ -214,11 +214,12 @@ cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2, double t):
                                ps1[:, 0], ps1[:, 1])
     cdef double[:] p2 = interp(arange(0, _max1d(ps2[:, 0]), t),
                                ps2[:, 0], ps2[:, 1])
-    cdef int diff = max(len(p1), len(p2))
-    cdef double[:] cn = zeros(diff, dtype=np_float)
+    if len(p2) > len(p1):
+        p1, p2 = p2, p1
+    cdef double[:] cn = zeros(len(p1), dtype=np_float)
     cdef int i, j, k
     cdef double m1, m2, tmp, tmp1, tmp2
-    for j in range(diff):
+    for j in range(len(p1)):
         for i in range(len(p2)):
             m1 = _mean(p1[j:j + len(p2)])
             m2 = _mean(p2)
@@ -393,7 +394,7 @@ cdef class FMatch(ObjFunc):
         if self.use_curvature and self.full_path:
             # Scale factor
             ub.append(1)
-            lb.append(0)
+            lb.append(1e-12)
         else:
             # Input nodes
             for start, end in inputs.values():
@@ -614,14 +615,11 @@ cdef class FMatch(ObjFunc):
                 if len(path1) == 0:
                     return HUGE_VAL
                 path1 = _path_signature(_curvature(path1))
-                scale = 1 / (v[len(v) - 1] or 1e-10)
+                scale = 1 / v[len(v) - 1]
                 if not self.full_path:
                     scale *= _max1d(path1[:, 0]) / _max1d(path2[:, 0])
                 _mul1d(path2[:, 0], scale)
-                if len(path2) > len(path1):
-                    j = argmax(_cross_correlation(path2, path1, 0.1))
-                else:
-                    j = argmax(_cross_correlation(path1, path2, 0.1))
+                j = argmax(_cross_correlation(path2, path1, 0.1))
                 for i in range(len(path2)):
                     path2[i, 0] += j
                 for i in range(self.target_count):

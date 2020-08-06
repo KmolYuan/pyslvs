@@ -195,8 +195,8 @@ cdef bint _is_all_lock(Status &status):
 
 cdef bint _is_parallel(VPoint p1, VPoint p2, VPoint p3, VPoint p4):
     """Check parallel four bar loop."""
-    return (abs(p1.distance(p3) - p2.distance(p4)) < 1e-10
-            and abs(p2.distance(p3) - p1.distance(p4)) < 1e-10)
+    return (abs(p1.distance(p3) - p2.distance(p4)) < 1e-12
+            and abs(p2.distance(p3) - p1.distance(p4)) < 1e-12)
 
 
 @cython.boundscheck(False)

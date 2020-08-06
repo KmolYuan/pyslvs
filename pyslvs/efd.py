@@ -125,7 +125,7 @@ def _calculate_dc_coefficients(contour: ndarray) -> Tuple[float, float]:
     dxy = diff(contour, axis=0)
     dt = sqrt((dxy ** 2).sum(axis=1))
     t = concatenate(([0], cumsum(dt)))
-    zt = t[-1] or 1e-6
+    zt = t[-1] or 1e-12
     diffs = diff(t ** 2)
     xi = cumsum(dxy[:, 0]) - dxy[:, 0] / dt * t[1:]
     a0 = 1 / zt * np_sum(dxy[:, 0] / (2 * dt) * diffs + xi * dt)
