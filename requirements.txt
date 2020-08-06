@@ -1,3 +1,3 @@
-cython
+cython >= 3.0a6
 numpy
 lark-parser
