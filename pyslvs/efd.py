@@ -73,7 +73,7 @@ def _normalize_efd(
         2 * (coeffs[0, 0] * coeffs[0, 1] + coeffs[0, 2] * coeffs[0, 3]),
         coeffs[0, 0] ** 2 - coeffs[0, 1] ** 2 + coeffs[0, 2] ** 2 - coeffs[0, 3] ** 2
     ) * 0.5
-    # Rotate all coefficients by theta_1.
+    # Rotate all coefficients by theta_1
     for n in range(coeffs.shape[0]):
         angle = (n + 1) * theta_1
         coeffs[n, :] = dot(
@@ -131,7 +131,7 @@ def _calculate_dc_coefficients(contour: ndarray) -> Tuple[float, float]:
     a0 = 1 / zt * np_sum(dxy[:, 0] / (2 * dt) * diffs + xi * dt)
     delta = cumsum(dxy[:, 1]) - dxy[:, 1] / dt * t[1:]
     c0 = 1 / zt * np_sum(dxy[:, 1] / (2 * dt) * diffs + delta * dt)
-    # A0 and CO relate to the first point of the contour array as origin.
+    # A0 and CO relate to the first point of the contour array as origin
     # Adding those values to the coefficients to make them relate to true origin
     return contour[0, 0] + a0, contour[0, 1] + c0
 
