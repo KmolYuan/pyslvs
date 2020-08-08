@@ -147,7 +147,7 @@ class _Transformer(Transformer, Generic[_T1, _T2]):
     @staticmethod
     @abstractmethod
     def type(n: List[str]) -> _T1:
-        ...
+        raise NotImplementedError
 
     @staticmethod
     def name(n: List[str]) -> str:
@@ -178,7 +178,7 @@ class _Transformer(Transformer, Generic[_T1, _T2]):
     @staticmethod
     @abstractmethod
     def joint(args: _JointArgs) -> _T2:
-        ...
+        raise NotImplementedError
 
     @staticmethod
     def mechanism(joints: List[_T2]) -> List[_T2]:
