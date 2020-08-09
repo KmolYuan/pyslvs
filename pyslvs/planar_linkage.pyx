@@ -11,9 +11,12 @@ email: pyslvs@gmail.com
 
 cimport cython
 from collections import OrderedDict
-from numpy import zeros, array, arange, interp, argmax, float64 as np_float
+from numpy import (
+    zeros, array, arange, interp, argmax, concatenate, float64 as np_float,
+)
+from scipy.signal import convolve
 from libc.math cimport (
-    cos, sin, fabs, sqrt, atan2, isnan, INFINITY as INF, HUGE_VAL, M_PI,
+    cos, sin, fabs, atan2, isnan, INFINITY as INF, HUGE_VAL, M_PI,
 )
 from .expression cimport Coord, VJoint, VPoint, distance
 from .metaheuristics.utility cimport ObjFunc
@@ -214,26 +217,11 @@ cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2, double t):
                                ps1[:, 0], ps1[:, 1])
     cdef double[:] p2 = interp(arange(0, _max1d(ps2[:, 0]), t),
                                ps2[:, 0], ps2[:, 1])
-    if len(p2) > len(p1):
-        p1, p2 = p2, p1
-    cdef double[:] cn = zeros(len(p1), dtype=np_float)
-    cdef int i, j, k
-    cdef double m1, m2, tmp, tmp1, tmp2
-    for j in range(len(p1)):
-        for i in range(len(p2)):
-            m1 = _mean(p1[j:j + len(p2)])
-            m2 = _mean(p2)
-            tmp1 = 0
-            for k in range(len(p2)):
-                tmp = p1[k + j] - m1
-                tmp1 += tmp * tmp
-            tmp2 = 0
-            for k in range(len(p2)):
-                tmp = p2[k] - m2
-                tmp2 += tmp * tmp
-            cn[j] += (p1[i + j] - m1) * (p2[i] - m2) / sqrt(tmp1 * tmp2)
-        cn[j] = fabs(cn[j])
-    return cn
+    if len(p1) < len(p2):
+        raise ValueError("data must longer than template")
+    _sub1d(p1, _mean(p1))
+    _sub1d(p2, _mean(p2))
+    return convolve(concatenate((p1, p1)), p2[::-1], mode='valid')
 
 
 @cython.boundscheck(False)
@@ -249,8 +237,17 @@ cdef double _max1d(double[:] s) nogil:
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+cdef void _sub1d(double[:] s, double v) nogil:
+    """Inplace subtraction assignment of 1D slice."""
+    cdef int i
+    for i in range(len(s)):
+        s[i] -= v
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef void _mul1d(double[:] s, double v) nogil:
-    """Inplace assignment of 1D slice."""
+    """Inplace multiplication assignment of 1D slice."""
     cdef int i
     for i in range(len(s)):
         s[i] *= v
@@ -259,7 +256,7 @@ cdef void _mul1d(double[:] s, double v) nogil:
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef double[:, :] _slice_nan2d(double[:, :] s):
-    """Slice copy without NaN."""
+    """Slice continuous view without NaN."""
     cdef int first = -1
     cdef int second = -1
     cdef int i
