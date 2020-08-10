@@ -13,8 +13,8 @@ cimport cython
 from collections import OrderedDict
 from numpy import (
     zeros, array, arange, interp, argmax, concatenate, float64 as np_float,
-    convolve,
 )
+from numpy.core.multiarray import correlate
 from libc.math cimport (
     cos, sin, fabs, atan2, isnan, log, INFINITY as INF, HUGE_VAL, M_PI,
 )
@@ -212,21 +212,18 @@ cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2, double t):
                                ps1[:, 0], ps1[:, 1])
     cdef double[:] p2 = interp(arange(0, _extr1d(ps2[:, 0], 1), t),
                                ps2[:, 0], ps2[:, 1])
-    if len(p1) < len(p2):
-        raise ValueError("data must longer than template")
     p1 = concatenate((p1, p1))
-    p2 = p2[::-1]
     cdef int s1 = len(p1)
     cdef int s2 = len(p2)
     cdef int n = s1 + s2 - 1
     if s2 >= s1:
         s1, s2 = s2, s1
     if (fftconvolve is not None and 1.89095737e-9 * 3 * n * log(n)
-        < 2.1364985e-10 * (s1 - s2 + 1) * s2 + -1e-3
+        < 2.1364985e-10 * (s1 - s2 + 1) * s2 - 1e-3
     ):
-        return fftconvolve(p1, p2, mode='valid')
+        return fftconvolve(p1, p2[::-1], mode='valid')
     else:
-        return convolve(p1, p2, mode='valid')
+        return correlate(p1, p2)
 
 
 @cython.boundscheck(False)
