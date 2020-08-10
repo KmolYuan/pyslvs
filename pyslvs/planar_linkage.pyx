@@ -16,7 +16,7 @@ from numpy import (
 )
 from numpy.core.multiarray import correlate
 from libc.math cimport (
-    cos, sin, fabs, atan2, isnan, log, INFINITY as INF, HUGE_VAL, M_PI,
+    cos, sin, atan2, isnan, log, INFINITY as INF, HUGE_VAL, M_PI,
 )
 from .expression cimport Coord, VJoint, VPoint, distance
 from .metaheuristics.utility cimport ObjFunc
@@ -155,7 +155,7 @@ cdef double[:, :] _derivative(double[:, :] p):
         return pd
 
 
-def path_signature(double[:] k):
+def path_signature(double[:] k, double maximum = 100):
     r"""Require a curvature, return path signature.
     It's composed by curvature $\kappa$ and a $K$ value.
 
@@ -165,21 +165,21 @@ def path_signature(double[:] k):
 
     >>> path_signature(curvature(...))
     """
-    return array(_path_signature(k))
+    return array(_path_signature(k, maximum))
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef double[:, :] _path_signature(double[:] k):
+cdef double[:, :] _path_signature(double[:] k, double maximum):
     """Require a curvature, return path signature."""
     cdef double[:, :] s = zeros((len(k), 2), dtype=np_float)
+    cdef double interval = maximum / len(k)
+    cdef double v = 0
     cdef int i
     for i in range(len(k)):
-        if i > 0:
-            s[i, 0] = s[i - 1, 0]
-        s[i, 0] += fabs(k[i])
+        s[i] = v
+        v += interval
     s[:, 1] = k
-    _sub1d(s[:, 0], _extr1d(s[:, 0], 0))
     return s
 
 
@@ -237,15 +237,6 @@ cdef double _extr1d(double[:] s, bint op) nogil:
         elif v < m:
             m = v
     return m
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef void _sub1d(double[:] s, double v) nogil:
-    """Inplace multiplication assignment of 1D slice."""
-    cdef int i
-    for i in range(len(s)):
-        s[i] -= v
 
 
 @cython.boundscheck(False)
@@ -338,7 +329,7 @@ cdef class FMatch(ObjFunc):
             if self.shape_only:
                 _norm(path, 1)
             if self.use_curvature:
-                path = _path_signature(_curvature(path))
+                path = _path_signature(_curvature(path), 100)
             self.target[i] = path
         # Expressions
         self.vpoints = list(mech.get('expression', []))
@@ -615,7 +606,7 @@ cdef class FMatch(ObjFunc):
                 path1 = _slice_nan2d(path1)
                 if len(path1) == 0:
                     return HUGE_VAL
-                path1 = _path_signature(_curvature(path1))
+                path1 = _path_signature(_curvature(path1), 100)
                 scale = 1 / v[len(v) - 1]
                 if not self.full_path:
                     scale *= _extr1d(path1[:, 0], 1) / _extr1d(path2[:, 0], 1)

@@ -15,7 +15,7 @@ def curvature(path: Iterable[_Coord]) -> ndarray:
 def derivative(path: ndarray) -> ndarray:
     ...
 
-def path_signature(k: ndarray) -> ndarray:
+def path_signature(k: ndarray, maximum: float = 100) -> ndarray:
     ...
 
 def cross_correlation(p1: ndarray, p2: ndarray, t: float = 0.1) -> ndarray:

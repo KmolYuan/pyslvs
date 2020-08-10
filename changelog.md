@@ -1,6 +1,6 @@
 # Version 20.08
 
-+ None
++ Change the definition of Path Signature: The mapping of stroke and curvature.
 
 # Version 20.07
 
