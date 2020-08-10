@@ -100,17 +100,6 @@ cdef void _aligned(double[:, :] path, int sp):
         path[len(path) - sp + i, 1] = tmp[i, 1]
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef double _mean(double[:] p):
-    """Calculate mean of the memory view."""
-    cdef double s = 0
-    cdef double v
-    for v in p:
-        s += v
-    return s / len(p)
-
-
 def curvature(path):
     r"""Calculate the signed curvature and return as an array.
 
@@ -190,6 +179,7 @@ cdef double[:, :] _path_signature(double[:] k):
             s[i, 0] = s[i - 1, 0]
         s[i, 0] += fabs(k[i])
     s[:, 1] = k
+    _sub1d(s[:, 0], _extr1d(s[:, 0], 0))
     return s
 
 
@@ -218,14 +208,12 @@ def cross_correlation(double[:, :] p1, double[:, :] p2, double t = 0.1):
 @cython.wraparound(False)
 cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2, double t):
     """Compare path signature."""
-    cdef double[:] p1 = interp(arange(0, _max1d(ps1[:, 0]), t),
+    cdef double[:] p1 = interp(arange(0, _extr1d(ps1[:, 0], 1), t),
                                ps1[:, 0], ps1[:, 1])
-    cdef double[:] p2 = interp(arange(0, _max1d(ps2[:, 0]), t),
+    cdef double[:] p2 = interp(arange(0, _extr1d(ps2[:, 0], 1), t),
                                ps2[:, 0], ps2[:, 1])
     if len(p1) < len(p2):
         raise ValueError("data must longer than template")
-    _sub1d(p1, _mean(p1))
-    _sub1d(p2, _mean(p2))
     p1 = concatenate((p1, p1))
     p2 = p2[::-1]
     cdef int s1 = len(p1)
@@ -243,11 +231,13 @@ cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2, double t):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef double _max1d(double[:] s) nogil:
+cdef double _extr1d(double[:] s, bint op) nogil:
     """Max value of 1D slice."""
-    cdef double m = -INF
+    cdef double m = -INF if op else INF
     for v in s:
-        if v > m:
+        if op and v > m:
+            m = v
+        elif v < m:
             m = v
     return m
 
@@ -255,7 +245,7 @@ cdef double _max1d(double[:] s) nogil:
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef void _sub1d(double[:] s, double v) nogil:
-    """Inplace subtraction assignment of 1D slice."""
+    """Inplace multiplication assignment of 1D slice."""
     cdef int i
     for i in range(len(s)):
         s[i] -= v
@@ -631,7 +621,7 @@ cdef class FMatch(ObjFunc):
                 path1 = _path_signature(_curvature(path1))
                 scale = 1 / v[len(v) - 1]
                 if not self.full_path:
-                    scale *= _max1d(path1[:, 0]) / _max1d(path2[:, 0])
+                    scale *= _extr1d(path1[:, 0], 1) / _extr1d(path2[:, 0], 1)
                 _mul1d(path2[:, 0], scale)
                 j = argmax(_cross_correlation(path2, path1, 0.1))
                 for i in range(len(path2)):
