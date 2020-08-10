@@ -13,10 +13,10 @@ cimport cython
 from collections import OrderedDict
 from numpy import (
     zeros, array, arange, interp, argmax, concatenate, float64 as np_float,
+    convolve,
 )
-from scipy.signal import convolve
 from libc.math cimport (
-    cos, sin, fabs, atan2, isnan, INFINITY as INF, HUGE_VAL, M_PI,
+    cos, sin, fabs, atan2, isnan, log, INFINITY as INF, HUGE_VAL, M_PI,
 )
 from .expression cimport Coord, VJoint, VPoint, distance
 from .metaheuristics.utility cimport ObjFunc
@@ -26,6 +26,11 @@ from .topo_config cimport (
     PLPP, PALP, EStack,
 )
 from .bfgs cimport SolverSystem
+
+try:
+    from scipy.signal import fftconvolve
+except ImportError:
+    fftconvolve = None
 
 
 def norm_path(path, scale=1):
@@ -221,7 +226,19 @@ cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2, double t):
         raise ValueError("data must longer than template")
     _sub1d(p1, _mean(p1))
     _sub1d(p2, _mean(p2))
-    return convolve(concatenate((p1, p1)), p2[::-1], mode='valid')
+    p1 = concatenate((p1, p1))
+    p2 = p2[::-1]
+    cdef int s1 = len(p1)
+    cdef int s2 = len(p2)
+    cdef int n = s1 + s2 - 1
+    if s2 >= s1:
+        s1, s2 = s2, s1
+    if (fftconvolve is not None and 1.89095737e-9 * 3 * n * log(n)
+        < 2.1364985e-10 * (s1 - s2 + 1) * s2 + -1e-3
+    ):
+        return fftconvolve(p1, p2, mode='valid')
+    else:
+        return convolve(p1, p2, mode='valid')
 
 
 @cython.boundscheck(False)
