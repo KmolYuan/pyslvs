@@ -232,8 +232,9 @@ cdef double _extr1d(double[:] s, bint op) nogil:
     """Max value of 1D slice."""
     cdef double m = -INF if op else INF
     for v in s:
-        if op and v > m:
-            m = v
+        if op:
+            if v > m:
+                m = v
         elif v < m:
             m = v
     return m
