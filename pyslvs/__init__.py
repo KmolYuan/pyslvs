@@ -2,7 +2,7 @@
 
 """Kernel of Pyslvs."""
 
-__version__ = "20.08.0.dev0"
+__version__ = "20.08.0"
 __author__ = "Yuan Chang"
 __copyright__ = "Copyright (C) 2016-2020"
 __license__ = "AGPL"
