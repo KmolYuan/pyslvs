@@ -20,7 +20,7 @@ from pyslvs.metaheuristics.utility cimport ObjFunc
 cdef class TestObj(ObjFunc):
     """Test objective function.
 
-    f(x) = x1^2 + 8x2
+    f(x) = x1^2 + 8*x2
     """
 
     def __cinit__(self):

@@ -262,6 +262,6 @@ class CoreTest(TestCase):
         for t in PARAMS:
             settings.update(PARAMS[t])
             x, fval = ALGORITHM[t](obj, settings).run()
-            self.assertAlmostEqual(0., round(x[0]))
-            self.assertAlmostEqual(0., round(x[1]))
-            self.assertAlmostEqual(0., round(fval))
+            self.assertAlmostEqual(0., x[0], 2)
+            self.assertAlmostEqual(0., x[1], 2)
+            self.assertAlmostEqual(0., fval, 2)
