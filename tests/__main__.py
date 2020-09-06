@@ -257,11 +257,11 @@ class CoreTest(TestCase):
 
     def test_obj_func(self):
         """Test with a objective function."""
-        settings = {'max_time': 1, 'report': 10}
+        settings = {'min_fit': 1e-20, 'report': 10}
         obj = TestObj()
         for t in PARAMS:
             settings.update(PARAMS[t])
             x, fval = ALGORITHM[t](obj, settings).run()
-            self.assertAlmostEqual(0., x[0], 2)
-            self.assertAlmostEqual(0., x[1], 2)
-            self.assertAlmostEqual(0., fval, 2)
+            self.assertAlmostEqual(0., x[0], 6)
+            self.assertAlmostEqual(0., x[1], 6)
+            self.assertAlmostEqual(0., fval, 6)
