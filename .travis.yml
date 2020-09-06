@@ -41,7 +41,7 @@ jobs:
 
     - <<: *win
       env:
-        - PYTHON=3.8.0
+        - PYTHON=3.8.5
         - PY=38
         - COMPILER=mingw32
 
@@ -53,7 +53,7 @@ jobs:
 
     - <<: *win
       env:
-        - PYTHON=3.8.0
+        - PYTHON=3.8.5
         - PY=38
         - COMPILER=msvc
 
@@ -74,7 +74,7 @@ jobs:
         - python3 -m pip install -r requirements.txt -U
 
     - <<: *osx
-      env: PYTHON=3.8.0
+      env: PYTHON=3.8.5
 
 script:
   - python3 setup.py test
