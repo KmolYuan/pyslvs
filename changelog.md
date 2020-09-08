@@ -1,6 +1,7 @@
 # Version 20.09
 
 + Improve performance of meta-heuristic algorithms.
+    + Release almost GIL, only left objective function.
 
 # Version 20.08
 
