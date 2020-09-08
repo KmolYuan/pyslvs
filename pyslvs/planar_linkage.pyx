@@ -414,8 +414,8 @@ cdef class FMatch(ObjFunc):
         return self.bfgs_mode
 
     cdef inline double get_len(self, str expr1, str expr2):
-        return self.mapping[frozenset({self.mapping_r[expr1], self.mapping_r[
-            expr2]})]
+        return self.mapping[frozenset({self.mapping_r[expr1],
+                                       self.mapping_r[expr2]})]
 
     cdef bint solve(self, double[:] input_list):
         self.data_dict.clear()
@@ -584,7 +584,7 @@ cdef class FMatch(ObjFunc):
             angles = zeros((self.input_count, self.target_count),
                            dtype=np_float)
             for i in range(self.input_count):
-                j = i + self.l_base
+                j = i * self.target_count + self.l_base
                 angles[i, :] = v[j:j + self.target_count]
         cdef double fitness = 0
         cdef int node
