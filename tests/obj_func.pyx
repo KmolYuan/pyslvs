@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# cython: language_level=3
+# cython: language_level=3, cdivision=True, boundscheck=False, wraparound=False
 
 """Differential Evolution
 
@@ -15,8 +15,6 @@ from pyslvs.metaheuristics.utility cimport ObjFunc
 
 
 @cython.final
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef class TestObj(ObjFunc):
     """Test objective function.
 
