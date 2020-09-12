@@ -32,11 +32,13 @@ src_path = 'pyslvs'
 graph_path = pth_join(src_path, 'graph')
 bfgs_path = pth_join(src_path, 'bfgs_solver')
 metaheuristics_path = pth_join(src_path, 'metaheuristics')
-macros = [('_USE_MATH_DEFINES', None), ('M_PI', 'PI')]
-compile_args = ['-O3', '-Wno-cpp', '-std=c++17']
+macros = [('_USE_MATH_DEFINES', None)]
+compile_args_msvc = ['/O2', '/std:c++17', '/openmp']
+compile_args = ['-O3', '-Wno-cpp', '-std=c++17', '-fopenmp']
 link_args = ['-static-libgcc', '-static-libstdc++',
              '-Wl,-Bstatic,--whole-archive',
              '-lwinpthread',
+             '-lgomp',
              '-Wl,--no-whole-archive']
 if system() == 'Windows':
     # Disable format warning
@@ -86,7 +88,7 @@ class Build(build_ext):
         elif compiler == 'msvc':
             for e in self.extensions:
                 e.define_macros = macros[:1]
-                e.extra_compile_args = ['/O2', '/std:c++17']
+                e.extra_compile_args = compile_args_msvc
         super(Build, self).build_extensions()
 
     def finalize_options(self):
