@@ -65,6 +65,7 @@ jobs:
       before_install:
         - brew update
         - brew upgrade pyenv || true
+        - brew install libomp
         - export PATH="/Users/travis/.pyenv/shims:${PATH}"
         - pyenv install ${PYTHON}
         - pyenv global ${PYTHON}
