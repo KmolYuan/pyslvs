@@ -25,10 +25,10 @@ cdef class TestObj(ObjFunc):
         self.ub = array([100, 100], dtype=np_float)
         self.lb = array([0, 0], dtype=np_float)
 
-    cdef double target(self, double[:] v):
+    cdef double target(self, double[:] v) nogil:
         return v[0] * v[0] + 8 * v[1]
 
-    cdef double fitness(self, double[:] v):
+    cdef double fitness(self, double[:] v) nogil:
         return self.target(v)
 
     cpdef object result(self, double[:] v):

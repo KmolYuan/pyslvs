@@ -404,7 +404,7 @@ cdef class FMatch(ObjFunc):
                 self.ub[i], self.lb[i] = self.lb[i], self.ub[i]
         # Allocate memory
         self.polar_angles = zeros(self.l_base - p_base, dtype=np_float)
-        # Result list
+        # TODO: Result list
         self.data_dict = {}
 
     cpdef bint is_two_kernel(self):
@@ -417,7 +417,9 @@ cdef class FMatch(ObjFunc):
         return self.mapping[frozenset({self.mapping_r[expr1],
                                        self.mapping_r[expr2]})]
 
-    cdef bint solve(self, double[:] input_list):
+    cdef bint solve(self, double[:] input_list) nogil:
+        """Solver function."""
+        # TODO: No GIL here.
         self.data_dict.clear()
         cdef int i
         cdef VPoint vpoint
@@ -550,13 +552,12 @@ cdef class FMatch(ObjFunc):
                 )
         return True
 
-    cdef double fitness(self, double[:] v):
-        """Return fitness from chromosome.
+    cdef double fitness(self, double[:] v) nogil:
+        """Return the difference of the path signature.
 
-        + Coordinates of fixed pivots. [0:self.l_base]
-            [(xn, yn), ...]
-        + Length and the angles of the links. [self.l_base]
-        + Angle respect to the target points.
+        + Position of fix joints.
+        + Link lengths.
+        + Angle corresponding to the target points.
         """
         # Copy data
         cdef int i = 0
