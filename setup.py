@@ -35,7 +35,9 @@ metaheuristics_path = pth_join(src_path, 'metaheuristics')
 macros = [('_USE_MATH_DEFINES', None)]
 compile_args_msvc = ['/O2', '/std:c++17', '/openmp']
 compile_args = ['-O3', '-Wno-cpp', '-std=c++17', '-fopenmp']
-link_args = ['-static-libgcc', '-static-libstdc++',
+link_args = ['-fopenmp']
+link_args_msvc = ['/openmp']
+link_args_static = ['-static-libgcc', '-static-libstdc++',
              '-Wl,-Bstatic,--whole-archive',
              '-lwinpthread',
              '-lgomp',
@@ -60,7 +62,7 @@ ext_modules = [Extension(
 )]
 paths = [src_path, graph_path, metaheuristics_path]
 if 'test' in argv:
-    paths.append('tests')
+    paths.append('test')
 for place in paths:
     for source in listdir(place):
         if not source.endswith('.pyx'):
@@ -84,11 +86,14 @@ class Build(build_ext):
                 e.define_macros = macros
                 e.extra_compile_args = compile_args
                 if compiler == 'mingw32':
+                    e.extra_link_args = link_args_static
+                else:
                     e.extra_link_args = link_args
         elif compiler == 'msvc':
             for e in self.extensions:
                 e.define_macros = macros[:1]
                 e.extra_compile_args = compile_args_msvc
+                e.extra_link_args = link_args_msvc
         super(Build, self).build_extensions()
 
     def finalize_options(self):
@@ -107,14 +112,14 @@ setup(
     long_description=read("README.md"),
     long_description_content_type='text/markdown',
     url="https://github.com/KmolYuan/pyslvs",
-    packages=find_packages(exclude=('tests',)),
+    packages=find_packages(exclude=('test',)),
     package_data={'': ['*.pyi', '*.pxd', '*.pyx'], 'pyslvs': ['py.typed']},
     ext_modules=ext_modules,
     cmdclass={'build_ext': Build},
     zip_safe=False,
     python_requires=">=3.7",
     install_requires=read('requirements.txt').splitlines(),
-    test_suite="tests",
+    test_suite="test",
     classifiers=[
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",

@@ -11,6 +11,8 @@ email: pyslvs@gmail.com
 
 cimport cython
 from numpy import array, float64 as np_float
+from unittest import TestCase
+from pyslvs.metaheuristics import ALGORITHM, PARAMS
 from pyslvs.metaheuristics.utility cimport ObjFunc
 
 
@@ -33,3 +35,17 @@ cdef class TestObj(ObjFunc):
 
     cpdef object result(self, double[:] v):
         return tuple(v), self.target(v)
+
+
+class AlgorithmTest(TestCase):
+
+    def test_obj_func(self):
+        """Test with an objective function."""
+        settings = {'min_fit': 1e-20, 'report': 10}
+        obj = TestObj()
+        for t, setting in PARAMS.items():
+            settings.update(setting)
+            x, fval = ALGORITHM[t](obj, settings).run()
+            self.assertAlmostEqual(0., x[0], 6)
+            self.assertAlmostEqual(0., x[1], 6)
+            self.assertAlmostEqual(0., fval, 6)
