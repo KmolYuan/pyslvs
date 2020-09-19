@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 
-"""This module contains test objects."""
+"""Pyslvs planar linkage module test."""
 
 __author__ = "Yuan Chang"
 __copyright__ = "Copyright (C) 2016-2020"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
-from pyslvs import collection_list, parse_vpoints, FMatch
+from unittest import TestCase
+from math import radians, hypot, sin, cos
+from numpy import array
+from pyslvs import parse_vpoints, norm_path, collection_list, FMatch
+from pyslvs.metaheuristics import ALGORITHM, AlgorithmType, PARAMS
 
 _FOUR_BAR = collection_list("Four bar linkage mechanism")
 _FOUR_BAR.update({
@@ -32,40 +36,6 @@ _FOUR_BAR.update({
     'lower': 0.,
 })
 PLANAR_OBJECT = FMatch(_FOUR_BAR)
-DEGREE_CODE_TABLE = [
-    (7, [(0, 1), (1, 2), (0, 2)]),
-    (51, [(0, 1), (1, 2), (2, 3), (0, 3)]),
-    (62, [(0, 1), (1, 2), (2, 3), (0, 3), (0, 2)]),
-    (63, [(0, 1), (1, 2), (2, 3), (0, 3), (0, 2), (1, 3)]),
-    (787, [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4)]),
-    (937, [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4), (0, 2)]),
-    (504, [(0, 1), (1, 2), (2, 3), (0, 3), (0, 4), (4, 2)]),
-    (947, [(0, 1), (1, 2), (2, 3), (0, 3), (0, 4), (4, 2), (1, 4)]),
-    (1010, [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4), (0, 2), (0, 3)]),
-    (1016, [(0, 1), (1, 2), (2, 3), (0, 3), (0, 4), (4, 2), (0, 2)]),
-    (1011, [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4), (0, 2), (0, 3), (1, 4)]),
-    (1020, [(0, 1), (1, 2), (2, 3), (0, 3), (0, 4), (4, 2), (0, 2), (1, 4)]),
-    (1022,
-     [(0, 1), (1, 2), (2, 3), (0, 3), (0, 4), (4, 2), (0, 2), (1, 4), (1, 3)]),
-    (24851, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5)]),
-    (15169, [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4), (0, 5), (3, 5)]),
-    (27050, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 2), (3, 5)]),
-    (29459, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 2), (1, 3)]),
-    (29326, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 3), (1, 5)]),
-    (31497, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 3), (0, 4)]),
-    (31064, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 2), (0, 4)]),
-    (24344, [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4), (0, 3), (0, 5), (2, 5)]),
-    (31553, [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4), (0, 2), (0, 5), (2, 5)]),
-    (16320, [(0, 1), (1, 2), (2, 3), (0, 3), (0, 4), (2, 4), (0, 5), (2, 5)]),
-    (29327, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 3), (1, 5),
-             (2, 4)]),
-    (30358, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 4), (1, 5),
-             (2, 4)]),
-    (31507, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 4), (1, 5),
-             (3, 5)]),
-    (30485, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (0, 3), (2, 5),
-             (2, 4)]),
-]
 PATH = [
     (6.7700907146387586, 24.644877369732),
     (3.9327689792658944, 26.12795413801081),
@@ -98,3 +68,38 @@ PATH = [
     (6.54573633651432, 21.9527700520141),
     (6.770090714638762, 24.64487736973219),
 ]
+
+
+class PlanarTest(TestCase):
+
+    def test_path_normalization(self):
+        """Test path normalization function."""
+        path1 = norm_path(PATH)
+        alpha = radians(50)
+        c = cos(alpha)
+        s = sin(alpha)
+        path2 = norm_path(array(path1) @ array([[c, -s], [s, c]]))
+        for i in range(len(PATH)):
+            h = hypot(path1[i][0] - path2[i][0], path1[i][1] - path2[i][1])
+            self.assertAlmostEqual(0, h, 6)
+
+    def algorithm_generic(self, t: AlgorithmType):
+        """Generic algorithm setup."""
+        settings = {'max_gen': 10, 'report': 10}
+        settings.update(PARAMS[t])
+        algorithm = ALGORITHM[t](PLANAR_OBJECT, settings)
+        algorithm.run()
+        t_f = algorithm.history()
+        self.assertTrue(10 == t_f[1][0] - t_f[0][0])
+
+    def test_algorithms(self):
+        """Test algorithms."""
+        self.assertFalse(PLANAR_OBJECT.is_two_kernel())
+        # Real-coded genetic algorithm
+        self.algorithm_generic(AlgorithmType.RGA)
+        # Firefly algorithm
+        self.algorithm_generic(AlgorithmType.Firefly)
+        # Differential evolution
+        self.algorithm_generic(AlgorithmType.DE)
+        # Teaching learning based optimization
+        self.algorithm_generic(AlgorithmType.TLBO)

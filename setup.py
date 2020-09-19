@@ -65,7 +65,7 @@ for place in paths:
     for source in listdir(place):
         if not source.endswith('.pyx'):
             continue
-        if place == src_path and source == 'bfgs.pyx':
+        if place == src_path and source in {'bfgs.pyx', 'planar_linkage.pyx'}:
             continue
         ext_modules.append(Extension(
             place.replace(sep, '.') + '.' + source.split('.')[0],  # Base name

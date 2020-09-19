@@ -19,7 +19,7 @@ Or install and test from source:
 
 ```bash
 python setup.py install
-python setup.py test
+make test
 ```
 
 ## Documentation

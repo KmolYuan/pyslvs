@@ -49,7 +49,7 @@ build_script:
   - python setup.py install
 
 test_script:
-  - python setup.py test
+  - python -m unittest discover tests test_*.py
 
 after_build:
   # PyPI deployment

@@ -15,9 +15,9 @@ from .tinycadlib import (
     pxy, ppp, plap, pllp, plpp, palp, vpoint_dof, expr_parser, expr_solving,
     data_collecting,
 )
-from .planar_linkage import (
-    FMatch, norm_path, curvature, derivative, path_signature, cross_correlation,
-)
+# from .planar_linkage import (
+#     FMatch, norm_path, curvature, derivative, path_signature, cross_correlation,
+# )
 from .expression_parser import (
     color_names, color_rgb, parse_params, parse_pos, parse_vpoints,
     parse_vlinks, edges_view, graph2vpoints, PointArgs, LinkArgs,
