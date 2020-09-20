@@ -78,7 +78,7 @@ jobs:
       env: PYTHON=3.8.5
 
 script:
-  - python3 -m unittest
+  - python3 test
 
 before_cache:
   - rm -rf $HOME/.cache/pip/log
