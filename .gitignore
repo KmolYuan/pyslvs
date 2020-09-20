@@ -103,10 +103,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-#Cython source
+# Cython source
 pyslvs/*.cpp
 pyslvs/graph/*.cpp
 test/*.cpp
-
-#Qt project
-*.pro.user
