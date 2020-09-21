@@ -8,7 +8,6 @@ __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
 from re import MULTILINE, search
-from sys import argv
 from os import listdir
 from os.path import sep, join as pth_join
 from setuptools import setup, Extension, find_packages
@@ -37,11 +36,14 @@ compile_args_msvc = ['/O2', '/std:c++17', '/openmp']
 compile_args = ['-O3', '-Wno-cpp', '-std=c++17', '-fopenmp']
 link_args = ['-fopenmp']
 link_args_msvc = ['/openmp']
-link_args_static = ['-static-libgcc', '-static-libstdc++',
-             '-Wl,-Bstatic,--whole-archive',
-             '-lwinpthread',
-             '-lgomp',
-             '-Wl,--no-whole-archive']
+link_args_static = [
+    '-static-libgcc',
+    '-static-libstdc++',
+    '-Wl,-Bstatic,--whole-archive',
+    '-lwinpthread',
+    '-lgomp',
+    '-Wl,--no-whole-archive',
+]
 if system() == 'Windows':
     # Disable format warning
     compile_args.append('-Wno-format')
@@ -61,8 +63,6 @@ ext_modules = [Extension(
     include_dirs=[bfgs_path]
 )]
 paths = [src_path, graph_path, metaheuristics_path]
-if 'test' in argv:
-    paths.append('test')
 for place in paths:
     for source in listdir(place):
         if not source.endswith('.pyx'):
@@ -79,6 +79,7 @@ for ext in ext_modules:
 
 
 class Build(build_ext):
+
     def build_extensions(self):
         compiler = self.compiler.compiler_type
         if compiler in {'mingw32', 'unix'}:
@@ -119,13 +120,13 @@ setup(
     zip_safe=False,
     python_requires=">=3.7",
     install_requires=read('requirements.txt').splitlines(),
-    test_suite="test",
     classifiers=[
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Cython",
         "Topic :: Scientific/Engineering",
-        "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+        "License :: OSI Approved :: GNU Affero General Public License v3 or "
+        "later (AGPLv3+)",
         "Operating System :: OS Independent",
         "Typing :: Typed",
     ]
