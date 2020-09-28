@@ -33,7 +33,8 @@ bfgs_path = pth_join(src_path, 'bfgs_solver')
 metaheuristics_path = pth_join(src_path, 'metaheuristics')
 macros = [('_USE_MATH_DEFINES', None)]
 compile_args_msvc = ['/O2', '/std:c++17', '/openmp']
-compile_args = ['-Wno-cpp', '-std=c++17', '-fopenmp']
+compile_args = ['-Wno-cpp', '-std=c++17', '-fopenmp', '-ffast-math',
+                '-march=native']
 link_args = ['-fopenmp']
 link_args_msvc = ['/openmp']
 link_args_static = [
