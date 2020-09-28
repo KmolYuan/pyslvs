@@ -34,18 +34,16 @@ def test_speed(algorithm: AlgorithmType, parallel: bool):
 
 if __name__ == '__main__':
     # Time test
-    no_mp = min(repeat("without_mp()",
-                       number=1, repeat=100, globals=globals()))
-    mp = min(repeat("with_mp()",
-                    number=1, repeat=100, globals=globals()))
-    print(f"> Example function - is faster? {mp < no_mp}")
-    print(no_mp)
-    print(mp)
+    no_mp = min(repeat("f()", number=1, repeat=100, globals={'f': without_mp}))
+    mp = min(repeat("f()", number=1, repeat=100, globals={'f': with_mp}))
+    print(f"> Radial basis function - is faster? {mp < no_mp}")
+    print(f"{no_mp:.020f}s")
+    print(f"{mp:.020f}s ... {no_mp / mp * 100 - 100:+.02f}%")
     for alg_type in AlgorithmType:
-        no_mp = min(repeat(f"test_speed(AlgorithmType.{alg_type.name}, False)",
+        no_mp = min(repeat(f"test_speed({alg_type!s}, False)",
                            number=1, repeat=100, globals=globals()))
-        mp = min(repeat(f"test_speed(AlgorithmType.{alg_type.name}, True)",
+        mp = min(repeat(f"test_speed({alg_type!s}, True)",
                         number=1, repeat=100, globals=globals()))
-        print(f"> {alg_type.name} - is faster? {mp < no_mp}")
-        print(no_mp)
-        print(mp)
+        print(f"> {alg_type} - is faster? {mp < no_mp}")
+        print(f"{no_mp:.020f}s")
+        print(f"{mp:.020f}s ... {no_mp / mp * 100 - 100:+.02f}%")
