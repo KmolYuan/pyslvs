@@ -13,7 +13,7 @@ email: pyslvs@gmail.com
 cimport cython
 from libc.math cimport M_PI, atan2, hypot, NAN
 from cpython.object cimport Py_EQ, Py_NE
-from numpy import array, zeros, float64 as np_float
+from numpy import array, zeros, float64 as f64
 
 
 cdef double distance(double x1, double y1, double x2, double y2) nogil:
@@ -100,7 +100,7 @@ cdef class VPoint:
             self.color = color_func(color_str)
         self.x = x
         self.y = y
-        self.c = zeros((2, 2), dtype=np_float)
+        self.c = zeros((2, 2), dtype=f64)
         if self.type in {VJoint.P, VJoint.RP}:
             # Slider current coordinates
             # [0]: Current node on slot

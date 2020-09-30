@@ -13,7 +13,7 @@ email: pyslvs@gmail.com
 cimport cython
 from collections import OrderedDict
 from numpy import (
-    zeros, array, arange, interp, argmax, concatenate, float64 as np_float,
+    zeros, array, arange, interp, argmax, concatenate, float64 as f64,
 )
 from numpy.core.multiarray import correlate
 from libc.math cimport (
@@ -36,7 +36,7 @@ except ImportError:
 
 def norm_path(path, scale=1):
     """Python wrapper of normalization function."""
-    cdef double[:, :] path_m = array(path, dtype=np_float)
+    cdef double[:, :] path_m = array(path, dtype=f64)
     _norm(path_m, scale)
     return [(x, y) for x, y in path_m]
 
@@ -45,7 +45,7 @@ def norm_path(path, scale=1):
 @cython.wraparound(False)
 cdef void _norm(double[:, :] path, double scale):
     """Normalization implementation inplace."""
-    cdef double[:] centre = zeros(2, dtype=np_float)
+    cdef double[:] centre = zeros(2, dtype=f64)
     cdef double x, y
     for x, y in path:
         centre[0] += x
@@ -53,8 +53,8 @@ cdef void _norm(double[:, :] path, double scale):
     cdef int end = len(path)
     centre[0] /= end
     centre[1] /= end
-    cdef double[:] angle = zeros(end + 1, dtype=np_float)
-    cdef double[:] length = zeros(end + 1, dtype=np_float)
+    cdef double[:] angle = zeros(end + 1, dtype=f64)
+    cdef double[:] length = zeros(end + 1, dtype=f64)
     cdef int sp = 0
     cdef int i
     for i in range(len(path)):
@@ -67,7 +67,7 @@ cdef void _norm(double[:, :] path, double scale):
             angle[end] = angle[i]
             sp = end
     _aligned(path, sp)
-    cdef double[:] bound = array([INF, -INF], dtype=np_float)
+    cdef double[:] bound = array([INF, -INF], dtype=f64)
     cdef double a
     for i in range(len(path)):
         a = angle[i] - angle[end]
@@ -88,7 +88,7 @@ cdef void _aligned(double[:, :] path, int sp):
     """Split 1D path from sp, concatenate to end."""
     if sp == 0:
         return
-    cdef double[:, :] tmp = zeros((sp, 2), dtype=np_float)
+    cdef double[:, :] tmp = zeros((sp, 2), dtype=f64)
     cdef int i
     for i in range(sp):
         tmp[i, 0] = path[i, 0]
@@ -108,7 +108,7 @@ def curvature(path):
     \kappa(t) = \frac{x'y'' - x''y'}{(x'^2 + y'^2)^\frac{3}{2}}
     $$
     """
-    cdef double[:, :] path_m = array(path, dtype=np_float)
+    cdef double[:, :] path_m = array(path, dtype=f64)
     return array(_curvature(path_m))
 
 
@@ -118,7 +118,7 @@ cdef double[:] _curvature(double[:, :] path):
     """Calculate the signed curvature."""
     cdef double[:, :] p1d = _derivative(path)
     cdef double[:, :] p2d = _derivative(p1d)
-    cdef double[:] k = zeros(len(path) - 2, dtype=np_float)
+    cdef double[:] k = zeros(len(path) - 2, dtype=f64)
     cdef int i
     for i in range(len(path) - 2):
         k[i] = ((p1d[i, 0] * p2d[i, 1] - p2d[i, 0] * p1d[i, 1])
@@ -135,7 +135,7 @@ def derivative(double[:, :] p):
 @cython.wraparound(False)
 cdef double[:, :] _derivative(double[:, :] p):
     """Differential function backend."""
-    cdef double[:, :] pd = zeros((len(p), 2), dtype=np_float)
+    cdef double[:, :] pd = zeros((len(p), 2), dtype=f64)
     cdef double max0 = 0
     cdef double max1 = 0
     cdef int i, j
@@ -173,7 +173,7 @@ def path_signature(double[:] k, double maximum = 100):
 @cython.wraparound(False)
 cdef double[:, :] _path_signature(double[:] k, double maximum):
     """Require a curvature, return path signature."""
-    cdef double[:, :] s = zeros((len(k), 2), dtype=np_float)
+    cdef double[:, :] s = zeros((len(k), 2), dtype=f64)
     cdef double interval = maximum / len(k)
     cdef double v = 0
     cdef int i
@@ -202,7 +202,7 @@ def cross_correlation(double[:, :] p1, double[:, :] p2, double t = 0.1):
     >>> ps2 = path_signature(curvature(...))
     >>> cc = cross_correlation(ps1, ps2)
     """
-    return array(_cross_correlation(p1, p2, t), dtype=np_float)
+    return array(_cross_correlation(p1, p2, t), dtype=f64)
 
 
 @cython.boundscheck(False)
@@ -324,7 +324,7 @@ cdef class FMatch(ObjFunc):
         cdef int i, j
         cdef double[:, :] path
         for i in target:
-            path = array(target[i], dtype=np_float)
+            path = array(target[i], dtype=f64)
             for j in range(i):
                 if j in same:
                     i -= 1
@@ -397,14 +397,14 @@ cdef class FMatch(ObjFunc):
             # Angle rage
             ub[self.l_base:] *= self.target_count
             lb[self.l_base:] *= self.target_count
-        self.ub = array(ub, dtype=np_float)
-        self.lb = array(lb, dtype=np_float)
+        self.ub = array(ub, dtype=f64)
+        self.lb = array(lb, dtype=f64)
         # Swap upper and lower bound if reversed
         for i in range(len(self.ub)):
             if self.ub[i] < self.lb[i]:
                 self.ub[i], self.lb[i] = self.lb[i], self.ub[i]
         # Allocate memory
-        self.polar_angles = zeros(self.l_base - p_base, dtype=np_float)
+        self.polar_angles = zeros(self.l_base - p_base, dtype=f64)
         # TODO: Result list
         self.data_dict = {}
 
@@ -578,13 +578,13 @@ cdef class FMatch(ObjFunc):
         # Angles (node, path length)
         cdef double[:, :] angles
         if self.use_curvature:
-            angles = zeros((self.input_count, 36), dtype=np_float)
+            angles = zeros((self.input_count, 36), dtype=f64)
             for i in range(self.input_count):
                 for j in range(0, 360, 10):
                     angles[i, j] = radians(j)
         else:
             angles = zeros((self.input_count, self.target_count),
-                           dtype=np_float)
+                           dtype=f64)
             for i in range(self.input_count):
                 j = i * self.target_count + self.l_base
                 angles[i, :] = v[j:j + self.target_count]
@@ -603,7 +603,7 @@ cdef class FMatch(ObjFunc):
         cdef double scale
         cdef double[:, :] path1, path2
         for node in self.target:
-            path1 = array(target[node], dtype=np_float)
+            path1 = array(target[node], dtype=f64)
             path2 = array(self.target[node])
             if self.use_curvature:
                 path1 = _slice_nan2d(path1)

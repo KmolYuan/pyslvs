@@ -23,7 +23,7 @@ from libcpp.pair cimport pair
 from libcpp.vector cimport vector
 from libcpp.map cimport map
 from numpy import (
-    int16 as np_int,
+    int16 as i16,
     array as np_array,
     zeros as np_zeros,
     ones as np_ones,
@@ -55,12 +55,12 @@ cdef short[:, :] _product(tuple pool, object stop_func):
     The pool is created by range(n).
     """
     if not pool:
-        return np_array([], dtype=np_int)
+        return np_array([], dtype=i16)
     cdef short[:] tmp1
     cdef short[:, :] tmp2
-    cdef short[:] array0 = arange(pool[0], dtype=np_int)
+    cdef short[:] array0 = arange(pool[0], dtype=i16)
     cdef int n = np_prod(pool)
-    cdef short[:, :] out = np_zeros((n, len(pool)), dtype=np_int)
+    cdef short[:, :] out = np_zeros((n, len(pool)), dtype=i16)
     cdef int array0_size = len(array0)
     cdef int m = n / array0_size
     tmp1 = np_repeat(array0, m)
@@ -165,11 +165,11 @@ cpdef list contracted_link_synthesis(object link_num_list, object stop_func = No
     """
     cdef short[:] link_num
     if len(link_num_list) == 1:
-        link_num = np_zeros(link_num_list[0], dtype=np_int)
+        link_num = np_zeros(link_num_list[0], dtype=i16)
         link_num[-1] = 1
         return [tuple(link_num)]
 
-    link_num = np_array(link_num_list, dtype=np_int)
+    link_num = np_array(link_num_list, dtype=i16)
 
     # Contracted link
     cdef int j_m_v = _j_m(link_num)
@@ -211,7 +211,7 @@ cdef inline short[:] _nonzero_index(short[:] array):
     for i, n in enumerate(array):
         if n != 0:
             counter.append(i)
-    return np_array(counter, dtype=np_int)
+    return np_array(counter, dtype=i16)
 
 
 cdef inline ullong _factorial(int n):
@@ -244,7 +244,7 @@ cdef inline short[:] _labels(short[:] numbers, int index, int offset):
         for i in range(num):
             labels.append(index)
         index += 1
-    return np_array(labels, dtype=np_int)
+    return np_array(labels, dtype=i16)
 
 
 cdef inline Graph _multigraph(short[:] counter, int n):
@@ -289,7 +289,7 @@ cdef inline void _gauss_elimination(
             f_matrix[i, :] = tmp1
 
     # Answer
-    cdef short[:] answer = -np_ones(var_count, dtype=np_int)
+    cdef short[:] answer = -np_ones(var_count, dtype=i16)
 
     # Determined solution
     cdef int c, k
@@ -448,7 +448,7 @@ cdef inline void _contracted_graph(
     """Synthesis of contracted graphs."""
     cdef int n = len(limit)
     cdef int var_count = n * (n - 1) / 2
-    cdef short[:, :] f_matrix = np_zeros((n, var_count + 1), dtype=np_int)
+    cdef short[:, :] f_matrix = np_zeros((n, var_count + 1), dtype=i16)
     f_matrix[:, -1] = limit
 
     # Equations
@@ -468,7 +468,7 @@ cdef inline void _contracted_graph(
         _gauss_elimination(result, limit, f_matrix, n, var_count)
     else:
         # Nest do loop method.
-        _nest_do(result, -np_ones(var_count, dtype=np_int), f_matrix, 0, n, stop_func)
+        _nest_do(result, -np_ones(var_count, dtype=i16), f_matrix, 0, n, stop_func)
 
 
 cdef inline void _dyad_insert(Graph g, frozenset edge, int amount):
@@ -500,7 +500,7 @@ cdef inline void _permute_combine(
         return
 
     cdef vector[int] indices = range(n)
-    cdef short[:] cycles = np_zeros(n, dtype=np_int)
+    cdef short[:] cycles = np_zeros(n, dtype=i16)
     cdef short[:] pool = limit
     permute_list = set()
     cdef int i, j
@@ -560,7 +560,7 @@ cdef inline list _contracted_links(tuple edges, short[:] limit, object stop_func
 
     pick_count -= confirm_size
     cdef int pool_size = len(pool_list)
-    cdef short[:] indices = np_zeros(pick_count, dtype=np_int)
+    cdef short[:] indices = np_zeros(pick_count, dtype=i16)
     cdef int i
     for i in range(pick_count):
         indices[i] = i
@@ -638,7 +638,7 @@ cpdef list contracted_graph(object link_num_list, object stop_func = None):
 
     # Initial time
     cdef double t0 = process_time()
-    cdef short[:] link_num = np_array(link_num_list, ndmin=1, dtype=np_int)
+    cdef short[:] link_num = np_array(link_num_list, ndmin=1, dtype=i16)
     logger.debug(f"Link assortment: {list(link_num)}")
 
     # Multiple links
@@ -682,7 +682,7 @@ cpdef list conventional_graph(
     logger.debug(f"Contracted link assortment: {list(c_j_list)}")
 
     # Synthesis of contracted link and multiple link combination.
-    cdef short[:] c_j = np_array(c_j_list, ndmin=1, dtype=np_int)
+    cdef short[:] c_j = np_array(c_j_list, ndmin=1, dtype=i16)
     result = []
     cdef int i, num
     if not cg_list:
@@ -701,7 +701,7 @@ cpdef list conventional_graph(
         return result
 
     # Multiple links
-    cdef short[:] m_link = np_array(link_assortment(cg_list[0]), ndmin=1, dtype=np_int)
+    cdef short[:] m_link = np_array(link_assortment(cg_list[0]), ndmin=1, dtype=i16)
     m_link = _labels(m_link, 3, 1)
 
     # Synthesis of multiple links

@@ -13,7 +13,7 @@ email: pyslvs@gmail.com
 cimport cython
 from libc.math cimport sin, cos, M_PI
 from libcpp.map cimport map
-from numpy import zeros, float64 as np_float
+from numpy import zeros, float64 as f64
 from .expression cimport VJoint, VPoint, VLink
 
 ctypedef vector[Sym] Inputs
@@ -361,7 +361,7 @@ cpdef EStack t_config(
                     if link_ not in vp1.links
                 ], VJoint.RP, vp1.angle, vp2.x, vp2.y)
     # Add positions parameters
-    cdef double[:, :] pos = zeros((len(vpoints), 2), dtype=np_float)
+    cdef double[:, :] pos = zeros((len(vpoints), 2), dtype=f64)
     for base, vp1 in enumerate(vpoints):
         node = 0 if vp1.type == VJoint.R else 1
         pos[base, 0] = vp1.c[node, 0]
@@ -389,7 +389,7 @@ cpdef EStack t_config(
     cdef int around = len(status)
     cdef int fa, fb, fc, fd
     cdef double angle
-    cdef double[:] tmp = zeros(2, dtype=np_float)
+    cdef double[:] tmp = zeros(2, dtype=f64)
     # Friend iterator
     while not _is_all_lock(status):
         if status.count(node) == 0:
