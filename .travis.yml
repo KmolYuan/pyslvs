@@ -65,8 +65,8 @@ jobs:
       before_install:
         - brew update
         - brew upgrade pyenv || true
-        - brew install libomp
-        - export PATH="/Users/travis/.pyenv/shims:${PATH}"
+        - brew install llvm libomp
+        - export PATH="/usr/local/opt/llvm/bin:/Users/travis/.pyenv/shims:${PATH}"
         - pyenv install ${PYTHON}
         - pyenv global ${PYTHON}
         - python3 -m pip install pip -U
@@ -78,6 +78,7 @@ jobs:
       env: PYTHON=3.8.5
 
 script:
+  - python3 setup.py install
   - python3 test
 
 before_cache:

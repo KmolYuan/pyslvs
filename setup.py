@@ -32,11 +32,11 @@ graph_path = pth_join(src_path, 'graph')
 bfgs_path = pth_join(src_path, 'bfgs_solver')
 metaheuristics_path = pth_join(src_path, 'metaheuristics')
 macros = [('_USE_MATH_DEFINES', None)]
-compile_args_msvc = ['/O2', '/std:c++17', '/openmp']
+compile_args_msvc = ['/O2', '/std:c++17']  # MSVC disabled OpenMP
 compile_args = ['-Wno-cpp', '-std=c++17', '-fopenmp', '-ffast-math',
                 '-march=native']
 link_args = ['-fopenmp']
-link_args_msvc = ['/openmp']
+link_args_msvc = []
 link_args_static = [
     '-static-libgcc',
     '-static-libstdc++',
@@ -126,8 +126,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Cython",
         "Topic :: Scientific/Engineering",
-        "License :: OSI Approved :: GNU Affero General Public License v3 or "
-        "later (AGPLv3+)",
+        "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Operating System :: OS Independent",
         "Typing :: Typed",
     ]
