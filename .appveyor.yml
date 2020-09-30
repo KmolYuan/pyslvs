@@ -35,7 +35,7 @@ install:
   - cmd: set Path=%MSYS_DIR%\mingw64\bin;%MSYS_DIR%\usr\bin;%Path%
   - cmd: set PYTHON_DIR=C:\Python%PY%-x64
   - cmd: set Path=%PYTHON_DIR%;%PYTHON_DIR%\Scripts;%Path%
-  - sh: if [[ "APPVEYOR_BUILD_WORKER_IMAGE" == "macos-mojave" ]]; then
+  - sh: if [[ "$APPVEYOR_BUILD_WORKER_IMAGE" == "macos-mojave" ]]; then
         brew install llvm libomp;
         export PATH="/usr/local/opt/llvm/bin:${PATH}";
         fi
