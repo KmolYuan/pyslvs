@@ -98,11 +98,6 @@ class Build(build_ext):
                 e.extra_link_args = link_args_msvc
         super(Build, self).build_extensions()
 
-    def finalize_options(self):
-        super(Build, self).finalize_options()
-        from numpy import get_include
-        self.include_dirs.append(get_include())
-
 
 setup(
     name='pyslvs',

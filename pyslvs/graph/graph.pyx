@@ -258,14 +258,14 @@ cdef class Graph:
                 code += n2 in self.adj[n1]
         return code
 
-    cpdef ndarray adjacency_matrix(self):
+    cpdef double[:, :] adjacency_matrix(self):
         """Generate a adjacency matrix.
 
         Assume the matrix $A[i, j] = A[j, i]$.
         Where $A[i, j] = 1$ if edge `(i, j)` exist.
         """
         cdef int n = len(self.vertices)
-        cdef ndarray am = zeros((n, n), dtype=np_uint)
+        cdef double[:, :] am = zeros((n, n), dtype=np_uint)
         for n1, n2 in self.edges:
             am[n1, n2] += 1
             am[n2, n1] += 1
