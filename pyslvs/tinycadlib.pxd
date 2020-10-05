@@ -10,8 +10,7 @@ email: pyslvs@gmail.com
 """
 
 from .topo_config cimport EStack
-
-ctypedef (double, double) CCoord
+from .expression cimport CCoord
 
 cdef double radians(double degree) nogil
 cdef CCoord cpxy(CCoord c1, double x, double y) nogil

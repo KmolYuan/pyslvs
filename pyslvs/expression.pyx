@@ -66,11 +66,6 @@ cdef class Coord:
     def __repr__(self):
         return f"Coord({self.x:.02f}, {self.y:.02f})"
 
-    @staticmethod
-    cdef Coord nan():
-        """Return "not a number" coordinate."""
-        return Coord.__new__(Coord, NAN, NAN)
-
 
 @cython.final
 @cython.boundscheck(False)

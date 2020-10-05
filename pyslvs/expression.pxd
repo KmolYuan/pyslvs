@@ -13,13 +13,17 @@ cdef double distance(double x1, double y1, double x2, double y2) nogil
 cdef double slope_angle(double x1, double y1, double x2, double y2) nogil
 cpdef list get_vlinks(object vpoints)
 
+cdef struct CCoord:
+    double x, y
+
 cdef class Coord:
+    # Coordinate data type.
+    # Needs to replaced at backend with c-struct type CCoord.
     cdef public double x, y
+
     cpdef double distance(self, Coord p)
     cpdef double slope_angle(self, Coord p)
     cpdef bint is_nan(self)
-    @staticmethod
-    cdef Coord nan()
 
 cpdef enum VJoint:
     # Joint types.
@@ -29,7 +33,6 @@ cpdef enum VJoint:
     RP  # Rotate and prismatic pair
 
 cdef class VPoint:
-
     # VPoint(links, type_int, angle, color_str, x, y, color_func=None)
 
     cdef readonly tuple links
@@ -79,7 +82,6 @@ cdef class VPoint:
     cpdef Coord to_coord(self, size_t ind)
 
 cdef class VLink:
-
     # VLink(name, color_str, points, color_func=None)
 
     cdef readonly str name, color_str
