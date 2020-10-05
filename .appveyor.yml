@@ -38,6 +38,10 @@ install:
   - sh: if [[ "$APPVEYOR_BUILD_WORKER_IMAGE" == "macos-mojave" ]]; then
         brew install llvm libomp;
         export PATH="/usr/local/opt/llvm/bin:${PATH}";
+        export LDFLAGS="-L/usr/local/opt/llvm/lib";
+        export CPPFLAGS="-I/usr/local/opt/llvm/include";
+        export CC=clang;
+        export CXX=clang++;
         fi
   - sh: source ~/venv${PY}/bin/activate
   # Show Python
