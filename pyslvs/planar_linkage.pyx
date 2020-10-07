@@ -21,7 +21,7 @@ from libc.math cimport (
 )
 from .expression cimport Coord, VJoint, VPoint, distance
 from .metaheuristics.utility cimport ObjFunc
-from .tinycadlib cimport radians, cpxy, cppp, cplap, cpllp, cplpp, cpalp
+from .tinycadlib cimport radians, ExprSolver
 from .tinycadlib import pxy, ppp, plap, pllp, plpp, palp
 from .topo_config cimport (
     t_config, symbol_str, I_LABEL, A_LABEL, Expr, PXY, PPP, PLA, PLAP, PLLP,
