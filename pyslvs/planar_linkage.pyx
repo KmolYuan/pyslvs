@@ -42,8 +42,6 @@ def norm_path(path, scale=1):
     return [(x, y) for x, y in path_m]
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef void _norm(double[:, :] path, double scale):
     """Normalization implementation inplace."""
     cdef double[:] centre = zeros(2, dtype=f64)
@@ -83,8 +81,6 @@ cdef void _norm(double[:, :] path, double scale):
     _mul1d(path[:, 1], scale)
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef void _aligned(double[:, :] path, int sp):
     """Split 1D path from sp, concatenate to end."""
     if sp == 0:
@@ -113,8 +109,6 @@ def curvature(path):
     return array(_curvature(path_m))
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef double[:] _curvature(double[:, :] path):
     """Calculate the signed curvature."""
     cdef double[:, :] p1d = _derivative(path)
@@ -132,8 +126,6 @@ def derivative(double[:, :] p):
     return array(_derivative(p))
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef double[:, :] _derivative(double[:, :] p):
     """Differential function backend."""
     cdef double[:, :] pd = zeros((len(p), 2), dtype=f64)
@@ -170,8 +162,6 @@ def path_signature(double[:] k, double maximum = 100):
     return array(_path_signature(k, maximum))
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef double[:, :] _path_signature(double[:] k, double maximum):
     """Require a curvature, return path signature."""
     cdef double[:, :] s = zeros((len(k), 2), dtype=f64)
@@ -206,8 +196,6 @@ def cross_correlation(double[:, :] p1, double[:, :] p2, double t = 0.1):
     return array(_cross_correlation(p1, p2, t), dtype=f64)
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2, double t):
     """Compare path signature."""
     cdef double[:] p1 = interp(arange(0, _extr1d(ps1[:, 0], 1), t),
@@ -228,8 +216,6 @@ cdef double[:] _cross_correlation(double[:, :] ps1, double[:, :] ps2, double t):
         return correlate(p1, p2)
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef double _extr1d(double[:] s, bint op) nogil:
     """Max value of 1D slice."""
     cdef double m = -INF if op else INF
@@ -242,8 +228,6 @@ cdef double _extr1d(double[:] s, bint op) nogil:
     return m
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef void _mul1d(double[:] s, double v) nogil:
     """Inplace multiplication assignment of 1D slice."""
     cdef int i
@@ -251,8 +235,6 @@ cdef void _mul1d(double[:] s, double v) nogil:
         s[i] *= v
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef double[:, :] _slice_nan2d(double[:, :] s):
     """Slice continuous view without NaN."""
     cdef int first = -1
@@ -276,8 +258,6 @@ cdef double[:, :] _slice_nan2d(double[:, :] s):
 
 
 @cython.final
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef class FMatch(ObjFunc):
     """This class is used to verified kinematics of the linkage mechanism.
 

@@ -43,8 +43,6 @@ cdef inline double _radians(double degree):
     return degree / 180 * M_PI
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef class SolverSystem:
     """Sketch Solve solver.
 

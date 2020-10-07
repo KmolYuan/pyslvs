@@ -11,7 +11,7 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
-from libc.math cimport M_PI, atan2, hypot, NAN
+from libc.math cimport M_PI, atan2, hypot
 from cpython.object cimport Py_EQ, Py_NE
 from numpy import array, zeros, float64 as f64
 
@@ -68,8 +68,6 @@ cdef class Coord:
 
 
 @cython.final
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef class VPoint:
     """Mechanism expression class."""
     HOLDER = VPoint([], VJoint.R, 0., "", 0., 0.)
@@ -207,8 +205,6 @@ cdef class VPoint:
         """Disable offset setting of the joint."""
         self.__has_offset = False
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef double distance(self, VPoint p):
         """Return the distance between two VPoint objects."""
         on_links = tuple(set(self.links) & set(p.links))
@@ -252,8 +248,6 @@ cdef class VPoint:
         """Return the current offset value of the joint."""
         return hypot(self.c[1, 0] - self.c[0, 0], self.c[1, 1] - self.c[0, 1])
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef double slope_angle(self, VPoint p, int num1 = 2, int num2 = 2):
         """Return the value `hypot(p_x - m_x, p_y - m_y)`,
         where `m_x`, `m_y` is the value of the joint,

@@ -10,7 +10,6 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-cimport cython
 from libc.math cimport sin, cos, M_PI
 from libcpp.map cimport map
 from numpy import zeros, float64 as f64
@@ -200,8 +199,6 @@ cdef bint _is_parallel(VPoint p1, VPoint p2, VPoint p3, VPoint p4):
             and abs(p2.distance(p3) - p1.distance(p4)) < 1e-12)
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef bint _clockwise(double[:] c1, double[:] c2, double[:] c3):
     """Check the orientation of three points."""
     cdef double val = (c2[1] - c1[1]) * (c3[0] - c2[0]) - (c2[0] - c1[0]) * (c3[1] - c2[1])
@@ -288,8 +285,6 @@ cdef int _get_input_base(int node, Inputs &inputs):
     return -1
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cpdef EStack t_config(
     object vpoints_,
     object inputs_,

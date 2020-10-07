@@ -10,7 +10,6 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-cimport cython
 from libc.math cimport M_PI, sqrt, sin, cos, tan, atan2, NAN
 from .expression cimport VJoint, VPoint, VLink
 from .topo_config cimport (Sym, symbol_str, I_LABEL, S_LABEL, Expr,
@@ -344,8 +343,6 @@ cdef inline int base_friend(int node, object vpoints):
             return i
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
     """Data transform function of Triangular method.
     The triangle expression stack `expr` is generated from
@@ -547,8 +544,6 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
     return data_dict, dof
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cpdef list expr_solving(
     EStack exprs,
     dict mapping,
