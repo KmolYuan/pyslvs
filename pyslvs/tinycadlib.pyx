@@ -15,7 +15,7 @@ from .expression cimport VJoint, VPoint, VLink
 from .topo_config cimport (Sym, symbol_str, I_LABEL, S_LABEL, Expr,
                            PXY, PPP, PLA, PLAP, PLLP, PLPP, PALP)
 from .bfgs cimport SolverSystem
-from .expression cimport Coord, CCoord, distance, slope_angle
+from .expression cimport Coord, distance, slope_angle
 
 
 cdef inline double radians(double degree) nogil:
