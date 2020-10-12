@@ -15,7 +15,7 @@ from .expression cimport VJoint, VPoint, VLink
 from .topo_config cimport (Sym, symbol_str, I_LABEL, S_LABEL, Expr,
                            PXY, PPP, PLA, PLAP, PLLP, PLPP, PALP)
 from .bfgs cimport SolverSystem
-from .expression cimport Coord, distance, slope_angle
+from .expression cimport Coord, CCoord, distance, slope_angle
 
 
 cdef inline double radians(double degree) nogil:
@@ -649,25 +649,3 @@ cpdef list expr_solving(
             else:
                 solved_points.append(vpoint.c)
     return solved_points
-
-
-cdef class ExprSolver:
-    """Expression solver."""
-
-    def __cinit__(
-        self,
-        EStack exprs not None,
-        dict mapping not None,
-        object vpoints not None,
-        object angles = None,
-        int free_list = 1
-    ):
-        self.exprs = exprs
-        cdef int dof = vpoint_dof(vpoints)
-        # TODO: data_collecting (expect DOF detection)
-        # TODO: Two solver? (use BFGS)
-
-    cdef double[:, :] solve(self) nogil:
-        """Solver Function."""
-        # TODO: Solver Function.
-        pass
