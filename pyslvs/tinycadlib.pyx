@@ -469,7 +469,6 @@ cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,
 
 cpdef list expr_solving(
     EStack exprs,
-    dict mapping,
     object vpoints,
     object angles = None
 ):
@@ -492,6 +491,7 @@ cpdef list expr_solving(
     if angles is None:
         angles = []
     data_dict = {}
+    mapping = {n: f'P{n}' for n in range(len(vpoints))}
     cdef int dof_input = data_collecting(data_dict, exprs, mapping, vpoints)
     # Check input number
     cdef int dof = vpoint_dof(vpoints)

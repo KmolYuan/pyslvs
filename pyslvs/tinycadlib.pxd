@@ -15,10 +15,8 @@ from libcpp.vector cimport vector
 from .topo_config cimport EStack
 
 cdef extern from "tinycadlib/solver.h" nogil:
-    cppclass SwappablePair:
+    struct SwappablePair:
         int first, second
-        bint operator==(const SwappablePair & rhs) const
-        bint operator!=(const SwappablePair & rhs) const
 
     enum Label:
         P_LABEL
@@ -65,5 +63,4 @@ cdef str symbol_str(Sym p)
 cpdef void expr_parser(EStack exprs, dict data_dict)
 cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,
                           object vpoints_)
-cpdef list expr_solving(EStack exprs, dict mapping, object vpoints,
-                        object angles=*)
+cpdef list expr_solving(EStack exprs, object vpoints, object angles=*)

@@ -76,7 +76,7 @@ class CoreTest(TestCase):
             mapping = {n: f'P{n}' for n in range(len(vpoints))}
             dof = data_collecting({}, exprs, mapping, vpoints)
             self.assertEqual(1, dof)
-            result = expr_solving(exprs, mapping, vpoints, [0.])
+            result = expr_solving(exprs, vpoints, [0.])
             return result[-1]
 
         x, y = test_case("Jansen's linkage (Single)")

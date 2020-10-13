@@ -48,7 +48,6 @@ def data_collecting(
 
 def expr_solving(
     exprs: EStack,
-    mapping: Dict[Union[int, Tuple[int, int]], Union[str, float]],
     vpoints: Sequence[VPoint],
     angles: Optional[Sequence[float]] = None
 ) -> List[Union[_Coord, Tuple[_Coord, _Coord]]]:
