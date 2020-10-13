@@ -21,8 +21,8 @@ from libc.math cimport (
 )
 from .expression cimport Coord, VJoint, VPoint, distance
 from .metaheuristics.utility cimport ObjFunc
-from .tinycadlib cimport (radians, symbol_str, I_LABEL, A_LABEL, Expr, PXY,
-    PPP, PLA, PLAP, PLLP, PLPP, PALP)
+from .tinycadlib cimport (symbol_str, I_LABEL, A_LABEL, Expr, PXY, PPP, PLA,
+    PLAP, PLLP, PLPP, PALP)
 from .tinycadlib import pxy, ppp, plap, pllp, plpp, palp
 from .topo_config cimport t_config, EStack
 from .bfgs cimport SolverSystem
@@ -371,8 +371,8 @@ cdef class FMatch(ObjFunc):
         else:
             # Input nodes
             for start, end in inputs.values():
-                ub.append(radians(start))
-                lb.append(radians(end))
+                ub.append(start / 180 * M_PI)
+                lb.append(end / 180 * M_PI)
             # Angle rage
             ub[self.l_base:] *= self.target_count
             lb[self.l_base:] *= self.target_count
@@ -560,7 +560,7 @@ cdef class FMatch(ObjFunc):
             angles = zeros((self.input_count, 36), dtype=f64)
             for i in range(self.input_count):
                 for j in range(0, 360, 10):
-                    angles[i, j] = radians(j)
+                    angles[i, j] = j / 180 * M_PI
         else:
             angles = zeros((self.input_count, self.target_count),
                            dtype=f64)

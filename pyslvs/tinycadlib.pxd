@@ -58,7 +58,6 @@ cdef extern from "tinycadlib/solver.h" nogil:
                    map[SwappablePair, double] len, map[Sym, double] param)
         void solve()
 
-cdef double radians(double degree) nogil
 cdef str symbol_str(Sym p)
 cpdef void expr_parser(EStack exprs, dict data_dict)
 cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,

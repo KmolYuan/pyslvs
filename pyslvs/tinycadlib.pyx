@@ -15,11 +15,6 @@ from .expression cimport Coord, VJoint, VPoint, VLink
 from .bfgs cimport SolverSystem
 
 
-cdef inline double radians(double degree) nogil:
-    """Deg to rad."""
-    return degree / 180 * M_PI
-
-
 cdef str symbol_str(Sym p):
     """The match pattern of the symbols."""
     if p.first == P_LABEL:
@@ -344,9 +339,9 @@ cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,
         if vpoint.type != VJoint.RP:
             continue
         bf = base_friend(i, vpoints)
-        angle = radians(vpoint.angle
-                        - vpoint.slope_angle(vpoints[bf], 1, 0)
-                        + vpoint.slope_angle(vpoints[bf], 0, 0))
+        angle = (vpoint.angle
+                 - vpoint.slope_angle(vpoints[bf], 1, 0)
+                 + vpoint.slope_angle(vpoints[bf], 0, 0)) / 180 * M_PI
         pos.append(Coord.__new__(Coord, vpoint.c[1, 0] + cos(angle),
                                  vpoint.c[1, 1] + sin(angle)))
         mapping_r[symbol_str(Sym(S_LABEL, i))] = len(pos) - 1
@@ -516,7 +511,7 @@ cpdef list expr_solving(
     cdef double a
     cdef int i
     for i, a in enumerate(angles):
-        data_dict[symbol_str(Sym(I_LABEL, i))] = radians(a)
+        data_dict[symbol_str(Sym(I_LABEL, i))] = a / 180 * M_PI
     # Solve
     if not exprs.stack.empty():
         expr_parser(exprs, data_dict)
