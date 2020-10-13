@@ -14,25 +14,12 @@ from libc.math cimport sin, cos, M_PI
 from libcpp.map cimport map
 from numpy import zeros, float64 as f64
 from .expression cimport VJoint, VPoint, VLink
+from .tinycadlib cimport (symbol_str, PXY, PPP, PLA, PLAP, PLLP, PLPP, PALP,
+    PXY, PPP, PLA, PLAP, PLLP, PLPP, PALP, P_LABEL, L_LABEL, I_LABEL,
+    A_LABEL, S_LABEL)
 
 ctypedef vector[Sym] Inputs
 ctypedef map[int, bint] Status
-
-
-cdef str symbol_str(Sym p):
-    """The match pattern of the symbols."""
-    if p.first == P_LABEL:
-        return f"P{p.second}"
-    elif p.first == L_LABEL:
-        return f"L{p.second}"
-    elif p.first == I_LABEL:
-        return f"I{p.second}"
-    elif p.first == A_LABEL:
-        return f"A{p.second}"
-    elif p.first == S_LABEL:
-        return f"S{p.second}"
-    else:
-        return ""
 
 
 cdef class EStack:

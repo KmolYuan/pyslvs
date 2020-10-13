@@ -1,8 +1,8 @@
-class SwappablePair {
-    int first, second;
+#ifndef SWAPPABLE_PAIR_HPP
+#define SWAPPABLE_PAIR_HPP
 
-public:
-    SwappablePair() = default;
+struct SwappablePair {
+    int first, second;
 
     inline auto operator==(const SwappablePair &rhs) const -> bool {
         return (first == rhs.first && second == rhs.second) ||
@@ -17,3 +17,5 @@ public:
         return this->operator!=(rhs) && (first < rhs.first || second < rhs.second);
     }
 };
+
+#endif //SWAPPABLE_PAIR_HPP

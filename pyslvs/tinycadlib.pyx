@@ -10,17 +10,30 @@ license: AGPL
 email: pyslvs@gmail.com
 """
 
-from libc.math cimport M_PI, sqrt, sin, cos, tan, atan2, NAN
-from .expression cimport VJoint, VPoint, VLink
-from .topo_config cimport (Sym, symbol_str, I_LABEL, S_LABEL, Expr,
-                           PXY, PPP, PLA, PLAP, PLLP, PLPP, PALP)
+from libc.math cimport M_PI, sin, cos
+from .expression cimport Coord, VJoint, VPoint, VLink
 from .bfgs cimport SolverSystem
-from .expression cimport Coord, CCoord, distance, slope_angle
 
 
 cdef inline double radians(double degree) nogil:
     """Deg to rad."""
     return degree / 180 * M_PI
+
+
+cdef str symbol_str(Sym p):
+    """The match pattern of the symbols."""
+    if p.first == P_LABEL:
+        return f"P{p.second}"
+    elif p.first == L_LABEL:
+        return f"L{p.second}"
+    elif p.first == I_LABEL:
+        return f"I{p.second}"
+    elif p.first == A_LABEL:
+        return f"A{p.second}"
+    elif p.first == S_LABEL:
+        return f"S{p.second}"
+    else:
+        return ""
 
 
 def pxy(Coord c1, double x, double y):
@@ -140,96 +153,6 @@ def palp(
     """
     cdef CCoord c = cpalp(CCoord(c1.x, c1.y), a0, d0, CCoord(c2.x, c2.y), inverse)
     return Coord.__new__(Coord, c.x, c.y)
-
-
-cdef CCoord cpxy(CCoord c1, double x, double y) nogil:
-    return CCoord(c1.x + x, c1.y + y)
-
-
-cdef CCoord cppp(CCoord c1, CCoord c2, CCoord c3) nogil:
-    cdef double length = distance(c1.x, c1.y, c2.x, c2.y)
-    cdef double alpha = slope_angle(c2.x, c2.y, c1.x, c1.y)
-    return CCoord(c3.x + length * cos(alpha), c3.y + length * sin(alpha))
-
-
-cdef CCoord cplap(CCoord c1, double d0, double a0, CCoord c2,
-                  bint inverse) nogil:
-    cdef double a1 = atan2(c2.y - c1.y, c2.x - c1.x)
-    if inverse:
-        a1 -= a0
-    else:
-        a1 += a0
-    return CCoord(c1.x + d0 * cos(a1), c1.y + d0 * sin(a1))
-
-
-cdef CCoord cpllp(CCoord c1, double d0, double d1, CCoord c2,
-                  bint inverse) nogil:
-    cdef double dx = c2.x - c1.x
-    cdef double dy = c2.y - c1.y
-    cdef double d = distance(c1.x, c1.y, c2.x, c2.y)
-    # No solutions, the circles are separate
-    if d > d0 + d1:
-        return CCoord(NAN, NAN)
-    # No solutions because one circle is contained within the other
-    if d < abs(d0 - d1):
-        return CCoord(NAN, NAN)
-    # Circles are coincident and there are an infinite number of solutions
-    if d == 0 and d0 == d1:
-        return CCoord(NAN, NAN)
-    cdef double a = (d0 * d0 - d1 * d1 + d * d) / (2 * d)
-    cdef double h = sqrt(d0 * d0 - a * a)
-    cdef double xm = c1.x + a * dx / d
-    cdef double ym = c1.y + a * dy / d
-    if inverse:
-        return CCoord(xm + h * dy / d, ym - h * dx / d)
-    else:
-        return CCoord(xm - h * dy / d, ym + h * dx / d)
-
-
-cdef CCoord cplpp(CCoord c1, double d0, CCoord c2, CCoord c3,
-                  bint inverse) nogil:
-    cdef double line_mag = distance(c2.x, c2.y, c3.x, c3.y)
-    cdef double dx = c3.x - c2.x
-    cdef double dy = c3.y - c2.y
-    cdef double u = ((c1.x - c2.x) * dx + (c1.y - c2.y) * dy) / (
-            line_mag * line_mag)
-    cdef CCoord inter = CCoord(c2.x + u * dx, c2.y + u * dy)
-    # Test distance between point A and intersection
-    cdef double d = distance(c1.x, c1.y, inter.x, inter.y)
-    if d > d0:
-        # No intersection
-        return CCoord(NAN, NAN)
-    elif d == d0:
-        # One intersection point
-        return inter
-    # Two intersection points
-    d = sqrt(d0 * d0 - d * d) / line_mag
-    dx *= d
-    dy *= d
-    if inverse:
-        return CCoord(inter.x - dx, inter.y - dy)
-    else:
-        return CCoord(inter.x + dx, inter.y + dy)
-
-
-cdef CCoord cpalp(CCoord c1, double a0, double d0, CCoord c2,
-                  bint inverse) nogil:
-    a0 += slope_angle(c2.x, c2.y, c1.x, c1.y)
-    cdef double tan_a = tan(a0)
-    cdef double tan2_a = tan_a * tan_a
-    cdef double tan2_a1 = tan2_a + 1
-    cdef double c1l = c1.x - c1.y / tan_a
-    cdef double c1c2x = c1.x - c2.x
-    cdef double c1c2y = c1.y - c2.y
-    cdef double sq = sqrt(d0 * d0 * tan2_a1
-                          - c1c2x * c1c2x * tan2_a - c1c2y * c1c2y + 2 *
-                          tan_a * c1c2y * c1c2x)
-    cdef double cx = 0
-    if inverse:
-        cx = c1l - (c1l - c2.y * tan_a - c2.x - sq) / tan2_a1
-    else:
-        cx = c1l - (c1l - c2.y * tan_a - c2.x + sq) / tan2_a1
-    return CCoord(cx, tan_a * (cx - c1.x) + c1.y)
 
 
 cpdef void expr_parser(EStack exprs, dict data_dict):

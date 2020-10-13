@@ -30,6 +30,7 @@ def find_version(path: str):
 src_path = 'pyslvs'
 graph_path = pth_join(src_path, 'graph')
 bfgs_path = pth_join(src_path, 'bfgs_solver')
+tinycadlib_path = pth_join(src_path, 'tinycadlib')
 metaheuristics_path = pth_join(src_path, 'metaheuristics')
 macros = [('_USE_MATH_DEFINES', None)]
 compile_args_msvc = ['/O2', '/std:c++17']  # MSVC disabled OpenMP
@@ -51,23 +52,25 @@ if system() == 'Windows':
 macros.append(('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION'))
 compiler_directives = {'binding': True, 'cdivision': True}
 
-ext_modules = [Extension(
-    src_path.replace(sep, '.') + '.bfgs',
-    [
+ext_modules = [
+    Extension(src_path.replace(sep, '.') + '.bfgs', [
         pth_join(src_path, 'bfgs.pyx'),
         pth_join(bfgs_path, 'constraints.cpp'),
         pth_join(bfgs_path, 'solve.cpp'),
         pth_join(bfgs_path, 'calc.cpp'),
-    ],
-    language="c++",
-    include_dirs=[bfgs_path]
-)]
+    ], language="c++", include_dirs=[bfgs_path]),
+    Extension(src_path.replace(sep, '.') + '.tinycadlib', [
+        pth_join(src_path, 'tinycadlib.pyx'),
+        pth_join(tinycadlib_path, 'solver.cpp'),
+    ], language="c++", include_dirs=[tinycadlib_path]),
+]
 paths = [src_path, graph_path, metaheuristics_path]
 for place in paths:
     for source in listdir(place):
         if not source.endswith('.pyx'):
             continue
-        if place == src_path and source in {'bfgs.pyx', 'planar_linkage.pyx'}:
+        if place == src_path and source in {'bfgs.pyx', 'tinycadlib.pyx',
+                                            'planar_linkage.pyx'}:
             continue
         ext_modules.append(Extension(
             place.replace(sep, '.') + '.' + source.split('.')[0],  # Base name
