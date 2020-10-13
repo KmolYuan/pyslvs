@@ -63,6 +63,7 @@ cdef extern from "tinycadlib/solver.h" nogil:
 cdef double radians(double degree) nogil
 cdef str symbol_str(Sym p)
 cpdef void expr_parser(EStack exprs, dict data_dict)
-cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_)
+cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,
+                          object vpoints_)
 cpdef list expr_solving(EStack exprs, dict mapping, object vpoints,
                         object angles=*)

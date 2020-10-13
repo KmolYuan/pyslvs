@@ -74,7 +74,7 @@ class CoreTest(TestCase):
             vpoints = parse_vpoints(expr)
             exprs = t_config(vpoints, inputs)
             mapping = {n: f'P{n}' for n in range(len(vpoints))}
-            _, dof = data_collecting(exprs, mapping, vpoints)
+            dof = data_collecting({}, exprs, mapping, vpoints)
             self.assertEqual(1, dof)
             result = expr_solving(exprs, mapping, vpoints, [0.])
             return result[-1]

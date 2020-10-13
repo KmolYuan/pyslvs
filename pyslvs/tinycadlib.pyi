@@ -39,10 +39,11 @@ def expr_parser(exprs: Sequence[Tuple[str, ...]], data_dict: Dict[str, float]) -
     ...
 
 def data_collecting(
+    data_dict: Dict[str, Union[Coord, float]],
     exprs: EStack,
     mapping: Dict[int, str],
     vpoints_: Sequence[VPoint],
-) -> Tuple[Dict[str, Union[Coord, float]], int]:
+) -> int:
     ...
 
 def expr_solving(

@@ -266,7 +266,8 @@ cdef inline int base_friend(int node, object vpoints):
             return i
 
 
-cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
+cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,
+                          object vpoints_):
     """Data transform function of Triangular method.
     The triangle expression stack `expr` is generated from
     [`t_config`](#t_config).
@@ -321,7 +322,6 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
     # Reverse mapping, exclude specified link length
     mapping_r = {}
     length = {}
-    data_dict = {}
     for k, v in mapping.items():
         if type(k) is int:
             mapping_r[v] = k
@@ -464,7 +464,7 @@ cpdef tuple data_collecting(EStack exprs, dict mapping, object vpoints_):
             x = vpoint.c[0, 0]
             y = vpoint.c[0, 1]
             data_dict[mapping[i]] = Coord.__new__(Coord, x, y)
-    return data_dict, dof
+    return dof
 
 
 cpdef list expr_solving(
@@ -491,7 +491,8 @@ cpdef list expr_solving(
     # Blank sequences
     if angles is None:
         angles = []
-    data_dict, dof_input = data_collecting(exprs, mapping, vpoints)
+    data_dict = {}
+    cdef int dof_input = data_collecting(data_dict, exprs, mapping, vpoints)
     # Check input number
     cdef int dof = vpoint_dof(vpoints)
     if dof_input > dof:
