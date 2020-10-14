@@ -123,6 +123,9 @@ class VPoint:
     def disable_offset(self) -> None:
         ...
 
+    def is_slider(self) -> bool:
+        ...
+
     def distance(self, p: VPoint) -> float:
         ...
 

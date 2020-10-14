@@ -63,6 +63,7 @@ cdef class VPoint:
     cpdef void disable_offset(self)
 
     # Get or calculate values
+    cpdef bint is_slider(self)
     cpdef double distance(self, VPoint p)
     cpdef bint has_offset(self)
     cpdef double offset(self)

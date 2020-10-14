@@ -205,6 +205,10 @@ cdef class VPoint:
         """Disable offset setting of the joint."""
         self.__has_offset = False
 
+    cpdef bint is_slider(self):
+        """Return true for slider type."""
+        return self.type in {VJoint.P, VJoint.RP}
+
     cpdef double distance(self, VPoint p):
         """Return the distance between two VPoint objects."""
         on_links = tuple(set(self.links) & set(p.links))
