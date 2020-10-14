@@ -42,7 +42,7 @@ def data_collecting(
     data_dict: Dict[str, Union[Coord, float]],
     exprs: EStack,
     mapping: Dict[int, str],
-    vpoints_: Sequence[VPoint],
+    vpoints: Sequence[VPoint],
 ) -> int:
     ...
 

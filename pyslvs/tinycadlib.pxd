@@ -61,5 +61,10 @@ cdef extern from "tinycadlib/solver.h" nogil:
 cdef str symbol_str(Sym p)
 cpdef void expr_parser(EStack exprs, dict data_dict)
 cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,
-                          object vpoints_)
+                          object vpoints)
+cdef void preprocessing(object vpoints, object angles,
+                        vector[Expr] & stack,
+                        map[Sym, CCoord] & joint_pos,
+                        map[SwappablePair, double] & link_len,
+                        map[Sym, double] & param)
 cpdef list expr_solving(EStack exprs, object vpoints, object angles=*)

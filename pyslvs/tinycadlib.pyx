@@ -262,7 +262,7 @@ cdef inline int base_friend(int node, object vpoints):
 
 
 cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,
-                          object vpoints_):
+                          object vpoints):
     """Data transform function of Triangular method.
     The triangle expression stack `expr` is generated from
     [`t_config`](#t_config).
@@ -272,7 +272,6 @@ cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,
     This function is already included in [`expr_solving`](#expr_solving),
     not recommended for direct use.
     """
-    vpoints = list(vpoints_)
     # First, we create a "VLinks" that can help us to
     # find a relationship just like adjacency matrix
     cdef int node
@@ -461,26 +460,41 @@ cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,
             data_dict[mapping[i]] = Coord.__new__(Coord, x, y)
     return dof
 
+cdef void preprocessing(object vpoints, object angles,
+                        vector[Expr] &stack,
+                        map[Sym, CCoord] &joint_pos,
+                        map[SwappablePair, double] &link_len,
+                        map[Sym, double] &param):
+    """Data preprocessing.
+
+    Use "vpoints", "angles" and "stack" to generate solver required data.
+    Please pre-allocate the "j", "len" and "param".
+    """
+    # TODO: Replace "data_collecting".
+    cdef Expr e
+    for e in stack:
+        pass
+
 
 cpdef list expr_solving(
     EStack exprs,
     object vpoints,
     object angles = None
 ):
-    """Solver function of Triangular method and BFGS method, for mechanism 
+    """Solver function of Triangular method and BFGS method, for mechanism
     expression `vpoints`.
 
     The triangle expression stack `expr` is generated from
     [`t_config`](#t_config).
 
-    The information data `mapping` map the symbols to the indicator of 
+    The information data `mapping` map the symbols to the indicator of
     `vpoints`,
     additionally has a same format as argument `data_dict` in [SolverSystem].
 
     Solver function will not handle slider input pairs in argument `angles`,
-    which is only support revolute joints. In another way, the slider input 
-    pairs
-    can be set by [`VPoint.disable_offset()`](#vpointdisable_offset) method.
+    which is only support revolute joints. In another way, the slider input
+    pairs can be set by [`VPoint.disable_offset()`](#vpointdisable_offset)
+    method.
     """
     # Blank sequences
     if angles is None:
