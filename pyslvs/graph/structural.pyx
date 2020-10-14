@@ -394,7 +394,7 @@ cdef void _nest_do(
 
 
 cdef inline bint _is_isomorphic(Graph g, list result):
-    """Return True if graph is isomorphic with result list."""
+    """Return true if graph is isomorphic with result list."""
     cdef Graph h
     for h in result:
         if g.is_isomorphic(h):

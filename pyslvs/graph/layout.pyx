@@ -245,7 +245,7 @@ cdef list _inner_lines(Graph g, OrderedSet o_loop):
 
 
 cdef inline bint _split_loop(OrderedSet o_loop, OrderedSet line, int n1, int n2):
-    """Return False if the line is a chord.
+    """Return false if the line is a chord.
     Or it is an arc of external cycle.
     """
     if n1 == n2:
@@ -549,7 +549,7 @@ cdef void _discard(OrderedSet oset, object key):
 
 
 cdef inline bint _isorderedsubset(seq1, seq2, bint is_loop):
-    """Return True if 'seq1' is ordered subset of 'seq2'."""
+    """Return true if 'seq1' is ordered subset of 'seq2'."""
     cdef int seq1_len = len(seq1)
     if not seq1_len <= len(seq2):
         # 'seq1' is obviously not a subset.
@@ -571,7 +571,7 @@ cdef inline bint _isorderedsubset(seq1, seq2, bint is_loop):
 
 
 cdef inline bint _not_subset(OrderedSet o_set, list members):
-    """Return True if 'o_set' is not any subset of members."""
+    """Return true if 'o_set' is not any subset of members."""
     cdef OrderedSet member
     for member in members:
         if member < o_set:
@@ -818,7 +818,7 @@ cdef class OrderedSet:
         return subsets
 
     cpdef bint isdisjoint(self, other):
-        """Return True if the set has no elements in common with other.
+        """Return true if the set has no elements in common with other.
         Sets are disjoint if and only if their intersection is the empty set.
         """
         for value in other:

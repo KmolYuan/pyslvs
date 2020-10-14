@@ -21,7 +21,7 @@ ctypedef pair[int, int] ipair
 
 
 cpdef bint is_planar(Graph g):
-    """Return True if the graph is a planar graph."""
+    """Return true if the graph is a planar graph."""
     cdef _LRPlanarity planarity_state = _LRPlanarity.__new__(_LRPlanarity, g)
     return planarity_state.lr_planarity() is not None
 
@@ -400,7 +400,7 @@ cdef class _Interval:
         return _Interval.__new__(_Interval, self.low, self.high)
 
     cdef bint conflicting(self, tuple b, _LRPlanarity state):
-        """Return True if interval I conflicts with edge b"""
+        """Return true if interval I conflicts with edge b"""
         return not self.empty() and state.lowpt[self.high] > state.lowpt[b]
 
 

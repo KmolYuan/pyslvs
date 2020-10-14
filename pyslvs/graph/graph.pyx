@@ -296,7 +296,7 @@ cdef class Graph:
         return len(vertices) == len(self.vertices)
 
     cpdef bint has_cut_link(self):
-        """Return True if the graph has any cut links."""
+        """Return true if the graph has any cut links."""
         cdef int n, d
         for n, d in self.degrees().items():
             # Only for multiple links.
@@ -307,7 +307,7 @@ cdef class Graph:
         return False
 
     cpdef bint is_degenerate(self):
-        """Return True if this kinematic chain is degenerate.
+        """Return true if this kinematic chain is degenerate.
 
         + Prue all multiple contracted links recursively.
         + Check the DOF of sub-graph if it is lower then zero.
@@ -335,7 +335,7 @@ cdef class Graph:
         return g.dof() < 1
 
     cpdef bint has_triangle(self):
-        """Return True if the graph has triangle."""
+        """Return true if the graph has triangle."""
         cdef int n1, n2
         for neighbors in self.adj.values():
             for n1 in neighbors:
@@ -347,7 +347,7 @@ cdef class Graph:
         return False
 
     cpdef bint is_isomorphic(self, Graph g):
-        """Return True if two graphs is isomorphic.
+        """Return true if two graphs is isomorphic.
 
         Default is using VF2 algorithm.
         """

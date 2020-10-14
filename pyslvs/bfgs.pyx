@@ -63,7 +63,7 @@ cdef class SolverSystem:
         self.build_expression()
 
     cpdef bint same_points(self, object vpoints_):
-        """Return True if two expressions are same."""
+        """Return true if two expressions are same."""
         cdef int i
         cdef VPoint p1, p2
         for i, p1 in enumerate(vpoints_):

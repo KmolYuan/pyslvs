@@ -60,7 +60,7 @@ cdef class Coord:
         return slope_angle(self.x, self.y, p.x, p.y)
 
     cpdef bint is_nan(self):
-        """Return True if the coordinate value is not a number."""
+        """Return true if the coordinate value is not a number."""
         return self.x != self.x
 
     def __repr__(self):
@@ -241,7 +241,7 @@ cdef class VPoint:
         return hypot(p_x - m_x, p_y - m_y)
 
     cpdef bint has_offset(self):
-        """Return True if the offset setting is enabled."""
+        """Return true if the offset setting is enabled."""
         return self.__has_offset
 
     cpdef double offset(self):
@@ -283,7 +283,7 @@ cdef class VPoint:
         return self.to_coord(ind)
 
     cpdef bint grounded(self):
-        """Return True if the joint pin is connected to ground link."""
+        """Return true if the joint pin is connected to ground link."""
         if self.type == VJoint.R:
             return VLink.FRAME in self.links
         elif self.type in {VJoint.P, VJoint.RP}:
@@ -293,19 +293,19 @@ cdef class VPoint:
                 return False
 
     cpdef bint pin_grounded(self):
-        """Return True if the point is at the same link."""
+        """Return true if the point is at the same link."""
         return VLink.FRAME in self.links[1:]
 
     cpdef bint same_link(self, VPoint p):
-        """Return True if the point is at the same link."""
+        """Return true if the point is at the same link."""
         return bool(set(self.links) & set(p.links))
 
     cpdef bint no_link(self):
-        """Return True if there is no any link in links attribute."""
+        """Return true if there is no any link in links attribute."""
         return not self.links
 
     cpdef bint is_slot_link(self, str link):
-        """Return True if the slot is on the link `link_name`."""
+        """Return true if the slot is on the link `link_name`."""
         if self.type == VJoint.R:
             return False
         if self.links:
