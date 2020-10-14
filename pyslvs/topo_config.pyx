@@ -280,7 +280,7 @@ cpdef EStack t_config(
     """Generate the Triangle solution stack by mechanism expression `vpoints_`.
 
     The argument `inputs` is a list of input pairs.
-    The argument `status` will track the configuration of each point, 
+    The argument `status` will track the configuration of each point,
     which is optional.
     """
     # For VPoint list:

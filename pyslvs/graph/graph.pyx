@@ -174,7 +174,7 @@ cdef class Graph:
         !!! note
             DOF is the Degree of Freedoms to a mechanism.
 
-            In the [Graph] objects, all vertices will assumed as revolute 
+            In the [Graph] objects, all vertices will assumed as revolute
             joints (1 DOF).
 
             $$

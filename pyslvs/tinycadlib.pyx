@@ -151,7 +151,7 @@ def palp(
 
 
 cpdef void expr_parser(EStack exprs, dict data_dict):
-    """Solve and update information of the triangle expression `exprs` to 
+    """Solve and update information of the triangle expression `exprs` to
     `data_dict`.
     The argument `exprs` can be obtained by
     [`t_config`](#t_config) and [`EStack.as_list()`](#estackas_list) method.
@@ -266,7 +266,7 @@ cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,
     """Data transform function of Triangular method.
     The triangle expression stack `expr` is generated from
     [`t_config`](#t_config).
-    The information data `mapping` map the symbols to the indicator of 
+    The information data `mapping` map the symbols to the indicator of
     `vpoints_`.
 
     This function is already included in [`expr_solving`](#expr_solving),
@@ -468,7 +468,7 @@ cdef void preprocessing(object vpoints, object angles,
     """Data preprocessing.
 
     Use "vpoints", "angles" and "stack" to generate solver required data.
-    Please pre-allocate the "j", "len" and "param".
+    Please pre-allocate the "j", "link_len" and "param".
     """
     # TODO: Replace "data_collecting".
     cdef Expr e

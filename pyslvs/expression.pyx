@@ -253,7 +253,7 @@ cdef class VPoint:
         where `m_x`, `m_y` is the value of the joint,
         and `p_x`, `p_y` is the value of `p`.
 
-        The option `num1` and `num2` is the position of current coordinate 
+        The option `num1` and `num2` is the position of current coordinate
         attribute.
         """
         cdef double x1, y1, x2, y2
