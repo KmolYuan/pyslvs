@@ -62,8 +62,7 @@ cdef str symbol_str(Sym p)
 cpdef void expr_parser(EStack exprs, dict data_dict)
 cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,
                           object vpoints)
-cdef void preprocessing(object vpoints, object angles,
-                        vector[Expr] & stack,
+cdef bint preprocessing(EStack exprs, object vpoints, object angles,
                         map[Sym, CCoord] & joint_pos,
                         map[SwappablePair, double] & link_len,
                         map[Sym, double] & param)

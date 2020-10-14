@@ -86,32 +86,13 @@ auto cpalp(CCoord c1, double a0, double d0, CCoord c2, bool inverse) -> CCoord {
 }
 
 
-/// Variable check.
+/// Constructure of solver core.
+/// Check the link length override options.
 ExprSolver::ExprSolver(Stack s, JointPos j, LinkLen len, Param p) :
     stack(std::move(s)),
     link_len(std::move(len)),
     param(std::move(p)),
-    joint_pos(std::move(j)) {
-    for (auto expr : stack) {
-        auto pair1 = SwappablePair{expr.c1.second, expr.target.second};
-        auto pair2 = SwappablePair{expr.c2.second, expr.target.second};
-        switch (expr.func) {
-            case PALP:
-                if (link_len.count(pair2))
-                    param[expr.v1] = link_len[pair2];
-                break;
-            case PLLP:
-                if (link_len.count(pair2))
-                    param[expr.v2] = link_len[pair2];
-            case PLA:
-            case PLAP:
-            case PLPP:
-                if (link_len.count(pair1))
-                    param[expr.v1] = link_len[pair1];
-            default:;
-        }
-    }
-}
+    joint_pos(std::move(j)) {}
 
 void ExprSolver::solve() {
     for (auto expr : stack) {

@@ -11,7 +11,7 @@ email: pyslvs@gmail.com
 """
 
 from libc.math cimport M_PI, sin, cos
-from .expression cimport Coord, VJoint, VPoint, VLink
+from .expression cimport Coord, VJoint, VPoint, VLink, distance, slope_angle
 from .bfgs cimport SolverSystem
 
 
@@ -289,30 +289,21 @@ cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,
     cdef int base
     cdef double x, y
     cdef VPoint vpoint_
-    links = set()
     for base in range(len(vpoints)):
         vpoint = vpoints[base]
         if vpoint.type != VJoint.P:
             continue
         for link in vpoint.links[1:]:
-            links.clear()
             for node in vlinks[link]:
                 vpoint_ = vpoints[node]
                 if node == base or vpoint_.type in {VJoint.P, VJoint.RP}:
                     continue
-                links.update(vpoint_.links)
                 x = vpoint_.c[0, 0]
                 y = vpoint_.c[0, 1]
-                vpoints[node] = VPoint.c_slider_joint(
-                    [vpoint.links[0]] + [
-                        link_ for link_ in vpoint_.links
-                        if (link_ not in vpoint.links)
-                    ],
-                    VJoint.RP,
-                    vpoint.angle,
-                    x,
-                    y
-                )
+                vpoints[node] = VPoint.c_slider_joint([vpoint.links[0]] + [
+                    link_ for link_ in vpoint_.links
+                    if (link_ not in vpoint.links)
+                ], VJoint.RP, vpoint.angle, x, y)
     # Reverse mapping, exclude specified link length
     mapping_r = {}
     length = {}
@@ -330,20 +321,19 @@ cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,
             pos.append(Coord.__new__(Coord, vpoint.c[0, 0], vpoint.c[0, 1]))
         else:
             pos.append(Coord.__new__(Coord, vpoint.c[1, 0], vpoint.c[1, 1]))
-    cdef int i, bf
     cdef double angle
     # Add slider slot virtual coordinates
-    for i, vpoint in enumerate(vpoints):
+    for node, vpoint in enumerate(vpoints):
         # PLPP dependencies
         if vpoint.type != VJoint.RP:
             continue
-        bf = base_friend(i, vpoints)
+        base = base_friend(node, vpoints)
         angle = (vpoint.angle
-                 - vpoint.slope_angle(vpoints[bf], 1, 0)
-                 + vpoint.slope_angle(vpoints[bf], 0, 0)) / 180 * M_PI
+                 - vpoint.slope_angle(vpoints[base], 1, 0)
+                 + vpoint.slope_angle(vpoints[base], 0, 0)) / 180 * M_PI
         pos.append(Coord.__new__(Coord, vpoint.c[1, 0] + cos(angle),
                                  vpoint.c[1, 1] + sin(angle)))
-        mapping_r[symbol_str(Sym(S_LABEL, i))] = len(pos) - 1
+        mapping_r[symbol_str(Sym(S_LABEL, node))] = len(pos) - 1
     # Add data to 'data_dict' and counting DOF
     cdef int dof = 0
     cdef int target
@@ -393,12 +383,10 @@ cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,
                 # Inputs
                 dof += 1
             else:
-                # Links
-                if expr.func == PLA:
-                    data_dict[symbol_str(expr.v2)] = coord1.slope_angle(coord2)
-                else:
-                    data_dict[symbol_str(expr.v2)] = (coord1.slope_angle(coord2)
-                        - coord1.slope_angle(pos[base]))
+                # Links (A_LABEL)
+                data_dict[symbol_str(expr.v2)] = coord1.slope_angle(coord2)
+                if expr.func == PLAP:
+                    data_dict[symbol_str(expr.v2)] -= coord1.slope_angle(pos[base])
             # Point 2
             if expr.func == PLAP and symbol_str(expr.c2) not in data_dict:
                 data_dict[symbol_str(expr.c2)] = pos[base]
@@ -453,27 +441,114 @@ cpdef int data_collecting(dict data_dict, EStack exprs, dict mapping,
             # Point 2
             data_dict[symbol_str(expr.c2)] = pos[base]
     # Other grounded R joints
-    for i, vpoint in enumerate(vpoints):
+    for node, vpoint in enumerate(vpoints):
         if vpoint.grounded() and vpoint.type == VJoint.R:
             x = vpoint.c[0, 0]
             y = vpoint.c[0, 1]
-            data_dict[mapping[i]] = Coord.__new__(Coord, x, y)
+            data_dict[mapping[node]] = Coord.__new__(Coord, x, y)
     return dof
 
-cdef void preprocessing(object vpoints, object angles,
-                        vector[Expr] &stack,
+
+cdef bint preprocessing(EStack exprs, object vpoints, object angles,
                         map[Sym, CCoord] &joint_pos,
                         map[SwappablePair, double] &link_len,
                         map[Sym, double] &param):
-    """Data preprocessing.
+    """Data extraction. Return true if input angle is matched DOF.
 
-    Use "vpoints", "angles" and "stack" to generate solver required data.
-    Please pre-allocate the "j", "link_len" and "param".
+    Use "exprs", "vpoints", "angles" and "link_len" to generate solver
+    required data. Please pre-allocate the "joint_pos" and "param".
+
+    C++ objects
+    + "exprs.stack" used for the position solution.
+    + "joint_pos" used for joint position.
+    + "link_len" used for custom link length except from calculation.
+      (The link pairs must be exist in the solution.)
+    + "param" used for store angles and link length.
     """
-    # TODO: Replace "data_collecting".
+    # First, we create a "VLinks" that can help us to
+    # find a relationship just like adjacency matrix
+    cdef int node, base
+    cdef VPoint vp, vp2
+    vlinks = {}
+    for node, vp in enumerate(vpoints):
+        for link in vp.links:
+            # Add as vlink.
+            if link not in vlinks:
+                vlinks[link] = [node]
+            else:
+                vlinks[link].append(node)
+    # Replace the P joints and their friends with RP joint
+    # DOF must be same after properties changed
+    cdef double x, y, angle
+    for base in range(len(vpoints)):
+        vp = vpoints[base]
+        if vp.type != VJoint.P:
+            continue
+        for link in vp.links[1:]:
+            for node in vlinks[link]:
+                vp2 = vpoints[node]
+                if node == base or vp2.is_slider():
+                    continue
+                x = vp2.c[0, 0]
+                y = vp2.c[0, 1]
+                vpoints[node] = VPoint.c_slider_joint([vp.links[0]] + [
+                    link_ for link_ in vp2.links
+                    if (link_ not in vp.links)
+                ], VJoint.RP, vp.angle, x, y)
+    # Assign joint positions
+    for node, vp in enumerate(vpoints):
+        base = 1 if vp.is_slider() else 0
+        joint_pos[Sym(P_LABEL, node)] = CCoord(vp.c[base, 0], vp.c[base, 1])
+    # Add slider slot virtual coordinates
+    for node, vp in enumerate(vpoints):
+        # PLPP dependencies
+        if vp.type != VJoint.RP:
+            continue
+        base = base_friend(node, vpoints)
+        angle = (vp.angle
+                 - vp.slope_angle(vpoints[base], 1, 0)
+                 + vp.slope_angle(vpoints[base], 0, 0)) / 180 * M_PI
+        joint_pos[Sym(S_LABEL, node)] = CCoord(vp.c[1, 0] + cos(angle),
+                                               vp.c[1, 1] + sin(angle))
+    # Input angles
+    for node, angle in enumerate(angles):
+        param[Sym(I_LABEL, node)] = angle / 180 * M_PI
+    # Scan again to check if the parameter exists
+    # Especially link lengths and angles
+    cdef int dof = 0
     cdef Expr e
-    for e in stack:
-        pass
+    cdef SwappablePair pair1, pair2
+    for e in exprs.stack:
+        pair1 = SwappablePair(e.c1.second, e.target.second)
+        pair2 = SwappablePair(e.c2.second, e.target.second)
+        if e.func == PXY:
+            param[e.v1] = joint_pos[e.c2].x - joint_pos[e.c1].x
+            param[e.v2] = joint_pos[e.c2].y - joint_pos[e.c1].y
+            continue
+        if e.func in {PLLP, PALP}:
+            param[e.v2] = link_len[pair2] if link_len.count(pair2) else (
+                distance(joint_pos[e.c2].x, joint_pos[e.c2].y,
+                         joint_pos[e.target].x, joint_pos[e.target].y)
+            )
+        if e.func in {PLLP, PLA, PLAP, PLPP}:
+            param[e.v1] = link_len[pair1] if link_len.count(pair1) else (
+                distance(joint_pos[e.c1].x, joint_pos[e.c1].y,
+                         joint_pos[e.target].x, joint_pos[e.target].y)
+            )
+            if e.func in {PLA, PLAP}:
+                if e.v2.first == I_LABEL:
+                    dof += 1
+                else:  # A_LABEL
+                    param[e.v2] = slope_angle(joint_pos[e.c1].x,
+                                              joint_pos[e.c1].y,
+                                              joint_pos[e.target].x,
+                                              joint_pos[e.target].y)
+                    if e.func == PLAP:
+                        param[e.v2] -= slope_angle(joint_pos[e.c1].x,
+                                                   joint_pos[e.c1].y,
+                                                   joint_pos[e.c2].x,
+                                                   joint_pos[e.c2].y)
+    return len(angles) == dof == vpoint_dof(vpoints)
 
 
 cpdef list expr_solving(
@@ -499,6 +574,11 @@ cpdef list expr_solving(
     # Blank sequences
     if angles is None:
         angles = []
+    cdef map[Sym, CCoord] joint_pos
+    cdef map[SwappablePair, double] link_len
+    cdef map[Sym, double] param
+    if not preprocessing(exprs, vpoints, angles, joint_pos, link_len, param):
+        raise ValueError("wrong number of input parameters")
     data_dict = {}
     mapping = {n: f'P{n}' for n in range(len(vpoints))}
     cdef int dof_input = data_collecting(data_dict, exprs, mapping, vpoints)
