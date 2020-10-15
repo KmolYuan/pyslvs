@@ -266,6 +266,7 @@ cdef class Graph:
         """
         cdef int n = len(self.vertices)
         cdef double[:, :] am = zeros((n, n), dtype=np_uint)
+        cdef int n1, n2
         for n1, n2 in self.edges:
             am[n1, n2] += 1
             am[n2, n1] += 1

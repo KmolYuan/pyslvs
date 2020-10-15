@@ -54,8 +54,9 @@ cdef extern from "tinycadlib/solver.h" nogil:
     cppclass ExprSolver:
         map[Sym, CCoord] joint_pos
 
-        ExprSolver(vector[Expr] stack, map[Sym, CCoord] j,
-                   map[SwappablePair, double] len, map[Sym, double] param)
+        ExprSolver()
+        ExprSolver(vector[Expr] stack, map[Sym, CCoord] joint_pos,
+                   map[SwappablePair, double] link_len, map[Sym, double] param)
         void solve()
 
 cdef str symbol_str(Sym p)

@@ -57,7 +57,8 @@ class ExprSolver {
 public:
     JointPos joint_pos;
 
-    ExprSolver(Stack stack, JointPos j, LinkLen len, Param p);
+    ExprSolver() = default;
+    ExprSolver(Stack stack, JointPos joint_pos, LinkLen link_len, Param param);
 
     void solve();
 };

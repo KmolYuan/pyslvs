@@ -548,6 +548,11 @@ cdef bint preprocessing(EStack exprs, object vpoints, object angles,
                                                    joint_pos[e.c1].y,
                                                    joint_pos[e.c2].x,
                                                    joint_pos[e.c2].y)
+                if (
+                    (<VPoint>vpoints[e.c1.second]).grounded()
+                    and (<VPoint>vpoints[e.target.second]).grounded()
+                ):
+                    raise ValueError("wrong driver definition")
     return len(angles) == dof == vpoint_dof(vpoints)
 
 
@@ -579,86 +584,41 @@ cpdef list expr_solving(
     cdef map[Sym, double] param
     if not preprocessing(exprs, vpoints, angles, joint_pos, link_len, param):
         raise ValueError("wrong number of input parameters")
-    data_dict = {}
-    mapping = {n: f'P{n}' for n in range(len(vpoints))}
-    cdef int dof_input = data_collecting(data_dict, exprs, mapping, vpoints)
-    # Check input number
-    cdef int dof = vpoint_dof(vpoints)
-    if dof_input > dof:
-        raise ValueError(
-            f"wrong number of input parameters: {dof_input} / {dof}"
-        )
-    # Reverse mapping, exclude specified link length
-    mapping_r = {v: k for k, v in mapping.items() if type(k) is int}
-    # Check input pairs
-    cdef int target
-    cdef Expr expr
-    for expr in exprs.stack:
-        if expr.func in {PLA, PLAP}:
-            target = mapping_r[symbol_str(expr.target)]
-            if (
-                vpoints[mapping_r[symbol_str(expr.c1)]].grounded()
-                and vpoints[target].grounded()
-            ):
-                raise ValueError("wrong driver definition.")
-    # Angles
-    cdef double a
-    cdef int i
-    for i, a in enumerate(angles):
-        data_dict[symbol_str(Sym(I_LABEL, i))] = a / 180 * M_PI
     # Solve
+    cdef ExprSolver solver
     if not exprs.stack.empty():
-        expr_parser(exprs, data_dict)
-    p_data_dict = {}
-    cdef bint has_not_solved = False
-    # Add coordinate of known points
-    for i in range(len(vpoints)):
-        # {1: 'A'} vs {'A': (10., 20.)}
-        if mapping[i] in data_dict:
-            p_data_dict[i] = data_dict[mapping[i]]
+        solver = ExprSolver(exprs.stack, joint_pos, link_len, param)
+        solver.solve()
+    # Check coverage
+    status = {i: (<VPoint>vp).grounded() for i, vp in enumerate(vpoints)}
+    cdef Expr e
+    for e in exprs.stack:
+        status[e.target.second] = True
+    cdef bint bfgs_mode = not all(status.values())
+    # Use BFGS mode
+    cdef pair[Sym, CCoord] jp
+    if bfgs_mode:
+        data_dict = {}
+        for jp in solver.joint_pos:
+            data_dict[jp.first.second] = Coord.__new__(Coord, jp.second.x,
+                                                       jp.second.y)
+        bfgs_rt = SolverSystem(vpoints, {}, data_dict).solve()
+    # Return result
+    rt = []
+    cdef int i
+    cdef CCoord c1, c2
+    cdef VPoint vp
+    for i, vp in enumerate(vpoints):
+        if bfgs_mode:
+            if vp.type == VJoint.R:
+                rt.append(bfgs_rt[i])
+            else:
+                rt.append((bfgs_rt[i][0], bfgs_rt[i][1]))
         else:
-            has_not_solved = True
-    # Calling Sketch Solve kernel and try to get the result
-    if has_not_solved:
-        # Add specified link lengths
-        for k, v in mapping.items():
-            if type(k) is tuple:
-                p_data_dict[k] = v
-        # Solve
-        try:
-            solved_bfgs = SolverSystem(vpoints, {}, p_data_dict).solve()
-        except ValueError:
-            raise ValueError("result contains failure from sketch solve")
-    # Format:
-    # R joint: [[p0]: (p0_x, p0_y), [p1]: (p1_x, p1_y)]
-    # P or RP joint: [[p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))]
-    solved_points = []
-    cdef VPoint vpoint
-    cdef Coord coord
-    for i in range(len(vpoints)):
-        vpoint = vpoints[i]
-        if mapping[i] in data_dict:
-            # These points has been solved
-            coord = data_dict[mapping[i]]
-            if coord.is_nan():
-                raise ValueError(f"result contains failure: Point{i}")
-            if vpoint.type == VJoint.R:
-                solved_points.append((coord.x, coord.y))
+            c1 = solver.joint_pos[Sym(P_LABEL, i)]
+            if vp.type == VJoint.R:
+                rt.append((c1.x, c1.y))
             else:
-                solved_points.append((
-                    (vpoint.c[0, 0], vpoint.c[0, 1]),
-                    (coord.x, coord.y)
-                ))
-        elif solved_bfgs is not None:
-            # These points solved by Sketch Solve
-            if vpoint.type == VJoint.R:
-                solved_points.append(solved_bfgs[i])
-            else:
-                solved_points.append((solved_bfgs[i][0], solved_bfgs[i][1]))
-        else:
-            # No answer
-            if vpoint.type == VJoint.R:
-                solved_points.append(vpoint.c[0, :])
-            else:
-                solved_points.append(vpoint.c)
-    return solved_points
+                c2 = solver.joint_pos[Sym(S_LABEL, i)]
+                rt.append(((c2.x, c2.y), (c1.x, c1.y)))
+    return rt
