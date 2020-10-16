@@ -38,14 +38,6 @@ def vpoint_dof(vpoints: Sequence[VPoint]) -> int:
 def expr_parser(exprs: Sequence[Tuple[str, ...]], data_dict: Dict[str, float]) -> None:
     ...
 
-def data_collecting(
-    data_dict: Dict[str, Union[Coord, float]],
-    exprs: EStack,
-    mapping: Dict[int, str],
-    vpoints: Sequence[VPoint],
-) -> int:
-    ...
-
 def expr_solving(
     exprs: EStack,
     vpoints: Sequence[VPoint],

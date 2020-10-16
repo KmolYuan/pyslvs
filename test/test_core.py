@@ -11,7 +11,7 @@ from unittest import TestCase
 from math import sqrt, radians
 from pyslvs import (
     Coord, SolverSystem, pxy, ppp, plap, pllp, plpp, palp, expr_solving,
-    data_collecting, t_config, parse_vpoints, example_list,
+    t_config, parse_vpoints, example_list,
 )
 
 
@@ -73,9 +73,6 @@ class CoreTest(TestCase):
             expr, inputs = example_list(name)
             vpoints = parse_vpoints(expr)
             exprs = t_config(vpoints, inputs)
-            mapping = {n: f'P{n}' for n in range(len(vpoints))}
-            dof = data_collecting({}, exprs, mapping, vpoints)
-            self.assertEqual(1, dof)
             result = expr_solving(exprs, vpoints, [0.])
             return result[-1]
 

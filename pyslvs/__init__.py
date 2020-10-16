@@ -13,7 +13,6 @@ from .bfgs import SolverSystem
 from .topo_config import t_config, EStack
 from .tinycadlib import (
     pxy, ppp, plap, pllp, plpp, palp, vpoint_dof, expr_parser, expr_solving,
-    data_collecting,
 )
 # from .planar_linkage import (
 #     FMatch, norm_path, curvature, derivative, path_signature, cross_correlation,
