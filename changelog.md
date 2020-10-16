@@ -1,6 +1,7 @@
 # Version 20.10
 
 + Unify "true" and "false" to lowercase in docstring.
++ Remove "data_collecting" function.
 + Add "VPoint.is_slider" method.
 + Improve performance of meta-heuristic algorithms.
     + Release almost GIL, only left objective function.
