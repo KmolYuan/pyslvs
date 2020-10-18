@@ -15,22 +15,6 @@ from .expression cimport Coord, VJoint, VPoint, VLink, distance, slope_angle
 from .bfgs cimport SolverSystem
 
 
-cdef str symbol_str(Sym p):
-    """The match pattern of the symbols."""
-    if p.first == P_LABEL:
-        return f"P{p.second}"
-    elif p.first == L_LABEL:
-        return f"L{p.second}"
-    elif p.first == I_LABEL:
-        return f"I{p.second}"
-    elif p.first == A_LABEL:
-        return f"A{p.second}"
-    elif p.first == S_LABEL:
-        return f"S{p.second}"
-    else:
-        return ""
-
-
 def pxy(Coord c1, double x, double y):
     """The PXY function requires one point and offset values, get the
     position of second point.
@@ -148,78 +132,6 @@ def palp(
     """
     cdef CCoord c = cpalp(CCoord(c1.x, c1.y), a0, d0, CCoord(c2.x, c2.y), inverse)
     return Coord.__new__(Coord, c.x, c.y)
-
-
-cpdef void expr_parser(EStack exprs, dict data_dict):
-    """Solve and update information of the triangle expression `exprs` to
-    `data_dict`.
-    The argument `exprs` can be obtained by
-    [`t_config`](#t_config) and [`EStack.as_list()`](#estackas_list) method.
-
-    This function is already included in [`expr_solving`](#expr_solving),
-    not recommended for direct use.
-    """
-    # Update data
-    # + exprs: [("PLAP", "P0", "L0", "a0", "P1", "P2"), ..."]
-    # + data_dict: {'a0':0., 'L1':10., 'A':(30., 40.), ...}
-    cdef Sym target
-    cdef Coord coord
-    cdef Expr expr
-    for expr in exprs.stack:
-        if expr.func == PXY:
-            coord = pxy(
-                data_dict[symbol_str(expr.c1)],
-                data_dict[symbol_str(expr.v1)],
-                data_dict[symbol_str(expr.v2)]
-            )
-        elif expr.func == PPP:
-            coord = ppp(
-                data_dict[symbol_str(expr.c1)],
-                data_dict[symbol_str(expr.c2)],
-                data_dict[symbol_str(expr.c3)]
-            )
-        elif expr.func in {PLA, PLAP}:
-            if expr.func == PLA:
-                coord = plap(
-                    data_dict[symbol_str(expr.c1)],
-                    data_dict[symbol_str(expr.v1)],
-                    data_dict[symbol_str(expr.v2)]
-                )
-            else:
-                coord = plap(
-                    data_dict[symbol_str(expr.c1)],
-                    data_dict[symbol_str(expr.v1)],
-                    data_dict[symbol_str(expr.v2)],
-                    data_dict[symbol_str(expr.c2)],
-                    expr.op
-                )
-        elif expr.func == PLLP:
-            coord = pllp(
-                data_dict[symbol_str(expr.c1)],
-                data_dict[symbol_str(expr.v1)],
-                data_dict[symbol_str(expr.v2)],
-                data_dict[symbol_str(expr.c2)],
-                expr.op
-            )
-        elif expr.func == PLPP:
-            coord = plpp(
-                data_dict[symbol_str(expr.c1)],
-                data_dict[symbol_str(expr.v1)],
-                data_dict[symbol_str(expr.c2)],
-                data_dict[symbol_str(expr.c3)],
-                expr.op
-            )
-        elif expr.func == PALP:
-            coord = palp(
-                data_dict[symbol_str(expr.c1)],
-                data_dict[symbol_str(expr.v1)],
-                data_dict[symbol_str(expr.v2)],
-                data_dict[symbol_str(expr.c2)],
-                expr.op
-            )
-        else:
-            raise ValueError("unsupported function")
-        data_dict[symbol_str(expr.target)] = coord
 
 
 cpdef int vpoint_dof(object vpoints):

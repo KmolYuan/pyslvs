@@ -2,6 +2,7 @@
 
 + Unify "true" and "false" to lowercase in docstring.
 + Remove "data_collecting" function.
++ Remove "expr_parser" function.
 + Add "VPoint.is_slider" method.
 + Improve performance of meta-heuristic algorithms.
     + Release almost GIL, only left objective function.

@@ -35,9 +35,6 @@ def palp(c1: Coord, a0: float, d0: float, c2: Coord, inverse: bool = False) -> C
 def vpoint_dof(vpoints: Sequence[VPoint]) -> int:
     ...
 
-def expr_parser(exprs: Sequence[Tuple[str, ...]], data_dict: Dict[str, float]) -> None:
-    ...
-
 def expr_solving(
     exprs: EStack,
     vpoints: Sequence[VPoint],
