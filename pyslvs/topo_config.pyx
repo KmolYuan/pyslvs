@@ -391,7 +391,7 @@ cpdef EStack t_config(
     cdef double[:] tmp = zeros(2, dtype=f64)
     # Friend iterator
     while not _is_all_lock(status):
-        if status.count(node) == 0:
+        if status.find(node) == status.end():
             node = 0
             continue
         # Check and break the loop if it's re-scan again

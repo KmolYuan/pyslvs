@@ -250,15 +250,19 @@ cdef bint preprocessing(EStack exprs, object vpoints, object angles,
             param[e.v2] = joint_pos[e.c2].y - joint_pos[e.c1].y
             continue
         if e.func in {PLLP, PALP}:
-            param[e.v2] = link_len[pair2] if link_len.count(pair2) else (
-                distance(joint_pos[e.c2].x, joint_pos[e.c2].y,
-                         joint_pos[e.target].x, joint_pos[e.target].y)
-            )
+            param[e.v2] = (link_len[pair2]
+                           if link_len.find(pair2) != link_len.end() else
+                           distance(joint_pos[e.c2].x,
+                                    joint_pos[e.c2].y,
+                                    joint_pos[e.target].x,
+                                    joint_pos[e.target].y))
         if e.func in {PLLP, PLA, PLAP, PLPP}:
-            param[e.v1] = link_len[pair1] if link_len.count(pair1) else (
-                distance(joint_pos[e.c1].x, joint_pos[e.c1].y,
-                         joint_pos[e.target].x, joint_pos[e.target].y)
-            )
+            param[e.v1] = (link_len[pair1]
+                           if link_len.find(pair1) != link_len.end() else
+                           distance(joint_pos[e.c1].x,
+                                    joint_pos[e.c1].y,
+                                    joint_pos[e.target].x,
+                                    joint_pos[e.target].y))
             if e.func in {PLA, PLAP}:
                 if e.v2.first == I_LABEL:
                     dof += 1
