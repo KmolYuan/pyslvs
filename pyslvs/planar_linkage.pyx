@@ -19,13 +19,17 @@ from numpy.core.multiarray import correlate
 from libc.math cimport (
     cos, sin, atan2, isnan, log, INFINITY as INF, HUGE_VAL, M_PI,
 )
+from libcpp.pair cimport pair
+from libcpp.map cimport map
+from libcpp.vector cimport vector
+from libcpp.set cimport set as cset
 from .expression cimport Coord, VJoint, VPoint, distance
 from .metaheuristics.utility cimport ObjFunc
 from .tinycadlib cimport (
-    ExprSolver, I_LABEL, A_LABEL, Expr, PXY, PPP, PLA, PLAP, PLLP, PLPP, PALP,
-    preprocessing, CCoord, Sym, SwappablePair,
+    ExprSolver, I_LABEL, A_LABEL, P_LABEL, PLA, PLAP, PLLP, preprocessing,
+    CCoord, Sym, SwappablePair,
 )
-from .topo_config cimport t_config, EStack
+from .topo_config cimport t_config, EStack, Expr
 from .bfgs cimport SolverSystem
 
 try:
@@ -265,8 +269,10 @@ cdef class FMatch(ObjFunc):
     cdef bint bfgs_mode, shape_only, use_curvature, full_path, ordered
     cdef int target_count, input_count, l_base
     cdef list vpoints
-    cdef dict placement, target
+    cdef long[:] target_nodes
+    cdef double[:, :, :] target
     cdef EStack exprs
+    cdef cset[int] slider
     cdef map[Sym, CCoord] joint_pos
     cdef map[SwappablePair, double] link_len
     cdef map[Sym, double] param
@@ -296,7 +302,8 @@ cdef class FMatch(ObjFunc):
             raise ValueError("target paths should be in the same size")
         self.target_count = check_set.pop()
         # Change the target paths into memory view
-        self.target = {}
+        self.target_nodes = zeros(len(target), dtype=int)
+        self.target = zeros((len(target), self.target_count, 2), dtype=f64)
         same = mech.get('same', {})
         self.shape_only = mech.get('shape_only', False)
         self.use_curvature = mech.get('use_curvature', False)
@@ -305,18 +312,18 @@ cdef class FMatch(ObjFunc):
             self.shape_only = False
         cdef int i, j
         cdef double[:, :] path
-        for i in target:
-            path = array(target[i], dtype=f64)
-            for j in range(i):
-                if j in same:
-                    i -= 1
+        for i, j in enumerate(target):
+            self.target_nodes[i] = j
+            path = array(target[j], dtype=f64)
             if self.shape_only:
                 _norm(path, 1)
             if self.use_curvature:
                 path = _path_signature(_curvature(path), 100)
-            self.target[i] = path
+            self.target[i, :, :] = path
         # Expressions (must be readonly)
         self.vpoints = list(mech.get('expression', []))
+        self.slider = {i for i, vp in enumerate(self.vpoints)
+                       if (<VPoint> vp).is_slider()}
         inputs = OrderedDict(mech.get('input', {}))
         self.input_count = len(inputs)
         status = {}
@@ -378,145 +385,6 @@ cdef class FMatch(ObjFunc):
         """
         return self.bfgs_mode
 
-    cdef inline double get_len(self, str expr1, str expr2):
-        return self.mapping[frozenset({self.mapping_r[expr1],
-                                       self.mapping_r[expr2]})]
-
-    cdef bint solve(self, double[:] input_list) nogil:
-        """Solver function."""
-        # TODO: No GIL here.
-        self.data_dict.clear()
-        cdef int i
-        cdef VPoint vpoint
-        cdef Coord coord1, coord2, coord3
-        for i, vpoint in enumerate(self.vpoints):
-            coord1 = Coord.__new__(Coord, vpoint.c[0, 0], vpoint.c[0, 1])
-            if vpoint.type == VJoint.R:
-                self.data_dict[self.mapping[i]] = coord1
-                self.data_dict[i, -1] = coord1
-            else:
-                coord2 = Coord.__new__(Coord, vpoint.c[1, 0], vpoint.c[1, 1])
-                self.data_dict[self.mapping[i]] = coord2
-                self.data_dict[i, -1] = coord1
-                self.data_dict[i, -2] = coord2
-        # Solve
-        i = 0
-        cdef int a = 0
-        cdef int t, params_count
-        cdef double length, angle
-        cdef Expr expr
-        for expr in self.exprs.stack:
-            target = symbol_str(expr.target)
-            if expr.func == PXY:
-                coord1 = self.data_dict[symbol_str(expr.c1)]
-                coord3 = pxy(
-                    coord1,
-                    vpoint.c[0, 0] - coord1.x,
-                    vpoint.c[0, 1] - coord1.y
-                )
-            elif expr.func == PPP:
-                coord3 = ppp(
-                    self.data_dict[symbol_str(expr.c1)],
-                    self.data_dict[symbol_str(expr.c2)],
-                    self.data_dict[symbol_str(expr.c3)],
-                )
-            elif expr.func in {PLA, PLAP}:
-                coord1 = self.data_dict[symbol_str(expr.c1)]
-                if expr.func == PLAP:
-                    coord2 = self.data_dict[symbol_str(expr.c2)]
-                length = self.get_len(symbol_str(expr.c1), target)
-                if expr.v2.first == I_LABEL:
-                    angle = input_list[i]
-                    i += 1
-                else:
-                    angle = self.polar_angles[a]
-                    a += 1
-                if expr.func == PLA:
-                    coord3 = plap(coord1, length, angle)
-                else:
-                    coord3 = plap(coord1, length, angle, coord2, expr.op)
-            elif expr.func == PLLP:
-                coord3 = pllp(
-                    self.data_dict[symbol_str(expr.c1)],
-                    self.get_len(symbol_str(expr.c1), target),
-                    self.get_len(symbol_str(expr.c2), target),
-                    self.data_dict[symbol_str(expr.c2)],
-                    expr.op
-                )
-            elif expr.func == PLPP:
-                coord3 = plpp(
-                    self.data_dict[symbol_str(expr.c1)],
-                    self.get_len(symbol_str(expr.c1), target),
-                    self.data_dict[symbol_str(expr.c2)],
-                    self.data_dict[symbol_str(expr.c3)],
-                    expr.op
-                )
-            elif expr.func == PALP:
-                angle = self.polar_angles[a]
-                a += 1
-                coord3 = palp(
-                    self.data_dict[symbol_str(expr.c1)],
-                    angle,
-                    self.get_len(symbol_str(expr.c2), target),
-                    self.data_dict[symbol_str(expr.c2)],
-                    expr.op
-                )
-            else:
-                return False
-            if coord3.is_nan():
-                return False
-            t = self.mapping_r[target]
-            vpoint = self.vpoints[t]
-            self.data_dict[target] = coord3
-            if vpoint.type == VJoint.R:
-                self.data_dict[t, -1] = coord3
-            else:
-                self.data_dict[t, -1] = (vpoint.c[0, 0], vpoint.c[0, 1])
-                self.data_dict[t, -2] = coord3
-        if not self.bfgs_mode:
-            return True
-        # Add coordinate of known points
-        p_data_dict = {}
-        for i in range(len(self.vpoints)):
-            # {1: 'A'} vs {'A': (10., 20.)}
-            if self.mapping[i] in self.data_dict:
-                p_data_dict[i] = self.data_dict[self.mapping[i]]
-        # Add specified link lengths
-        for k, v in self.mapping.items():
-            if type(k) is frozenset:
-                p_data_dict[k] = v
-        # Solve
-        try:
-            solved_bfgs = SolverSystem(self.vpoints, {}, p_data_dict).solve()
-        except ValueError:
-            return False
-        # Format:
-        # R joint: [[p0]: (p0_x, p0_y), [p1]: (p1_x, p1_y)]
-        # P or RP joint: [[p2]: ((p2_x0, p2_y0), (p2_x1, p2_y1))]
-        for i in range(len(self.vpoints)):
-            if self.mapping[i] in self.data_dict:
-                continue
-            vpoint = self.vpoints[i]
-            # These points solved by Sketch Solve
-            if vpoint.type == VJoint.R:
-                self.data_dict[i, -1] = Coord.__new__(
-                    Coord,
-                    solved_bfgs[i][0],
-                    solved_bfgs[i][1]
-                )
-            else:
-                self.data_dict[i, -1] = Coord.__new__(
-                    Coord,
-                    solved_bfgs[i][0][0],
-                    solved_bfgs[i][0][1]
-                )
-                self.data_dict[i, -2] = Coord.__new__(
-                    Coord,
-                    solved_bfgs[i][1][0],
-                    solved_bfgs[i][1][1]
-                )
-        return True
-
     cdef double fitness(self, double[:] v) nogil:
         """Return the difference of the path signature.
 
@@ -524,22 +392,8 @@ cdef class FMatch(ObjFunc):
         + Link lengths.
         + Angle corresponding to the target points.
         """
-        # Copy data
-        cdef int i = 0
-        cdef int j = 0
-        for m in self.mapping_list:
-            if type(m) is int:
-                (<VPoint>self.vpoints[m]).locate(v[i], v[i + 1])
-                i += 2
-            elif type(m) is str and m.startswith('A'):
-                self.polar_angles[j] = v[i]
-                j += 1
-                i += 1
-            else:
-                self.mapping[m] = v[i]
-                i += 1
-        # Solver
         # Angles (node, path length)
+        cdef int i, j
         cdef double[:, :] angles
         if self.use_curvature:
             angles = zeros((self.input_count, 36), dtype=f64)
@@ -554,15 +408,36 @@ cdef class FMatch(ObjFunc):
                 angles[i, :] = v[j:j + self.target_count]
         cdef double fitness = 0
         cdef int node
-        cdef Coord c
-        target = {n: [] for n in self.target}
+        cdef pair[Sym, CCoord] jp
+        cdef map[int, vector[CCoord]] target
         for i in range(self.target_count):
-            if not self.solve(angles[:, i]):
-                # Punishment
-                return HUGE_VAL
-            for node in self.target:
-                c = self.data_dict[node, -1]
-                target[node].append((c.x, c.y))
+            # TODO: Input parameters (length, angles)
+            for node in range(len(v)):
+                self.param[Sym(I_LABEL, node)] = v[i]
+            # Solve
+            solver = ExprSolver(self.exprs.stack, self.joint_pos, self.link_len,
+                                self.param)
+            solver.solve()
+            if self.bfgs_mode:
+                with gil:
+                    data_dict = {}
+                    for jp in solver.joint_pos:
+                        data_dict[jp.first.second] = Coord.__new__(Coord,
+                                                                   jp.second.x,
+                                                                   jp.second.y)
+                    # Solve
+                    try:
+                        solved_bfgs = SolverSystem(self.vpoints, {}, data_dict).solve()
+                    except ValueError:
+                        return HUGE_VAL
+            # Collecting
+            for node in self.target_nodes:
+                if self.bfgs_mode:
+                    with gil:
+                        target[node].push_back(CCoord(solved_bfgs[node][0][0],
+                                                      solved_bfgs[node][0][1]))
+                else:
+                    target[node].push_back(solver.joint_pos[Sym(P_LABEL, node)])
         # Compare
         cdef double scale
         cdef double[:, :] path1, path2
