@@ -308,17 +308,16 @@ cpdef list expr_solving(
     cdef map[Sym, double] param
     if not preprocessing(exprs, vpoints, angles, joint_pos, link_len, param):
         raise ValueError("wrong number of input parameters")
-    # Solve
-    cdef ExprSolver solver
-    if not exprs.stack.empty():
-        solver = ExprSolver(exprs.stack, joint_pos, link_len, param)
-        solver.solve()
     # Check coverage
-    status = {i: (<VPoint>vp).grounded() for i, vp in enumerate(vpoints)}
+    status = {i: (<VPoint> vp).grounded() for i, vp in enumerate(vpoints)}
     cdef Expr e
     for e in exprs.stack:
         status[e.target.second] = True
     cdef bint bfgs_mode = not all(status.values())
+    # Solve
+    cdef ExprSolver solver
+    solver = ExprSolver(exprs.stack, joint_pos, link_len, param)
+    solver.solve()
     # Use BFGS mode
     cdef pair[Sym, CCoord] jp
     if bfgs_mode:

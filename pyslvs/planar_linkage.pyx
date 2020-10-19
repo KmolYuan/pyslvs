@@ -22,9 +22,9 @@ from libc.math cimport (
 from .expression cimport Coord, VJoint, VPoint, distance
 from .metaheuristics.utility cimport ObjFunc
 from .tinycadlib cimport (
-    I_LABEL, A_LABEL, Expr, PXY, PPP, PLA, PLAP, PLLP, PLPP, PALP
+    ExprSolver, I_LABEL, A_LABEL, Expr, PXY, PPP, PLA, PLAP, PLLP, PLPP, PALP,
+    preprocessing, CCoord, Sym, SwappablePair,
 )
-from .tinycadlib import pxy, ppp, plap, pllp, plpp, palp
 from .topo_config cimport t_config, EStack
 from .bfgs cimport SolverSystem
 
@@ -264,10 +264,12 @@ cdef class FMatch(ObjFunc):
     """
     cdef bint bfgs_mode, shape_only, use_curvature, full_path, ordered
     cdef int target_count, input_count, l_base
-    cdef list vpoints, mapping_list
-    cdef dict placement, target, mapping, mapping_r, data_dict
-    cdef double[:] polar_angles
+    cdef list vpoints
+    cdef dict placement, target
     cdef EStack exprs
+    cdef map[Sym, CCoord] joint_pos
+    cdef map[SwappablePair, double] link_len
+    cdef map[Sym, double] param
 
     def __cinit__(self, dict mech):
         # mech = {
@@ -313,22 +315,19 @@ cdef class FMatch(ObjFunc):
             if self.use_curvature:
                 path = _path_signature(_curvature(path), 100)
             self.target[i] = path
-        # Expressions
+        # Expressions (must be readonly)
         self.vpoints = list(mech.get('expression', []))
         inputs = OrderedDict(mech.get('input', {}))
         self.input_count = len(inputs)
         status = {}
         self.exprs = t_config(self.vpoints, tuple(inputs.keys()), status)
         self.bfgs_mode = not all(status.values())
-        # Data mapping
-        self.mapping = {i: f"P{i}" for i in range(len(self.vpoints))}
-        self.mapping_r = {v: k for k, v in self.mapping.items()}
-        self.mapping_list = []
+        if not preprocessing(self.exprs, self.vpoints, [0.] * self.input_count,
+                             self.joint_pos, self.link_len, self.param):
+            raise ValueError("wrong number of input parameters")
         # Bounds
         ub = []
         lb = []
-        if len(ub) != len(lb):
-            raise ValueError("upper and lower should be in the same size")
         # Position
         cdef double x, y, r
         for i in sorted(placement):
@@ -337,33 +336,22 @@ cdef class FMatch(ObjFunc):
             ub.append(y + r)
             lb.append(x - r)
             lb.append(y - r)
-            self.mapping_list.append(i)
         cdef int p_base = len(ub)
         # Length of links
         link_upper = float(mech.get('upper', 100))
         link_lower = float(mech.get('lower', 0))
-        i = 0
         cdef Expr expr
         for expr in self.exprs.stack:
             ub.append(link_upper)
             lb.append(link_lower)
-            sym = frozenset({expr.c1.second, expr.target.second})
-            self.mapping[sym] = None
-            self.mapping_list.append(sym)
             if expr.func in {PLA, PLAP}:
                 if expr.v2.first == A_LABEL:
+                    # The included angle of the link
                     ub.append(2 * M_PI)
                     lb.append(0)
-                    sym = f"A{i}"
-                    self.mapping[sym] = None
-                    self.mapping_list.append(sym)
-                    i += 1
             elif expr.func == PLLP:
                 ub.append(link_upper)
                 lb.append(link_lower)
-                sym = frozenset({expr.c2.second, expr.target.second})
-                self.mapping[sym] = None
-                self.mapping_list.append(sym)
         self.l_base = len(ub)
         if self.use_curvature and self.full_path:
             # Scale factor
@@ -383,10 +371,6 @@ cdef class FMatch(ObjFunc):
         for i in range(len(self.ub)):
             if self.ub[i] < self.lb[i]:
                 self.ub[i], self.lb[i] = self.lb[i], self.ub[i]
-        # Allocate memory
-        self.polar_angles = zeros(self.l_base - p_base, dtype=f64)
-        # TODO: Result list
-        self.data_dict = {}
 
     cpdef bint is_two_kernel(self):
         """Input a generic data (variable array), return the mechanism
