@@ -269,7 +269,7 @@ cdef class FMatch(ObjFunc):
     cdef bint bfgs_mode, shape_only, use_curvature, full_path, ordered
     cdef int target_count, input_count, l_base
     cdef list vpoints
-    cdef long[:] target_nodes
+    cdef long[:] target_nodes, pivots
     cdef double[:, :, :] target
     cdef EStack exprs
     cdef cset[int] slider
@@ -322,8 +322,10 @@ cdef class FMatch(ObjFunc):
             self.target[i, :, :] = path
         # Expressions (must be readonly)
         self.vpoints = list(mech.get('expression', []))
+        self.pivots = array([i for i, vp in enumerate(self.vpoints)
+                             if (<VPoint>vp).grounded()], dtype=int)
         self.slider = {i for i, vp in enumerate(self.vpoints)
-                       if (<VPoint> vp).is_slider()}
+                       if (<VPoint>vp).is_slider()}
         inputs = OrderedDict(mech.get('input', {}))
         self.input_count = len(inputs)
         status = {}
@@ -337,7 +339,7 @@ cdef class FMatch(ObjFunc):
         lb = []
         # Position
         cdef double x, y, r
-        for i in sorted(placement):
+        for i in self.pivots:
             x, y, r = placement[i]
             ub.append(x + r)
             ub.append(y + r)
@@ -351,14 +353,14 @@ cdef class FMatch(ObjFunc):
         for expr in self.exprs.stack:
             ub.append(link_upper)
             lb.append(link_lower)
-            if expr.func in {PLA, PLAP}:
-                if expr.v2.first == A_LABEL:
-                    # The included angle of the link
-                    ub.append(2 * M_PI)
-                    lb.append(0)
+            if expr.func in {PLA, PLAP} and expr.v2.first == A_LABEL:
+                # The included angle of the link
+                ub.append(2 * M_PI)
+                lb.append(0)
             elif expr.func == PLLP:
                 ub.append(link_upper)
                 lb.append(link_lower)
+        # The start of the angle parameters
         self.l_base = len(ub)
         if self.use_curvature and self.full_path:
             # Scale factor
@@ -369,7 +371,7 @@ cdef class FMatch(ObjFunc):
             for start, end in inputs.values():
                 ub.append(start / 180 * M_PI)
                 lb.append(end / 180 * M_PI)
-            # Angle rage
+            # Angle rage (input count * target count)
             ub[self.l_base:] *= self.target_count
             lb[self.l_base:] *= self.target_count
         self.ub = array(ub, dtype=f64)
@@ -392,28 +394,26 @@ cdef class FMatch(ObjFunc):
         + Link lengths.
         + Angle corresponding to the target points.
         """
-        # Angles (node, path length)
-        cdef int i, j
-        cdef double[:, :] angles
-        if self.use_curvature:
-            angles = zeros((self.input_count, 36), dtype=f64)
-            for i in range(self.input_count):
-                for j in range(0, 360, 10):
-                    angles[i, j] = j / 180 * M_PI
-        else:
-            angles = zeros((self.input_count, self.target_count),
-                           dtype=f64)
-            for i in range(self.input_count):
-                j = i * self.target_count + self.l_base
-                angles[i, :] = v[j:j + self.target_count]
-        cdef double fitness = 0
-        cdef int node
+        cdef int i, j, node, vi
+        cdef Expr expr
         cdef pair[Sym, CCoord] jp
         cdef map[int, vector[CCoord]] target
+        cdef ExprSolver solver
+        cdef double x, y
         for i in range(self.target_count):
-            # TODO: Input parameters (length, angles)
-            for node in range(len(v)):
-                self.param[Sym(I_LABEL, node)] = v[i]
+            # Input parameters (length)
+            vi = 0
+            for expr in self.exprs.stack:
+                self.param[expr.v1] = v[vi]
+                vi += 1
+                if expr.func == PLLP or (
+                    expr.func in {PLA, PLAP} and expr.v2.first == A_LABEL
+                ):
+                    self.param[expr.v2] = v[vi]
+                    vi += 1
+            # Input parameters (angles)
+            for vi in range(self.input_count):
+                self.param[Sym(I_LABEL, vi)] = v[self.l_base + vi * i]
             # Solve
             solver = ExprSolver(self.exprs.stack, self.joint_pos, self.link_len,
                                 self.param)
@@ -434,11 +434,12 @@ cdef class FMatch(ObjFunc):
             for node in self.target_nodes:
                 if self.bfgs_mode:
                     with gil:
-                        target[node].push_back(CCoord(solved_bfgs[node][0][0],
-                                                      solved_bfgs[node][0][1]))
+                        x, y = solved_bfgs[node][0]
+                    target[node].push_back(CCoord(x, y))
                 else:
                     target[node].push_back(solver.joint_pos[Sym(P_LABEL, node)])
-        # Compare
+        # TODO: Compare
+        cdef double fitness = 0
         cdef double scale
         cdef double[:, :] path1, path2
         for node in self.target:
