@@ -295,10 +295,6 @@ cpdef list expr_solving(
     The triangle expression stack `expr` is generated from
     [`t_config`](#t_config).
 
-    The information data `mapping` map the symbols to the indicator of
-    `vpoints`,
-    additionally has a same format as argument `data_dict` in [SolverSystem].
-
     Solver function will not handle slider input pairs in argument `angles`,
     which is only support revolute joints. In another way, the slider input
     pairs can be set by [`VPoint.disable_offset()`](#vpointdisable_offset)
@@ -319,8 +315,7 @@ cpdef list expr_solving(
         status[e.target.second] = True
     cdef bint bfgs_mode = not all(status.values())
     # Solve
-    cdef ExprSolver solver
-    solver = ExprSolver(exprs.stack, joint_pos, link_len, param)
+    cdef ExprSolver solver = ExprSolver(exprs.stack, joint_pos, link_len, param)
     solver.solve()
     # Use BFGS mode
     cdef pair[Sym, CCoord] jp
