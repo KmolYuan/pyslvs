@@ -77,6 +77,9 @@ jobs:
     - <<: *osx
       env: PYTHON=3.8.5
 
+    - <<: *osx
+      env: PYTHON=3.9.0
+
 script:
   - python3 setup.py install
   - python3 test
