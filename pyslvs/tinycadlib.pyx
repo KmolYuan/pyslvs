@@ -281,7 +281,7 @@ cdef bint preprocessing(EStack exprs, object vpoints, object angles,
                     and (<VPoint>vpoints[e.target.second]).grounded()
                 ):
                     raise ValueError("wrong driver definition")
-    return len(angles) == dof == vpoint_dof(vpoints)
+    return len(angles) == dof <= vpoint_dof(vpoints)
 
 
 cpdef list expr_solving(
