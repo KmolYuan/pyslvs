@@ -45,7 +45,7 @@ def norm_path(path, scale=1):
     return [(x, y) for x, y in path_m]
 
 
-cdef void _norm(double[:, :] path, double scale):
+cdef void _norm(double[:, :] path, double scale) nogil:
     """Normalization implementation inplace."""
     cdef double[:] centre = zeros(2, dtype=f64)
     cdef double x, y
@@ -84,11 +84,13 @@ cdef void _norm(double[:, :] path, double scale):
     _mul1d(path[:, 1], scale)
 
 
-cdef void _aligned(double[:, :] path, int sp):
+cdef void _aligned(double[:, :] path, int sp) nogil:
     """Split 1D path from sp, concatenate to end."""
     if sp == 0:
         return
-    cdef double[:, :] tmp = zeros((sp, 2), dtype=f64)
+    cdef double[:, :] tmp
+    with gil:
+        tmp = zeros((sp, 2), dtype=f64)
     cdef int i
     for i in range(sp):
         tmp[i, 0] = path[i, 0]
@@ -112,11 +114,13 @@ def curvature(path):
     return array(_curvature(path_m))
 
 
-cdef double[:] _curvature(double[:, :] path):
+cdef double[:] _curvature(double[:, :] path) nogil:
     """Calculate the signed curvature."""
     cdef double[:, :] p1d = _derivative(path)
     cdef double[:, :] p2d = _derivative(p1d)
-    cdef double[:] k = zeros(len(path) - 2, dtype=f64)
+    cdef double[:] k
+    with gil:
+        k = zeros(len(path) - 2, dtype=f64)
     cdef int i
     for i in range(len(path) - 2):
         k[i] = ((p1d[i, 0] * p2d[i, 1] - p2d[i, 0] * p1d[i, 1])
@@ -129,9 +133,11 @@ def derivative(double[:, :] p):
     return array(_derivative(p))
 
 
-cdef double[:, :] _derivative(double[:, :] p):
+cdef double[:, :] _derivative(double[:, :] p) nogil:
     """Differential function backend."""
-    cdef double[:, :] pd = zeros((len(p), 2), dtype=f64)
+    cdef double[:, :] pd
+    with gil:
+        pd = zeros((len(p), 2), dtype=f64)
     cdef double max0 = 0
     cdef double max1 = 0
     cdef int i, j
@@ -165,9 +171,11 @@ def path_signature(double[:] k, double maximum = 100):
     return array(_path_signature(k, maximum))
 
 
-cdef double[:, :] _path_signature(double[:] k, double maximum):
+cdef double[:, :] _path_signature(double[:] k, double maximum) nogil:
     """Require a curvature, return path signature."""
-    cdef double[:, :] s = zeros((len(k), 2), dtype=f64)
+    cdef double[:, :] s
+    with gil:
+        s = zeros((len(k), 2), dtype=f64)
     cdef double interval = maximum / len(k)
     cdef double v = 0
     cdef int i
@@ -238,7 +246,7 @@ cdef void _mul1d(double[:] s, double v) nogil:
         s[i] *= v
 
 
-cdef double[:, :] _slice_nan2d(double[:, :] s):
+cdef double[:, :] _slice_nan2d(double[:, :] s) nogil:
     """Slice continuous view without NaN."""
     cdef int first = -1
     cdef int second = -1
@@ -441,10 +449,7 @@ cdef class FMatch(ObjFunc):
         # TODO: Compare
         cdef double fitness = 0
         cdef double scale
-        cdef double[:, :] path1, path2
         for node in self.target:
-            path1 = array(target[node], dtype=f64)
-            path2 = array(self.target[node])
             if self.use_curvature:
                 path1 = _slice_nan2d(path1)
                 if len(path1) == 0:
@@ -454,7 +459,8 @@ cdef class FMatch(ObjFunc):
                 if not self.full_path:
                     scale *= _extr1d(path1[:, 0], 1) / _extr1d(path2[:, 0], 1)
                 _mul1d(path2[:, 0], scale)
-                j = argmax(_cross_correlation(path2, path1, 0.1))
+                with gil:
+                    j = argmax(_cross_correlation(path2, path1, 0.1))
                 for i in range(len(path2)):
                     path2[i, 0] += j
                 for i in range(self.target_count):
