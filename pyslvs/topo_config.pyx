@@ -315,7 +315,7 @@ cpdef EStack t_config(
     if not vpoints_ or not has_input:
         return exprs
 
-    vpoints = tuple(vpoints_)
+    vpoints = list(vpoints_)
     cdef Inputs inputs
     cdef Status status
 

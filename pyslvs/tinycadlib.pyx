@@ -146,20 +146,17 @@ cpdef int vpoint_dof(object vpoints):
     cdef VPoint vpoint
     for vpoint in vpoints:
         link_count = len(vpoint.links)
-        if not link_count > 1:
+        if link_count < 2:
             # If a point doesn't have two more links, it can not be call a 'joint'.
             continue
         vlinks.update(vpoint.links)
         if vpoint.type == VJoint.R:
             j1 += link_count - 1
         elif vpoint.type == VJoint.P:
-            if link_count > 2:
-                j1 += link_count - 2
-            j1 += 1
+            j1 += link_count - 1
         elif vpoint.type == VJoint.RP:
-            if link_count > 2:
-                j1 += link_count - 2
-            j2 += 1
+            j2 += link_count - 1
+    print(len(vlinks), j1, j2)
     return 3 * (len(vlinks) - 1) - 2 * j1 - j2
 
 
@@ -189,6 +186,8 @@ cdef bint preprocessing(EStack exprs, object vpoints, object angles,
       (The link pairs must be exist in the solution.)
     + "param" used for store angles and link length.
     """
+    vpoints = list(vpoints)
+    cdef int vp_dof = vpoint_dof(vpoints)
     # First, we create a "VLinks" that can help us to
     # find a relationship just like adjacency matrix
     cdef int node, base
@@ -217,7 +216,7 @@ cdef bint preprocessing(EStack exprs, object vpoints, object angles,
                 y = vp2.c[0, 1]
                 vpoints[node] = VPoint.c_slider_joint([vp.links[0]] + [
                     link_ for link_ in vp2.links
-                    if (link_ not in vp.links)
+                    if link_ not in vp.links
                 ], VJoint.RP, vp.angle, x, y)
     # Assign joint positions
     for node, vp in enumerate(vpoints):
@@ -281,7 +280,8 @@ cdef bint preprocessing(EStack exprs, object vpoints, object angles,
                     and (<VPoint>vpoints[e.target.second]).grounded()
                 ):
                     raise ValueError("wrong driver definition")
-    return len(angles) == dof <= vpoint_dof(vpoints)
+    print(len(angles), dof, vp_dof)
+    return len(angles) == dof <= vp_dof
 
 
 cpdef list expr_solving(
