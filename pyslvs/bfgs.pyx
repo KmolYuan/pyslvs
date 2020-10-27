@@ -428,16 +428,26 @@ cdef class SolverSystem:
             i += 1
         # Solve
         cdef bint flag = solve(params_ptr, params_count, cons, cons_count, False)
+        cdef VPoint vp
+        cdef Coord c
+        cdef Point p1, p2
         if flag:
             solved_points = []
-            for i, vpoint in enumerate(self.vpoints):
-                if vpoint.type == VJoint.R:
-                    solved_points.append((self.points[i].x[0], self.points[i].y[0]))
+            for i, vp in enumerate(self.vpoints):
+                if i in self.data_dict:
+                    c = self.data_dict[i]
+                    if vp.type == VJoint.R:
+                        solved_points.append((c.x, c.y))
+                    else:
+                        solved_points.append(((c.x, c.y), (c.x, c.y)))
+                    continue
+                p1 = self.points[i]
+                if vp.type == VJoint.R:
+                    solved_points.append((p1.x[0], p1.y[0]))
                 else:
-                    solved_points.append((
-                        (self.slider_bases[self.sliders[i]].x[0], self.slider_bases[self.sliders[i]].y[0]),
-                        (self.points[i].x[0], self.points[i].y[0])
-                    ))
+                    p2 = self.slider_bases[self.sliders[i]]
+                    solved_points.append(((p2.x[0], p2.y[0]),
+                                          (p1.x[0], p1.y[0])))
         PyMem_Free(params_ptr)
         PyMem_Free(cons)
         if flag:
