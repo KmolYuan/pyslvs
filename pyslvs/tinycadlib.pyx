@@ -344,3 +344,17 @@ cpdef list expr_solving(
                 c2 = solver.joint_pos[Sym(S_LABEL, i)]
                 rt.append(((c2.x, c2.y), (c1.x, c1.y)))
     return rt
+
+cdef map[Sym, CCoord] quick_solve(
+    vector[Expr] stack,
+    map[Sym, CCoord] joint_pos,
+    map[SwappablePair, double] link_len,
+    map[Sym, double] param
+) nogil:
+    """Quick solving function.
+
+    !! Cython can not expose C external function to another pyx.
+    """
+    cdef ExprSolver s = ExprSolver(stack, joint_pos, link_len, param)
+    s.solve()
+    return s.joint_pos

@@ -63,14 +63,16 @@ ext_modules = [
         pth_join(src_path, 'tinycadlib.pyx'),
         pth_join(tinycadlib_path, 'solver.cpp'),
     ], language="c++", include_dirs=[tinycadlib_path]),
+    Extension(src_path.replace(sep, '.') + '.planar_linkage', [
+        pth_join(src_path, 'planar_linkage.pyx'),
+    ], language="c++", libraraies=['tinycadlib']),
 ]
 paths = [src_path, graph_path, metaheuristics_path]
 for place in paths:
     for source in listdir(place):
         if not source.endswith('.pyx'):
             continue
-        if place == src_path and source in {'bfgs.pyx', 'tinycadlib.pyx',
-                                            'planar_linkage.pyx'}:
+        if place == src_path and source in {'bfgs.pyx', 'tinycadlib.pyx'}:
             continue
         ext_modules.append(Extension(
             place.replace(sep, '.') + '.' + source.split('.')[0],  # Base name

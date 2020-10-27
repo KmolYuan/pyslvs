@@ -26,7 +26,7 @@ from libcpp.set cimport set as cset
 from .expression cimport Coord, VJoint, VPoint, distance
 from .metaheuristics.utility cimport ObjFunc
 from .tinycadlib cimport (
-    ExprSolver, I_LABEL, A_LABEL, P_LABEL, PLA, PLAP, PLLP, preprocessing,
+    quick_solve, I_LABEL, A_LABEL, P_LABEL, PLA, PLAP, PLLP, preprocessing,
     CCoord, Sym, SwappablePair,
 )
 from .topo_config cimport t_config, EStack, Expr
@@ -47,39 +47,39 @@ def norm_path(path, scale=1):
 
 cdef void _norm(double[:, :] path, double scale) nogil:
     """Normalization implementation inplace."""
-    cdef double[:] centre = zeros(2, dtype=f64)
+    cdef CCoord centre = CCoord(0, 0)
     cdef double x, y
-    for x, y in path:
-        centre[0] += x
-        centre[1] += y
-    cdef int end = len(path)
-    centre[0] /= end
-    centre[1] /= end
-    cdef double[:] angle = zeros(end + 1, dtype=f64)
-    cdef double[:] length = zeros(end + 1, dtype=f64)
-    cdef int sp = 0
     cdef int i
+    for i in range(len(path)):
+        centre.x += path[i, 0]
+        centre.y += path[i, 1]
+    cdef int end = len(path)
+    centre.x /= end
+    centre.y /= end
+    cdef vector[double] angle = vector[double](end + 1)
+    cdef vector[double] length = vector[double](end + 1)
+    cdef int sp = 0
     for i in range(len(path)):
         x = path[i, 0]
         y = path[i, 1]
-        angle[i] = atan2(y - centre[1], x - centre[0])
-        length[i] = distance(centre[0], centre[1], x, y)
+        angle[i] = atan2(y - centre.y, x - centre.x)
+        length[i] = distance(centre.x, centre.y, x, y)
         if length[i] > length[end]:
             length[end] = length[i]
             angle[end] = angle[i]
             sp = end
     _aligned(path, sp)
-    cdef double[:] bound = array([INF, -INF], dtype=f64)
+    cdef CCoord bound = CCoord(INF, -INF)
     cdef double a
     for i in range(len(path)):
         a = angle[i] - angle[end]
         path[i, 0] = length[i] * cos(a)
         path[i, 1] = length[i] * sin(a)
-        if path[i, 0] < bound[0]:
-            bound[0] = path[i, 0]
-        if path[i, 0] > bound[1]:
-            bound[1] = path[i, 0]
-    scale /= (bound[1] - bound[0])
+        if path[i, 0] < bound.x:
+            bound.x = path[i, 0]
+        if path[i, 0] > bound.y:
+            bound.y = path[i, 0]
+    scale /= (bound.y - bound.x)
     _mul1d(path[:, 0], scale)
     _mul1d(path[:, 1], scale)
 
@@ -275,7 +275,7 @@ cdef class FMatch(ObjFunc):
     A fast matching method that adds mapping angles to variables.
     """
     cdef bint bfgs_mode, shape_only, use_curvature, full_path, ordered
-    cdef int target_count, input_count, l_base
+    cdef int target_count, target_len, input_count, l_base
     cdef list vpoints
     cdef long[:] target_nodes, pivots
     cdef double[:, :, :] target
@@ -308,10 +308,11 @@ cdef class FMatch(ObjFunc):
         check_set = {len(t) for t in target.values()}
         if len(check_set) != 1:
             raise ValueError("target paths should be in the same size")
-        self.target_count = check_set.pop()
+        self.target_len = check_set.pop()
         # Change the target paths into memory view
-        self.target_nodes = zeros(len(target), dtype=int)
-        self.target = zeros((len(target), self.target_count, 2), dtype=f64)
+        self.target_count = len(target)
+        self.target_nodes = zeros(self.target_count, dtype=int)
+        self.target = zeros((self.target_count, self.target_len, 2), dtype=f64)
         same = mech.get('same', {})
         self.shape_only = mech.get('shape_only', False)
         self.use_curvature = mech.get('use_curvature', False)
@@ -380,8 +381,8 @@ cdef class FMatch(ObjFunc):
                 ub.append(start / 180 * M_PI)
                 lb.append(end / 180 * M_PI)
             # Angle rage (input count * target count)
-            ub[self.l_base:] *= self.target_count
-            lb[self.l_base:] *= self.target_count
+            ub[self.l_base:] *= self.target_len
+            lb[self.l_base:] *= self.target_len
         self.ub = array(ub, dtype=f64)
         self.lb = array(lb, dtype=f64)
         # Swap upper and lower bound if reversed
@@ -405,10 +406,10 @@ cdef class FMatch(ObjFunc):
         cdef int i, j, node, vi
         cdef Expr expr
         cdef pair[Sym, CCoord] jp
+        cdef map[Sym, CCoord] joint_pos
         cdef map[int, vector[CCoord]] target
-        cdef ExprSolver solver
         cdef double x, y
-        for i in range(self.target_count):
+        for i in range(self.target_len):
             # Input parameters (length)
             vi = 0
             for expr in self.exprs.stack:
@@ -423,13 +424,12 @@ cdef class FMatch(ObjFunc):
             for vi in range(self.input_count):
                 self.param[Sym(I_LABEL, vi)] = v[self.l_base + vi * i]
             # Solve
-            solver = ExprSolver(self.exprs.stack, self.joint_pos, self.link_len,
-                                self.param)
-            solver.solve()
+            joint_pos = quick_solve(self.exprs.stack, self.joint_pos,
+                                    self.link_len, self.param)
             if self.bfgs_mode:
                 with gil:
                     data_dict = {}
-                    for jp in solver.joint_pos:
+                    for jp in joint_pos:
                         data_dict[jp.first.second] = Coord.__new__(Coord,
                                                                    jp.second.x,
                                                                    jp.second.y)
@@ -445,12 +445,21 @@ cdef class FMatch(ObjFunc):
                         x, y = solved_bfgs[node][0]
                     target[node].push_back(CCoord(x, y))
                 else:
-                    target[node].push_back(solver.joint_pos[Sym(P_LABEL, node)])
+                    target[node].push_back(joint_pos[Sym(P_LABEL, node)])
         # TODO: Compare
         cdef double fitness = 0
         cdef double scale
-        for node in self.target:
+        cdef double[:, :] path1, path2
+        cdef CCoord c
+        for node in range(self.target_count):
             if self.use_curvature:
+                with gil:
+                    path1 = zeros((self.target_len, 2), dtype=f64)
+                    path2 = array(self.target[node], dtype=f64)
+                for i in range(self.target_len):
+                    c = target[node][i]
+                    path1[i, 0] = c.x
+                    path1[i, 1] = c.y
                 path1 = _slice_nan2d(path1)
                 if len(path1) == 0:
                     return HUGE_VAL
@@ -463,14 +472,17 @@ cdef class FMatch(ObjFunc):
                     j = argmax(_cross_correlation(path2, path1, 0.1))
                 for i in range(len(path2)):
                     path2[i, 0] += j
-                for i in range(self.target_count):
+                for i in range(self.target_len):
                     fitness += path1[i, 0] - path2[i, 0]
             else:
                 if self.shape_only:
+                    # TODO
                     _norm(path1, 1)
-                for i in range(self.target_count):
-                    fitness += distance(path1[i, 0], path1[i, 1],
-                                        path2[i, 0], path2[i, 1])
+                for i in range(self.target_len):
+                    c = target[node][i]
+                    fitness += distance(c.x, c.y,
+                                        self.target[node, i, 0],
+                                        self.target[node, i, 1])
         return fitness
 
     cpdef object result(self, double[:] v):
@@ -492,7 +504,7 @@ cdef class FMatch(ObjFunc):
             else:
                 self.mapping[m] = v[index]
                 index += 1
-        self.solve(v[self.l_base:self.l_base + self.target_count])
+        self.solve(v[self.l_base:self.l_base + self.target_len])
         expressions = []
         cdef int i
         cdef double x1, y1, x2, y2

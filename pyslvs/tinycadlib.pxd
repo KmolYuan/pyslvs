@@ -64,3 +64,9 @@ cdef bint preprocessing(EStack exprs, object vpoints, object angles,
                         map[SwappablePair, double] & link_len,
                         map[Sym, double] & param)
 cpdef list expr_solving(EStack exprs, object vpoints, object angles=*)
+cdef map[Sym, CCoord] quick_solve(
+    vector[Expr] stack,
+    map[Sym, CCoord] joint_pos,
+    map[SwappablePair, double] link_len,
+    map[Sym, double] param
+) nogil
