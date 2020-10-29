@@ -244,8 +244,8 @@ cdef bint preprocessing(EStack exprs, object vpoints, object angles,
         pair1 = SwappablePair(e.c1.second, e.target.second)
         pair2 = SwappablePair(e.c2.second, e.target.second)
         if e.func == PXY:
-            param[e.v1] = joint_pos[e.c2].x - joint_pos[e.c1].x
-            param[e.v2] = joint_pos[e.c2].y - joint_pos[e.c1].y
+            param[e.v1] = joint_pos[e.target].x - joint_pos[e.c1].x
+            param[e.v2] = joint_pos[e.target].y - joint_pos[e.c1].y
             continue
         if e.func in {PLLP, PALP}:
             param[e.v2] = (link_len[pair2]
@@ -320,27 +320,26 @@ cpdef list expr_solving(
     if bfgs_mode:
         data_dict = {}
         for jp in solver.joint_pos:
-            data_dict[jp.first.second] = Coord.__new__(Coord, jp.second.x,
-                                                       jp.second.y)
+            if jp.first.first == P_LABEL:
+                data_dict[jp.first.second] = Coord.__new__(Coord, jp.second.x,
+                                                           jp.second.y)
         bfgs_rt = SolverSystem(vpoints, {}, data_dict).solve()
-    # Return result
     rt = []
     cdef int i
-    cdef CCoord c1, c2
+    cdef CCoord c
     cdef VPoint vp
     for i, vp in enumerate(vpoints):
         if bfgs_mode:
-            if vp.type == VJoint.R:
-                rt.append(bfgs_rt[i])
-            else:
+            if vp.is_slider():
                 rt.append((bfgs_rt[i][0], bfgs_rt[i][1]))
-        else:
-            c1 = solver.joint_pos[Sym(P_LABEL, i)]
-            if vp.type == VJoint.R:
-                rt.append((c1.x, c1.y))
             else:
-                c2 = solver.joint_pos[Sym(S_LABEL, i)]
-                rt.append(((c2.x, c2.y), (c1.x, c1.y)))
+                rt.append(bfgs_rt[i])
+        else:
+            c = solver.joint_pos[Sym(P_LABEL, i)]
+            if vp.is_slider():
+                rt.append(((vp.c[0, 0], vp.c[0, 1]), (c.x, c.y)))
+            else:
+                rt.append((c.x, c.y))
     return rt
 
 cdef map[Sym, CCoord] quick_solve(
