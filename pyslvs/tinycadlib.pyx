@@ -156,7 +156,6 @@ cpdef int vpoint_dof(object vpoints):
             j1 += link_count - 1
         elif vpoint.type == VJoint.RP:
             j2 += link_count - 1
-    print(len(vlinks), j1, j2)
     return 3 * (len(vlinks) - 1) - 2 * j1 - j2
 
 
@@ -280,7 +279,6 @@ cdef bint preprocessing(EStack exprs, object vpoints, object angles,
                     and (<VPoint>vpoints[e.target.second]).grounded()
                 ):
                     raise ValueError("wrong driver definition")
-    print(len(angles), dof, vp_dof)
     return len(angles) == dof <= vp_dof
 
 

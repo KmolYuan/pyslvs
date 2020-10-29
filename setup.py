@@ -63,9 +63,6 @@ ext_modules = [
         pth_join(src_path, 'tinycadlib.pyx'),
         pth_join(tinycadlib_path, 'solver.cpp'),
     ], language="c++", include_dirs=[tinycadlib_path]),
-    Extension(src_path.replace(sep, '.') + '.planar_linkage', [
-        pth_join(src_path, 'planar_linkage.pyx'),
-    ], language="c++", libraraies=['tinycadlib']),
 ]
 paths = [src_path, graph_path, metaheuristics_path]
 for place in paths:
