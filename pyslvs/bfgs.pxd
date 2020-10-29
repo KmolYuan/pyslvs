@@ -16,6 +16,7 @@ from .sketch_solve cimport Point, Line, Constraint
 from .expression cimport VLink
 
 cdef class SolverSystem:
+    # SolverSystem(object vpoints, dict inputs = None, dict data_dict = None)
 
     cdef list vpoints
     cdef dict vlinks

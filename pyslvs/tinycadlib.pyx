@@ -143,19 +143,18 @@ cpdef int vpoint_dof(object vpoints):
     # First link is frame
     vlinks = {VLink.FRAME}
     cdef int link_count
-    cdef VPoint vpoint
-    for vpoint in vpoints:
-        link_count = len(vpoint.links)
+    cdef VPoint vp
+    for vp in vpoints:
+        link_count = len(vp.links)
         if link_count < 2:
             # If a point doesn't have two more links, it can not be call a 'joint'.
             continue
-        vlinks.update(vpoint.links)
-        if vpoint.type == VJoint.R:
+        vlinks.update(vp.links)
+        if vp.type in {VJoint.R, VJoint.P}:
             j1 += link_count - 1
-        elif vpoint.type == VJoint.P:
-            j1 += link_count - 1
-        elif vpoint.type == VJoint.RP:
-            j2 += link_count - 1
+        elif vp.type == VJoint.RP:
+            j1 += link_count - 2
+            j2 += 1
     return 3 * (len(vlinks) - 1) - 2 * j1 - j2
 
 
@@ -320,9 +319,10 @@ cpdef list expr_solving(
     if bfgs_mode:
         data_dict = {}
         for jp in solver.joint_pos:
-            if jp.first.first == P_LABEL:
+            if jp.first.first == P_LABEL and status[jp.first.second]:
                 data_dict[jp.first.second] = Coord.__new__(Coord, jp.second.x,
                                                            jp.second.y)
+        # FIXME: Still error here!
         bfgs_rt = SolverSystem(vpoints, {}, data_dict).solve()
     rt = []
     cdef int i
