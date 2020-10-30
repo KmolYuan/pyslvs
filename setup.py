@@ -34,7 +34,7 @@ tinycadlib_path = pth_join(src_path, 'tinycadlib')
 metaheuristics_path = pth_join(src_path, 'metaheuristics')
 macros = [('_USE_MATH_DEFINES', None)]
 compile_args_msvc = ['/O2', '/std:c++17']  # MSVC disabled OpenMP
-compile_args = ['-Wno-cpp', '-std=c++17', '-fopenmp', '-ffast-math']
+compile_args = ['-Wno-cpp', '-std=c++17', '-fopenmp']
 link_args = ['-fopenmp']
 link_args_msvc = []
 link_args_static = [

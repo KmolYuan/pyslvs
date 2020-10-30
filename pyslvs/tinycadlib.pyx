@@ -322,7 +322,6 @@ cpdef list expr_solving(
             if jp.first.first == P_LABEL and status[jp.first.second]:
                 data_dict[jp.first.second] = Coord.__new__(Coord, jp.second.x,
                                                            jp.second.y)
-        # FIXME: Still error here!
         bfgs_rt = SolverSystem(vpoints, {}, data_dict).solve()
     rt = []
     cdef int i
