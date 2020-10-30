@@ -23,7 +23,7 @@ from libcpp.pair cimport pair
 from libcpp.map cimport map
 from libcpp.vector cimport vector
 from libcpp.set cimport set as cset
-from .expression cimport Coord, VJoint, VPoint, distance
+from .expression cimport Coord, VPoint, distance
 from .metaheuristics.utility cimport ObjFunc
 from .tinycadlib cimport (
     quick_solve, I_LABEL, A_LABEL, P_LABEL, PLA, PLAP, PLLP, preprocessing,
@@ -422,7 +422,8 @@ cdef class FMatch(ObjFunc):
                     vi += 1
             # Input parameters (angles)
             for vi in range(self.input_count):
-                self.param[Sym(I_LABEL, vi)] = v[self.l_base + vi * i]
+                self.param[Sym(I_LABEL, vi)] = v[self.l_base + vi
+                                                 + i * self.target_count]
             # Solve
             joint_pos = quick_solve(self.exprs.stack, self.joint_pos,
                                     self.link_len, self.param)
@@ -497,33 +498,51 @@ cdef class FMatch(ObjFunc):
         """Input a generic data (variable array), return the mechanism
         expression.
         """
-        # TODO: Update new expression.
-        cdef int index = 0
-        cdef int a_index = 0
-        cdef VPoint vpoint
-        for m in self.mapping_list:
-            if type(m) is int:
-                vpoint = self.vpoints[m]
-                vpoint.locate(v[index], v[index + 1])
-                index += 2
-            elif type(m) is str and m.startswith('A'):
-                self.polar_angles[a_index] = v[index]
-                a_index += 1
-                index += 1
+        cdef int vi = 0
+        cdef Expr expr
+        for expr in self.exprs.stack:
+            self.param[expr.v1] = v[vi]
+            vi += 1
+            if expr.func == PLLP or (
+                expr.func in {PLA, PLAP} and expr.v2.first == A_LABEL
+            ):
+                self.param[expr.v2] = v[vi]
+                vi += 1
+        # Input parameters (angles)
+        for vi in range(self.input_count):
+            self.param[Sym(I_LABEL, vi)] = v[self.l_base + vi]
+        # Solve
+        cdef map[Sym, CCoord] joint_pos = quick_solve(self.exprs.stack,
+                                                      self.joint_pos,
+                                                      self.link_len,
+                                                      self.param)
+        cdef pair[Sym, CCoord] jp
+        if self.bfgs_mode:
+            data_dict = {}
+            for jp in joint_pos:
+                data_dict[jp.first.second] = Coord.__new__(Coord,
+                                                           jp.second.x,
+                                                           jp.second.y)
+            # Solve
+            solved_bfgs = SolverSystem(self.vpoints, {}, data_dict).solve()
+        # Collecting
+        cdef int node
+        cdef CCoord c
+        cdef VPoint vp
+        cdef double x, y
+        for node in self.target_nodes:
+            vp = self.vpoints[node]
+            if self.bfgs_mode:
+                if vp.is_slider():
+                    vp.move(solved_bfgs[node][0], solved_bfgs[node][1])
+                else:
+                    x, y = solved_bfgs[node][0]
+                    vp.locate(x, y)
             else:
-                self.mapping[m] = v[index]
-                index += 1
-        self.solve(v[self.l_base:self.l_base + self.target_len])
-        expressions = []
-        cdef int i
-        cdef double x1, y1, x2, y2
-        cdef Coord coord1, coord2
-        for i in range(len(self.vpoints)):
-            vpoint = self.vpoints[i]
-            coord1 = self.data_dict[i, -1]
-            vpoint.locate(coord1.x, coord1.y)
-            if vpoint.type != VJoint.R:
-                coord2 = self.data_dict[i, -2]
-                vpoint.move((coord1.x, coord1.y), (coord2.x, coord2.y))
-            expressions.append(vpoint.expr())
-        return "M[" + ", ".join(expressions) + "]"
+                c = joint_pos[Sym(P_LABEL, node)]
+                if vp.is_slider():
+                    vp.move((vp.c[0, 0], vp.c[0, 1]), (c.x, c.y))
+                else:
+                    vp.locate(c.x, c.y)
+        return "M[" + ", ".join([(<VPoint>vp).expr()
+                                 for vp in self.vpoints]) + "]"
