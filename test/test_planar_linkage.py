@@ -90,7 +90,7 @@ class PlanarTest(TestCase):
         algorithm = ALGORITHM[t](PLANAR_OBJECT, settings)
         algorithm.run()
         t_f = algorithm.history()
-        self.assertTrue(10 == t_f[1][0] - t_f[0][0])
+        self.assertEqual(10, t_f[1][0] - t_f[0][0])
 
     def test_algorithms(self):
         """Test algorithms."""

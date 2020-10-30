@@ -403,30 +403,31 @@ cdef class FMatch(ObjFunc):
         + Link lengths.
         + Angle corresponding to the target points.
         """
+        cdef map[int, vector[CCoord]] target
+        cdef map[Sym, double] param = map[Sym, double](self.param)
         cdef int i, j, node, vi
+        cdef double x, y
         cdef Expr expr
         cdef pair[Sym, CCoord] jp
         cdef map[Sym, CCoord] joint_pos
-        cdef map[int, vector[CCoord]] target
-        cdef double x, y
         for i in range(self.target_len):
             # Input parameters (length)
             vi = 0
             for expr in self.exprs.stack:
-                self.param[expr.v1] = v[vi]
+                param[expr.v1] = v[vi]
                 vi += 1
                 if expr.func == PLLP or (
                     expr.func in {PLA, PLAP} and expr.v2.first == A_LABEL
                 ):
-                    self.param[expr.v2] = v[vi]
+                    param[expr.v2] = v[vi]
                     vi += 1
             # Input parameters (angles)
             for vi in range(self.input_count):
-                self.param[Sym(I_LABEL, vi)] = v[self.l_base + vi
+                param[Sym(I_LABEL, vi)] = v[self.l_base + vi
                                                  + i * self.target_count]
             # Solve
             joint_pos = quick_solve(self.exprs.stack, self.joint_pos,
-                                    self.link_len, self.param)
+                                    self.link_len, param)
             if self.bfgs_mode:
                 with gil:
                     data_dict = {}
@@ -452,7 +453,7 @@ cdef class FMatch(ObjFunc):
         cdef double scale
         cdef double[:, :] path1, path2
         cdef CCoord c
-        for node in range(self.target_count):
+        for node in self.target_nodes:
             if self.use_curvature:
                 with gil:
                     path1 = zeros((self.target_len, 2), dtype=f64)
@@ -499,23 +500,24 @@ cdef class FMatch(ObjFunc):
         expression.
         """
         cdef int vi = 0
+        cdef map[Sym, double] param = map[Sym, double](self.param)
         cdef Expr expr
         for expr in self.exprs.stack:
-            self.param[expr.v1] = v[vi]
+            param[expr.v1] = v[vi]
             vi += 1
             if expr.func == PLLP or (
                 expr.func in {PLA, PLAP} and expr.v2.first == A_LABEL
             ):
-                self.param[expr.v2] = v[vi]
+                param[expr.v2] = v[vi]
                 vi += 1
         # Input parameters (angles)
         for vi in range(self.input_count):
-            self.param[Sym(I_LABEL, vi)] = v[self.l_base + vi]
+            param[Sym(I_LABEL, vi)] = v[self.l_base + vi]
         # Solve
         cdef map[Sym, CCoord] joint_pos = quick_solve(self.exprs.stack,
                                                       self.joint_pos,
                                                       self.link_len,
-                                                      self.param)
+                                                      param)
         cdef pair[Sym, CCoord] jp
         if self.bfgs_mode:
             data_dict = {}
