@@ -446,7 +446,7 @@ cdef class FMatch(ObjFunc):
                     target[node].push_back(CCoord(x, y))
                 else:
                     target[node].push_back(joint_pos[Sym(P_LABEL, node)])
-        # TODO: Compare
+        # Compare
         cdef double fitness = 0
         cdef double scale
         cdef double[:, :] path1, path2
@@ -476,8 +476,16 @@ cdef class FMatch(ObjFunc):
                     fitness += path1[i, 0] - path2[i, 0]
             else:
                 if self.shape_only:
-                    # TODO
+                    with gil:
+                        path1 = zeros((self.target_len, 2), dtype=f64)
+                    for i in range(self.target_len):
+                        c = target[node][i]
+                        path1[i, 0] = c.x
+                        path1[i, 1] = c.y
                     _norm(path1, 1)
+                    for i in range(self.target_len):
+                        target[node][i].x = path1[i, 0]
+                        target[node][i].y = path1[i, 1]
                 for i in range(self.target_len):
                     c = target[node][i]
                     fitness += distance(c.x, c.y,
@@ -489,6 +497,7 @@ cdef class FMatch(ObjFunc):
         """Input a generic data (variable array), return the mechanism
         expression.
         """
+        # TODO: Update new expression.
         cdef int index = 0
         cdef int a_index = 0
         cdef VPoint vpoint
