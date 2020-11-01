@@ -60,7 +60,7 @@ public:
     ExprSolver() = default;
     ExprSolver(Stack stack, JointPos joint_pos, LinkLen link_len, Param param);
 
-    void solve();
+    bool solve();
 };
 
 #endif //SOLVER_H

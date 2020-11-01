@@ -94,7 +94,7 @@ ExprSolver::ExprSolver(Stack stack, JointPos joint_pos, LinkLen link_len, Param 
     param(std::move(param)),
     joint_pos(std::move(joint_pos)) {}
 
-void ExprSolver::solve() {
+bool ExprSolver::solve() {
     for (auto expr : stack) {
         auto &c = joint_pos[expr.target];
         switch (expr.func) {
@@ -143,5 +143,8 @@ void ExprSolver::solve() {
                           joint_pos[expr.c2],
                           expr.op);
         }
+        if (std::isnan(c.x) || std::isnan(c.y))
+            return false;
     }
+    return true;
 }

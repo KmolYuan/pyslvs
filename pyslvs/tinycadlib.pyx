@@ -341,7 +341,7 @@ cpdef list expr_solving(
                 rt.append((c.x, c.y))
     return rt
 
-cdef map[Sym, CCoord] quick_solve(
+cdef (bint, map[Sym, CCoord]) quick_solve(
     vector[Expr] stack,
     map[Sym, CCoord] joint_pos,
     map[SwappablePair, double] link_len,
@@ -352,5 +352,5 @@ cdef map[Sym, CCoord] quick_solve(
     !! Cython can not expose C external function to another pyx.
     """
     cdef ExprSolver s = ExprSolver(stack, joint_pos, link_len, param)
-    s.solve()
-    return s.joint_pos
+    cdef bint ok = s.solve()
+    return ok, s.joint_pos

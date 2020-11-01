@@ -354,7 +354,6 @@ cdef class FMatch(ObjFunc):
             ub.append(y + r)
             lb.append(x - r)
             lb.append(y - r)
-        cdef int p_base = len(ub)
         # Length of links
         link_upper = float(mech.get('upper', 100))
         link_lower = float(mech.get('lower', 0))
@@ -405,29 +404,35 @@ cdef class FMatch(ObjFunc):
         """
         cdef map[int, vector[CCoord]] target
         cdef map[Sym, double] param = map[Sym, double](self.param)
+        cdef map[Sym, CCoord] joint_pos = map[Sym, CCoord](self.joint_pos)
+        cdef bint ok
         cdef int i, j, node, vi
         cdef double x, y
         cdef Expr expr
+        cdef CCoord c
         cdef pair[Sym, CCoord] jp
-        cdef map[Sym, CCoord] joint_pos
         for i in range(self.target_len):
-            # Input parameters (length)
             vi = 0
+            for node in self.pivots:
+                joint_pos[Sym(P_LABEL, node)] = CCoord(v[vi], v[vi + 1])
+                vi += 2
+            # Input parameters (length)
             for expr in self.exprs.stack:
                 param[expr.v1] = v[vi]
                 vi += 1
-                if expr.func == PLLP or (
-                    expr.func in {PLA, PLAP} and expr.v2.first == A_LABEL
-                ):
-                    param[expr.v2] = v[vi]
-                    vi += 1
+                if expr.v2.first == I_LABEL:
+                    continue
+                param[expr.v2] = v[vi]
+                vi += 1
             # Input parameters (angles)
             for vi in range(self.input_count):
                 param[Sym(I_LABEL, vi)] = v[self.l_base + vi
-                                                 + i * self.target_count]
+                                            + i * self.target_count]
             # Solve
-            joint_pos = quick_solve(self.exprs.stack, self.joint_pos,
-                                    self.link_len, param)
+            ok, joint_pos = quick_solve(self.exprs.stack, joint_pos,
+                                        self.link_len, param)
+            if not ok:
+                return HUGE_VAL
             if self.bfgs_mode:
                 with gil:
                     data_dict = {}
@@ -447,17 +452,17 @@ cdef class FMatch(ObjFunc):
                         x, y = solved_bfgs[node][0]
                     target[node].push_back(CCoord(x, y))
                 else:
-                    target[node].push_back(joint_pos[Sym(P_LABEL, node)])
+                    c = joint_pos[Sym(P_LABEL, node)]
+                    target[node].push_back(c)
         # Compare
         cdef double fitness = 0
         cdef double scale
         cdef double[:, :] path1, path2
-        cdef CCoord c
-        for node in self.target_nodes:
+        for vi, node in enumerate(self.target_nodes):
             if self.use_curvature:
                 with gil:
                     path1 = zeros((self.target_len, 2), dtype=f64)
-                    path2 = array(self.target[node], dtype=f64)
+                    path2 = array(self.target[vi], dtype=f64)
                 for i in range(self.target_len):
                     c = target[node][i]
                     path1[i, 0] = c.x
@@ -491,33 +496,35 @@ cdef class FMatch(ObjFunc):
                 for i in range(self.target_len):
                     c = target[node][i]
                     fitness += distance(c.x, c.y,
-                                        self.target[node, i, 0],
-                                        self.target[node, i, 1])
+                                        self.target[vi, i, 0],
+                                        self.target[vi, i, 1])
         return fitness
 
     cpdef object result(self, double[:] v):
         """Input a generic data (variable array), return the mechanism
         expression.
         """
-        cdef int vi = 0
         cdef map[Sym, double] param = map[Sym, double](self.param)
+        cdef map[Sym, CCoord] joint_pos = map[Sym, CCoord](self.joint_pos)
+        cdef int vi = 0
+        cdef int node
+        for node in self.pivots:
+            joint_pos[Sym(P_LABEL, node)] = CCoord(v[vi], v[vi + 1])
+            vi += 2
         cdef Expr expr
         for expr in self.exprs.stack:
             param[expr.v1] = v[vi]
             vi += 1
-            if expr.func == PLLP or (
-                expr.func in {PLA, PLAP} and expr.v2.first == A_LABEL
-            ):
-                param[expr.v2] = v[vi]
-                vi += 1
+            if expr.v2.first == I_LABEL:
+                continue
+            param[expr.v2] = v[vi]
+            vi += 1
         # Input parameters (angles)
         for vi in range(self.input_count):
             param[Sym(I_LABEL, vi)] = v[self.l_base + vi]
         # Solve
-        cdef map[Sym, CCoord] joint_pos = quick_solve(self.exprs.stack,
-                                                      self.joint_pos,
-                                                      self.link_len,
-                                                      param)
+        _, joint_pos = quick_solve(self.exprs.stack, joint_pos,
+                                   self.link_len, param)
         cdef pair[Sym, CCoord] jp
         if self.bfgs_mode:
             data_dict = {}
@@ -528,23 +535,24 @@ cdef class FMatch(ObjFunc):
             # Solve
             solved_bfgs = SolverSystem(self.vpoints, {}, data_dict).solve()
         # Collecting
-        cdef int node
         cdef CCoord c
         cdef VPoint vp
         cdef double x, y
-        for node in self.target_nodes:
+        for node in range(len(self.vpoints)):
             vp = self.vpoints[node]
             if self.bfgs_mode:
+                x, y = solved_bfgs[node][0]
+                vp.locate(x, y)
                 if vp.is_slider():
                     vp.move(solved_bfgs[node][0], solved_bfgs[node][1])
-                else:
-                    x, y = solved_bfgs[node][0]
-                    vp.locate(x, y)
             else:
                 c = joint_pos[Sym(P_LABEL, node)]
                 if vp.is_slider():
+                    vp.locate(vp.c[0, 0], vp.c[0, 1])
                     vp.move((vp.c[0, 0], vp.c[0, 1]), (c.x, c.y))
                 else:
                     vp.locate(c.x, c.y)
+        print("M[" + ", ".join([(<VPoint> vp).expr()
+                                for vp in self.vpoints]) + "]")
         return "M[" + ", ".join([(<VPoint>vp).expr()
                                  for vp in self.vpoints]) + "]"
