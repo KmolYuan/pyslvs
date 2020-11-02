@@ -10,9 +10,13 @@ environment:
       COMPILER: mingw32
     - PY: 38
       COMPILER: mingw32
+    - PY: 39
+      COMPILER: mingw32
     - PY: 37
       COMPILER: msvc
     - PY: 38
+      COMPILER: msvc
+    - PY: 39
       COMPILER: msvc
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
       PY: 3.7
