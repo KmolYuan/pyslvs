@@ -434,8 +434,11 @@ cdef class SolverSystem:
         if flag:
             solved_points = []
             for i, vp in enumerate(self.vpoints):
-                if i in self.data_dict:
-                    c = self.data_dict[i]
+                if i in self.data_dict or vp.no_link():
+                    if vp.no_link():
+                        c = Coord.__new__(Coord, vp.c[0, 0], vp.c[0, 1])
+                    else:
+                        c = self.data_dict[i]
                     if vp.type == VJoint.R:
                         solved_points.append((c.x, c.y))
                     else:

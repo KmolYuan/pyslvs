@@ -313,7 +313,8 @@ cpdef list expr_solving(
     cdef bint bfgs_mode = not all(status.values())
     # Solve
     cdef ExprSolver solver = ExprSolver(exprs.stack, joint_pos, link_len, param)
-    solver.solve()
+    if not solver.solve():
+        raise ValueError("solve failed")
     # Use BFGS mode
     cdef pair[Sym, CCoord] jp
     if bfgs_mode:
