@@ -312,7 +312,7 @@ cpdef list expr_solving(
         status[e.target.second] = True
     cdef bint bfgs_mode = not all(status.values())
     # Solve
-    cdef ExprSolver solver = ExprSolver(exprs.stack, joint_pos, link_len, param)
+    cdef ExprSolver solver = ExprSolver(exprs.stack, joint_pos, param)
     if not solver.solve():
         raise ValueError("solve failed")
     # Use BFGS mode
@@ -345,13 +345,12 @@ cpdef list expr_solving(
 cdef (bint, map[Sym, CCoord]) quick_solve(
     vector[Expr] stack,
     map[Sym, CCoord] joint_pos,
-    map[SwappablePair, double] link_len,
     map[Sym, double] param
 ) nogil:
     """Quick solving function.
 
     !! Cython can not expose C external function to another pyx.
     """
-    cdef ExprSolver s = ExprSolver(stack, joint_pos, link_len, param)
+    cdef ExprSolver s = ExprSolver(stack, joint_pos, param)
     cdef bint ok = s.solve()
     return ok, s.joint_pos

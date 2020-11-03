@@ -11,14 +11,11 @@ int main() {
         {{P_LABEL, 0}, {0, 0}},
         {{P_LABEL, 1}, {0, 0}},
     };
-    auto link_len = LinkLen{
-        {{0, 1}, 20},
-    };
     auto param = Param{
         {{I_LABEL, 0}, 90. / 180 * M_PI},
         {{L_LABEL, 0}, 10.},
     };
-    auto solver = ExprSolver(stack, join_pos, link_len, param);
+    auto solver = ExprSolver(stack, join_pos, param);
     solver.solve();
     for (auto[_, pos] : solver.joint_pos)
         std::cout << pos.x << ", " << pos.y << std::endl;

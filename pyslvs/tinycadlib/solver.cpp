@@ -88,13 +88,12 @@ auto cpalp(CCoord c1, double a0, double d0, CCoord c2, bool inverse) -> CCoord {
 
 /// Constructure of solver core.
 /// Check the link length override options.
-ExprSolver::ExprSolver(Stack stack, JointPos joint_pos, LinkLen link_len, Param param) :
+ExprSolver::ExprSolver(Stack stack, JointPos joint_pos, Param param) :
     stack(std::move(stack)),
-    link_len(std::move(link_len)),
     param(std::move(param)),
     joint_pos(std::move(joint_pos)) {}
 
-bool ExprSolver::solve() {
+auto ExprSolver::solve() -> bool {
     for (auto expr : stack) {
         auto &c = joint_pos[expr.target];
         switch (expr.func) {

@@ -432,8 +432,7 @@ cdef class FMatch(ObjFunc):
                 param[Sym(I_LABEL, vi)] = v[self.l_base + vi
                                             + i * self.target_count]
             # Solve
-            ok, joint_pos = quick_solve(self.exprs.stack, joint_pos,
-                                        self.link_len, param)
+            ok, joint_pos = quick_solve(self.exprs.stack, joint_pos, param)
             if not ok:
                 return HUGE_VAL
             if self.bfgs_mode:
@@ -526,8 +525,7 @@ cdef class FMatch(ObjFunc):
         for vi in range(self.input_count):
             param[Sym(I_LABEL, vi)] = v[self.l_base + vi]
         # Solve
-        _, joint_pos = quick_solve(self.exprs.stack, joint_pos,
-                                   self.link_len, param)
+        _, joint_pos = quick_solve(self.exprs.stack, joint_pos, param)
         cdef pair[Sym, CCoord] jp
         if self.bfgs_mode:
             data_dict = {}

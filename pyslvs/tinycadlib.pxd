@@ -56,7 +56,7 @@ cdef extern from "tinycadlib/solver.h" nogil:
 
         ExprSolver()
         ExprSolver(vector[Expr] stack, map[Sym, CCoord] joint_pos,
-                   map[SwappablePair, double] link_len, map[Sym, double] param)
+                   map[Sym, double] param)
         bint solve()
 
 cdef bint preprocessing(EStack exprs, object vpoints, object angles,
@@ -67,6 +67,5 @@ cpdef list expr_solving(EStack exprs, object vpoints, object angles=*)
 cdef (bint, map[Sym, CCoord]) quick_solve(
     vector[Expr] stack,
     map[Sym, CCoord] joint_pos,
-    map[SwappablePair, double] link_len,
     map[Sym, double] param
 ) nogil

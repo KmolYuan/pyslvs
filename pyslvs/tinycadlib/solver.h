@@ -30,12 +30,12 @@ struct CCoord {
     double x, y;
 };
 
-CCoord cpxy(CCoord c1, double x, double y);
-CCoord cppp(CCoord c1, CCoord c2, CCoord c3);
-CCoord cplap(CCoord c1, double d0, double a0, CCoord c2, bool inverse);
-CCoord cpllp(CCoord c1, double d0, double d1, CCoord c2, bool inverse);
-CCoord cplpp(CCoord c1, double d0, CCoord c2, CCoord c3, bool inverse);
-CCoord cpalp(CCoord c1, double a0, double d0, CCoord c2, bool inverse);
+auto cpxy(CCoord c1, double x, double y) -> CCoord;
+auto cppp(CCoord c1, CCoord c2, CCoord c3) -> CCoord;
+auto cplap(CCoord c1, double d0, double a0, CCoord c2, bool inverse) -> CCoord;
+auto cpllp(CCoord c1, double d0, double d1, CCoord c2, bool inverse) -> CCoord;
+auto cplpp(CCoord c1, double d0, CCoord c2, CCoord c3, bool inverse) -> CCoord;
+auto cpalp(CCoord c1, double a0, double d0, CCoord c2, bool inverse) -> CCoord;
 
 struct Expr {
     bool op;
@@ -51,16 +51,15 @@ using Param = std::map<Sym, double>;
 class ExprSolver {
     Stack stack;
     // Link length for P_LABEL.
-    LinkLen link_len;
     Param param;
 
 public:
     JointPos joint_pos;
 
     ExprSolver() = default;
-    ExprSolver(Stack stack, JointPos joint_pos, LinkLen link_len, Param param);
+    ExprSolver(Stack stack, JointPos joint_pos, Param param);
 
-    bool solve();
+    auto solve() -> bool;
 };
 
 #endif //SOLVER_H
