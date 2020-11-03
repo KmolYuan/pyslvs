@@ -279,7 +279,7 @@ cdef bint preprocessing(EStack exprs, object vpoints, object inputs,
                     and (<VPoint>vpoints[e.target.second]).grounded()
                 ):
                     raise ValueError("wrong driver definition")
-    return len(inputs) == dof <= vp_dof
+    return dof <= len(inputs) <= vp_dof
 
 
 cpdef list expr_solving(
@@ -307,10 +307,14 @@ cpdef list expr_solving(
     if not preprocessing(exprs, vpoints, inputs, joint_pos, link_len, param):
         raise ValueError("wrong number of input parameters")
     # Check coverage
-    status = {i: (<VPoint> vp).grounded() for i, vp in enumerate(vpoints)}
+    status = {i: False for i in range(len(vpoints))}
     cdef Expr e
     for e in exprs.stack:
-        status[e.target.second] = True
+        status[e.c1.second] = status[e.target.second] = True
+        if e.func in {PLAP, PLLP, PLPP, PALP}:
+            status[e.c2.second] = True
+            if e.func == PLPP:
+                status[e.c3.second] = True
     cdef bint bfgs_mode = not all(status.values())
     # Solve
     cdef ExprSolver solver = ExprSolver(exprs.stack, joint_pos, param)
@@ -321,26 +325,23 @@ cpdef list expr_solving(
     if bfgs_mode:
         data_dict = {}
         for jp in solver.joint_pos:
-            if jp.first.first == P_LABEL and status[jp.first.second]:
+            if (
+                jp.first.first == P_LABEL
+                and status[jp.first.second]
+            ):
                 data_dict[jp.first.second] = Coord.__new__(Coord, jp.second.x,
                                                            jp.second.y)
-        bfgs_rt = SolverSystem(vpoints, {}, data_dict).solve()
+        return SolverSystem(vpoints, inputs, data_dict).solve()
     rt = []
     cdef int i
     cdef CCoord c
     cdef VPoint vp
     for i, vp in enumerate(vpoints):
-        if bfgs_mode:
-            if vp.is_slider():
-                rt.append((bfgs_rt[i][0], bfgs_rt[i][1]))
-            else:
-                rt.append(bfgs_rt[i])
+        c = solver.joint_pos[Sym(P_LABEL, i)]
+        if vp.is_slider():
+            rt.append(((vp.c[0, 0], vp.c[0, 1]), (c.x, c.y)))
         else:
-            c = solver.joint_pos[Sym(P_LABEL, i)]
-            if vp.is_slider():
-                rt.append(((vp.c[0, 0], vp.c[0, 1]), (c.x, c.y)))
-            else:
-                rt.append((c.x, c.y))
+            rt.append((c.x, c.y))
     return rt
 
 cdef (bint, map[Sym, CCoord]) quick_solve(

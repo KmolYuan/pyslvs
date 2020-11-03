@@ -53,12 +53,8 @@ cdef class SolverSystem:
     def __cinit__(self, object vpoints_, dict inputs = None, dict data_dict = None):
         self.vpoints = list(vpoints_)
         self.vlinks = {vlink.name: vlink for vlink in get_vlinks(self.vpoints)}
-        self.inputs = inputs
-        self.data_dict = data_dict
-        if self.inputs is None:
-            self.inputs = {}
-        if self.data_dict is None:
-            self.data_dict = {}
+        self.inputs = {} if inputs is None else inputs
+        self.data_dict = {} if data_dict is None else data_dict
         _sort_pairs(self.data_dict)
         self.build_expression()
 

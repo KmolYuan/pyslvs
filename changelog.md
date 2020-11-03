@@ -1,3 +1,7 @@
+# Version 20.11
+
++ Fix slider input function.
+
 # Version 20.10
 
 + Unify "true" and "false" to lowercase in docstring.
