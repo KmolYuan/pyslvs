@@ -12,6 +12,7 @@ email: pyslvs@gmail.com
 
 cimport cython
 from collections import OrderedDict
+from logging import getLogger
 from numpy import (
     zeros, array, arange, interp, argmax, concatenate, float64 as f64,
 )
@@ -36,6 +37,8 @@ try:
     from scipy.signal import fftconvolve
 except ImportError:
     fftconvolve = None
+
+logger = getLogger()
 
 
 def norm_path(path, scale=1):
@@ -552,7 +555,7 @@ cdef class FMatch(ObjFunc):
                     vp.move((vp.c[0, 0], vp.c[0, 1]), (c.x, c.y))
                 else:
                     vp.locate(c.x, c.y)
-        print("M[" + ", ".join([(<VPoint> vp).expr()
-                                for vp in self.vpoints]) + "]")
-        return "M[" + ", ".join([(<VPoint>vp).expr()
-                                 for vp in self.vpoints]) + "]"
+        expr_str = "M[" + ", ".join([(<VPoint> vp).expr()
+                                     for vp in self.vpoints]) + "]"
+        logger.debug(f"Result: {expr_str}")
+        return expr_str
