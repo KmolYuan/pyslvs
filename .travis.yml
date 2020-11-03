@@ -11,6 +11,9 @@ jobs:
     - <<: *linux
       python: "3.8"
 
+    - <<: *linux
+      python: "3.9"
+
     - &win
       os: windows
       # 'generic' will cause infinity loop
@@ -47,6 +50,12 @@ jobs:
 
     - <<: *win
       env:
+        - PYTHON=3.9.0
+        - PY=38
+        - COMPILER=mingw32
+
+    - <<: *win
+      env:
         - PYTHON=3.7.0
         - PY=37
         - COMPILER=msvc
@@ -54,6 +63,12 @@ jobs:
     - <<: *win
       env:
         - PYTHON=3.8.5
+        - PY=38
+        - COMPILER=msvc
+
+    - <<: *win
+      env:
+        - PYTHON=3.9.0
         - PY=38
         - COMPILER=msvc
 
