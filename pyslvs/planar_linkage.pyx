@@ -285,7 +285,6 @@ cdef class FMatch(ObjFunc):
     cdef EStack exprs
     cdef cset[int] slider
     cdef map[Sym, CCoord] joint_pos
-    cdef map[SwappablePair, double] link_len
     cdef map[Sym, double] param
 
     def __cinit__(self, dict mech):
@@ -343,8 +342,9 @@ cdef class FMatch(ObjFunc):
         status = {}
         self.exprs = t_config(self.vpoints, tuple(inputs.keys()), status)
         self.bfgs_mode = not all(status.values())
-        if not preprocessing(self.exprs, self.vpoints, [0.] * self.input_count,
-                             self.joint_pos, self.link_len, self.param):
+        if not preprocessing(self.exprs, self.vpoints, {p: 0. for p in inputs},
+                             self.joint_pos, map[SwappablePair, double](),
+                             self.param):
             raise ValueError("wrong number of input parameters")
         # Bounds
         ub = []

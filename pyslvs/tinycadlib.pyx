@@ -168,7 +168,7 @@ cdef inline int base_friend(int node, object vpoints):
             return i
 
 
-cdef bint preprocessing(EStack exprs, object vpoints, object angles,
+cdef bint preprocessing(EStack exprs, object vpoints, object inputs,
                         map[Sym, CCoord] &joint_pos,
                         map[SwappablePair, double] &link_len,
                         map[Sym, double] &param):
@@ -231,9 +231,6 @@ cdef bint preprocessing(EStack exprs, object vpoints, object angles,
                  + vp.slope_angle(vpoints[base], 0, 0)) / 180 * M_PI
         joint_pos[Sym(S_LABEL, node)] = CCoord(vp.c[1, 0] + cos(angle),
                                                vp.c[1, 1] + sin(angle))
-    # Input angles
-    for node, angle in enumerate(angles):
-        param[Sym(I_LABEL, node)] = angle / 180 * M_PI
     # Scan again to check if the parameter exists
     # Especially link lengths and angles
     cdef int dof = 0
@@ -262,8 +259,12 @@ cdef bint preprocessing(EStack exprs, object vpoints, object angles,
                                     joint_pos[e.target].y))
             if e.func in {PLA, PLAP}:
                 if e.v2.first == I_LABEL:
+                    # Input angles
+                    angle = inputs[pair1.first, pair1.second]
+                    param[e.v2] = angle / 180 * M_PI
                     dof += 1
-                else:  # A_LABEL
+                else:
+                    # A_LABEL
                     param[e.v2] = slope_angle(joint_pos[e.c1].x,
                                               joint_pos[e.c1].y,
                                               joint_pos[e.target].x,
@@ -278,13 +279,13 @@ cdef bint preprocessing(EStack exprs, object vpoints, object angles,
                     and (<VPoint>vpoints[e.target.second]).grounded()
                 ):
                     raise ValueError("wrong driver definition")
-    return len(angles) == dof <= vp_dof
+    return len(inputs) == dof <= vp_dof
 
 
 cpdef list expr_solving(
     EStack exprs,
     object vpoints,
-    object angles = None
+    object inputs = None
 ):
     """Solver function of Triangular method and BFGS method, for mechanism
     expression `vpoints`.
@@ -298,12 +299,12 @@ cpdef list expr_solving(
     method.
     """
     # Blank sequences
-    if angles is None:
-        angles = []
+    if inputs is None:
+        inputs = {}
     cdef map[Sym, CCoord] joint_pos
     cdef map[SwappablePair, double] link_len
     cdef map[Sym, double] param
-    if not preprocessing(exprs, vpoints, angles, joint_pos, link_len, param):
+    if not preprocessing(exprs, vpoints, inputs, joint_pos, link_len, param):
         raise ValueError("wrong number of input parameters")
     # Check coverage
     status = {i: (<VPoint> vp).grounded() for i, vp in enumerate(vpoints)}

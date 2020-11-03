@@ -73,7 +73,7 @@ class CoreTest(TestCase):
             expr, inputs = example_list(name)
             vpoints = parse_vpoints(expr)
             exprs = t_config(vpoints, inputs)
-            result = expr_solving(exprs, vpoints, [0.])
+            result = expr_solving(exprs, vpoints, {pair: 0. for pair in inputs})
             return result[-1]
 
         x, y = test_case("Jansen's linkage (Single)")

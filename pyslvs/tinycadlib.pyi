@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import Tuple, List, Sequence, Dict, Union, Optional
+from typing import Tuple, List, Sequence, Mapping, Union, Optional
 from .topo_config import EStack
 from .expression import VPoint, Coord
 
@@ -38,6 +38,6 @@ def vpoint_dof(vpoints: Sequence[VPoint]) -> int:
 def expr_solving(
     exprs: EStack,
     vpoints: Sequence[VPoint],
-    angles: Optional[Sequence[float]] = None
+    angles: Optional[Mapping[Tuple[int, int], float]] = None
 ) -> List[Union[_Coord, Tuple[_Coord, _Coord]]]:
     ...
