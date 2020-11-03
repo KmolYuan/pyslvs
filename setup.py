@@ -106,7 +106,8 @@ setup(
     author=__author__,
     author_email=__email__,
     license=__license__,
-    description="Pyslvs library",
+    description="Pyslvs core module. "
+                "An open source planar linkage mechanism synthesis tool.",
     long_description=read("README.md"),
     long_description_content_type='text/markdown',
     url="https://github.com/KmolYuan/pyslvs",
