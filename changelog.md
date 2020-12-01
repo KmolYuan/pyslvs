@@ -1,3 +1,7 @@
+# Version 20.12
+
++ None.
+
 # Version 20.11
 
 + Fix slider input function.
