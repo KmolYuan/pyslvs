@@ -1,6 +1,6 @@
 # Version 20.12
 
-+ None.
++ Add uniform four-bar linkage function.
 
 # Version 20.11
 

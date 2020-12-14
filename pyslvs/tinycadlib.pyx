@@ -13,6 +13,7 @@ email: pyslvs@gmail.com
 from libc.math cimport M_PI, sin, cos
 from .expression cimport Coord, VJoint, VPoint, VLink, distance, slope_angle
 from .bfgs cimport SolverSystem
+from numpy.random import uniform
 
 
 def pxy(Coord c1, double x, double y):
@@ -344,6 +345,7 @@ cpdef list expr_solving(
             rt.append((c.x, c.y))
     return rt
 
+
 cdef (bint, map[Sym, CCoord]) quick_solve(
     vector[Expr] stack,
     map[Sym, CCoord] joint_pos,
@@ -356,3 +358,17 @@ cdef (bint, map[Sym, CCoord]) quick_solve(
     cdef ExprSolver s = ExprSolver(stack, joint_pos, param)
     cdef bint ok = s.solve()
     return ok, s.joint_pos
+
+
+cpdef double[:, :] uniform_four_bar(double ml, int n):
+    """Generate n four bar mechanisms from maximum lengths.
+
+    These mechanisms have coupling points. ($[L1, L2, L3, L5, a0]$)
+
+    ![pxy](img/uniform_four_bar.png)
+    """
+    cdef double[:, :] d = uniform(1., ml, (n, 5))
+    cdef int i
+    for i in range(n):
+        d[i, 4] = uniform(1., 2 * M_PI)
+    return d
