@@ -68,3 +68,4 @@ cdef (bint, map[Sym, CCoord]) quick_solve(vector[Expr] stack,
                                           map[Sym, CCoord] joint_pos,
                                           map[Sym, double] param) nogil
 cpdef double[:, :] uniform_four_bar(double ml, int n)
+cpdef double[:, :] uniform_path(double[:, :] dimension, int n)

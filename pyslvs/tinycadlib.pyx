@@ -13,6 +13,7 @@ email: pyslvs@gmail.com
 from libc.math cimport M_PI, sin, cos
 from .expression cimport Coord, VJoint, VPoint, VLink, distance, slope_angle
 from .bfgs cimport SolverSystem
+from numpy import zeros, arange
 from numpy.random import uniform
 
 
@@ -363,7 +364,8 @@ cdef (bint, map[Sym, CCoord]) quick_solve(
 cpdef double[:, :] uniform_four_bar(double ml, int n):
     """Generate n four bar mechanisms from maximum lengths.
 
-    These mechanisms have coupling points. ($[L1, L2, L3, L5, a0]$)
+    These mechanisms have coupling points.
+    Normalized parameters are $[L1, L2, L3, L4, a0]$.
 
     ![pxy](img/uniform_four_bar.png)
     """
@@ -372,3 +374,24 @@ cpdef double[:, :] uniform_four_bar(double ml, int n):
     for i in range(n):
         d[i, 4] = uniform(1., 2 * M_PI)
     return d
+
+
+cpdef double[:, :] uniform_path(double[:, :] dimension, int n):
+    """Generate path with four-bar dimensions.
+
+    Normalized parameters are $[L1, L2, L3, L4, a0]$.
+    """
+    cdef double[:, :] p = zeros((dimension.shape[0], n))
+    cdef vector[Expr] stack
+    stack.push_back(Expr(False, PLA, Sym(L_LABEL, 0), Sym(I_LABEL, 0),
+                         Sym(P_LABEL, 0), Sym(), Sym(), Sym(P_LABEL, 2)))
+    stack.push_back(Expr(False, PLLP, Sym(L_LABEL, 1), Sym(L_LABEL, 2),
+                         Sym(P_LABEL, 2), Sym(P_LABEL, 1), Sym(),
+                         Sym(P_LABEL, 3)))
+    stack.push_back(Expr(False, PLAP, Sym(L_LABEL, 4), Sym(A_LABEL, 0),
+                         Sym(P_LABEL, 2), Sym(P_LABEL, 3), Sym(),
+                         Sym(P_LABEL, 4)))
+    cdef double a
+    for a in arange(0, 360, 360. / n):
+        pass
+    return p
