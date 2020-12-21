@@ -12,7 +12,8 @@ from .expression import get_vlinks, VJoint, VPoint, VLink, Coord
 from .bfgs import SolverSystem
 from .topo_config import t_config, EStack
 from .tinycadlib import (
-    pxy, ppp, plap, pllp, plpp, palp, vpoint_dof, expr_solving,
+    pxy, ppp, plap, pllp, plpp, palp, vpoint_dof, expr_solving, uniform_path,
+    uniform_four_bar,
 )
 from .planar_linkage import (
     FMatch, norm_path, curvature, derivative, path_signature, cross_correlation,
