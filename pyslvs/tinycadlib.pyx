@@ -365,7 +365,7 @@ def uniform_four_bar(double ml, int n):
     """Generate n four bar mechanisms from maximum lengths.
 
     These mechanisms have coupling points.
-    Normalized parameters are $[L0, L2, L3, L4, a0]$.
+    Normalized parameters are $[L_0, L_2, L_3, L_4, \alpha]$.
 
     ![pxy](img/uniform_four_bar.png)
     """
@@ -387,7 +387,7 @@ cdef double[:, :] _uniform_four_bar(double ml, int n):
 def uniform_path(double[:, :] dimension, int n):
     """Generate path with four-bar dimensions.
 
-    Normalized parameters are $[L0, L2, L3, L4, a0]$.
+    Normalized parameters are $[L_0, L_2, L_3, L_4, \alpha]$.
     """
     return array(_uniform_path(dimension, n))
 
