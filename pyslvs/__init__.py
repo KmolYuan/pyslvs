@@ -2,9 +2,9 @@
 
 """Kernel of Pyslvs."""
 
-__version__ = "20.12.0"
+__version__ = "21.01.0.dev0"
 __author__ = "Yuan Chang"
-__copyright__ = "Copyright (C) 2016-2020"
+__copyright__ = "Copyright (C) 2016-2021"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
