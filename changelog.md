@@ -1,6 +1,7 @@
 # Version 21.01
 
-+ None
++ Add examples:
+    + Stephenson III (slider)
 
 # Version 20.12
 
