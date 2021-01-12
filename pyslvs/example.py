@@ -245,6 +245,15 @@ _example_list: Dict[str, Tuple[str, Sequence[Tuple[int, int]]]] = {
         "J[R, color[Green], P[113.6667, 36.0], L[L4, L5]],"
         "J[R, color[Green], P[87.0, -17.0], L[ground, L5]]"
         "]", ((0, 1),)),
+    "Watt II (slider)": (
+        "M["
+        "J[R, color[Blue], P[0, 0], L[ground, link_3]],"
+        "J[R, color[Green], P[-4.1011, -49.6944], L[link_1, link_3]],"
+        "J[R, color[Green], P[-151.1537, -50.2107], L[link_1, link_2]],"
+        "J[RP, A[45.0], color[Blue], P[-139.0458, 20.2296], L[ground, link_2]],"
+        "J[P, A[45.0], color[Green], P[-47.356, -102.562], L[link_1, link_4]],"
+        "J[R, color[Blue], P[15.3065, -161.8204], L[ground, link_4]]"
+        "]", ((0, 1),)),
 }
 
 

@@ -2,6 +2,7 @@
 
 + Add examples:
     + Stephenson III (slider)
+    + Watt II (slider)
 
 # Version 20.12
 
