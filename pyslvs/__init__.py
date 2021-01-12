@@ -26,9 +26,6 @@ from .example import example_list, all_examples
 from .collection import collection_list, all_collections
 from .efd import efd_fitting
 
-# backward alignment
-Coordinate = Coord
-
 
 def get_include() -> str:
     """Get include directory."""

@@ -3,6 +3,7 @@
 + Add examples:
     + Stephenson III (slider)
     + Watt II (slider)
++ Remove "Coordinate" name alignment to "Coord".
 
 # Version 20.12
 
