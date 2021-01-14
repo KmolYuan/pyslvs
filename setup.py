@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
 
-"""Compile the Cython libraries of Pyslvs."""
-
-__author__ = "Yuan Chang"
-__copyright__ = "Copyright (C) 2016-2021"
-__license__ = "AGPL"
-__email__ = "pyslvs@gmail.com"
-
 from os import listdir
 from os.path import sep, join as pth_join
 from setuptools import setup, Extension
