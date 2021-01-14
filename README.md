@@ -18,8 +18,8 @@ pip install pyslvs
 Or install and test from source:
 
 ```bash
-python setup.py install
-make test
+pip install -e .
+python test
 ```
 
 ## Documentation
