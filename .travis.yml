@@ -29,10 +29,10 @@ jobs:
         - export PATH=${PYDIR}:${PYDIR}/Scripts:${PATH}
         - sh ./platform/set_pycompiler.sh ${PYDIR} ${COMPILER}
         - cp ${PYDIR}/python.exe ${PYDIR}/python3.exe
-        - python3 -m pip install pip -U
+        - python3 -m pip install pip setuptools -U
         - python3 --version
         - python3 -m pip --version
-        - python3 -m pip install -r requirements.txt -U
+        - python3 -m pip install -e . -U
         # Select Msys2
         - export PATH=/c/tools/msys64/mingw64/bin:${PATH}
       before_cache:
@@ -73,7 +73,7 @@ jobs:
         - COMPILER=msvc
 
 script:
-  - python3 setup.py install
+  - python3 -m pip install -e . -U
   - python3 test
 
 before_cache:
