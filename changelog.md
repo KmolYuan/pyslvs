@@ -4,6 +4,7 @@
     + Stephenson III (slider)
     + Watt II (slider)
 + Remove "Coordinate" name alignment to "Coord".
++ Follows PEP517.
 
 # Version 20.12
 
