@@ -271,6 +271,15 @@ cdef double[:, :] _slice_nan2d(double[:, :] s) nogil:
     return s[first:second]
 
 
+cdef double trapezoidal_camp(double[:] a, double[:] b):
+    """Error comparison by trapezoidal rule."""
+    cdef double area = 0
+    cdef int i
+    for i in range(1, len(a)):
+        area += abs(a[i - 1] + a[i] - b[i - 1] + b[i]) / 2
+    return area
+
+
 @cython.final
 cdef class FMatch(ObjFunc):
     """This class is used to verified kinematics of the linkage mechanism.
