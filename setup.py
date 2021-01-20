@@ -29,7 +29,6 @@ if system() == 'Windows':
     compile_args.append('-Wno-format')
 # Disable NumPy warning
 macros.append(('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION'))
-compiler_directives = {'binding': True, 'cdivision': True}
 
 ext_modules = [
     Extension(src_path.replace(sep, '.') + '.bfgs', [
@@ -43,8 +42,7 @@ ext_modules = [
         pth_join(tinycadlib_path, 'solver.cpp'),
     ], language="c++", include_dirs=[tinycadlib_path]),
 ]
-paths = [src_path, graph_path, metaheuristics_path]
-for place in paths:
+for place in [src_path, graph_path, metaheuristics_path]:
     for source in listdir(place):
         if not source.endswith('.pyx'):
             continue
@@ -56,7 +54,7 @@ for place in paths:
             language="c++"
         ))
 for ext in ext_modules:
-    ext.cython_directives = compiler_directives
+    ext.cython_directives = {'binding': True, 'cdivision': True}
 
 
 class Build(build_ext):
