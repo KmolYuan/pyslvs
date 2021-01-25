@@ -7,6 +7,6 @@ __copyright__ = "Copyright (C) 2016-2021"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
-from .planar_linkage import (
+from .planar import (
     FMatch, norm_path, curvature, derivative, path_signature, cross_correlation,
 )
