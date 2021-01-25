@@ -24,14 +24,14 @@ from libcpp.pair cimport pair
 from libcpp.map cimport map
 from libcpp.vector cimport vector
 from libcpp.set cimport set as cset
-from .expression cimport Coord, VPoint, distance
-from .metaheuristics.utility cimport ObjFunc
-from .tinycadlib cimport (
+from pyslvs.expression cimport Coord, VPoint, distance
+from pyslvs.metaheuristics.utility cimport ObjFunc
+from pyslvs.tinycadlib cimport (
     quick_solve, I_LABEL, A_LABEL, P_LABEL, PLA, PLAP, PLLP, preprocessing,
     CCoord, Sym, SwappablePair,
 )
-from .topo_config cimport t_config, EStack, Expr
-from .bfgs cimport SolverSystem
+from pyslvs.topo_config cimport t_config, EStack, Expr
+from pyslvs.bfgs cimport SolverSystem
 
 try:
     from scipy.signal import fftconvolve

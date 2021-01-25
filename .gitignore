@@ -106,6 +106,7 @@ venv.bak/
 # Cython source
 pyslvs/*.cpp
 pyslvs/graph/*.cpp
+pyslvs/optimization/*.cpp
 test/*.cpp
 
 # JetBrains

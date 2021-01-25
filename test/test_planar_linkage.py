@@ -10,7 +10,8 @@ __email__ = "pyslvs@gmail.com"
 from unittest import TestCase
 from math import radians, hypot, sin, cos
 from numpy import array
-from pyslvs import parse_vpoints, norm_path, collection_list, FMatch
+from pyslvs import parse_vpoints, collection_list
+from pyslvs.optimization import norm_path, FMatch
 from pyslvs.metaheuristics import ALGORITHM, AlgorithmType, PARAMS
 
 _FOUR_BAR = collection_list("Four bar linkage mechanism")

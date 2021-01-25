@@ -5,6 +5,7 @@
     + Watt II (slider)
 + Remove "Coordinate" name alignment to "Coord".
 + Follows PEP517.
++ New submodule "optimization".
 
 # Version 20.12
 
