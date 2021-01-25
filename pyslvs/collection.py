@@ -7,7 +7,7 @@ __copyright__ = "Copyright (C) 2016-2021"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
-from typing import Mapping, Iterator, Any
+from typing import Dict, Iterator, Any
 from copy import deepcopy
 
 _collection_list = {
@@ -94,7 +94,7 @@ _collection_list = {
 }
 
 
-def collection_list(key: str) -> Mapping[str, Any]:
+def collection_list(key: str) -> Dict[str, Any]:
     """The example data of collections.
 
     The format of each configuration is:
