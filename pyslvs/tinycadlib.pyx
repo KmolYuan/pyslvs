@@ -365,7 +365,7 @@ def uniform_four_bar(double ml, int n):
     """Generate n four bar mechanisms from maximum lengths.
 
     These mechanisms have coupling points.
-    Normalized parameters are $[L_0, L_2, L_3, L_4, \alpha]$.
+    Normalized parameters are $[L_0, L_2, L_3, L_4, \\alpha]$.
 
     ![pxy](img/uniform_four_bar.png)
     """
@@ -384,17 +384,19 @@ cdef double[:, :] _uniform_four_bar(double ml, int n):
     return d
 
 
-def uniform_path(double[:, :] dimension, int n):
+def uniform_path(double[:, :] v, int n):
     """Generate path with four-bar dimensions.
 
     Normalized parameters are $[L_0, L_2, L_3, L_4, \alpha]$.
     """
-    return array(_uniform_path(dimension, n))
+    return array(c_uniform_path(v, n))
 
 
-cdef double[:, :, :] _uniform_path(double[:, :] dimension, int n):
+cdef double[:, :, :] c_uniform_path(double[:, :] v, int n) nogil:
     """Uniform path implementation."""
-    cdef double[:, :, :] p = zeros((dimension.shape[0], n, 2))
+    cdef double[:, :, :] p
+    with gil:
+        p = zeros((v.shape[0], n, 2))
     cdef vector[Expr] stack
     stack.push_back(Expr(False, PLA, Sym(L_LABEL, 1), Sym(I_LABEL, 0),
                          Sym(P_LABEL, 0), Sym(), Sym(), Sym(P_LABEL, 2)))
@@ -413,12 +415,14 @@ cdef double[:, :, :] _uniform_path(double[:, :] dimension, int n):
     cdef double a
     cdef CCoord c
     cdef map[Sym, CCoord] ans
-    for i in range(len(dimension)):
-        joint_pos[Sym(P_LABEL, 1)] = CCoord(dimension[i, 0], 0)
+    for i in range(len(v)):
+        joint_pos[Sym(P_LABEL, 1)] = CCoord(v[i, 0], 0)
         for k in range(1, 4):
-            param[Sym(L_LABEL, k + 1)] = dimension[i, k]
-        param[Sym(A_LABEL, 0)] = dimension[i, 5]
-        for j, a in enumerate(arange(0, 2 * M_PI, 2 * M_PI / n)):
+            param[Sym(L_LABEL, k + 1)] = v[i, k]
+        param[Sym(A_LABEL, 0)] = v[i, 5]
+        j = 0
+        a = 0
+        while a < 2 * M_PI:
             param[Sym(I_LABEL, 0)] = a
             ok, ans = quick_solve(stack, joint_pos, param)
             if ok:
@@ -428,4 +432,6 @@ cdef double[:, :, :] _uniform_path(double[:, :] dimension, int n):
             else:
                 p[i, j, 0] = NAN
                 p[i, j, 1] = NAN
+            a += 2 * M_PI / n
+            j += 1
     return p

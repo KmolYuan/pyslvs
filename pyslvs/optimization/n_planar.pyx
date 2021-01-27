@@ -11,7 +11,10 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
+from libc.math cimport M_PI
 from numpy import array
+from numpy.fft import fft
+from pyslvs.tinycadlib cimport c_uniform_path
 from pyslvs.metaheuristics.utility cimport ObjFunc
 
 
@@ -28,16 +31,22 @@ cdef double trapezoidal_camp(double[:] a, double[:] b):
 cdef class NPlanar(ObjFunc):
     """A normalized matching method.
 
-    Defects free.
+    Defects free. Normalized parameters are $[L_0, L_2, L_3, L_4, \\alpha]$.
     """
+    cdef int len
     cdef double[:, :] target
 
     def __cinit__(self, dict mech):
         self.target = array(mech['target'])
+        self.len = len(self.target)
         # TODO: Normalization
+        self.lb = array([1e-5] * 4 + [0.])
+        self.ub = array([5.] * 4 + [2. * M_PI])
 
     cdef double fitness(self, double[:] v) nogil:
-        pass
+        """Generate linkage with 5 parameters."""
+        cdef double[:, :] p = c_uniform_path(v[None, :], self.len)[0]
+        # TODO: Normalization
 
     cpdef object result(self, double[:] v):
         pass
