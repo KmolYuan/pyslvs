@@ -13,7 +13,7 @@ email: pyslvs@gmail.com
 from libc.math cimport M_PI, NAN, sin, cos
 from .expression cimport Coord, VJoint, VPoint, VLink, distance, slope_angle
 from .bfgs cimport SolverSystem
-from numpy import zeros, arange, array
+from numpy import zeros, array
 from numpy.random import uniform
 
 
@@ -435,3 +435,43 @@ cdef double[:, :, :] c_uniform_path(double[:, :] v, int n) nogil:
             a += 2 * M_PI / n
             j += 1
     return p
+
+
+cpdef object uniform_expr(double[:] v):
+    """Turn the uniform link length into expression."""
+    cdef vector[Expr] stack
+    stack.push_back(Expr(False, PLA, Sym(L_LABEL, 1), Sym(I_LABEL, 0),
+                         Sym(P_LABEL, 0), Sym(), Sym(), Sym(P_LABEL, 2)))
+    stack.push_back(Expr(False, PLLP, Sym(L_LABEL, 2), Sym(L_LABEL, 3),
+                         Sym(P_LABEL, 2), Sym(P_LABEL, 1), Sym(),
+                         Sym(P_LABEL, 3)))
+    stack.push_back(Expr(False, PLAP, Sym(L_LABEL, 4), Sym(A_LABEL, 0),
+                         Sym(P_LABEL, 2), Sym(P_LABEL, 3), Sym(),
+                         Sym(P_LABEL, 4)))
+    cdef map[Sym, CCoord] joint_pos
+    joint_pos[Sym(P_LABEL, 0)] = CCoord(0, 0)
+    cdef map[Sym, double] param
+    param[Sym(L_LABEL, 1)] = 1.
+    joint_pos[Sym(P_LABEL, 1)] = CCoord(v[0], 0)
+    for k in range(1, 4):
+        param[Sym(L_LABEL, k + 1)] = v[k]
+    param[Sym(A_LABEL, 0)] = v[5]
+    cdef vector[CCoord] coords = vector[CCoord](3, CCoord(0., 0.))
+    cdef bint ok = False
+    cdef double a = 0
+    cdef map[Sym, CCoord] ans
+    while a < 2 * M_PI:
+        param[Sym(I_LABEL, 0)] = a
+        ok, ans = quick_solve(stack, joint_pos, param)
+        for i in range(2, 5):
+            coords[i - 2] = ans[Sym(P_LABEL, 4)]
+        if ok:
+            break
+        a += 2 * M_PI / 30
+    return [
+        VPoint.c_r_joint([VLink.FRAME, 'L1'], 0., 0.),
+        VPoint.c_r_joint([VLink.FRAME, 'L3'], v[0], 0.),
+        VPoint.c_r_joint(['L1', 'L2'], coords[0].x, coords[0].y),
+        VPoint.c_r_joint(['L2', 'L3'], coords[1].x, coords[1].y),
+        VPoint.c_r_joint(['L2'], coords[2].x, coords[2].y),
+    ]

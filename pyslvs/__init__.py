@@ -13,7 +13,7 @@ from .bfgs import SolverSystem
 from .topo_config import t_config, EStack
 from .tinycadlib import (
     pxy, ppp, plap, pllp, plpp, palp, vpoint_dof, expr_solving, uniform_path,
-    uniform_four_bar,
+    uniform_four_bar, uniform_expr,
 )
 from .expression_parser import (
     color_names, color_rgb, parse_params, parse_pos, parse_vpoints,

@@ -14,7 +14,8 @@ cimport cython
 from libc.math cimport M_PI
 from numpy import array
 from numpy.fft import fft
-from pyslvs.tinycadlib cimport c_uniform_path
+from pyslvs.expression cimport VPoint
+from pyslvs.tinycadlib cimport c_uniform_path, uniform_expr
 from pyslvs.metaheuristics.utility cimport ObjFunc
 
 
@@ -32,6 +33,8 @@ cdef class NPlanar(ObjFunc):
     """A normalized matching method.
 
     Defects free. Normalized parameters are $[L_0, L_2, L_3, L_4, \\alpha]$.
+
+    ![pxy](img/uniform_four_bar.png)
     """
     cdef int len
     cdef double[:, :] target
@@ -49,4 +52,5 @@ cdef class NPlanar(ObjFunc):
         # TODO: Normalization
 
     cpdef object result(self, double[:] v):
-        pass
+        return "M[" + ", ".join([(<VPoint> vp).expr()
+                                 for vp in uniform_expr(v)]) + "]"
