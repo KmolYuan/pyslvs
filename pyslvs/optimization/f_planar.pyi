@@ -2,7 +2,7 @@
 
 from typing import Tuple, List, Dict, Iterable, Any
 from numpy import ndarray, double
-from .metaheuristics import ObjFunc
+from pyslvs.metaheuristics import ObjFunc
 
 _Coord = Tuple[float, float]
 
