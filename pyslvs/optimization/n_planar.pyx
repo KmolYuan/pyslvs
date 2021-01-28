@@ -45,11 +45,13 @@ cdef class NPlanar(ObjFunc):
         # TODO: Normalization
         self.lb = array([1e-5] * 4 + [0.])
         self.ub = array([5.] * 4 + [2. * M_PI])
+        raise NotImplementedError
 
     cdef double fitness(self, double[:] v) nogil:
         """Generate linkage with 5 parameters."""
         cdef double[:, :] p = c_uniform_path(v[None, :], self.len)[0]
         # TODO: Normalization
+        raise NotImplementedError
 
     cpdef object result(self, double[:] v):
         return "M[" + ", ".join([(<VPoint> vp).expr()
