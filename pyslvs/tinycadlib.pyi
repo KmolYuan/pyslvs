@@ -46,5 +46,8 @@ def expr_solving(
 def uniform_four_bar(ml: float, n: int) -> ndarray:
     ...
 
-def uniform_path(dimension: ndarray, n: int) -> ndarray:
+def uniform_path(v: ndarray, n: int) -> ndarray:
+    ...
+
+def uniform_expr(v: ndarray) -> List[VPoint]:
     ...

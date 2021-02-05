@@ -2,7 +2,7 @@
 # cython: language_level=3, cdivision=True, boundscheck=False, wraparound=False
 # cython: initializedcheck=False, nonecheck=False
 
-"""The callable classes of the validation in the algorithm.
+"""Fast planar linkage synthesis. (defect allowable)
 
 author: Yuan Chang
 copyright: Copyright (C) 2016-2021
@@ -271,23 +271,15 @@ cdef double[:, :] _slice_nan2d(double[:, :] s) nogil:
     return s[first:second]
 
 
-cdef double trapezoidal_camp(double[:] a, double[:] b):
-    """Error comparison by trapezoidal rule."""
-    cdef double area = 0
-    cdef int i
-    for i in range(1, len(a)):
-        area += abs(a[i - 1] + a[i] - b[i - 1] + b[i]) / 2
-    return area
-
-
 @cython.final
 cdef class FMatch(ObjFunc):
-    """This class is used to verified kinematics of the linkage mechanism.
+    """A fast matching method that adds mapping angles to variables.
 
-    A fast matching method that adds mapping angles to variables.
+    Allowing defects.
     """
     cdef bint bfgs_mode, shape_only, use_curvature, full_path, ordered
     cdef int target_count, target_len, input_count, l_base
+    cdef public int callback
     cdef list vpoints
     cdef long[:] target_nodes, pivots
     cdef double[:, :, :] target
@@ -400,6 +392,7 @@ cdef class FMatch(ObjFunc):
         for i in range(len(self.ub)):
             if self.ub[i] < self.lb[i]:
                 self.ub[i], self.lb[i] = self.lb[i], self.ub[i]
+        self.callback = 0
 
     cpdef bint is_two_kernel(self):
         """Input a generic data (variable array), return the mechanism
@@ -414,6 +407,7 @@ cdef class FMatch(ObjFunc):
         + Link lengths.
         + Angle corresponding to the target points.
         """
+        self.callback += 1
         cdef map[int, vector[CCoord]] target
         cdef map[Sym, double] param = map[Sym, double](self.param)
         cdef map[Sym, CCoord] joint_pos = map[Sym, CCoord](self.joint_pos)

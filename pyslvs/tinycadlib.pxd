@@ -67,3 +67,5 @@ cpdef list expr_solving(EStack exprs, object vpoints, object inputs=*)
 cdef (bint, map[Sym, CCoord]) quick_solve(vector[Expr] stack,
                                           map[Sym, CCoord] joint_pos,
                                           map[Sym, double] param) nogil
+cdef double[:, :, :] c_uniform_path(double[:, :] dimension, int n) nogil
+cpdef object uniform_expr(double[:] v)

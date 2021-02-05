@@ -2,7 +2,7 @@
 
 from typing import Tuple, List, Dict, Iterable, Any
 from numpy import ndarray, double
-from .metaheuristics import ObjFunc
+from pyslvs.metaheuristics import ObjFunc
 
 _Coord = Tuple[float, float]
 
@@ -22,6 +22,7 @@ def cross_correlation(p1: ndarray, p2: ndarray, t: float = 0.1) -> ndarray:
     ...
 
 class FMatch(ObjFunc[str]):
+    callback: int
 
     def __init__(self, mech: Dict[str, Any]):
         """The constructor of objective object.
