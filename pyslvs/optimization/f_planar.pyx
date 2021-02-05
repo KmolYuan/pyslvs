@@ -279,6 +279,7 @@ cdef class FMatch(ObjFunc):
     """
     cdef bint bfgs_mode, shape_only, use_curvature, full_path, ordered
     cdef int target_count, target_len, input_count, l_base
+    cdef public int callback
     cdef list vpoints
     cdef long[:] target_nodes, pivots
     cdef double[:, :, :] target
@@ -391,6 +392,7 @@ cdef class FMatch(ObjFunc):
         for i in range(len(self.ub)):
             if self.ub[i] < self.lb[i]:
                 self.ub[i], self.lb[i] = self.lb[i], self.ub[i]
+        self.callback = 0
 
     cpdef bint is_two_kernel(self):
         """Input a generic data (variable array), return the mechanism
@@ -405,6 +407,7 @@ cdef class FMatch(ObjFunc):
         + Link lengths.
         + Angle corresponding to the target points.
         """
+        self.callback += 1
         cdef map[int, vector[CCoord]] target
         cdef map[Sym, double] param = map[Sym, double](self.param)
         cdef map[Sym, CCoord] joint_pos = map[Sym, CCoord](self.joint_pos)
