@@ -11,7 +11,7 @@ from typing import Tuple, Sequence, Dict, TypedDict, Iterator, Optional
 from copy import deepcopy
 
 
-class Collection(TypedDict, tatal=False):
+class Collection(TypedDict, total=False):
     expression: str
     input: Sequence[Tuple[Tuple[int, int], Sequence[float]]]
     graph: Sequence[Tuple[int, int]]
