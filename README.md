@@ -27,7 +27,7 @@ python test
 Run the solver through an example:
 
 ```python
-from pyslvs import example_list, parse_vpoints, t_config
+from pyslvs import example_list, parse_vpoints, t_config, expr_solving
 
 # Get example with name
 expr, inputs = example_list("Jansen's linkage (Single)")
