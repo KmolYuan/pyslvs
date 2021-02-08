@@ -11,12 +11,14 @@ from unittest import TestCase
 from math import radians, hypot, sin, cos
 from numpy import array
 from pyslvs import parse_vpoints, collection_list
-from pyslvs.optimization import norm_path, FMatch
+from pyslvs.optimization import norm_path, FMatch, FConfig
 from pyslvs.metaheuristics import ALGORITHM, AlgorithmType, PARAMS
 
 _FOUR_BAR = collection_list("Four bar linkage mechanism")
-_FOUR_BAR.update({
+_FOUR_BAR_ALG: FConfig = {
     'expression': parse_vpoints(_FOUR_BAR['expression']),
+    'input': list(_FOUR_BAR['input']),
+    'same': _FOUR_BAR['same'],
     'placement': {0: (-70, -70, 10), 1: (70, -70, 10)},
     'target': {
         4: [
@@ -35,8 +37,8 @@ _FOUR_BAR.update({
     },
     'upper': 100.,
     'lower': 0.,
-})
-PLANAR_OBJECT = FMatch(_FOUR_BAR)
+}
+PLANAR_OBJECT = FMatch(_FOUR_BAR_ALG)
 PATH = [
     (6.7700907146387586, 24.644877369732),
     (3.9327689792658944, 26.12795413801081),
@@ -86,8 +88,8 @@ class PlanarTest(TestCase):
 
     def algorithm_generic(self, t: AlgorithmType):
         """Generic algorithm setup."""
-        settings = {'max_gen': 10, 'report': 10}
-        settings.update(PARAMS[t])
+        settings = PARAMS[t].copy()
+        settings.update({'max_gen': 10, 'report': 10})
         algorithm = ALGORITHM[t](PLANAR_OBJECT, settings)
         algorithm.run()
         t_f = algorithm.history()

@@ -27,8 +27,8 @@ class AlgorithmTest(TestCase):
 
 def test_speed(algorithm: AlgorithmType, parallel: bool):
     """Test algorithm performance."""
-    settings = {'min_fit': 1e-20, 'report': 10, 'parallel': parallel}
-    settings.update(PARAMS[algorithm])
+    settings = PARAMS[algorithm].copy()
+    settings.update({'min_fit': 1e-20, 'report': 10, 'parallel': parallel})
     ALGORITHM[algorithm](TestObj(), settings).run()
 
 

@@ -11,6 +11,7 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
+from typing import TypedDict
 from collections import OrderedDict
 from logging import getLogger
 from numpy import (
@@ -271,6 +272,10 @@ cdef double[:, :] _slice_nan2d(double[:, :] s) nogil:
     return s[first:second]
 
 
+class FConfig(TypedDict):
+    pass
+
+
 @cython.final
 cdef class FMatch(ObjFunc):
     """A fast matching method that adds mapping angles to variables.
@@ -279,7 +284,7 @@ cdef class FMatch(ObjFunc):
     """
     cdef bint bfgs_mode, shape_only, use_curvature, full_path, ordered
     cdef int target_count, target_len, input_count, l_base
-    cdef public int callback
+    cdef public unsigned long callback
     cdef list vpoints
     cdef long[:] target_nodes, pivots
     cdef double[:, :, :] target

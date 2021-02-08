@@ -7,10 +7,21 @@ __copyright__ = "Copyright (C) 2016-2021"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
-from typing import Dict, Iterator, Any
+from typing import Tuple, Sequence, Dict, TypedDict, Iterator, Optional
 from copy import deepcopy
 
-_collection_list = {
+
+class Collection(TypedDict, tatal=False):
+    expression: str
+    input: Sequence[Tuple[Tuple[int, int], Sequence[float]]]
+    graph: Sequence[Tuple[int, int]]
+    placement: Dict[int, Optional[Tuple[float, float, float]]]
+    target: Dict[int, Optional[Sequence[Tuple[float, float]]]]
+    cus: Dict[int, int]
+    same: Dict[int, int]
+
+
+_collection_list: Dict[str, Collection] = {
     "Four bar linkage mechanism": {
         'expression':
             "M["
@@ -94,20 +105,20 @@ _collection_list = {
 }
 
 
-def collection_list(key: str) -> Dict[str, Any]:
+def collection_list(key: str) -> Collection:
     """The example data of collections.
 
     The format of each configuration is:
 
-    + `Expression`: Mechanism expression of the structure.
+    + `expression`: Mechanism expression of the structure.
         + type: str
     + `input`: Input pairs.
         + type: Sequence[Tuple[int, int]]
-    + `Graph`: The generalized chain graph in edge set.
+    + `graph`: The generalized chain graph in edge set.
         + type: Sequence[Tuple[int, int]]
-    + `Placement`: The grounded joints setting. (`x`, `y`, `r`)
+    + `placement`: The grounded joints setting. (`x`, `y`, `r`)
         + type: Dict[int, Optional[Tuple[float, float, float]]]
-    + `Target`: The target joints settings.
+    + `target`: The target joints settings.
         + type: Dict[int, Optional[Sequence[Tuple[float, float]]]]
     + `cus`: The custom joints on specific link. (link number correspond to
         the graph expression.)

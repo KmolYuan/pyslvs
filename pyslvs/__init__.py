@@ -20,7 +20,7 @@ from .expression_parser import (
     parse_vlinks, edges_view, graph2vpoints, PointArgs, LinkArgs,
 )
 from .example import example_list, all_examples
-from .collection import collection_list, all_collections
+from .collection import collection_list, all_collections, Collection
 from .efd import efd_fitting
 
 

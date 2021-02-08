@@ -9,4 +9,5 @@ __email__ = "pyslvs@gmail.com"
 
 from .f_planar import (
     FMatch, norm_path, curvature, derivative, path_signature, cross_correlation,
+    FConfig,
 )

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from typing import Tuple, List, Dict, Iterable, Any
+from typing import Tuple, List, Dict, TypedDict, Iterable, Sequence
 from numpy import ndarray, double
+from pyslvs.expression import VPoint
 from pyslvs.metaheuristics import ObjFunc
 
 _Coord = Tuple[float, float]
@@ -21,30 +22,32 @@ def path_signature(k: ndarray, maximum: float = 100) -> ndarray:
 def cross_correlation(p1: ndarray, p2: ndarray, t: float = 0.1) -> ndarray:
     ...
 
+class FConfig(TypedDict, total=False):
+    expression: Sequence[VPoint]
+    input: Sequence[Tuple[Tuple[int, int], Sequence[float]]]
+    placement: Dict[int, Tuple[float, float, float]]
+    target: Dict[int, Sequence[Tuple[float, float]]]
+    same: Dict[int, int]
+    upper: float
+    lower: float
+    shape_only: bool
+
 class FMatch(ObjFunc[str]):
     callback: int
 
-    def __init__(self, mech: Dict[str, Any]):
+    def __init__(self, mech: FConfig):
         """The constructor of objective object.
 
         Options of `mech_params`:
 
-        + `Expression`: The mechanism expression of the structure.
-            + type: List\[[VPoint]]
+        + `expression`: The mechanism expression of the structure.
         + `input`: Input pairs.
-            + type: List[Tuple[int, int]]
-        + `Placement`: The grounded joints setting. (`x`, `y`, `r`)
-            + type: Dict[int, Tuple[float, float, float]]
-        + `Target`: The target path.
-            + type: Dict[int, Sequence[Tuple[float, float]]]
+        + `placement`: The grounded joints setting. (`x`, `y`, `r`)
+        + `target`: The target path.
         + `same`: Multiple joint setting. The joints are according to [`edges_view`](#edges_view).
-            + type: Dict[int, int]
         + `upper`: The upper setting of variables, the length must same as variable array.
-            + type: List[float]
         + `lower`: The lower setting of variables, the length must same as variable array.
-            + type: List[float]
         + `shape_only`: Compare paths by shape only.
-            + type: bool
 
         Variable array:
 
