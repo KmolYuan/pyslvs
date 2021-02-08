@@ -1,6 +1,8 @@
 # Version 21.02
 
 + Add function callback counter for `FMatch`.
++ Dropped the support of Python 3.7.
+    + Start using `TypedDict` typing.
 
 # Version 21.01
 

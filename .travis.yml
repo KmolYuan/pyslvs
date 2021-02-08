@@ -6,7 +6,6 @@ dist: xenial
 jobs:
   include:
     # linux
-    - python: "3.7"
     - python: "3.8"
     - python: "3.9"
 
@@ -15,8 +14,8 @@ jobs:
       # 'generic' will cause infinity loop
       language: shell
       env:
-        - PYTHON=3.7.7
-        - PY=37
+        - PYTHON=3.8.5
+        - PY=38
         - COMPILER=mingw32
       before_install:
         # Install Python
@@ -40,21 +39,9 @@ jobs:
 
     - <<: *win
       env:
-        - PYTHON=3.8.5
-        - PY=38
-        - COMPILER=mingw32
-
-    - <<: *win
-      env:
         - PYTHON=3.9.0
         - PY=39
         - COMPILER=mingw32
-
-    - <<: *win
-      env:
-        - PYTHON=3.7.0
-        - PY=37
-        - COMPILER=msvc
 
     - <<: *win
       env:
