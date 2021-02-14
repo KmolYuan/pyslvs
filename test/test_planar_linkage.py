@@ -7,12 +7,14 @@ __copyright__ = "Copyright (C) 2016-2021"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
+from typing import cast
 from unittest import TestCase
 from math import radians, hypot, sin, cos
 from numpy import array
 from pyslvs import parse_vpoints, collection_list
 from pyslvs.optimization import norm_path, FMatch, FConfig
-from pyslvs.metaheuristics import ALGORITHM, AlgorithmType, PARAMS
+from pyslvs.metaheuristics import (algorithm, default, AlgorithmType,
+                                   AlgorithmConfig)
 
 _FOUR_BAR = collection_list("Four bar linkage mechanism")
 _FOUR_BAR_ALG: FConfig = {
@@ -88,11 +90,11 @@ class PlanarTest(TestCase):
 
     def algorithm_generic(self, t: AlgorithmType):
         """Generic algorithm setup."""
-        settings = PARAMS[t].copy()
-        settings.update({'max_gen': 10, 'report': 10})
-        algorithm = ALGORITHM[t](PLANAR_OBJECT, settings)
-        algorithm.run()
-        t_f = algorithm.history()
+        s = default(t)
+        s.update({'max_gen': 10, 'report': 10})
+        alg = algorithm(t)(PLANAR_OBJECT, cast(AlgorithmConfig, s))
+        alg.run()
+        t_f = alg.history()
         self.assertEqual(10, t_f[1][0] - t_f[0][0])
 
     def test_algorithms(self):

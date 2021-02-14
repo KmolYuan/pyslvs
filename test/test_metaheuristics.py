@@ -5,9 +5,11 @@ __copyright__ = "Copyright (C) 2016-2021"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
+from typing import cast
 from unittest import TestCase
 from timeit import repeat
-from pyslvs.metaheuristics import ALGORITHM, PARAMS, AlgorithmType
+from pyslvs.metaheuristics import (algorithm, default, AlgorithmType,
+                                   AlgorithmConfig)
 from pyslvs.metaheuristics.test import TestObj, with_mp, without_mp
 
 
@@ -17,19 +19,21 @@ class AlgorithmTest(TestCase):
         """Test with an objective function."""
         settings = {'min_fit': 1e-20, 'report': 10, 'parallel': True}
         obj = TestObj()
-        for t, setting in PARAMS.items():
-            settings.update(setting)
-            x, fval = ALGORITHM[t](obj, settings).run()
+        for alg in AlgorithmType:
+            s = default(alg)
+            s.update(settings)
+            x, fval = algorithm(alg)(obj, s).run()
             self.assertAlmostEqual(0., x[0], 6)
             self.assertAlmostEqual(0., x[1], 6)
             self.assertAlmostEqual(0., fval, 6)
 
 
-def test_speed(algorithm: AlgorithmType, parallel: bool):
+def test_speed(alg: AlgorithmType, parallel: bool):
     """Test algorithm performance."""
-    settings = PARAMS[algorithm].copy()
-    settings.update({'min_fit': 1e-20, 'report': 10, 'parallel': parallel})
-    ALGORITHM[algorithm](TestObj(), settings).run()
+    s = default(alg)
+    s.pop('max_gen')
+    s.update({'min_fit': 1e-20, 'report': 10, 'parallel': parallel})
+    algorithm(alg)(TestObj(), cast(AlgorithmConfig, s)).run()
 
 
 if __name__ == '__main__':
