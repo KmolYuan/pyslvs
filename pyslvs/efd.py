@@ -7,15 +7,17 @@ __copyright__ = "Copyright (C) 2016-2021"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
-from typing import Tuple, Sized, Sequence
+from typing import Tuple, Sized, Sequence, Union
 from math import pi, sin, cos, atan2, degrees, radians
 from numpy import (
     sqrt, abs, cos as np_cos, sin as np_sin, dot, sum as np_sum, array,
     ndarray, linspace, zeros, ones, diff, concatenate, cumsum,
 )
 
+_Path = Union[Sequence[Tuple[float, float]], ndarray]
 
-def efd_fitting(path: Sequence[Tuple[float, float]], n: int = 0) -> ndarray:
+
+def efd_fitting(path: _Path, n: int = 0) -> ndarray:
     """Curve fitting using Elliptical Fourier Descriptor.
 
     The path `path` will be translated to Fourier descriptor coefficients,
@@ -71,7 +73,8 @@ def _normalize_efd(
     # the first major axis. Theta_1 is that shift angle.
     theta_1 = atan2(
         2 * (coeffs[0, 0] * coeffs[0, 1] + coeffs[0, 2] * coeffs[0, 3]),
-        coeffs[0, 0] ** 2 - coeffs[0, 1] ** 2 + coeffs[0, 2] ** 2 - coeffs[0, 3] ** 2
+        coeffs[0, 0] ** 2 - coeffs[0, 1] ** 2
+        + coeffs[0, 2] ** 2 - coeffs[0, 3] ** 2
     ) * 0.5
     # Rotate all coefficients by theta_1
     for n in range(coeffs.shape[0]):

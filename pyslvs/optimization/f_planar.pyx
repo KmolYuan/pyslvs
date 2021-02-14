@@ -11,7 +11,6 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
-from typing import TypedDict
 from collections import OrderedDict
 from logging import getLogger
 from numpy import (
@@ -270,10 +269,6 @@ cdef double[:, :] _slice_nan2d(double[:, :] s) nogil:
     if second == -1:
         second = len(s) - 1
     return s[first:second]
-
-
-class FConfig(TypedDict):
-    pass
 
 
 @cython.final

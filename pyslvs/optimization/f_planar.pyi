@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from typing import Tuple, List, Dict, TypedDict, Iterable, Sequence
+from typing import Tuple, List, Iterable
 from numpy import ndarray, double
-from pyslvs.expression import VPoint
 from pyslvs.metaheuristics import ObjFunc
+from .utility import FConfig
 
 _Coord = Tuple[float, float]
 
@@ -22,15 +22,6 @@ def path_signature(k: ndarray, maximum: float = 100) -> ndarray:
 def cross_correlation(p1: ndarray, p2: ndarray, t: float = 0.1) -> ndarray:
     ...
 
-class FConfig(TypedDict, total=False):
-    expression: Sequence[VPoint]
-    input: Sequence[Tuple[Tuple[int, int], Sequence[float]]]
-    placement: Dict[int, Tuple[float, float, float]]
-    target: Dict[int, Sequence[Tuple[float, float]]]
-    same: Dict[int, int]
-    upper: float
-    lower: float
-    shape_only: bool
 
 class FMatch(ObjFunc[str]):
     callback: int
