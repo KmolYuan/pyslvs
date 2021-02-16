@@ -42,14 +42,14 @@ logger = getLogger()
 
 
 def norm_path(path, scale=1):
-    """Python wrapper of normalization function."""
+    """Normalization function."""
     cdef double[:, :] path_m = array(path, dtype=f64)
     _norm(path_m, scale)
     return [(x, y) for x, y in path_m]
 
 
 cdef void _norm(double[:, :] path, double scale) nogil:
-    """Normalization implementation inplace."""
+    """Normalization implementation."""
     cdef CCoord centre = CCoord(0, 0)
     cdef double x, y
     cdef int i

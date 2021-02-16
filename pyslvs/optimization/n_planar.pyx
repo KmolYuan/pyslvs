@@ -95,8 +95,15 @@ cdef double rotation_angle(double[:, :] p1, double x_mean, double y_mean) nogil:
         return -M_PI / 2 if -M_PI / 2 in {theta_1, theta_2} else 0
 
 
-cdef double[:, :] normalization(double[:, :] p1) nogil:
-    """Normalization function."""
+def norm_pca(path):
+    """Normalization function by PCA."""
+    cdef double[:, :] path_m = array(path, dtype=f64)
+    _norm_pca(path_m)
+    return [(x, y) for x, y in path_m]
+
+
+cdef void _norm_pca(double[:, :] p1) nogil:
+    """Normalization implementation."""
     cdef double x_mean = 0
     cdef double y_mean = 0
     cdef int i
@@ -109,42 +116,37 @@ cdef double[:, :] normalization(double[:, :] p1) nogil:
     cdef double c = cos(alpha)
     cdef double s = sin(alpha)
     # Normalized the path points
-    cdef double[:, :] p1_n
+    for i in range(len(p1)):
+        p1[i, 0] -= x_mean
+        p1[i, 1] -= y_mean
     with gil:
-        p1_n = zeros((len(p1), 2), dtype=f64)
-    p1_n[:] = p1[:]
-    for i in range(len(p1_n)):
-        p1_n[i, 0] -= x_mean
-        p1_n[i, 1] -= y_mean
-    with gil:
-        p1_n = (array([[c, s], [-s, c]]) @ p1_n.T).T
+        p1 = array(p1) @ array([[c, -s], [s, c]])
     cdef int ind = 0
     cdef double p1_max = -INF
     cdef double p1_min = INF
     cdef double d_min = INF
     cdef double d
-    for i in range(len(p1_n)):
-        d = hypot(p1_n[i, 0], p1_n[i, 1])
+    for i in range(len(p1)):
+        d = hypot(p1[i, 0], p1[i, 1])
         if d < d_min:
             d_min = d
             ind = i
-        if p1_n[i, 0] > p1_max:
-            p1_max = p1_n[i, 0]
-        if p1_n[i, 0] < p1_min:
-            p1_min = p1_n[i, 0]
-    for i in range(len(p1_n)):
-        p1_n[i, 0] /= p1_max - p1_min
-        p1_n[i, 1] /= p1_max - p1_min
+        if p1[i, 0] > p1_max:
+            p1_max = p1[i, 0]
+        if p1[i, 0] < p1_min:
+            p1_min = p1[i, 0]
+    for i in range(len(p1)):
+        p1[i, 0] /= p1_max - p1_min
+        p1[i, 1] /= p1_max - p1_min
     # Swap to the starting point of the path
     if ind == 0:
-        return p1_n
+        return
     cdef double[:, :] tmp
     with gil:
         tmp = zeros((ind, 2), dtype=f64)
-    tmp[:] = p1_n[:ind]
-    p1_n[:len(p1_n) - ind] = p1_n[ind:]
-    p1_n[len(p1_n) - ind:] = tmp[:]
-    return p1_n
+    tmp[:] = p1[:ind]
+    p1[:len(p1) - ind] = p1[ind:]
+    p1[len(p1) - ind:] = tmp[:]
 
 
 cdef double trapezoidal_camp(double[:] a, double[:] b):
