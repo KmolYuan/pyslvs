@@ -11,81 +11,140 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
-from libc.math cimport M_PI, fabs, atan2, cos, sin
-from numpy import array, mean, matmul, max, min, argmin, roll, sum, insert
-from numpy.linalg import norm, eig
+from libc.math cimport M_PI, INFINITY as INF, hypot, fabs, atan2, cos, sin, sqrt
+from numpy import array, zeros, float64 as f64
+from numpy.linalg import eig
 from numpy.fft import fft
 from pyslvs.expression cimport VPoint
 from pyslvs.tinycadlib cimport c_uniform_path, uniform_expr
 from pyslvs.metaheuristics.utility cimport ObjFunc
 
 
-def axes_v(v1, v2, p1, x_mean, y_mean):
+cdef (double, double) axes_v(double[:] v1, double[:] v2, double[:, :] p1,
+                             double x_mean, double y_mean) nogil:
     """Calculate the orientation vector of the axes."""
-    a = v1[1] / v1[0]
-    b = y_mean - a * x_mean
-    val = p1[:, 1] - a * p1[:, 0] - b
-    neg_dist = norm((p1[val < 0] - mean(p1, axis=0)), axis=1).sum()
-    pos_dist = norm((p1[val > 0] - mean(p1, axis=0)), axis=1).sum()
-    v2 = abs(v2)
+    cdef double a = v1[1] / v1[0]
+    cdef double b = y_mean - a * x_mean
+    cdef double[:, :] dist
+    with gil:
+        dist = zeros((len(p1), 2), dtype=f64)
+    dist[:] = p1[:]
+    cdef double neg_dist = 0
+    cdef double pos_dist = 0
+    cdef int i
+    cdef double val, x, y
+    for i in range(len(p1)):
+        val = p1[i, 1] - a * p1[i, 0] - b
+        x = p1[i, 0] - x_mean
+        y = p1[i, 1] - y_mean
+        if val < 0:
+            neg_dist += sqrt(x * x + y * y)
+        elif val > 0:
+            pos_dist += sqrt(x * x + y * y)
+    x = fabs(v2[0])
+    y = fabs(v2[1])
     if a < 0:
         if neg_dist > pos_dist:
-            axis = [-v2[0], -v2[1]]
+            return -x, -y
         else:
-            axis = [v2[0], v2[1]]
+            return x, y
     else:
         if neg_dist > pos_dist:
-            axis = [v2[0], -v2[1]]
+            return x, -y
         else:
-            axis = [-v2[0], v2[1]]
-    return axis
+            return -x, y
 
 
-def rotation_angle(p1):
+cdef double rotation_angle(double[:, :] p1, double x_mean, double y_mean) nogil:
     """Calculate rotation angle."""
-    # Calculate the mean and std of path points
-    x_mean, y_mean = mean(p1, axis=0)
     # Calculate the principal component axes (eigenvectors)
-    m = p1.shape[0]
-    cxx = sum((p1[:, 0] - x_mean) ** 2) / m
-    cyy = sum((p1[:, 1] - y_mean) ** 2) / m
-    cxy = sum((p1[:, 0] - x_mean) * (p1[:, 1] - y_mean)) / m
-    c = array(((cxx, cxy), (cxy, cyy)))
-    w, v = eig(c)
+    cdef double cxx = 0
+    cdef double cyy = 0
+    cdef double cxy = 0
+    cdef double x, y
+    for i in range(len(p1)):
+        x = (p1[i, 0] - x_mean)
+        y = (p1[i, 1] - y_mean)
+        cxx += x * x
+        cyy += y * y
+        cxy += x * y
+    cxx /= len(p1)
+    cyy /= len(p1)
+    cxy /= len(p1)
+    cdef double[:, :] v
+    with gil:
+        _, v = eig(array([[cxx, cxy], [cxy, cyy]]))
     # Calculate the orientation of the axes
-    axes = array([
-        axes_v(v[:, 1], v[:, 0], p1, x_mean, y_mean),
-        axes_v(v[:, 0], v[:, 1], p1, x_mean, y_mean),
-    ])
-    theta_1 = atan2(axes[0][1], axes[0][0])
-    theta_2 = atan2(axes[1][1], axes[1][0])
-    pca = insert(axes, 1, (0, 0), axis=0) + mean(p1, axis=0)
+    cdef double a, b
+    x, y = axes_v(v[:, 1], v[:, 0], p1, x_mean, y_mean)
+    a, b = axes_v(v[:, 0], v[:, 1], p1, x_mean, y_mean)
+    cdef double[:, :] axes
+    with gil:
+        axes = array([[x, y], [a, b]])
+    cdef double theta_1 = atan2(axes[0][1], axes[0][0])
+    cdef double theta_2 = atan2(axes[1][1], axes[1][0])
     # Calculate the rotation matrix
     if theta_1 * theta_2 > 0:
-        alpha = theta_1 if theta_1 < theta_2 else theta_2
+        return min(theta_1, theta_2)
     elif theta_1 * theta_2 < 0:
         if fabs(theta_1) < M_PI / 2:
-            alpha = theta_1 if theta_1 < theta_2 else theta_2
+            return min(theta_1, theta_2)
         else:
-            alpha = theta_1 if theta_1 > theta_2 else theta_2
+            return max(theta_1, theta_2)
     else:
-        alpha = -M_PI / 2 if theta_1 == -M_PI / 2 or theta_2 == -M_PI / 2 else 0
-    return alpha, pca
+        return -M_PI / 2 if -M_PI / 2 in {theta_1, theta_2} else 0
 
 
-def normalization(p1):
+cdef double[:, :] normalization(double[:, :] p1) nogil:
     """Normalization function."""
-    alpha, pca = rotation_angle(p1)
-    c = cos(alpha)
-    s = sin(alpha)
-    r = array([[c, s], [-s, c]])
+    cdef double x_mean = 0
+    cdef double y_mean = 0
+    cdef int i
+    for i in range(len(p1)):
+        x_mean += p1[i, 0]
+        y_mean += p1[i, 1]
+    x_mean /= len(p1)
+    y_mean /= len(p1)
+    cdef double alpha = rotation_angle(p1, x_mean, y_mean)
+    cdef double c = cos(alpha)
+    cdef double s = sin(alpha)
     # Normalized the path points
-    x_mean, y_mean = mean(p1, axis=0)
-    p1_normal = matmul(r, (p1 - array([x_mean, y_mean])).T).T
-    p1_normal /= max(p1_normal[:, 0]) - min(p1_normal[:, 0])
-    # Find the starting point of the path
-    ind = argmin(norm(p1_normal, axis=1))
-    return roll(p1_normal, p1_normal.shape[0] - ind, axis=0)
+    cdef double[:, :] p1_n
+    with gil:
+        p1_n = zeros((len(p1), 2), dtype=f64)
+    p1_n[:] = p1[:]
+    for i in range(len(p1_n)):
+        p1_n[i, 0] -= x_mean
+        p1_n[i, 1] -= y_mean
+    with gil:
+        p1_n = (array([[c, s], [-s, c]]) @ p1_n.T).T
+    cdef int ind = 0
+    cdef double p1_max = -INF
+    cdef double p1_min = INF
+    cdef double d_min = INF
+    cdef double d
+    for i in range(len(p1_n)):
+        d = hypot(p1_n[i, 0], p1_n[i, 1])
+        if d < d_min:
+            d_min = d
+            ind = i
+        if p1_n[i, 0] > p1_max:
+            p1_max = p1_n[i, 0]
+        if p1_n[i, 0] < p1_min:
+            p1_min = p1_n[i, 0]
+    for i in range(len(p1_n)):
+        p1_n[i, 0] /= p1_max - p1_min
+        p1_n[i, 1] /= p1_max - p1_min
+    # Swap to the starting point of the path
+    if ind == 0:
+        return p1_n
+    cdef double[:, :] tmp
+    with gil:
+        tmp = zeros((ind, 2), dtype=f64)
+    tmp[:] = p1_n[:ind]
+    p1_n[:len(p1_n) - ind] = p1_n[ind:]
+    p1_n[len(p1_n) - ind:] = tmp[:]
+    return p1_n
 
 
 cdef double trapezoidal_camp(double[:] a, double[:] b):
