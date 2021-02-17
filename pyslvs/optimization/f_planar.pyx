@@ -71,7 +71,7 @@ cdef void _norm(double[:, :] path, double scale) nogil:
             length[end] = length[i]
             angle[end] = angle[i]
             sp = end
-    _aligned(path, sp)
+    roll(path, sp)
     cdef CCoord bound = CCoord(INF, -INF)
     cdef double a
     for i in range(len(path)):
@@ -87,23 +87,16 @@ cdef void _norm(double[:, :] path, double scale) nogil:
     _mul1d(path[:, 1], scale)
 
 
-cdef void _aligned(double[:, :] path, int sp) nogil:
+cdef void roll(double[:, :] path, int ind) nogil:
     """Split 1D path from sp, concatenate to end."""
-    if sp == 0:
+    if ind == 0:
         return
     cdef double[:, :] tmp
     with gil:
-        tmp = zeros((sp, 2), dtype=f64)
-    cdef int i
-    for i in range(sp):
-        tmp[i, 0] = path[i, 0]
-        tmp[i, 1] = path[i, 1]
-    for i in range(sp, len(path)):
-        path[i - sp, 0] = path[i, 0]
-        path[i - sp, 1] = path[i, 1]
-    for i in range(sp):
-        path[len(path) - sp + i, 0] = tmp[i, 0]
-        path[len(path) - sp + i, 1] = tmp[i, 1]
+        tmp = zeros((ind, 2), dtype=f64)
+    tmp[:] = path[:ind]
+    path[:len(path) - ind] = path[ind:]
+    path[len(path) - ind:] = tmp[:]
 
 
 def curvature(path):

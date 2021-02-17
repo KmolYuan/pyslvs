@@ -18,6 +18,7 @@ from numpy.fft import fft
 from pyslvs.expression cimport VPoint
 from pyslvs.tinycadlib cimport c_uniform_path, uniform_expr
 from pyslvs.metaheuristics.utility cimport ObjFunc
+from .f_planar cimport roll
 
 
 cdef (double, double) axes_v(double[:] v1, double[:] v2, double[:, :] p1,
@@ -139,14 +140,7 @@ cdef void _norm_pca(double[:, :] p1) nogil:
         p1[i, 0] /= p1_max - p1_min
         p1[i, 1] /= p1_max - p1_min
     # Swap to the starting point of the path
-    if ind == 0:
-        return
-    cdef double[:, :] tmp
-    with gil:
-        tmp = zeros((ind, 2), dtype=f64)
-    tmp[:] = p1[:ind]
-    p1[:len(p1) - ind] = p1[ind:]
-    p1[len(p1) - ind:] = tmp[:]
+    roll(p1, ind)
 
 
 cdef double trapezoidal_camp(double[:] a, double[:] b):
