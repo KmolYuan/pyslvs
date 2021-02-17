@@ -100,7 +100,7 @@ def norm_pca(path):
     """Normalization function by PCA."""
     cdef double[:, :] path_m = array(path, dtype=f64)
     _norm_pca(path_m)
-    return [(x, y) for x, y in path_m]
+    return array(path_m)
 
 
 cdef void _norm_pca(double[:, :] p1) nogil:

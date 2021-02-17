@@ -45,7 +45,7 @@ def norm_path(path, scale=1):
     """Normalization function."""
     cdef double[:, :] path_m = array(path, dtype=f64)
     _norm(path_m, scale)
-    return [(x, y) for x, y in path_m]
+    return array(path_m)
 
 
 cdef void _norm(double[:, :] path, double scale) nogil:

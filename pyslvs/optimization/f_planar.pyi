@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from typing import Tuple, List, Iterable
+from typing import Tuple, Iterable
 from numpy import ndarray, double
 from pyslvs.metaheuristics import ObjFunc
 from .utility import FConfig
 
 _Coord = Tuple[float, float]
 
-def norm_path(path: Iterable[_Coord], scale: float = 1) -> List[_Coord]:
+def norm_path(path: Iterable[_Coord], scale: float = 1) -> ndarray:
     ...
 
 def curvature(path: Iterable[_Coord]) -> ndarray:
