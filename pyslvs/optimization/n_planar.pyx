@@ -11,8 +11,8 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
-from libc.math cimport M_PI, INFINITY as INF, hypot, fabs, atan2, cos, sin, sqrt
-from numpy import array, zeros, float64 as f64
+from libc.math cimport M_PI, INFINITY as INF, hypot, atan2, cos, sin, sqrt
+from numpy import array, float64 as f64
 from numpy.linalg import eig
 from numpy.fft import fft
 from pyslvs.expression cimport VPoint
@@ -26,10 +26,6 @@ cdef (double, double) axes_v(double[:] v1, double[:] v2, double[:, :] p1,
     """Calculate the orientation vector of the axes."""
     cdef double a = v1[1] / v1[0]
     cdef double b = y_mean - a * x_mean
-    cdef double[:, :] dist
-    with gil:
-        dist = zeros((len(p1), 2), dtype=f64)
-    dist[:] = p1[:]
     cdef double neg_dist = 0
     cdef double pos_dist = 0
     cdef int i
@@ -39,11 +35,13 @@ cdef (double, double) axes_v(double[:] v1, double[:] v2, double[:, :] p1,
         x = p1[i, 0] - x_mean
         y = p1[i, 1] - y_mean
         if val < 0:
-            neg_dist += sqrt(x * x + y * y)
+            neg_dist += x * x + y * y
         elif val > 0:
-            pos_dist += sqrt(x * x + y * y)
-    x = fabs(v2[0])
-    y = fabs(v2[1])
+            pos_dist += x * x + y * y
+    neg_dist = sqrt(neg_dist)
+    pos_dist = sqrt(pos_dist)
+    x = abs(v2[0])
+    y = abs(v2[1])
     if a < 0:
         if neg_dist > pos_dist:
             return -x, -y
@@ -62,10 +60,11 @@ cdef double rotation_angle(double[:, :] p1, double x_mean, double y_mean) nogil:
     cdef double cxx = 0
     cdef double cyy = 0
     cdef double cxy = 0
+    cdef int i
     cdef double x, y
     for i in range(len(p1)):
-        x = (p1[i, 0] - x_mean)
-        y = (p1[i, 1] - y_mean)
+        x = p1[i, 0] - x_mean
+        y = p1[i, 1] - y_mean
         cxx += x * x
         cyy += y * y
         cxy += x * y
@@ -76,19 +75,15 @@ cdef double rotation_angle(double[:, :] p1, double x_mean, double y_mean) nogil:
     with gil:
         _, v = eig(array([[cxx, cxy], [cxy, cyy]]))
     # Calculate the orientation of the axes
-    cdef double a, b
     x, y = axes_v(v[:, 1], v[:, 0], p1, x_mean, y_mean)
-    a, b = axes_v(v[:, 0], v[:, 1], p1, x_mean, y_mean)
-    cdef double[:, :] axes
-    with gil:
-        axes = array([[x, y], [a, b]])
-    cdef double theta_1 = atan2(axes[0][1], axes[0][0])
-    cdef double theta_2 = atan2(axes[1][1], axes[1][0])
+    cdef double theta_1 = atan2(y, x)
+    x, y = axes_v(v[:, 0], v[:, 1], p1, x_mean, y_mean)
+    cdef double theta_2 = atan2(y, x)
     # Calculate the rotation matrix
     if theta_1 * theta_2 > 0:
         return min(theta_1, theta_2)
     elif theta_1 * theta_2 < 0:
-        if fabs(theta_1) < M_PI / 2:
+        if abs(theta_1) < M_PI / 2:
             return min(theta_1, theta_2)
         else:
             return max(theta_1, theta_2)
@@ -136,9 +131,10 @@ cdef void _norm_pca(double[:, :] p1) nogil:
             p1_max = p1[i, 0]
         if p1[i, 0] < p1_min:
             p1_min = p1[i, 0]
+    d_min = p1_max - p1_min
     for i in range(len(p1)):
-        p1[i, 0] /= p1_max - p1_min
-        p1[i, 1] /= p1_max - p1_min
+        p1[i, 0] /= d_min
+        p1[i, 1] /= d_min
     # Swap to the starting point of the path
     roll(p1, ind)
 
