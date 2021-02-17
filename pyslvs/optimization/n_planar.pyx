@@ -26,8 +26,10 @@ cdef (double, double) axes_v(double[:] v1, double[:] v2, double[:, :] p1,
     """Calculate the orientation vector of the axes."""
     cdef double a = v1[1] / v1[0]
     cdef double b = y_mean - a * x_mean
-    cdef double neg_dist = 0
-    cdef double pos_dist = 0
+    cdef double neg_x = 0
+    cdef double neg_y = 0
+    cdef double pos_x = 0
+    cdef double pos_y = 0
     cdef int i
     cdef double val, x, y
     for i in range(len(p1)):
@@ -35,11 +37,13 @@ cdef (double, double) axes_v(double[:] v1, double[:] v2, double[:, :] p1,
         x = p1[i, 0] - x_mean
         y = p1[i, 1] - y_mean
         if val < 0:
-            neg_dist += x * x + y * y
+            neg_x += x * x
+            neg_y += y * y
         elif val > 0:
-            pos_dist += x * x + y * y
-    neg_dist = sqrt(neg_dist)
-    pos_dist = sqrt(pos_dist)
+            pos_x += x * x
+            pos_y += y * y
+    cdef double neg_dist = sqrt(neg_x) + sqrt(neg_y)
+    cdef double pos_dist = sqrt(pos_x) + sqrt(pos_y)
     x = abs(v2[0])
     y = abs(v2[1])
     if a < 0:
@@ -76,19 +80,26 @@ cdef double rotation_angle(double[:, :] p1, double x_mean, double y_mean) nogil:
         _, v = eig(array([[cxx, cxy], [cxy, cyy]]))
     # Calculate the orientation of the axes
     x, y = axes_v(v[:, 1], v[:, 0], p1, x_mean, y_mean)
-    cdef double theta_1 = atan2(y, x)
+    cdef double a1 = atan2(y, x)
     x, y = axes_v(v[:, 0], v[:, 1], p1, x_mean, y_mean)
-    cdef double theta_2 = atan2(y, x)
+    cdef double a2 = atan2(y, x)
     # Calculate the rotation matrix
-    if theta_1 * theta_2 > 0:
-        return min(theta_1, theta_2)
-    elif theta_1 * theta_2 < 0:
-        if abs(theta_1) < M_PI / 2:
-            return min(theta_1, theta_2)
+    if a1 * a2 > 0:
+        return min(a1, a2)
+    elif a1 * a2 < 0:
+        if abs(a1) < M_PI / 2:
+            return min(a1, a2)
         else:
-            return max(theta_1, theta_2)
+            return max(a1, a2)
     else:
-        return -M_PI / 2 if -M_PI / 2 in {theta_1, theta_2} else 0
+        return -M_PI / 2 if -M_PI / 2 in {a1, a2} else 0
+
+
+cdef double[:, :] rotate(double[:, :] p1, double a) nogil:
+    cdef double c = cos(a)
+    cdef double s = sin(a)
+    with gil:
+        return array(p1) @ array([[c, -s], [s, c]])
 
 
 def norm_pca(path):
@@ -109,14 +120,11 @@ cdef void _norm_pca(double[:, :] p1) nogil:
     x_mean /= len(p1)
     y_mean /= len(p1)
     cdef double alpha = rotation_angle(p1, x_mean, y_mean)
-    cdef double c = cos(alpha)
-    cdef double s = sin(alpha)
     # Normalized the path points
     for i in range(len(p1)):
         p1[i, 0] -= x_mean
         p1[i, 1] -= y_mean
-    with gil:
-        p1 = array(p1) @ array([[c, -s], [s, c]])
+    p1[:] = rotate(p1, alpha)
     cdef int ind = 0
     cdef double p1_max = -INF
     cdef double p1_min = INF
