@@ -147,6 +147,19 @@ cdef void _norm_pca(double[:, :] p1) nogil:
     roll(p1, ind)
 
 
+cdef void transform(double[:, :] target) nogil:
+    """Apply normalization and FFT to target."""
+    _norm_pca(target)
+    cdef double[:] real, imag
+    with gil:
+        t = array(target)
+        t = fft(t[:, 0] + t[:, 1] * 1j)
+        real = t.real
+        imag = t.imag
+    target[:, 0] = real
+    target[:, 1] = imag
+
+
 cdef double trapezoidal_camp(double[:] a, double[:] b):
     """Error comparison by trapezoidal rule."""
     cdef double area = 0
@@ -169,11 +182,10 @@ cdef class NPlanar(ObjFunc):
 
     def __cinit__(self, dict mech):
         self.target = array(mech['target'])
+        transform(self.target)
         self.len = len(self.target)
-        # TODO: Normalization
         self.lb = array([1e-5] * 4 + [0.])
         self.ub = array([5.] * 4 + [2. * M_PI])
-        raise NotImplementedError
 
     cdef double fitness(self, double[:] v) nogil:
         """Generate linkage with 5 parameters."""
