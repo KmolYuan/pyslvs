@@ -11,7 +11,9 @@ email: pyslvs@gmail.com
 """
 
 cimport cython
-from libc.math cimport M_PI, INFINITY as INF, hypot, atan2, cos, sin, sqrt
+from libc.math cimport (
+    M_PI, NAN, INFINITY as INF, HUGE_VAL, hypot, atan2, cos, sin, sqrt,
+)
 from numpy import array, float64 as f64
 from numpy.linalg import eig
 from numpy.fft import fft
@@ -197,7 +199,11 @@ cdef class NPlanar(ObjFunc):
     cdef double fitness(self, double[:] v) nogil:
         """Generate linkage with 5 parameters."""
         cdef double[:, :] p = c_uniform_path(v[None, :], self.len)[0]
-        # TODO: NAN check
+        # NAN check
+        cdef int i
+        for i in range(len(p)):
+            if NAN in {p[i, 0], p[i, 1]}:
+                return HUGE_VAL
         transform(p)
         return (trapezoidal_camp(self.target[:, 0], p[:, 0]) +
                 trapezoidal_camp(self.target[:, 1], p[:, 1]))
