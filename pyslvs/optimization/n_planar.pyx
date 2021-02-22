@@ -160,12 +160,19 @@ cdef void transform(double[:, :] target) nogil:
     target[:, 1] = imag
 
 
-cdef double trapezoidal_camp(double[:] a, double[:] b):
+cdef double trapezoidal_camp(double[:] a, double[:] b) nogil:
     """Error comparison by trapezoidal rule."""
     cdef double area = 0
     cdef int i
+    cdef double right, left, total
     for i in range(1, len(a)):
-        area += abs(a[i - 1] + a[i] - b[i - 1] + b[i]) / 2
+        right = a[i] - b[i]
+        left = a[i - 1] - b[i - 1]
+        total = abs(right) + abs(left)
+        if right * left < 0:
+            area += (right * right + left * left) / total * 0.5
+        else:
+            area += total * 0.5
     return area
 
 
@@ -190,8 +197,10 @@ cdef class NPlanar(ObjFunc):
     cdef double fitness(self, double[:] v) nogil:
         """Generate linkage with 5 parameters."""
         cdef double[:, :] p = c_uniform_path(v[None, :], self.len)[0]
-        # TODO: Normalization
-        raise NotImplementedError
+        # TODO: NAN check
+        transform(p)
+        return (trapezoidal_camp(self.target[:, 0], p[:, 0]) +
+                trapezoidal_camp(self.target[:, 1], p[:, 1]))
 
     cpdef object result(self, double[:] v):
         return "M[" + ", ".join([(<VPoint> vp).expr()
