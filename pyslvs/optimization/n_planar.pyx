@@ -14,7 +14,7 @@ cimport cython
 from libc.math cimport (
     M_PI, NAN, INFINITY as INF, HUGE_VAL, hypot, atan2, cos, sin, sqrt,
 )
-from numpy import array, float64 as f64
+from numpy import array, float64 as f64, hstack
 from numpy.linalg import eig
 from numpy.fft import fft
 from pyslvs.expression cimport VPoint
@@ -154,8 +154,8 @@ cdef void transform(double[:, :] target) nogil:
     _norm_pca(target)
     cdef double[:] real, imag
     with gil:
-        t = array(target)
-        t = fft(t[:, 0] + t[:, 1] * 1j)
+        c = array(target)
+        t = fft(hstack([c, c, c]))[len(target):len(target) * 2]
         real = t.real
         imag = t.imag
     target[:, 0] = real
