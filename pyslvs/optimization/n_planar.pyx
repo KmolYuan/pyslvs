@@ -12,7 +12,7 @@ email: pyslvs@gmail.com
 
 cimport cython
 from libc.math cimport (
-    M_PI, NAN, INFINITY as INF, HUGE_VAL, hypot, atan2, cos, sin, sqrt,
+    M_PI, INFINITY as INF, HUGE_VAL, isnan, hypot, atan2, cos, sin, sqrt,
 )
 from numpy import array, float64 as f64, hstack
 from numpy.linalg import eig
@@ -79,7 +79,7 @@ cdef double rotation_angle(double[:, :] p1, double x_mean, double y_mean) nogil:
     cxy /= len(p1)
     cdef double[:, :] v
     with gil:
-        _, v = eig(array([[cxx, cxy], [cxy, cyy]]))
+        _, v = eig(array([[cxx, cxy], [cxy, cyy]], dtype=f64))
     # Calculate the orientation of the axes
     x, y = axes_v(v[:, 1], v[:, 0], p1, x_mean, y_mean)
     cdef double a1 = atan2(y, x)
@@ -101,7 +101,7 @@ cdef double[:, :] rotate(double[:, :] p1, double a) nogil:
     cdef double c = cos(a)
     cdef double s = sin(a)
     with gil:
-        return array(p1) @ array([[c, -s], [s, c]])
+        return array(p1) @ array([[c, -s], [s, c]], dtype=f64)
 
 
 def norm_pca(path):
@@ -154,10 +154,11 @@ cdef void transform(double[:, :] target) nogil:
     _norm_pca(target)
     cdef double[:] real, imag
     with gil:
-        c = array(target)
-        t = fft(hstack([c, c, c]))[len(target):len(target) * 2]
-        real = t.real
-        imag = t.imag
+        c = array(target, dtype=f64)
+        c = c[:, 0] + c[:, 1] * 1j
+        v = fft(hstack([c, c, c]))[len(target):len(target) * 2]
+        real = v.real
+        imag = v.imag
     target[:, 0] = real
     target[:, 1] = imag
 
@@ -190,11 +191,11 @@ cdef class NPlanar(ObjFunc):
     cdef double[:, :] target
 
     def __cinit__(self, dict mech):
-        self.target = array(mech['target'])
+        self.target = array(mech['target'], dtype=f64)
         transform(self.target)
         self.len = len(self.target)
-        self.lb = array([1e-5] * 4 + [0.])
-        self.ub = array([5.] * 4 + [2. * M_PI])
+        self.lb = array([1e-5] * 4 + [0.], dtype=f64)
+        self.ub = array([5.] * 4 + [2. * M_PI], dtype=f64)
 
     cdef double fitness(self, double[:] v) nogil:
         """Generate linkage with 5 parameters."""
@@ -202,7 +203,7 @@ cdef class NPlanar(ObjFunc):
         # NAN check
         cdef int i
         for i in range(len(p)):
-            if NAN in {p[i, 0], p[i, 1]}:
+            if isnan(p[i, 0]) or isnan(p[i, 1]):
                 return HUGE_VAL
         transform(p)
         return (trapezoidal_camp(self.target[:, 0], p[:, 0]) +

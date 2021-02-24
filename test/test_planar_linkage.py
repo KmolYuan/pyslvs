@@ -9,15 +9,17 @@ __email__ = "pyslvs@gmail.com"
 
 from typing import cast
 from unittest import TestCase
-from math import radians, hypot, sin, cos
+from random import random
+from math import pi, hypot, sin, cos
 from numpy import array
 from pyslvs import parse_vpoints, collection_list
-from pyslvs.optimization import norm_path, FPlanar, FConfig
-from pyslvs.metaheuristics import (algorithm, default, AlgorithmType,
-                                   AlgorithmConfig)
+from pyslvs.optimization import norm_path, norm_pca, FPlanar, NPlanar
+from pyslvs.metaheuristics import (
+    algorithm, default, AlgorithmType, AlgorithmConfig,
+)
 
 _FOUR_BAR = collection_list("Four bar linkage mechanism")
-_FOUR_BAR_ALG: FConfig = {
+F_PLANAR = FPlanar({
     'expression': parse_vpoints(_FOUR_BAR['expression']),
     'input': list(_FOUR_BAR['input']),
     'same': _FOUR_BAR['same'],
@@ -39,8 +41,8 @@ _FOUR_BAR_ALG: FConfig = {
     },
     'upper': 100.,
     'lower': 0.,
-}
-PLANAR_OBJECT = FPlanar(_FOUR_BAR_ALG)
+})
+N_PLANAR = NPlanar({'target': [(0, 0), (1, 1), (2, 2), (3, 3), (4, 4)]})
 PATH = [
     (6.7700907146387586, 24.644877369732),
     (3.9327689792658944, 26.12795413801081),
@@ -77,34 +79,30 @@ PATH = [
 
 class PlanarTest(TestCase):
 
-    def test_path_normalization(self):
+    def test_norm(self):
         """Test path normalization function."""
-        path1 = norm_path(PATH)
-        alpha = radians(50)
-        c = cos(alpha)
-        s = sin(alpha)
-        path2 = norm_path(array(path1) @ array([[c, -s], [s, c]]))
-        for i in range(len(PATH)):
-            h = hypot(path1[i][0] - path2[i][0], path1[i][1] - path2[i][1])
-            self.assertAlmostEqual(0, h, 6)
+        for f in [norm_path, norm_pca]:
+            p1 = f(PATH)
+            alpha = 2 * pi * random()
+            c = cos(alpha)
+            s = sin(alpha)
+            p2 = f(array(p1) @ array([[c, -s], [s, c]]))
+            for i in range(len(PATH)):
+                h = hypot(p1[i][0] - p2[i][0], p1[i][1] - p2[i][1])
+                self.assertAlmostEqual(0, h, 6)
 
-    def algorithm_generic(self, t: AlgorithmType):
-        """Generic algorithm setup."""
+    def planar(self, t: AlgorithmType):
+        """Algorithm setup for FPlanar."""
         s = default(t)
         s.update({'max_gen': 10, 'report': 10})
-        alg = algorithm(t)(PLANAR_OBJECT, cast(AlgorithmConfig, s))
-        alg.run()
-        t_f = alg.history()
-        self.assertEqual(10, t_f[1][0] - t_f[0][0])
+        for p in [F_PLANAR, N_PLANAR]:
+            alg = algorithm(t)(p, cast(AlgorithmConfig, s))
+            alg.run()
+            t_f = alg.history()
+            self.assertEqual(10, t_f[1][0] - t_f[0][0])
 
     def test_algorithms(self):
         """Test algorithms."""
-        self.assertFalse(PLANAR_OBJECT.is_two_kernel())
-        # Real-coded genetic algorithm
-        self.algorithm_generic(AlgorithmType.RGA)
-        # Firefly algorithm
-        self.algorithm_generic(AlgorithmType.Firefly)
-        # Differential evolution
-        self.algorithm_generic(AlgorithmType.DE)
-        # Teaching learning based optimization
-        self.algorithm_generic(AlgorithmType.TLBO)
+        self.assertFalse(F_PLANAR.is_two_kernel())
+        for t in AlgorithmType:
+            self.planar(t)

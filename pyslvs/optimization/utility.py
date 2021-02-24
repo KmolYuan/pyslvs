@@ -25,4 +25,4 @@ class FConfig(TypedDict, total=False):
 
 
 class NConfig(TypedDict, total=False):
-    target: Dict[int, _Path]
+    target: _Path
