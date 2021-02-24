@@ -29,8 +29,7 @@ class FPlanar(ObjFunc[str]):
     def __init__(self, mech: FConfig):
         """The constructor of objective object.
 
-        Options of `mech_params`:
-
+        Options:
         + `expression`: The mechanism expression of the structure.
         + `input`: Input pairs.
         + `placement`: The grounded joints setting. (`x`, `y`, `r`)
@@ -41,7 +40,6 @@ class FPlanar(ObjFunc[str]):
         + `shape_only`: Compare paths by shape only.
 
         Variable array:
-
         | | Placement | Link length | Inputs |
         |:---:|:-----:|:-----------:|:------:|
         | `v =` | `x0`, `y0`, ... | `l0`, `l1`, ... | `a00`, `a01`, ..., `a10`, `a11`, ... |
