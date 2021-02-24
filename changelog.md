@@ -1,6 +1,7 @@
 # Version 21.02
 
-+ Add function callback counter for `FMatch`.
++ Rename `FMatch` to `FPlanar`.
++ Add function callback counter for `FPlanar`.
 + Dropped the support of Python 3.7.
     + Start using `TypedDict` typing.
 

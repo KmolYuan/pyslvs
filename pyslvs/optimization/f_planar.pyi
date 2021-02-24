@@ -23,7 +23,7 @@ def cross_correlation(p1: ndarray, p2: ndarray, t: float = 0.1) -> ndarray:
     ...
 
 
-class FMatch(ObjFunc[str]):
+class FPlanar(ObjFunc[str]):
     callback: int
 
     def __init__(self, mech: FConfig):

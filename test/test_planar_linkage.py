@@ -12,7 +12,7 @@ from unittest import TestCase
 from math import radians, hypot, sin, cos
 from numpy import array
 from pyslvs import parse_vpoints, collection_list
-from pyslvs.optimization import norm_path, FMatch, FConfig
+from pyslvs.optimization import norm_path, FPlanar, FConfig
 from pyslvs.metaheuristics import (algorithm, default, AlgorithmType,
                                    AlgorithmConfig)
 
@@ -40,7 +40,7 @@ _FOUR_BAR_ALG: FConfig = {
     'upper': 100.,
     'lower': 0.,
 }
-PLANAR_OBJECT = FMatch(_FOUR_BAR_ALG)
+PLANAR_OBJECT = FPlanar(_FOUR_BAR_ALG)
 PATH = [
     (6.7700907146387586, 24.644877369732),
     (3.9327689792658944, 26.12795413801081),

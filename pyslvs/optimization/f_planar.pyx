@@ -265,7 +265,7 @@ cdef double[:, :] _slice_nan2d(double[:, :] s) nogil:
 
 
 @cython.final
-cdef class FMatch(ObjFunc):
+cdef class FPlanar(ObjFunc):
     """A fast matching method that adds mapping angles to variables.
 
     Allowing defects.
