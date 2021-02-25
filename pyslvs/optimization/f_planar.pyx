@@ -162,6 +162,7 @@ def path_signature(double[:] k, double maximum = 100):
     K = \int^t_0 |\kappa(t)| dt
     $$
 
+    >>> from pyslvs.optimization import curvature, path_signature
     >>> path_signature(curvature(...))
     """
     return array(_path_signature(k, maximum))
@@ -196,8 +197,10 @@ def cross_correlation(double[:, :] p1, double[:, :] p2, double t = 0.1):
     \end{aligned}
     $$
 
+    >>> from pyslvs.optimization import curvature, path_signature
     >>> ps1 = path_signature(curvature(...))
     >>> ps2 = path_signature(curvature(...))
+    >>> from pyslvs.optimization import cross_correlation
     >>> cc = cross_correlation(ps1, ps2)
     """
     return array(_cross_correlation(p1, p2, t), dtype=f64)
