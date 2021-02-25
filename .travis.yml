@@ -1,7 +1,7 @@
 # Travis-Ci for Pyslvs
 language: python
 os: linux
-dist: xenial
+dist: bionic
 
 jobs:
   include:
