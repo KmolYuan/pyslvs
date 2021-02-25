@@ -387,16 +387,13 @@ cdef double[:, :] _uniform_four_bar(double ml, int n):
 def uniform_path(double[:, :] v, int n):
     """Generate path with four-bar dimensions.
 
-    Normalized parameters are $[L_0, L_2, L_3, L_4, \alpha]$.
+    Normalized parameters are $[L_0, L_2, L_3, L_4, \\alpha]$.
     """
     return array(c_uniform_path(v, n))
 
 
-cdef double[:, :, :] c_uniform_path(double[:, :] v, int n) nogil:
-    """Uniform path implementation."""
-    cdef double[:, :, :] p
-    with gil:
-        p = zeros((v.shape[0], n, 2))
+cdef (vector[Expr], map[Sym, CCoord], map[Sym, double]) ueb(double[:] v) nogil:
+    """Uniform expression builder."""
     cdef vector[Expr] stack
     stack.push_back(Expr(False, PLA, Sym(L_LABEL, 1), Sym(I_LABEL, 0),
                          Sym(P_LABEL, 0), Sym(), Sym(), Sym(P_LABEL, 2)))
@@ -410,16 +407,31 @@ cdef double[:, :, :] c_uniform_path(double[:, :] v, int n) nogil:
     joint_pos[Sym(P_LABEL, 0)] = CCoord(0, 0)
     cdef map[Sym, double] param
     param[Sym(L_LABEL, 1)] = 1.
+    joint_pos[Sym(P_LABEL, 1)] = CCoord(v[0], 0)
+    cdef int i
+    for i in range(1, 4):
+        param[Sym(L_LABEL, i + 1)] = v[i]
+    param[Sym(A_LABEL, 0)] = v[5]
+    # Assign driver angle
+    # param[Sym(I_LABEL, 0)] = a
+    return stack, joint_pos, param
+
+
+cdef double[:, :, :] c_uniform_path(double[:, :] v, int n) nogil:
+    """Uniform path implementation."""
+    cdef double[:, :, :] p
+    with gil:
+        p = zeros((v.shape[0], n, 2))
+    cdef vector[Expr] stack
+    cdef map[Sym, CCoord] joint_pos
+    cdef map[Sym, double] param
     cdef bint ok
-    cdef int i, j, k
+    cdef int i, j
     cdef double a
     cdef CCoord c
     cdef map[Sym, CCoord] ans
     for i in range(len(v)):
-        joint_pos[Sym(P_LABEL, 1)] = CCoord(v[i, 0], 0)
-        for k in range(1, 4):
-            param[Sym(L_LABEL, k + 1)] = v[i, k]
-        param[Sym(A_LABEL, 0)] = v[i, 5]
+        stack, joint_pos, param = ueb(v[i])
         j = 0
         a = 0
         while a < 2 * M_PI:
@@ -440,22 +452,9 @@ cdef double[:, :, :] c_uniform_path(double[:, :] v, int n) nogil:
 cpdef object uniform_expr(double[:] v):
     """Turn the uniform link length into expression."""
     cdef vector[Expr] stack
-    stack.push_back(Expr(False, PLA, Sym(L_LABEL, 1), Sym(I_LABEL, 0),
-                         Sym(P_LABEL, 0), Sym(), Sym(), Sym(P_LABEL, 2)))
-    stack.push_back(Expr(False, PLLP, Sym(L_LABEL, 2), Sym(L_LABEL, 3),
-                         Sym(P_LABEL, 2), Sym(P_LABEL, 1), Sym(),
-                         Sym(P_LABEL, 3)))
-    stack.push_back(Expr(False, PLAP, Sym(L_LABEL, 4), Sym(A_LABEL, 0),
-                         Sym(P_LABEL, 2), Sym(P_LABEL, 3), Sym(),
-                         Sym(P_LABEL, 4)))
     cdef map[Sym, CCoord] joint_pos
-    joint_pos[Sym(P_LABEL, 0)] = CCoord(0, 0)
     cdef map[Sym, double] param
-    param[Sym(L_LABEL, 1)] = 1.
-    joint_pos[Sym(P_LABEL, 1)] = CCoord(v[0], 0)
-    for k in range(1, 4):
-        param[Sym(L_LABEL, k + 1)] = v[k]
-    param[Sym(A_LABEL, 0)] = v[5]
+    stack, joint_pos, param = ueb(v)
     cdef vector[CCoord] coords = vector[CCoord](3, CCoord(0., 0.))
     cdef bint ok = False
     cdef double a = 0
@@ -464,7 +463,7 @@ cpdef object uniform_expr(double[:] v):
         param[Sym(I_LABEL, 0)] = a
         ok, ans = quick_solve(stack, joint_pos, param)
         for i in range(2, 5):
-            coords[i - 2] = ans[Sym(P_LABEL, 4)]
+            coords[i - 2] = ans[Sym(P_LABEL, i)]
         if ok:
             break
         a += 2 * M_PI / 30

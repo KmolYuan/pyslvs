@@ -210,5 +210,6 @@ cdef class NPlanar(ObjFunc):
                 trapezoidal_camp(self.target[:, 1], p[:, 1]))
 
     cpdef object result(self, double[:] v):
+        print(array(v))
         return "M[" + ", ".join([(<VPoint> vp).expr()
                                  for vp in uniform_expr(v)]) + "]"
