@@ -136,9 +136,10 @@ cdef void _norm_pca(double[:, :] p1) nogil:
         d = hypot(p1[i, 0], p1[i, 1])
         if d < d_min:
             d_min = d
-            ind = i
         if p1[i, 0] > p1_max:
             p1_max = p1[i, 0]
+            if p1[i, 1] > 0:
+                ind = i
         if p1[i, 0] < p1_min:
             p1_min = p1[i, 0]
     d_min = p1_max - p1_min
@@ -208,6 +209,9 @@ cdef class NPlanar(ObjFunc):
         transform(p)
         return (trapezoidal_camp(self.target[:, 0], p[:, 0]) +
                 trapezoidal_camp(self.target[:, 1], p[:, 1]))
+
+    cpdef object path(self, double[:] v):
+        return array(c_uniform_path(v[None, :], self.len)[0])
 
     cpdef object result(self, double[:] v):
         return "M[" + ", ".join([(<VPoint> vp).expr()
