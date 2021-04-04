@@ -23,9 +23,9 @@ class AlgorithmTest(TestCase):
             s = default(alg)
             s.update(settings)
             x, fval = algorithm(alg)(obj, s).run()
-            self.assertAlmostEqual(0., x[0], 6)
-            self.assertAlmostEqual(0., x[1], 6)
-            self.assertAlmostEqual(0., fval, 6)
+            self.assertAlmostEqual(0., x[0], 10)
+            self.assertAlmostEqual(0., x[1], 10)
+            self.assertAlmostEqual(0., fval, 20)
 
 
 def test_speed(alg: AlgorithmType, parallel: bool):
