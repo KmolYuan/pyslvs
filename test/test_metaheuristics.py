@@ -9,7 +9,7 @@ from typing import cast
 from unittest import TestCase
 from timeit import repeat
 from pyslvs.metaheuristics import (algorithm, default, AlgorithmType,
-                                   AlgorithmConfig)
+                                   Setting)
 from pyslvs.metaheuristics.test import TestObj, with_mp, without_mp
 
 
@@ -33,7 +33,7 @@ def test_speed(alg: AlgorithmType, parallel: bool):
     s = default(alg)
     s.pop('max_gen')
     s.update({'min_fit': 1e-20, 'report': 10, 'parallel': parallel})
-    algorithm(alg)(TestObj(), cast(AlgorithmConfig, s)).run()
+    algorithm(alg)(TestObj(), cast(Setting, s)).run()
 
 
 if __name__ == '__main__':

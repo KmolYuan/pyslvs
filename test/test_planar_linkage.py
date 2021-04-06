@@ -15,7 +15,7 @@ from numpy import array
 from pyslvs import parse_vpoints, collection_list
 from pyslvs.optimization import norm_path, norm_pca, FPlanar, NPlanar
 from pyslvs.metaheuristics import (
-    algorithm, default, AlgorithmType, AlgorithmConfig,
+    algorithm, default, AlgorithmType, Setting,
 )
 
 _FOUR_BAR = collection_list("Four bar linkage mechanism")
@@ -96,7 +96,7 @@ class PlanarTest(TestCase):
         s = default(t)
         s.update({'max_gen': 10, 'report': 10})
         for p in [F_PLANAR, N_PLANAR]:
-            alg = algorithm(t)(p, cast(AlgorithmConfig, s))
+            alg = algorithm(t)(p, cast(Setting, s))
             alg.run()
             t_f = alg.history()
             self.assertEqual(10, t_f[1][0] - t_f[0][0])
