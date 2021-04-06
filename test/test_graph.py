@@ -7,7 +7,6 @@ __copyright__ = "Copyright (C) 2016-2021"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
-from unittest import TestCase
 from pyslvs.graph import (
     link_assortment,
     contracted_link_assortment,
@@ -19,6 +18,7 @@ from pyslvs.graph import (
     link_synthesis,
     contracted_link_synthesis,
 )
+from . import TestBase
 
 DEGREE_CODE_TABLE = [
     (7, [(0, 1), (1, 2), (0, 2)]),
@@ -56,7 +56,7 @@ DEGREE_CODE_TABLE = [
 ]
 
 
-class GraphTest(TestCase):
+class GraphTest(TestBase):
 
     def test_graph_basic(self):
         """Test 'graph' libraries."""

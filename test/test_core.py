@@ -7,15 +7,15 @@ __copyright__ = "Copyright (C) 2016-2021"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
-from unittest import TestCase
 from math import sqrt, radians
 from pyslvs import (
     Coord, SolverSystem, pxy, ppp, plap, pllp, plpp, palp, expr_solving,
     t_config, parse_vpoints, example_list,
 )
+from . import TestBase
 
 
-class CoreTest(TestCase):
+class CoreTest(TestBase):
 
     def test_pxy(self):
         """Test for pxy function."""

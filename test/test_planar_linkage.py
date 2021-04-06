@@ -8,7 +8,6 @@ __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
 from typing import cast
-from unittest import TestCase
 from random import random
 from math import pi, hypot, sin, cos
 from numpy import array
@@ -17,6 +16,7 @@ from pyslvs.optimization import norm_path, norm_pca, FPlanar, NPlanar
 from pyslvs.metaheuristics import (
     algorithm, default, AlgorithmType, Setting,
 )
+from . import TestBase
 
 _FOUR_BAR = collection_list("Four bar linkage mechanism")
 F_PLANAR = FPlanar({
@@ -77,7 +77,7 @@ PATH = [
 ]
 
 
-class PlanarTest(TestCase):
+class PlanarTest(TestBase):
 
     def test_norm(self):
         """Test path normalization function."""
@@ -101,8 +101,17 @@ class PlanarTest(TestCase):
             t_f = alg.history()
             self.assertEqual(10, t_f[1][0] - t_f[0][0])
 
-    def test_algorithms(self):
-        """Test algorithms."""
+    def test_case(self):
         self.assertFalse(F_PLANAR.is_two_kernel())
-        for t in AlgorithmType:
-            self.planar(t)
+
+    def test_rga(self):
+        self.planar(AlgorithmType.RGA)
+
+    def test_de(self):
+        self.planar(AlgorithmType.DE)
+
+    def test_fa(self):
+        self.planar(AlgorithmType.FA)
+
+    def test_tlbo(self):
+        self.planar(AlgorithmType.TLBO)
