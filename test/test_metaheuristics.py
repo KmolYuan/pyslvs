@@ -18,10 +18,13 @@ class AlgorithmTest(TestBase):
         obj = TestObj()
         s = default(alg)
         s.update(settings)
-        x, fval = algorithm(alg)(obj, s).run()
-        self.assertAlmostEqual(0., x[0], 10)
-        self.assertAlmostEqual(0., x[1], 10)
-        self.assertAlmostEqual(0., fval, 20)
+        a = algorithm(alg)(obj, s)
+        ans = a.run()
+        x, y = a.result()
+        self.assertTrue(ans < 1e-20)
+        for i in range(4):
+            self.assertTrue(x[i] < 1e-10)
+        self.assertEqual(y, ans)
 
     def test_rga(self):
         self.case(AlgorithmType.RGA)
