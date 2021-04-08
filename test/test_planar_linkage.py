@@ -110,6 +110,9 @@ class PlanarTest(TestBase):
     def test_de(self):
         self.planar(AlgorithmType.DE)
 
+    def test_pso(self):
+        self.planar(AlgorithmType.PSO)
+
     def test_fa(self):
         self.planar(AlgorithmType.FA)
 

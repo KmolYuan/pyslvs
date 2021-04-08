@@ -32,6 +32,9 @@ class AlgorithmTest(TestBase):
     def test_de(self):
         self.case(AlgorithmType.DE)
 
+    def test_pso(self):
+        self.case(AlgorithmType.PSO)
+
     def test_fa(self):
         self.case(AlgorithmType.FA)
 

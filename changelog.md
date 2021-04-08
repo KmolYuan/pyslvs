@@ -1,6 +1,7 @@
 # Version 21.04
 
 + Some adjustment of algorithm settings.
++ Add PSO.
 + Simplify algorithm names.
 
 # Version 21.03
