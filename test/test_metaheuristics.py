@@ -14,7 +14,7 @@ class AlgorithmTest(TestBase):
 
     def case(self, alg: AlgorithmType):
         """Test with an objective function."""
-        settings = {'min_fit': 1e-20, 'report': 10, 'parallel': True}
+        settings = {'min_fit': 1e-20, 'report': 10}
         obj = TestObj()
         s = default(alg)
         s.update(settings)
