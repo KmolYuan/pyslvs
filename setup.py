@@ -10,16 +10,15 @@ root_path = 'pyslvs'
 bfgs_path = pth_join(root_path, 'bfgs_solver')
 tinycadlib_path = pth_join(root_path, 'tinycadlib')
 macros = [('_USE_MATH_DEFINES', None)]
-compile_args_msvc = ['/O2', '/std:c++17']  # MSVC disabled OpenMP
-compile_args = ['-Wno-cpp', '-std=c++17', '-fopenmp']
-link_args = ['-fopenmp']
+compile_args_msvc = ['/O2', '/std:c++17']
+compile_args = ['-Wno-cpp', '-std=c++17']
+link_args = []
 link_args_msvc = []
 link_args_static = [
     '-static-libgcc',
     '-static-libstdc++',
     '-Wl,-Bstatic,--whole-archive',
     '-lwinpthread',
-    '-lgomp',
     '-Wl,--no-whole-archive',
 ]
 if system() == 'Windows':
