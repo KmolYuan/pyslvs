@@ -3,6 +3,7 @@
 + Some adjustment of algorithm settings.
 + Add PSO.
 + Simplify algorithm names.
++ Make more EFD functions public.
 
 # Version 21.03
 

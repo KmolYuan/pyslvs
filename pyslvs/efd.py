@@ -26,20 +26,19 @@ def efd_fitting(path: _Path, n: int = 0) -> ndarray:
     contour = array(path, dtype=float)
     if n < 3:
         n = len(contour)
-    harmonic = _fourier_power(
-        _calculate_efd(contour, _nyquist(contour)),
+    harmonic = fourier_power(
+        calculate_efd(contour, _nyquist(contour)),
         _nyquist(contour)
     )
-    coeffs = _calculate_efd(contour, harmonic)
-    coeffs, rotation = _normalize_efd(coeffs, size_invariant=False)
-    locus = _calculate_dc_coefficients(contour)
+    coeffs = calculate_efd(contour, harmonic)
+    coeffs, rotation = normalize_efd(coeffs, size_invariant=False)
+    locus = calculate_dc_coefficients(contour)
     # New path
-    contour = _inverse_transform(coeffs, locus, n, harmonic)
-    contour = _rotate_contour(contour, -rotation, locus)
-    return contour
+    contour = inverse_transform(coeffs, locus, n, harmonic)
+    return rotate_contour(contour, -rotation, locus)
 
 
-def _normalize_efd(
+def normalize_efd(
     coeffs: ndarray,
     size_invariant: bool = True
 ) -> Tuple[ndarray, float]:
@@ -109,7 +108,7 @@ def _normalize_efd(
     return coeffs, degrees(psi_1)
 
 
-def _calculate_dc_coefficients(contour: ndarray) -> Tuple[float, float]:
+def calculate_dc_coefficients(contour: ndarray) -> Tuple[float, float]:
     """
     Compute the dc coefficients, used as the locus when calling
     inverse_transform().
@@ -139,7 +138,7 @@ def _calculate_dc_coefficients(contour: ndarray) -> Tuple[float, float]:
     return contour[0, 0] + a0, contour[0, 1] + c0
 
 
-def _calculate_efd(contour: ndarray, harmonic: int = 10) -> ndarray:
+def calculate_efd(contour: ndarray, harmonic: int = 10) -> ndarray:
     """
     Compute the Elliptical Fourier Descriptors for a polygon.
 
@@ -178,7 +177,7 @@ def _calculate_efd(contour: ndarray, harmonic: int = 10) -> ndarray:
     return coeffs
 
 
-def _inverse_transform(
+def inverse_transform(
     coeffs: ndarray,
     locus: Tuple[float, float] = (0., 0.),
     n: int = 300,
@@ -239,7 +238,7 @@ def _nyquist(zx: Sized) -> int:
     return len(zx) // 2
 
 
-def _fourier_power(
+def fourier_power(
     coeffs: ndarray,
     nyq: int,
     threshold: float = 0.9999
@@ -276,7 +275,7 @@ def _fourier_power(
     return nyq
 
 
-def _rotate_contour(
+def rotate_contour(
     contour: ndarray,
     rotation: float,
     centroid: Tuple[float, float]
