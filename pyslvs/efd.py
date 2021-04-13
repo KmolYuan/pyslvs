@@ -32,10 +32,10 @@ def efd_fitting(path: _Path, n: int = 0) -> ndarray:
     )
     coeffs = calculate_efd(contour, harmonic)
     coeffs, rotation = normalize_efd(coeffs, size_invariant=False)
-    locus = calculate_dc_coefficients(contour)
+    locus_v = locus(contour)
     # New path
-    contour = inverse_transform(coeffs, locus, n, harmonic)
-    return rotate_contour(contour, -rotation, locus)
+    contour = inverse_transform(coeffs, locus_v, n, harmonic)
+    return rotate_contour(contour, -rotation, locus_v)
 
 
 def normalize_efd(
@@ -70,14 +70,14 @@ def normalize_efd(
     """
     # Make the coefficients have a zero phase shift from
     # the first major axis. Theta_1 is that shift angle.
-    theta_1 = atan2(
+    theta1 = 0.5 * atan2(
         2 * (coeffs[0, 0] * coeffs[0, 1] + coeffs[0, 2] * coeffs[0, 3]),
         coeffs[0, 0] ** 2 - coeffs[0, 1] ** 2
         + coeffs[0, 2] ** 2 - coeffs[0, 3] ** 2
-    ) * 0.5
+    )
     # Rotate all coefficients by theta_1
     for n in range(coeffs.shape[0]):
-        angle = (n + 1) * theta_1
+        angle = (n + 1) * theta1
         coeffs[n, :] = dot(
             array([
                 [coeffs[n, 0], coeffs[n, 1]],
@@ -90,10 +90,10 @@ def normalize_efd(
         ).flatten()
     # Make the coefficients rotation invariant by rotating so that
     # the semi-major axis is parallel to the x-axis.
-    psi_1 = atan2(coeffs[0, 2], coeffs[0, 0])
-    psi_r = array([
-        [np_cos(psi_1), np_sin(psi_1)],
-        [-np_sin(psi_1), np_cos(psi_1)],
+    psi1 = atan2(coeffs[0, 2], coeffs[0, 0])
+    psi2 = array([
+        [np_cos(psi1), np_sin(psi1)],
+        [-np_sin(psi1), np_cos(psi1)],
     ])
     # Rotate all coefficients by -psi_1.
     for n in range(coeffs.shape[0]):
@@ -101,14 +101,14 @@ def normalize_efd(
             [coeffs[n, 0], coeffs[n, 1]],
             [coeffs[n, 2], coeffs[n, 3]],
         ])
-        coeffs[n, :] = psi_r.dot(rot).flatten()
+        coeffs[n, :] = psi2.dot(rot).flatten()
     if size_invariant:
         # Obtain size-invariance by normalizing.
         coeffs /= abs(coeffs[0, 0])
-    return coeffs, degrees(psi_1)
+    return coeffs, degrees(psi1)
 
 
-def calculate_dc_coefficients(contour: ndarray) -> Tuple[float, float]:
+def locus(contour: ndarray) -> Tuple[float, float]:
     """
     Compute the dc coefficients, used as the locus when calling
     inverse_transform().
@@ -127,12 +127,12 @@ def calculate_dc_coefficients(contour: ndarray) -> Tuple[float, float]:
     dxy = diff(contour, axis=0)
     dt = sqrt((dxy ** 2).sum(axis=1))
     t = concatenate(([0], cumsum(dt)))
-    zt = t[-1] or 1e-12
+    zt = t[-1]
     diffs = diff(t ** 2)
     xi = cumsum(dxy[:, 0]) - dxy[:, 0] / dt * t[1:]
-    a0 = 1 / zt * np_sum(dxy[:, 0] / (2 * dt) * diffs + xi * dt)
+    a0 = np_sum(dxy[:, 0] / (2 * dt) * diffs + xi * dt) / (zt + 1e-20)
     delta = cumsum(dxy[:, 1]) - dxy[:, 1] / dt * t[1:]
-    c0 = 1 / zt * np_sum(dxy[:, 1] / (2 * dt) * diffs + delta * dt)
+    c0 = np_sum(dxy[:, 1] / (2 * dt) * diffs + delta * dt) / (zt + 1e-20)
     # A0 and CO relate to the first point of the contour array as origin
     # Adding those values to the coefficients to make them relate to true origin
     return contour[0, 0] + a0, contour[0, 1] + c0
@@ -161,7 +161,7 @@ def calculate_efd(contour: ndarray, harmonic: int = 10) -> ndarray:
     dt = sqrt((dxy ** 2).sum(axis=1))
     t = concatenate(([0], cumsum(dt)))
     zt = t[-1]
-    phi = (2. * pi * t) / zt
+    phi = (2. * pi * t) / (zt + 1e-20)
     coeffs = zeros((harmonic, 4))
     for n in range(1, harmonic + 1):
         const = zt / (2 * n * n * pi * pi)
@@ -179,7 +179,7 @@ def calculate_efd(contour: ndarray, harmonic: int = 10) -> ndarray:
 
 def inverse_transform(
     coeffs: ndarray,
-    locus: Tuple[float, float] = (0., 0.),
+    locus_v: Tuple[float, float] = (0., 0.),
     n: int = 300,
     harmonic: int = 10
 ) -> ndarray:
@@ -197,7 +197,7 @@ def inverse_transform(
     Args:
         coeffs: A numpy array of shape (n, 4) representing the
             four coefficients for each harmonic computed.
-        locus: The x,y coordinates of the centroid of the contour being
+        locus_v: The x,y coordinates of the centroid of the contour being
             generated. Use calculate_dc_coefficients() to generate the correct
             locus for a shape.
         n: The number of coordinate pairs to compute. A larger value will
@@ -211,8 +211,8 @@ def inverse_transform(
     """
     t = linspace(0, 1, n)
     contour = ones((n, 2), dtype=float)
-    contour[:, 0] *= locus[0]
-    contour[:, 1] *= locus[1]
+    contour[:, 0] *= locus_v[0]
+    contour[:, 1] *= locus_v[1]
     for n in range(harmonic):
         angle = 2 * (n + 1) * pi * t
         cosine = np_cos(angle)
@@ -296,13 +296,12 @@ def rotate_contour(
     """
     angle = radians(rotation)
     cpx, cpy = centroid
-    new_contour = zeros(contour.shape, dtype=contour.dtype)
+    out = zeros(contour.shape, dtype=contour.dtype)
     for i in range(len(contour)):
-        x, y = contour[i]
-        dx = x - cpx
-        dy = y - cpy
-        new_contour[i] = (
+        dx = contour[i, 0] - cpx
+        dy = contour[i, 1] - cpy
+        out[i] = (
             cpx + dx * cos(angle) - dy * sin(angle),
             cpy + dx * sin(angle) + dy * cos(angle)
         )
-    return new_contour
+    return out
