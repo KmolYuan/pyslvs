@@ -244,7 +244,7 @@ def fourier_power(
     threshold: float = 0.9999
 ) -> int:
     """
-    Compute the total Fourier power and find the minium number of harmonics
+    Compute the total Fourier power and find the minimum number of harmonics
     required to exceed the threshold fraction of the total power.
 
     This is a good method for identifying the number of harmonics to use to
