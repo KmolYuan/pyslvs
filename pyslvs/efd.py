@@ -8,10 +8,9 @@ __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
 from typing import Tuple, Sized, Sequence, Union
-from math import pi, sin, cos, atan2, degrees, radians
 from numpy import (
-    sqrt, abs, cos as np_cos, sin as np_sin, dot, sum as np_sum, array,
-    ndarray, linspace, zeros, ones, diff, concatenate, cumsum,
+    pi, sqrt, abs, cos, sin, arctan2, array, ndarray, linspace, zeros, ones,
+    asarray, diff, concatenate, cumsum,
 )
 
 _Path = Union[Sequence[Tuple[float, float]], ndarray]
@@ -23,7 +22,7 @@ def efd_fitting(path: _Path, n: int = 0) -> ndarray:
     The path `path` will be translated to Fourier descriptor coefficients,
     then regenerate a new path as a `n` x 4 NumPy array.
     """
-    contour = array(path, dtype=float)
+    contour = asarray(path, dtype=float)
     if n < 3:
         n = len(contour)
     harmonic = fourier_power(
@@ -31,11 +30,11 @@ def efd_fitting(path: _Path, n: int = 0) -> ndarray:
         _nyquist(contour)
     )
     coeffs = calculate_efd(contour, harmonic)
-    coeffs, rotation = normalize_efd(coeffs, size_invariant=False)
+    coeffs, rot = normalize_efd(coeffs, size_invariant=False)
     locus_v = locus(contour)
     # New path
     contour = inverse_transform(coeffs, locus_v, n, harmonic)
-    return rotate_contour(contour, -rotation, locus_v)
+    return rotate_contour(contour, -rot, locus_v)
 
 
 def normalize_efd(
@@ -66,11 +65,11 @@ def normalize_efd(
     Returns:
         A tuple consisting of a numpy.ndarray of shape (harmonics, 4)
         representing the four coefficients for each harmonic computed and
-        the rotation in degrees applied to the normalized contour.
+        the rotation in radians applied to the normalized contour.
     """
     # Make the coefficients have a zero phase shift from
     # the first major axis. Theta_1 is that shift angle.
-    theta1 = 0.5 * atan2(
+    theta1 = 0.5 * arctan2(
         2 * (coeffs[0, 0] * coeffs[0, 1] + coeffs[0, 2] * coeffs[0, 3]),
         coeffs[0, 0] ** 2 - coeffs[0, 1] ** 2
         + coeffs[0, 2] ** 2 - coeffs[0, 3] ** 2
@@ -78,34 +77,30 @@ def normalize_efd(
     # Rotate all coefficients by theta_1
     for n in range(coeffs.shape[0]):
         angle = (n + 1) * theta1
-        coeffs[n, :] = dot(
-            array([
-                [coeffs[n, 0], coeffs[n, 1]],
-                [coeffs[n, 2], coeffs[n, 3]],
-            ]),
-            array([
-                [np_cos(angle), -np_sin(angle)],
-                [np_sin(angle), np_cos(angle)],
-            ])
-        ).flatten()
+        coeffs[n, :] = (array([
+            [coeffs[n, 0], coeffs[n, 1]],
+            [coeffs[n, 2], coeffs[n, 3]],
+        ]) @ array([
+            [cos(angle), -sin(angle)],
+            [sin(angle), cos(angle)],
+        ])).flat
     # Make the coefficients rotation invariant by rotating so that
     # the semi-major axis is parallel to the x-axis.
-    psi1 = atan2(coeffs[0, 2], coeffs[0, 0])
+    psi1 = arctan2(coeffs[0, 2], coeffs[0, 0])
     psi2 = array([
-        [np_cos(psi1), np_sin(psi1)],
-        [-np_sin(psi1), np_cos(psi1)],
+        [cos(psi1), sin(psi1)],
+        [-sin(psi1), cos(psi1)],
     ])
     # Rotate all coefficients by -psi_1.
     for n in range(coeffs.shape[0]):
-        rot = array([
+        coeffs[n, :] = (psi2 @ array([
             [coeffs[n, 0], coeffs[n, 1]],
             [coeffs[n, 2], coeffs[n, 3]],
-        ])
-        coeffs[n, :] = psi2.dot(rot).flatten()
+        ])).flat
     if size_invariant:
         # Obtain size-invariance by normalizing.
         coeffs /= abs(coeffs[0, 0])
-    return coeffs, degrees(psi1)
+    return coeffs, psi1
 
 
 def locus(contour: ndarray) -> Tuple[float, float]:
@@ -130,9 +125,9 @@ def locus(contour: ndarray) -> Tuple[float, float]:
     zt = t[-1]
     diffs = diff(t ** 2)
     xi = cumsum(dxy[:, 0]) - dxy[:, 0] / dt * t[1:]
-    a0 = np_sum(dxy[:, 0] / (2 * dt) * diffs + xi * dt) / (zt + 1e-20)
+    a0 = sum(dxy[:, 0] / (2 * dt) * diffs + xi * dt) / (zt + 1e-20)
     delta = cumsum(dxy[:, 1]) - dxy[:, 1] / dt * t[1:]
-    c0 = np_sum(dxy[:, 1] / (2 * dt) * diffs + delta * dt) / (zt + 1e-20)
+    c0 = sum(dxy[:, 1] / (2 * dt) * diffs + delta * dt) / (zt + 1e-20)
     # A0 and CO relate to the first point of the contour array as origin
     # Adding those values to the coefficients to make them relate to true origin
     return contour[0, 0] + a0, contour[0, 1] + c0
@@ -166,13 +161,13 @@ def calculate_efd(contour: ndarray, harmonic: int = 10) -> ndarray:
     for n in range(1, harmonic + 1):
         const = zt / (2 * n * n * pi * pi)
         phi_n = phi * n
-        d_np_cos_phi_n = np_cos(phi_n[1:]) - np_cos(phi_n[:-1])
-        d_np_sin_phi_n = np_sin(phi_n[1:]) - np_sin(phi_n[:-1])
+        cos_phi_n = (cos(phi_n[1:]) - cos(phi_n[:-1])) / dt
+        sin_phi_n = (sin(phi_n[1:]) - sin(phi_n[:-1])) / dt
         coeffs[n - 1, :] = (
-            const * np_sum(dxy[:, 1] / dt * d_np_cos_phi_n),
-            const * np_sum(dxy[:, 1] / dt * d_np_sin_phi_n),
-            const * np_sum(dxy[:, 0] / dt * d_np_cos_phi_n),
-            const * np_sum(dxy[:, 0] / dt * d_np_sin_phi_n),
+            const * (dxy[:, 1] * cos_phi_n).sum(),
+            const * (dxy[:, 1] * sin_phi_n).sum(),
+            const * (dxy[:, 0] * cos_phi_n).sum(),
+            const * (dxy[:, 0] * sin_phi_n).sum(),
         )
     return coeffs
 
@@ -215,8 +210,8 @@ def inverse_transform(
     contour[:, 1] *= locus_v[1]
     for n in range(harmonic):
         angle = 2 * (n + 1) * pi * t
-        cosine = np_cos(angle)
-        sine = np_sin(angle)
+        cosine = cos(angle)
+        sine = sin(angle)
         contour[:, 0] += coeffs[n, 2] * cosine + coeffs[n, 3] * sine
         contour[:, 1] += coeffs[n, 0] * cosine + coeffs[n, 1] * sine
     return contour
@@ -267,9 +262,9 @@ def fourier_power(
     total_power = 0
     current_power = 0
     for i in range(nyq):
-        total_power += 0.5 * np_sum(coeffs[i, :] ** 2)
+        total_power += 0.5 * (coeffs[i, :] ** 2).sum()
     for i in range(nyq):
-        current_power += 0.5 * np_sum(coeffs[i, :] ** 2)
+        current_power += 0.5 * (coeffs[i, :] ** 2).sum()
         if current_power / total_power > threshold:
             return i + 1
     return nyq
@@ -277,7 +272,7 @@ def fourier_power(
 
 def rotate_contour(
     contour: ndarray,
-    rotation: float,
+    angle: float,
     centroid: Tuple[float, float]
 ) -> ndarray:
     """
@@ -288,13 +283,12 @@ def rotate_contour(
 
     Args:
         contour: A n x 2 numpy array represents a path.
-        rotation: The angle in degrees for the contour to be rotated by.
+        angle: The angle in radians for the contour to be rotated by.
         centroid: A tuple containing the x,y coordinates of the centroid to
             rotate the contour about.
     Returns:
         A n x 2 numpy array represents a contour.
     """
-    angle = radians(rotation)
     cpx, cpy = centroid
     out = zeros(contour.shape, dtype=contour.dtype)
     for i in range(len(contour)):
