@@ -142,7 +142,7 @@ def calculate_efd(contour: ndarray, harmonic: int = 10) -> ndarray:
     from the pyefd module. See the original paper for more detail:
 
     Kuhl, FP and Giardina, CR (1982). Elliptic Fourier features of a closed
-    contour. Computer graphics and image procesnp_sing, 18(3), 236-258.
+    contour. Computer graphics and image processing, 18(3), 236-258.
 
     Args:
         contour: A n x 2 numpy array represents a path.
