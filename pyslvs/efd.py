@@ -31,8 +31,7 @@ def efd_fitting(path: _Path, n: int = 0,
             calculate_efd(contour, _nyquist(contour)),
             _nyquist(contour)
         )
-    coeffs = calculate_efd(contour, harmonic)
-    coeffs, rot = normalize_efd(coeffs, size_invariant=False)
+    coeffs, rot = normalize_efd(calculate_efd(contour, harmonic), norm=False)
     locus_v = locus(contour)
     # New path
     contour = inverse_transform(coeffs, locus_v, n, harmonic)
@@ -41,7 +40,7 @@ def efd_fitting(path: _Path, n: int = 0,
 
 def normalize_efd(
     coeffs: ndarray,
-    size_invariant: bool = True
+    norm: bool = True
 ) -> Tuple[ndarray, float]:
     """
     Normalize the Elliptical Fourier Descriptor coefficients for a polygon.
@@ -60,7 +59,7 @@ def normalize_efd(
     Args:
         coeffs: A numpy array of shape (n, 4) representing the
             four coefficients for each harmonic computed.
-        size_invariant: Set to True (the default) to perform the third
+        norm: Set to True (the default) to perform the third
             normalization and false to return the data withot this procesnp_sing
             step. Set this to False when plotting a comparison between the
             input data and the Fourier ellipse.
@@ -76,6 +75,7 @@ def normalize_efd(
         coeffs[0, 0] ** 2 - coeffs[0, 1] ** 2
         + coeffs[0, 2] ** 2 - coeffs[0, 3] ** 2
     )
+    coeffs = coeffs.copy()
     # Rotate all coefficients by theta_1
     for n in range(coeffs.shape[0]):
         angle = (n + 1) * theta1
@@ -99,7 +99,7 @@ def normalize_efd(
             [coeffs[n, 0], coeffs[n, 1]],
             [coeffs[n, 2], coeffs[n, 3]],
         ])).flat
-    if size_invariant:
+    if norm:
         # Obtain size-invariance by normalizing.
         coeffs /= abs(coeffs[0, 0])
     return coeffs, psi1
@@ -125,11 +125,11 @@ def locus(contour: ndarray) -> Tuple[float, float]:
     dt = sqrt((dxy ** 2).sum(axis=1))
     t = concatenate(([0], cumsum(dt)))
     zt = t[-1]
-    diffs = diff(t ** 2)
     xi = cumsum(dxy[:, 0]) - dxy[:, 0] / dt * t[1:]
-    a0 = sum(dxy[:, 0] / (2 * dt) * diffs + xi * dt) / (zt + 1e-20)
+    c = diff(t ** 2) / (dt * 2)
+    a0 = sum(dxy[:, 0] * c + xi * dt) / (zt + 1e-20)
     delta = cumsum(dxy[:, 1]) - dxy[:, 1] / dt * t[1:]
-    c0 = sum(dxy[:, 1] / (2 * dt) * diffs + delta * dt) / (zt + 1e-20)
+    c0 = sum(dxy[:, 1] * c + delta * dt) / (zt + 1e-20)
     # A0 and CO relate to the first point of the contour array as origin
     # Adding those values to the coefficients to make them relate to true origin
     return contour[0, 0] + a0, contour[0, 1] + c0
@@ -161,24 +161,24 @@ def calculate_efd(contour: ndarray, harmonic: int = 10) -> ndarray:
     phi = (2. * pi * t) / (zt + 1e-20)
     coeffs = zeros((harmonic, 4))
     for n in range(1, harmonic + 1):
-        const = zt / (2 * n * n * pi * pi)
+        c = zt / (2 * n * n * pi * pi)
         phi_n = phi * n
         cos_phi_n = (cos(phi_n[1:]) - cos(phi_n[:-1])) / dt
         sin_phi_n = (sin(phi_n[1:]) - sin(phi_n[:-1])) / dt
         coeffs[n - 1, :] = (
-            const * (dxy[:, 1] * cos_phi_n).sum(),
-            const * (dxy[:, 1] * sin_phi_n).sum(),
-            const * (dxy[:, 0] * cos_phi_n).sum(),
-            const * (dxy[:, 0] * sin_phi_n).sum(),
+            c * (dxy[:, 1] * cos_phi_n).sum(),
+            c * (dxy[:, 1] * sin_phi_n).sum(),
+            c * (dxy[:, 0] * cos_phi_n).sum(),
+            c * (dxy[:, 0] * sin_phi_n).sum(),
         )
     return coeffs
 
 
 def inverse_transform(
     coeffs: ndarray,
-    locus_v: Tuple[float, float] = (0., 0.),
-    n: int = 300,
-    harmonic: int = 10
+    locus_v: Tuple[float, float],
+    n: int,
+    harmonic: int
 ) -> ndarray:
     """
     Perform an inverse fourier transform to convert the coefficients back into
@@ -199,9 +199,9 @@ def inverse_transform(
             locus for a shape.
         n: The number of coordinate pairs to compute. A larger value will
             result in a more complex shape at the expense of increased
-            computational time. Defaults to 300.
+            computational time.
         harmonic: The number of harmonics to be used to generate
-            coordinates, defaults to 10. Must be <= coeffs.shape[0]. Supply a
+            coordinates. Must be <= coeffs.shape[0]. Supply a
             smaller value to produce coordinates for a more generalized shape.
     Returns:
         A n x 2 numpy array represents a contour.
@@ -211,7 +211,7 @@ def inverse_transform(
     contour[:, 0] *= locus_v[0]
     contour[:, 1] *= locus_v[1]
     for n in range(harmonic):
-        angle = 2 * (n + 1) * pi * t
+        angle = t * (n + 1) * 2 * pi
         cosine = cos(angle)
         sine = sin(angle)
         contour[:, 0] += coeffs[n, 2] * cosine + coeffs[n, 3] * sine
@@ -296,7 +296,7 @@ def rotate_contour(
     for i in range(len(contour)):
         dx = contour[i, 0] - cpx
         dy = contour[i, 1] - cpy
-        out[i] = (
+        out[i, :] = (
             cpx + dx * cos(angle) - dy * sin(angle),
             cpy + dx * sin(angle) + dy * cos(angle)
         )
