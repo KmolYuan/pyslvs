@@ -238,7 +238,7 @@ def _nyquist(zx: Sized) -> int:
 def fourier_power(
     coeffs: ndarray,
     nyq: int,
-    threshold: float = 0.9999
+    threshold: float = 1.
 ) -> int:
     """
     Compute the total Fourier power and find the minimum number of harmonics
@@ -256,7 +256,7 @@ def fourier_power(
             four coefficients for each harmonic computed.
         nyq: The Nyquist Frequency.
         threshold: The threshold fraction of the total Fourier power,
-            the default is 0.9999.
+            the default is 1.
     Returns:
         The number of harmonics required to represent the contour above
         the threshold Fourier power.
@@ -267,7 +267,7 @@ def fourier_power(
         total_power += 0.5 * (coeffs[i, :] ** 2).sum()
     for i in range(nyq):
         current_power += 0.5 * (coeffs[i, :] ** 2).sum()
-        if current_power / total_power > threshold:
+        if current_power / total_power >= threshold:
             return i + 1
     return nyq
 
