@@ -7,7 +7,7 @@ __copyright__ = "Copyright (C) 2016-2021"
 __license__ = "AGPL"
 __email__ = "pyslvs@gmail.com"
 
-from typing import Tuple, Sized, Sequence, Union
+from typing import Tuple, Sized, Sequence, Union, Optional
 from numpy import (
     pi, sqrt, abs, cos, sin, arctan2, array, ndarray, linspace, zeros, ones,
     asarray, diff, concatenate, cumsum,
@@ -16,7 +16,8 @@ from numpy import (
 _Path = Union[Sequence[Tuple[float, float]], ndarray]
 
 
-def efd_fitting(path: _Path, n: int = 0) -> ndarray:
+def efd_fitting(path: _Path, n: int = 0,
+                harmonic: Optional[int] = None) -> ndarray:
     """Curve fitting using Elliptical Fourier Descriptor.
 
     The path `path` will be translated to Fourier descriptor coefficients,
@@ -25,10 +26,11 @@ def efd_fitting(path: _Path, n: int = 0) -> ndarray:
     contour = asarray(path, dtype=float)
     if n < 3:
         n = len(contour)
-    harmonic = fourier_power(
-        calculate_efd(contour, _nyquist(contour)),
-        _nyquist(contour)
-    )
+    if harmonic is None:
+        harmonic = fourier_power(
+            calculate_efd(contour, _nyquist(contour)),
+            _nyquist(contour)
+        )
     coeffs = calculate_efd(contour, harmonic)
     coeffs, rot = normalize_efd(coeffs, size_invariant=False)
     locus_v = locus(contour)
