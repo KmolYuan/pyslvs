@@ -411,7 +411,7 @@ cdef (vector[Expr], map[Sym, CCoord], map[Sym, double]) ueb(double[:] v) nogil:
     cdef int i
     for i in range(1, 4):
         param[Sym(L_LABEL, i + 1)] = v[i]
-    param[Sym(A_LABEL, 0)] = v[5]
+    param[Sym(A_LABEL, 0)] = v[4]
     # Assign driver angle
     # param[Sym(I_LABEL, 0)] = a
     return stack, joint_pos, param
