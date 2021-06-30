@@ -57,7 +57,7 @@ jobs:
 
 script:
   - python3 -m pip install -e . -U
-  - python3 unittest
+  - python3 -m unittest
 
 before_cache:
   - rm -rf $HOME/.cache/pip/log
