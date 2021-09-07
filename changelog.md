@@ -1,6 +1,22 @@
-# Version 21.05
+# Version 21.09
 
 + None.
+
+# Version 21.08
+
++ Periodic update.
+
+# Version 21.07
+
++ Periodic update.
+
+# Version 21.06
+
++ Periodic update.
+
+# Version 21.05
+
++ Periodic update.
 
 # Version 21.04
 
@@ -11,7 +27,7 @@
 
 # Version 21.03
 
-+ None.
++ Periodic update.
 
 # Version 21.02
 
@@ -110,7 +126,7 @@
 
 # Version 19.12
 
-+ None.
++ Periodic update.
 
 # Version 19.11
 
@@ -169,7 +185,7 @@
 
 # Version 19.06
 
-+ None.
++ Periodic update.
 
 # Version 19.05
 
