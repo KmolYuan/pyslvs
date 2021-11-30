@@ -1,6 +1,14 @@
+# Version 21.11
+
++ Periodic update.
+
+# Version 21.10
+
++ Periodic update.
+
 # Version 21.09
 
-+ None.
++ Periodic update.
 
 # Version 21.08
 
