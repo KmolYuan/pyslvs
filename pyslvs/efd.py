@@ -123,7 +123,7 @@ def locus(contour: ndarray) -> Tuple[float, float]:
     """
     dxy = diff(contour, axis=0)
     dt = sqrt((dxy ** 2).sum(axis=1))
-    t = concatenate(([0], cumsum(dt)))
+    t = concatenate((array([0]), cumsum(dt)))
     zt = t[-1]
     xi = cumsum(dxy[:, 0]) - dxy[:, 0] / dt * t[1:]
     c = diff(t ** 2) / (dt * 2)
@@ -156,7 +156,7 @@ def calculate_efd(contour: ndarray, harmonic: int = 10) -> ndarray:
     """
     dxy = diff(contour, axis=0)
     dt = sqrt((dxy ** 2).sum(axis=1))
-    t = concatenate(([0], cumsum(dt)))
+    t = concatenate((array([0]), cumsum(dt)))
     zt = t[-1]
     phi = (2. * pi * t) / (zt + 1e-20)
     coeffs = zeros((harmonic, 4))
