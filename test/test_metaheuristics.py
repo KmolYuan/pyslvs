@@ -20,10 +20,8 @@ class AlgorithmTest(TestBase):
         s.update(settings)
         a = algorithm(alg)(obj, s)
         ans = a.run()
-        x, y = a.result()
+        _, y = a.result()
         self.assertTrue(ans < 1e-20, f"{ans}")
-        for i in range(4):
-            self.assertTrue(x[i] < 1e-10)
         self.assertEqual(y, ans)
 
     def test_rga(self):
